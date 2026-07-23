@@ -1,0 +1,668 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import type { ResumeData, ExperienceEntry, EducationEntry } from "@/lib/types";
+import type { AtsResult } from "@/lib/ats-score";
+
+const TEMPLATES = ["classic", "modern", "compact"];
+
+export function ResumeEditor({
+  resumeId,
+  initialTitle,
+  initialTemplate,
+  initialData,
+}: {
+  resumeId: string;
+  initialTitle: string;
+  initialTemplate: string;
+  initialData: ResumeData;
+}) {
+  const router = useRouter();
+  const [title, setTitle] = useState(initialTitle);
+  const [template, setTemplate] = useState(initialTemplate);
+  const [data, setData] = useState<ResumeData>(initialData);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [tab, setTab] = useState<"edit" | "match" | "cover-letter">("edit");
+
+  async function save() {
+    setSaveStatus("saving");
+    await fetch(`/api/resumes/${resumeId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, template, data }),
+    });
+    setSaveStatus("saved");
+    setTimeout(() => setSaveStatus("idle"), 1500);
+  }
+
+  async function exportPdf() {
+    const res = await fetch("/api/resumes/pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resume: data }),
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(data.contact.fullName || "resume").replace(/\s+/g, "_")}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function deleteThisResume() {
+    if (!confirm("Delete this resume? This cannot be undone.")) return;
+    await fetch(`/api/resumes/${resumeId}`, { method: "DELETE" });
+    router.push("/dashboard");
+  }
+
+  return (
+    <main className="flex-1 flex flex-col">
+      <div className="border-b border-rule px-6 py-3 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4 min-w-0">
+          <Link href="/dashboard" className="text-sm text-ink-soft hover:text-ink shrink-0">
+            ← Dashboard
+          </Link>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="font-display font-bold text-lg bg-transparent focus:outline-none border-b border-transparent focus:border-rule min-w-0"
+          />
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <select
+            value={template}
+            onChange={(e) => setTemplate(e.target.value)}
+            className="text-sm border border-rule rounded-sm px-2 py-1.5 bg-paper-raised"
+          >
+            {TEMPLATES.map((t) => (
+              <option key={t} value={t}>
+                {t[0].toUpperCase() + t.slice(1)}
+              </option>
+            ))}
+          </select>
+          <span className="text-xs text-ink-soft font-mono w-14 text-right">
+            {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "Saved" : ""}
+          </span>
+          <button
+            onClick={save}
+            className="text-sm border border-rule rounded-sm px-3 py-1.5 hover:bg-paper-raised"
+          >
+            Save
+          </button>
+          <button
+            onClick={exportPdf}
+            className="text-sm bg-seal text-white rounded-sm px-3 py-1.5 hover:opacity-90"
+          >
+            Export PDF
+          </button>
+          <button
+            onClick={deleteThisResume}
+            className="text-sm text-red-600 hover:underline"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+
+      <div className="border-b border-rule px-6 flex gap-1">
+        {[
+          { id: "edit", label: "Edit" },
+          { id: "match", label: "Job Match" },
+          { id: "cover-letter", label: "Cover Letter" },
+        ].map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id as typeof tab)}
+            className={`px-4 py-2.5 text-sm border-b-2 -mb-px ${
+              tab === t.id ? "border-seal text-ink font-medium" : "border-transparent text-ink-soft"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex-1 grid lg:grid-cols-2 min-h-0">
+        <div className="overflow-y-auto p-6 border-r border-rule">
+          {tab === "edit" && <EditForm data={data} setData={setData} />}
+          {tab === "match" && <JobMatchPanel data={data} />}
+          {tab === "cover-letter" && <CoverLetterPanel data={data} />}
+        </div>
+        <div className="overflow-y-auto p-6 bg-rule/10">
+          <ResumePreview data={data} template={template} />
+        </div>
+      </div>
+    </main>
+  );
+}
+
+// ---------- Edit form ----------
+
+function EditForm({
+  data,
+  setData,
+}: {
+  data: ResumeData;
+  setData: React.Dispatch<React.SetStateAction<ResumeData>>;
+}) {
+  function updateContact<K extends keyof ResumeData["contact"]>(key: K, value: string) {
+    setData((d) => ({ ...d, contact: { ...d.contact, [key]: value } }));
+  }
+
+  function addExperience() {
+    const entry: ExperienceEntry = {
+      id: crypto.randomUUID(),
+      company: "",
+      role: "",
+      startDate: "",
+      endDate: "Present",
+      bullets: [""],
+    };
+    setData((d) => ({ ...d, experience: [...d.experience, entry] }));
+  }
+
+  function updateExperience(id: string, patch: Partial<ExperienceEntry>) {
+    setData((d) => ({
+      ...d,
+      experience: d.experience.map((e) => (e.id === id ? { ...e, ...patch } : e)),
+    }));
+  }
+
+  function removeExperience(id: string) {
+    setData((d) => ({ ...d, experience: d.experience.filter((e) => e.id !== id) }));
+  }
+
+  function addEducation() {
+    const entry: EducationEntry = {
+      id: crypto.randomUUID(),
+      school: "",
+      degree: "",
+      startDate: "",
+      endDate: "",
+    };
+    setData((d) => ({ ...d, education: [...d.education, entry] }));
+  }
+
+  function updateEducation(id: string, patch: Partial<EducationEntry>) {
+    setData((d) => ({
+      ...d,
+      education: d.education.map((e) => (e.id === id ? { ...e, ...patch } : e)),
+    }));
+  }
+
+  function removeEducation(id: string) {
+    setData((d) => ({ ...d, education: d.education.filter((e) => e.id !== id) }));
+  }
+
+  return (
+    <div className="space-y-8 max-w-xl">
+      <Section title="Contact">
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="Full name" value={data.contact.fullName} onChange={(v) => updateContact("fullName", v)} />
+          <Input label="Email" value={data.contact.email} onChange={(v) => updateContact("email", v)} />
+          <Input label="Phone" value={data.contact.phone ?? ""} onChange={(v) => updateContact("phone", v)} />
+          <Input label="Location" value={data.contact.location ?? ""} onChange={(v) => updateContact("location", v)} />
+          <Input label="LinkedIn" value={data.contact.linkedin ?? ""} onChange={(v) => updateContact("linkedin", v)} />
+          <Input label="Website" value={data.contact.website ?? ""} onChange={(v) => updateContact("website", v)} />
+        </div>
+      </Section>
+
+      <Section title="Summary">
+        <textarea
+          value={data.summary}
+          onChange={(e) => setData((d) => ({ ...d, summary: e.target.value }))}
+          rows={3}
+          placeholder="2-3 sentence pitch: your role, years of experience, and what you're great at."
+          className="w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+        />
+      </Section>
+
+      <Section title="Experience" action={<AddButton onClick={addExperience} label="Add role" />}>
+        <div className="space-y-5">
+          {data.experience.map((exp) => (
+            <ExperienceCard
+              key={exp.id}
+              exp={exp}
+              role={exp.role}
+              onChange={(patch) => updateExperience(exp.id, patch)}
+              onRemove={() => removeExperience(exp.id)}
+            />
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Education" action={<AddButton onClick={addEducation} label="Add school" />}>
+        <div className="space-y-3">
+          {data.education.map((edu) => (
+            <div key={edu.id} className="paper-sheet rounded-sm p-3 space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <Input label="School" value={edu.school} onChange={(v) => updateEducation(edu.id, { school: v })} />
+                <Input label="Degree" value={edu.degree} onChange={(v) => updateEducation(edu.id, { degree: v })} />
+                <Input label="Start" value={edu.startDate} onChange={(v) => updateEducation(edu.id, { startDate: v })} />
+                <Input label="End" value={edu.endDate} onChange={(v) => updateEducation(edu.id, { endDate: v })} />
+              </div>
+              <button onClick={() => removeEducation(edu.id)} className="text-xs text-red-600 hover:underline">
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Skills">
+        <input
+          value={data.skills.join(", ")}
+          onChange={(e) =>
+            setData((d) => ({
+              ...d,
+              skills: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+            }))
+          }
+          placeholder="Comma-separated, e.g. Python, Django, AWS"
+          className="w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+        />
+      </Section>
+    </div>
+  );
+}
+
+function ExperienceCard({
+  exp,
+  role,
+  onChange,
+  onRemove,
+}: {
+  exp: ExperienceEntry;
+  role: string;
+  onChange: (patch: Partial<ExperienceEntry>) => void;
+  onRemove: () => void;
+}) {
+  const [aiOptions, setAiOptions] = useState<Record<number, string[]>>({});
+  const [loadingBullet, setLoadingBullet] = useState<number | null>(null);
+
+  function updateBullet(index: number, value: string) {
+    const bullets = [...exp.bullets];
+    bullets[index] = value;
+    onChange({ bullets });
+  }
+
+  function addBullet() {
+    onChange({ bullets: [...exp.bullets, ""] });
+  }
+
+  function removeBullet(index: number) {
+    onChange({ bullets: exp.bullets.filter((_, i) => i !== index) });
+  }
+
+  async function polish(index: number) {
+    const bullet = exp.bullets[index];
+    if (!bullet?.trim()) return;
+    setLoadingBullet(index);
+    try {
+      const res = await fetch("/api/ai/generate-bullets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roughBullet: bullet, role: role || "professional" }),
+      });
+      const body = await res.json();
+      if (res.ok) setAiOptions((o) => ({ ...o, [index]: body.options }));
+      else alert(body.error ?? "Couldn't generate suggestions.");
+    } finally {
+      setLoadingBullet(null);
+    }
+  }
+
+  return (
+    <div className="paper-sheet rounded-sm p-4 space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <Input label="Role" value={exp.role} onChange={(v) => onChange({ role: v })} />
+        <Input label="Company" value={exp.company} onChange={(v) => onChange({ company: v })} />
+        <Input label="Start" value={exp.startDate} onChange={(v) => onChange({ startDate: v })} />
+        <Input label="End" value={exp.endDate} onChange={(v) => onChange({ endDate: v })} />
+      </div>
+
+      <div className="space-y-2">
+        {exp.bullets.map((b, i) => (
+          <div key={i}>
+            <div className="flex gap-2 items-start">
+              <textarea
+                value={b}
+                onChange={(e) => updateBullet(i, e.target.value)}
+                rows={2}
+                className="flex-1 border border-rule rounded-sm px-2 py-1.5 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+              />
+              <div className="flex flex-col gap-1">
+                <button
+                  onClick={() => polish(i)}
+                  disabled={loadingBullet === i}
+                  title="Rewrite with AI"
+                  className="text-xs bg-seal-soft text-seal px-2 py-1 rounded-sm hover:opacity-80 disabled:opacity-50"
+                >
+                  {loadingBullet === i ? "…" : "✦ AI"}
+                </button>
+                <button onClick={() => removeBullet(i)} className="text-xs text-red-600">
+                  ✕
+                </button>
+              </div>
+            </div>
+            {aiOptions[i] && (
+              <div className="mt-1.5 space-y-1">
+                {aiOptions[i].map((opt, oi) => (
+                  <button
+                    key={oi}
+                    onClick={() => {
+                      updateBullet(i, opt);
+                      setAiOptions((o) => ({ ...o, [i]: [] }));
+                    }}
+                    className="block w-full text-left text-xs bg-paper border border-rule rounded-sm px-2 py-1.5 hover:border-seal"
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+        <button onClick={addBullet} className="text-xs text-ink-soft hover:text-ink">
+          + Add bullet
+        </button>
+      </div>
+
+      <button onClick={onRemove} className="text-xs text-red-600 hover:underline">
+        Remove role
+      </button>
+    </div>
+  );
+}
+
+// ---------- Job match panel ----------
+
+function JobMatchPanel({ data }: { data: ResumeData }) {
+  const [jd, setJd] = useState("");
+  const [result, setResult] = useState<AtsResult | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function check() {
+    if (!jd.trim() || jd.trim().length < 10) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/ai/ats-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resume: data, jobDescription: jd }),
+      });
+      const body = await res.json();
+      if (res.ok) setResult(body);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="max-w-xl space-y-4">
+      <Section title="Paste the job description">
+        <textarea
+          value={jd}
+          onChange={(e) => setJd(e.target.value)}
+          rows={10}
+          placeholder="Paste the full job posting here…"
+          className="w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+        />
+        <button
+          onClick={check}
+          disabled={loading}
+          className="mt-2 bg-seal text-white text-sm px-4 py-2 rounded-sm hover:opacity-90 disabled:opacity-60"
+        >
+          {loading ? "Scoring…" : "Check match score"}
+        </button>
+      </Section>
+
+      {result && (
+        <div className="paper-sheet rounded-sm p-5">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="relative w-16 h-16 shrink-0">
+              <svg viewBox="0 0 80 80" className="w-16 h-16 -rotate-90">
+                <circle cx="40" cy="40" r="34" fill="none" stroke="var(--rule)" strokeWidth="8" />
+                <circle
+                  cx="40" cy="40" r="34" fill="none" stroke="var(--seal)" strokeWidth="8"
+                  strokeDasharray={`${2 * Math.PI * 34 * (result.score / 100)} ${2 * Math.PI * 34}`}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center font-mono font-semibold text-sm">
+                {result.score}
+              </span>
+            </div>
+            <p className="text-sm text-ink-soft">
+              {result.matchedKeywords.length} of {result.totalKeywords} key terms found in your resume.
+            </p>
+          </div>
+
+          <p className="text-xs uppercase tracking-wide text-ink-soft mb-1.5">Missing keywords</p>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {result.missingKeywords.length === 0 ? (
+              <span className="text-sm text-ink-soft">None — great coverage.</span>
+            ) : (
+              result.missingKeywords.map((k) => (
+                <span key={k} className="text-xs font-mono bg-red-50 text-red-700 px-2 py-1 rounded-sm">
+                  {k}
+                </span>
+              ))
+            )}
+          </div>
+
+          <p className="text-xs uppercase tracking-wide text-ink-soft mb-1.5">Matched keywords</p>
+          <div className="flex flex-wrap gap-2">
+            {result.matchedKeywords.map((k) => (
+              <span key={k} className="text-xs font-mono bg-seal-soft text-seal px-2 py-1 rounded-sm">
+                {k}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- Cover letter panel ----------
+
+function CoverLetterPanel({ data }: { data: ResumeData }) {
+  const [jd, setJd] = useState("");
+  const [company, setCompany] = useState("");
+  const [letter, setLetter] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function generate() {
+    if (!jd.trim() || jd.trim().length < 10) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/ai/cover-letter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resume: data, jobDescription: jd, companyName: company || undefined }),
+      });
+      const body = await res.json();
+      if (res.ok) setLetter(body.letter);
+      else setError(body.error ?? "Couldn't generate a cover letter.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="max-w-xl space-y-4">
+      <Section title="Target role">
+        <Input label="Company (optional)" value={company} onChange={setCompany} />
+        <textarea
+          value={jd}
+          onChange={(e) => setJd(e.target.value)}
+          rows={8}
+          placeholder="Paste the job description…"
+          className="w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40 mt-2"
+        />
+        <button
+          onClick={generate}
+          disabled={loading}
+          className="mt-2 bg-seal text-white text-sm px-4 py-2 rounded-sm hover:opacity-90 disabled:opacity-60"
+        >
+          {loading ? "Writing…" : "Generate cover letter"}
+        </button>
+        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+      </Section>
+
+      {letter && (
+        <div className="paper-sheet rounded-sm p-5">
+          <div className="flex justify-end mb-2">
+            <button
+              onClick={() => navigator.clipboard.writeText(letter)}
+              className="text-xs text-ink-soft hover:text-ink"
+            >
+              Copy
+            </button>
+          </div>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed">{letter}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- Live preview ----------
+
+function ResumePreview({ data, template }: { data: ResumeData; template: string }) {
+  const dense = template === "compact";
+  return (
+    <div
+      className={`paper-sheet rounded-sm mx-auto max-w-2xl ${dense ? "p-6 text-[13px]" : "p-10"}`}
+      style={{ fontFamily: "var(--font-sans)" }}
+    >
+      <h2 className="font-display font-bold text-2xl">{data.contact.fullName || "Your Name"}</h2>
+      <p className="text-xs text-ink-soft mt-1">
+        {[data.contact.email, data.contact.phone, data.contact.location, data.contact.linkedin, data.contact.website]
+          .filter(Boolean)
+          .join("  •  ")}
+      </p>
+
+      {data.summary && (
+        <>
+          <h3 className="text-xs uppercase tracking-wide font-mono text-seal mt-5 mb-1 border-b border-rule pb-1">
+            Summary
+          </h3>
+          <p className="text-sm leading-relaxed">{data.summary}</p>
+        </>
+      )}
+
+      {data.experience.length > 0 && (
+        <>
+          <h3 className="text-xs uppercase tracking-wide font-mono text-seal mt-5 mb-1 border-b border-rule pb-1">
+            Experience
+          </h3>
+          {data.experience.map((exp) => (
+            <div key={exp.id} className="mt-2">
+              <div className="flex justify-between text-sm">
+                <span className="font-medium">
+                  {exp.role || "Role"} {exp.company && `— ${exp.company}`}
+                </span>
+                <span className="text-xs text-ink-soft font-mono">
+                  {exp.startDate} – {exp.endDate}
+                </span>
+              </div>
+              <ul className="mt-1 space-y-0.5">
+                {exp.bullets.filter(Boolean).map((b, i) => (
+                  <li key={i} className="text-sm pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-seal">
+                    {b}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </>
+      )}
+
+      {data.education.length > 0 && (
+        <>
+          <h3 className="text-xs uppercase tracking-wide font-mono text-seal mt-5 mb-1 border-b border-rule pb-1">
+            Education
+          </h3>
+          {data.education.map((edu) => (
+            <div key={edu.id} className="flex justify-between text-sm mt-1">
+              <span className="font-medium">
+                {edu.degree || "Degree"} {edu.school && `— ${edu.school}`}
+              </span>
+              <span className="text-xs text-ink-soft font-mono">
+                {edu.startDate} – {edu.endDate}
+              </span>
+            </div>
+          ))}
+        </>
+      )}
+
+      {data.skills.length > 0 && (
+        <>
+          <h3 className="text-xs uppercase tracking-wide font-mono text-seal mt-5 mb-1 border-b border-rule pb-1">
+            Skills
+          </h3>
+          <p className="text-sm">{data.skills.join(" • ")}</p>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ---------- Shared small components ----------
+
+function Section({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-display font-bold text-sm uppercase tracking-wide text-ink-soft">{title}</h3>
+        {action}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function AddButton({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <button onClick={onClick} className="text-xs text-seal hover:underline">
+      + {label}
+    </button>
+  );
+}
+
+function Input({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="text-xs text-ink-soft">{label}</span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-0.5 w-full border border-rule rounded-sm px-2 py-1.5 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+      />
+    </label>
+  );
+}
