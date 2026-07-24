@@ -7,8 +7,8 @@ export default async function AdminSupportPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (!adminEmail || session.user.email !== adminEmail) notFound();
+  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
+  if (!adminEmail || session.user.email?.toLowerCase() !== adminEmail) notFound();
 
   const messages = await listSupportMessages();
   const open = messages.filter((m) => m.status === "open");

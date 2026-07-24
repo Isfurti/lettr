@@ -7,8 +7,8 @@ const Schema = z.object({ id: z.string(), status: z.enum(["open", "resolved"]) }
 
 export async function POST(req: Request) {
   const session = await auth();
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (!session?.user?.email || !adminEmail || session.user.email !== adminEmail) {
+  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
+  if (!session?.user?.email || !adminEmail || session.user.email.toLowerCase() !== adminEmail) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
