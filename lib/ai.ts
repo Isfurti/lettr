@@ -98,8 +98,96 @@ ${jobDescription.slice(0, 3000)}`;
     .trim();
 }
 
-function parseJsonArraySafely(text: string): string[] {
-  const cleaned = text.replace(/```json|```/g, "").trim();
+/**
+ * Generate a professional resignation letter from basic details the user provides.
+ */
+export async function generateResignationLetter(params: {
+  employeeName: string;
+  companyName: string;
+  jobTitle: string;
+  lastDay: string;
+  reason?: string;
+  tone?: "warm" | "neutral" | "brief";
+}): Promise<string> {
+  const client = getClient();
+  const { employeeName, companyName, jobTitle, lastDay, reason, tone = "neutral" } = params;
+
+  const prompt = `Write a professional resignation letter with these details:
+- Employee name: ${employeeName}
+- Job title: ${jobTitle}
+- Company: ${companyName}
+- Last day of work: ${lastDay}
+${reason ? `- Reason to briefly mention (optional, keep it graceful): ${reason}` : ""}
+
+Tone: ${tone === "warm" ? "warm and appreciative, express gratitude for the opportunity" : tone === "brief" ? "brief and to the point, 3-4 sentences total" : "professional and neutral"}.
+
+Rules:
+- Standard business letter structure
+- State the resignation clearly in the first paragraph, including the last working day
+- Do not badmouth the company or manager, regardless of the reason given
+- End with an offer to help with the transition
+- Output plain text only, no markdown, no placeholders left unfilled
+
+Sign off with the employee's name.`;
+
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: 600,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  return response.content
+    .map((block) => (block.type === "text" ? block.text : ""))
+    .join("")
+    .trim();
+}
+
+/**
+ * Generate 3 professional summary options from the candidate's experience and skills.
+ */
+export async function generateSummary(params: {
+  experience: ResumeData["experience"];
+  skills: string[];
+  targetRole?: string;
+}): Promise<string[]> {
+  const client = getClient();
+  const { experience, skills, targetRole } = params;
+
+  const experienceText = experience
+    .map((e) => `${e.role} at ${e.company} (${e.startDate}–${e.endDate}): ${e.bullets.join("; ")}`)
+    .join("\n");
+
+  const prompt = `You are an expert resume writer. Write 3 distinct professional summary options
+(2-3 sentences each, under 400 characters) for a resume${targetRole ? ` targeting a "${targetRole}" role` : ""}.
+
+Base it on this experience:
+${experienceText || "(no experience listed yet - write a summary suitable for someone early in their career, based on the skills below)"}
+
+Skills: ${skills.join(", ") || "(none listed)"}
+
+Rules:
+- Third person is not needed - write as the candidate's own voice, no "I" pronoun needed either (resume style, e.g. "Results-driven engineer with...")
+- Lead with role/seniority, not a generic adjective
+- Mention 1-2 concrete strengths grounded in the experience given
+- No buzzword soup - avoid stacking more than one of "passionate", "dynamic", "synergy", "results-driven" per summary
+- Plain text only
+
+Respond ONLY with a JSON array of exactly 3 strings, no preamble, no markdown fences.`;
+
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: 600,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const text = response.content
+    .map((block) => (block.type === "text" ? block.text : ""))
+    .join("");
+
+  return parseJsonArraySafely(text);
+}
+
+function parseJsonArraySafely(text: string): string[] {  const cleaned = text.replace(/```json|```/g, "").trim();
   try {
     const parsed = JSON.parse(cleaned);
     if (Array.isArray(parsed)) return parsed.map(String);

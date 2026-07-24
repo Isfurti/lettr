@@ -28,6 +28,28 @@ function ensureSchema(): Promise<void> {
         password_hash TEXT NOT NULL,
         name TEXT,
         plan TEXT NOT NULL DEFAULT 'free',
+        stripe_customer_id TEXT,
+        stripe_subscription_id TEXT,
+        pdf_download_count INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+
+      -- safe to run repeatedly: adds the billing columns to a users table
+      -- created before this migration existed
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS pdf_download_count INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS google_access_token TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS google_refresh_token TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS google_token_expiry TIMESTAMPTZ;
+
+      CREATE TABLE IF NOT EXISTS support_messages (
+        id TEXT PRIMARY KEY,
+        user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        email TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        message TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'open',
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
 
@@ -53,6 +75,12 @@ export type UserRow = {
   password_hash: string;
   name: string | null;
   plan: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  pdf_download_count: number;
+  google_access_token: string | null;
+  google_refresh_token: string | null;
+  google_token_expiry: string | null;
   created_at: string;
 };
 
@@ -118,6 +146,101 @@ export async function upsertResume(r: { id: string; userId: string; title: strin
 export async function deleteResume(id: string, userId: string) {
   await ensureSchema();
   await pool.query("DELETE FROM resumes WHERE id = $1 AND user_id = $2", [id, userId]);
+}
+
+export async function countResumesForUser(userId: string): Promise<number> {
+  await ensureSchema();
+  const res = await pool.query("SELECT COUNT(*)::int AS count FROM resumes WHERE user_id = $1", [userId]);
+  return res.rows[0].count;
+}
+
+export async function getUserByStripeCustomerId(customerId: string): Promise<UserRow | undefined> {
+  await ensureSchema();
+  const res = await pool.query("SELECT * FROM users WHERE stripe_customer_id = $1", [customerId]);
+  return res.rows[0];
+}
+
+export async function setStripeCustomerId(userId: string, customerId: string) {
+  await ensureSchema();
+  await pool.query("UPDATE users SET stripe_customer_id = $1 WHERE id = $2", [customerId, userId]);
+}
+
+export async function updateUserPlan(params: {
+  userId: string;
+  plan: "free" | "pro";
+  stripeSubscriptionId?: string | null;
+}) {
+  await ensureSchema();
+  await pool.query(
+    "UPDATE users SET plan = $1, stripe_subscription_id = $2 WHERE id = $3",
+    [params.plan, params.stripeSubscriptionId ?? null, params.userId]
+  );
+}
+
+export async function incrementPdfDownloadCount(userId: string): Promise<number> {
+  await ensureSchema();
+  const res = await pool.query(
+    "UPDATE users SET pdf_download_count = pdf_download_count + 1 WHERE id = $1 RETURNING pdf_download_count",
+    [userId]
+  );
+  return res.rows[0].pdf_download_count;
+}
+
+export async function setGoogleTokens(params: {
+  userId: string;
+  accessToken: string;
+  refreshToken?: string | null;
+  expiryDate: Date;
+}) {
+  await ensureSchema();
+  if (params.refreshToken) {
+    await pool.query(
+      "UPDATE users SET google_access_token = $1, google_refresh_token = $2, google_token_expiry = $3 WHERE id = $4",
+      [params.accessToken, params.refreshToken, params.expiryDate.toISOString(), params.userId]
+    );
+  } else {
+    // Google only returns a refresh_token on the FIRST consent - subsequent
+    // token refreshes must not overwrite the existing one with null.
+    await pool.query(
+      "UPDATE users SET google_access_token = $1, google_token_expiry = $2 WHERE id = $3",
+      [params.accessToken, params.expiryDate.toISOString(), params.userId]
+    );
+  }
+}
+
+export type SupportMessageRow = {
+  id: string;
+  user_id: string | null;
+  email: string;
+  subject: string;
+  message: string;
+  status: string;
+  created_at: string;
+};
+
+export async function createSupportMessage(params: {
+  id: string;
+  userId: string | null;
+  email: string;
+  subject: string;
+  message: string;
+}) {
+  await ensureSchema();
+  await pool.query(
+    "INSERT INTO support_messages (id, user_id, email, subject, message) VALUES ($1, $2, $3, $4, $5)",
+    [params.id, params.userId, params.email, params.subject, params.message]
+  );
+}
+
+export async function listSupportMessages(): Promise<SupportMessageRow[]> {
+  await ensureSchema();
+  const res = await pool.query("SELECT * FROM support_messages ORDER BY created_at DESC");
+  return res.rows;
+}
+
+export async function updateSupportMessageStatus(id: string, status: "open" | "resolved") {
+  await ensureSchema();
+  await pool.query("UPDATE support_messages SET status = $1 WHERE id = $2", [status, id]);
 }
 
 export default pool;

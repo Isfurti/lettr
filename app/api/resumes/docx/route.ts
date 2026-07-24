@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { renderToBuffer } from "@react-pdf/renderer";
 import { auth } from "@/lib/auth";
-import { getUserById, incrementPdfDownloadCount } from "@/lib/db";
-import { canDownloadPdf, type Plan } from "@/lib/limits";
-import { ResumePdfDocument } from "@/components/ResumePdfDocument";
+import { getUserById } from "@/lib/db";
+import { canExportDocx, type Plan } from "@/lib/limits";
+import { generateResumeDocx } from "@/lib/generate-docx";
 import type { ResumeData } from "@/lib/types";
 
 export async function POST(req: Request) {
@@ -13,23 +12,21 @@ export async function POST(req: Request) {
   const userId = (session.user as { id: string }).id;
   const user = await getUserById(userId);
   const plan = (user?.plan ?? "free") as Plan;
-  const check = canDownloadPdf(plan, user?.pdf_download_count ?? 0);
+  const check = canExportDocx(plan);
   if (!check.allowed) {
     return NextResponse.json({ error: check.reason, upgradeRequired: true }, { status: 402 });
   }
 
   const body = await req.json().catch(() => null);
   const resume = body?.resume as ResumeData | undefined;
-  const template = typeof body?.template === "string" ? body.template : "classic";
   if (!resume) return NextResponse.json({ error: "Missing resume data" }, { status: 400 });
 
-  const buffer = await renderToBuffer(ResumePdfDocument({ resume, template }));
-  await incrementPdfDownloadCount(userId);
+  const buffer = await generateResumeDocx(resume);
 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${(resume.contact.fullName || "resume").replace(/\s+/g, "_")}.pdf"`,
+      "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "Content-Disposition": `attachment; filename="${(resume.contact.fullName || "resume").replace(/\s+/g, "_")}.docx"`,
     },
   });
 }

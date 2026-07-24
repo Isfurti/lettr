@@ -2,13 +2,16 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getUserById } from "@/lib/db";
-import { canUseCoverLetterBuilder, type Plan } from "@/lib/limits";
-import { generateCoverLetter } from "@/lib/ai";
+import { canUseResignationLetterBuilder, type Plan } from "@/lib/limits";
+import { generateResignationLetter } from "@/lib/ai";
 
 const Schema = z.object({
-  resume: z.any(),
-  jobDescription: z.string().min(10).max(10000),
-  companyName: z.string().max(200).optional(),
+  employeeName: z.string().min(1).max(200),
+  companyName: z.string().min(1).max(200),
+  jobTitle: z.string().min(1).max(200),
+  lastDay: z.string().min(1).max(100),
+  reason: z.string().max(1000).optional(),
+  tone: z.enum(["warm", "neutral", "brief"]).optional(),
 });
 
 export async function POST(req: Request) {
@@ -18,7 +21,7 @@ export async function POST(req: Request) {
   const userId = (session.user as { id: string }).id;
   const user = await getUserById(userId);
   const plan = (user?.plan ?? "free") as Plan;
-  const check = canUseCoverLetterBuilder(plan);
+  const check = canUseResignationLetterBuilder(plan);
   if (!check.allowed) {
     return NextResponse.json({ error: check.reason, upgradeRequired: true }, { status: 402 });
   }
@@ -30,7 +33,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const letter = await generateCoverLetter(parsed.data);
+    const letter = await generateResignationLetter(parsed.data);
     return NextResponse.json({ letter });
   } catch (err) {
     const message = err instanceof Error ? err.message : "AI generation failed";

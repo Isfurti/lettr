@@ -1,8 +1,9 @@
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { getResume } from "@/lib/db";
+import { getResume, getUserById } from "@/lib/db";
 import { ResumeEditor } from "@/components/ResumeEditor";
 import type { ResumeData } from "@/lib/types";
+import type { Plan } from "@/lib/limits";
 
 export default async function BuilderPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -10,10 +11,12 @@ export default async function BuilderPage({ params }: { params: Promise<{ id: st
 
   const userId = (session.user as { id: string }).id;
   const { id } = await params;
-  const row = await getResume(id, userId);
+  const [row, user] = await Promise.all([getResume(id, userId), getUserById(userId)]);
   if (!row) notFound();
 
   const data = JSON.parse(row.data) as ResumeData;
+  const plan = (user?.plan ?? "free") as Plan;
+  const googleDriveConnected = Boolean(user?.google_refresh_token);
 
   return (
     <ResumeEditor
@@ -21,6 +24,8 @@ export default async function BuilderPage({ params }: { params: Promise<{ id: st
       initialTitle={row.title}
       initialTemplate={row.template}
       initialData={data}
+      plan={plan}
+      googleDriveConnected={googleDriveConnected}
     />
   );
 }

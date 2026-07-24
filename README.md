@@ -43,6 +43,67 @@ endpoints (bullet rewriting and cover letter generation) — auth, resume
 CRUD, ATS scoring, and PDF export are all pure-code/no-external-API and work
 immediately.
 
+## Billing setup (Stripe)
+
+Lettr's Free vs Pro plan matches Rezi's actual published pricing:
+
+| | Free | Pro ($29/mo) |
+|---|---|---|
+| Resumes | 1 | Unlimited |
+| PDF downloads | 3 | Unlimited |
+| Cover letter builder | ❌ | ✅ |
+| Resignation letter builder | ❌ | ✅ |
+
+To enable it:
+1. Create a Stripe account, go to **Products**, create a recurring $29/month price. Copy its Price ID into `STRIPE_PRO_PRICE_ID`.
+2. Copy your **Secret key** from the Stripe dashboard into `STRIPE_SECRET_KEY`.
+3. Add a webhook endpoint in Stripe pointing at `https://your-domain.com/api/billing/webhook`, subscribed to `checkout.session.completed`, `customer.subscription.updated`, and `customer.subscription.deleted`. Copy the signing secret into `STRIPE_WEBHOOK_SECRET`.
+4. For local testing, use the Stripe CLI: `stripe listen --forward-to localhost:3000/api/billing/webhook`
+
+Without real Stripe keys, everything else in the app still works — the app just can't process real upgrades (the `/pricing` page's checkout button will error).
+
+## Google Drive setup (Pro feature)
+
+Lets Pro users save a resume PDF straight to their own Google Drive.
+
+1. Go to the **Google Cloud Console** → create a project (or use an existing one)
+2. **APIs & Services** → **Library** → enable the **Google Drive API**
+3. **APIs & Services** → **OAuth consent screen** → configure it (External is fine for testing; add your own email as a test user while unverified)
+4. **APIs & Services** → **Credentials** → **Create Credentials** → **OAuth client ID** → type **Web application**
+5. Add an **Authorized redirect URI**: `https://your-domain.com/api/google/callback` (and `http://localhost:3000/api/google/callback` for local dev)
+6. Copy the **Client ID** and **Client Secret** into `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
+
+The app only requests the `drive.file` scope — it can only see/write files it creates itself, never a user's existing Drive contents.
+
+Without real Google credentials, the rest of the app still works — the Drive export button will correctly show a "couldn't connect" state instead of crashing.
+
+## Monitoring & ops setup
+
+Three separate concerns, set up separately:
+
+### Errors/crashes → Sentry
+1. Create a free account at **sentry.io**, create a project (choose Next.js)
+2. Copy the **DSN** it gives you into both `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN`
+3. (Optional, for better stack traces) also set `SENTRY_ORG` / `SENTRY_PROJECT` from your Sentry project settings
+4. That's it — uncaught errors on both client and server now report to Sentry automatically, and you can configure Sentry's own alert rules (email/Slack) for new issues
+
+### Support requests → in-app inbox
+- Anyone can submit a message at `/support` — no account required
+- All messages are stored in the `support_messages` table regardless of any other config
+- Set `ADMIN_EMAIL` to your own account's email — that unlocks `/admin/support`, a private inbox only you can see (returns a 404, not a login prompt, to anyone else)
+- Optional: set `RESEND_API_KEY` + `RESEND_FROM_EMAIL` (free tier at resend.com) to also get an email the moment someone submits a message. Without it, messages still save fine, you just have to check `/admin/support` yourself.
+
+### Failed payments → Stripe dashboard + Sentry
+- The webhook handler now captures `invoice.payment_failed` to Sentry as a warning (with the customer/amount) so you see it alongside other errors — it does not auto-downgrade the user, since Stripe's own retry schedule handles that
+- For truly instant alerts, also turn on Stripe's own **Email notifications** for failed payments: Stripe Dashboard → **Settings** → **Notifications**
+
+### Uptime → an external pinger (this can't be code in the app)
+An uptime monitor has to run independently of your app — if the app is down, code running inside it can't report that. Use a free service:
+1. **UptimeRobot** (or Better Uptime, Pingdom, etc.) → sign up free
+2. Add a new monitor, type HTTP(s), URL: `https://your-domain.vercel.app/api/health`
+3. Set the check interval (5 min is fine on the free tier) and your alert email/SMS
+4. `/api/health` returns `200` with `{"status":"ok"}` when the DB is reachable, `503` otherwise — so this also catches database outages, not just "server is down"
+
 ## Testing
 
 ```bash
@@ -103,11 +164,14 @@ tests/
 
 ## Known limitations (MVP scope)
 
-- Only one resume template style is actually differentiated visually
-  (`compact` shrinks spacing; `modern` currently renders the same as
-  `classic` — easy to extend in `ResumePreview` / `ResumePdfDocument`)
-- No LinkedIn profile optimizer or job-application tracker yet (both are
-  in Rezi's real product — straightforward to add as another `app/api/ai/*`
-  route + tab if you want them)
+- No AI Interview practice, Job Search tool, LinkedIn optimizer, or resume
+  upload/parsing yet — all real Rezi features, but each is a substantial
+  standalone feature, not a quick addition
 - No email verification on signup
-- No subscription/paywall gating yet — `users.plan` column exists but is unused
+- The "Job Match" tab measures JD-keyword overlap; the separate "Score" tab
+  covers Rezi's resume-quality scoring (formatting/content strength) —
+  together they cover what Rezi Score + Keyword Targeting do
+- The AI Agent (`lib/ai-agent.ts`) supports 9 tools covering contact,
+  summary, experience, education, and skills edits. It does not yet call
+  the ATS scorer or cover-letter generator as tools within the same
+  conversation - those stay on their own tabs.

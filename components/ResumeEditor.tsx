@@ -5,26 +5,36 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { ResumeData, ExperienceEntry, EducationEntry } from "@/lib/types";
 import type { AtsResult } from "@/lib/ats-score";
+import { scoreResumeQuality } from "@/lib/resume-score";
+import type { Plan } from "@/lib/limits";
 
-const TEMPLATES = ["classic", "modern", "compact"];
+const TEMPLATES = ["classic", "modern", "compact", "bold"];
 
 export function ResumeEditor({
   resumeId,
   initialTitle,
   initialTemplate,
   initialData,
+  plan,
+  googleDriveConnected,
 }: {
   resumeId: string;
   initialTitle: string;
   initialTemplate: string;
   initialData: ResumeData;
+  plan: Plan;
+  googleDriveConnected: boolean;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(initialTitle);
   const [template, setTemplate] = useState(initialTemplate);
   const [data, setData] = useState<ResumeData>(initialData);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
-  const [tab, setTab] = useState<"edit" | "match" | "cover-letter">("edit");
+  const [tab, setTab] = useState<"edit" | "score" | "match" | "agent" | "cover-letter" | "resignation-letter">("edit");
+  const [pdfUpgradeRequired, setPdfUpgradeRequired] = useState(false);
+  const [docxUpgradeRequired, setDocxUpgradeRequired] = useState(false);
+  const [driveStatus, setDriveStatus] = useState<"idle" | "loading" | "upgrade" | "connect">("idle");
+  const [driveLink, setDriveLink] = useState<string | null>(null);
 
   async function save() {
     setSaveStatus("saving");
@@ -38,11 +48,16 @@ export function ResumeEditor({
   }
 
   async function exportPdf() {
+    setPdfUpgradeRequired(false);
     const res = await fetch("/api/resumes/pdf", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume: data }),
+      body: JSON.stringify({ resume: data, template }),
     });
+    if (res.status === 402) {
+      setPdfUpgradeRequired(true);
+      return;
+    }
     if (!res.ok) return;
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
@@ -51,6 +66,58 @@ export function ResumeEditor({
     a.download = `${(data.contact.fullName || "resume").replace(/\s+/g, "_")}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  async function exportDocx() {
+    setDocxUpgradeRequired(false);
+    const res = await fetch("/api/resumes/docx", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resume: data }),
+    });
+    if (res.status === 402) {
+      setDocxUpgradeRequired(true);
+      return;
+    }
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(data.contact.fullName || "resume").replace(/\s+/g, "_")}.docx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function exportToDrive() {
+    if (!googleDriveConnected) {
+      setDriveStatus("connect");
+      return;
+    }
+    setDriveStatus("loading");
+    setDriveLink(null);
+    const res = await fetch("/api/resumes/drive-export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resume: data, template }),
+    });
+    const body = await res.json();
+
+    if (res.status === 402) {
+      setDriveStatus("upgrade");
+      return;
+    }
+    if (res.status === 428) {
+      setDriveStatus("connect");
+      return;
+    }
+    if (!res.ok) {
+      setDriveStatus("idle");
+      alert(body.error ?? "Couldn't export to Google Drive.");
+      return;
+    }
+    setDriveStatus("idle");
+    setDriveLink(body.webViewLink);
   }
 
   async function deleteThisResume() {
@@ -93,12 +160,56 @@ export function ResumeEditor({
           >
             Save
           </button>
-          <button
-            onClick={exportPdf}
-            className="text-sm bg-seal text-white rounded-sm px-3 py-1.5 hover:opacity-90"
-          >
-            Export PDF
-          </button>
+          {pdfUpgradeRequired ? (
+            <Link href="/pricing" className="text-sm text-seal hover:underline">
+              Upgrade for more PDFs →
+            </Link>
+          ) : (
+            <button
+              onClick={exportPdf}
+              className="text-sm bg-seal text-white rounded-sm px-3 py-1.5 hover:opacity-90"
+            >
+              Export PDF
+            </button>
+          )}
+          {docxUpgradeRequired ? (
+            <Link href="/pricing" className="text-sm text-seal hover:underline">
+              DOCX is Pro →
+            </Link>
+          ) : (
+            <button
+              onClick={exportDocx}
+              className="text-sm border border-rule rounded-sm px-3 py-1.5 hover:bg-paper-raised"
+            >
+              Export DOCX
+            </button>
+          )}
+          {driveStatus === "upgrade" ? (
+            <Link href="/pricing" className="text-sm text-seal hover:underline">
+              Drive is Pro →
+            </Link>
+          ) : driveStatus === "connect" ? (
+            <a href="/api/google/connect" className="text-sm text-seal hover:underline">
+              Connect Drive →
+            </a>
+          ) : driveLink ? (
+            <a
+              href={driveLink}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-seal hover:underline"
+            >
+              Opened in Drive ✓
+            </a>
+          ) : (
+            <button
+              onClick={exportToDrive}
+              disabled={driveStatus === "loading"}
+              className="text-sm border border-rule rounded-sm px-3 py-1.5 hover:bg-paper-raised disabled:opacity-60"
+            >
+              {driveStatus === "loading" ? "Uploading…" : googleDriveConnected ? "Save to Drive" : "Save to Drive"}
+            </button>
+          )}
           <button
             onClick={deleteThisResume}
             className="text-sm text-red-600 hover:underline"
@@ -111,17 +222,21 @@ export function ResumeEditor({
       <div className="border-b border-rule px-6 flex gap-1">
         {[
           { id: "edit", label: "Edit" },
+          { id: "agent", label: "AI Agent" },
+          { id: "score", label: "Score" },
           { id: "match", label: "Job Match" },
-          { id: "cover-letter", label: "Cover Letter" },
+          { id: "cover-letter", label: "Cover Letter", pro: true },
+          { id: "resignation-letter", label: "Resignation Letter", pro: true },
         ].map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id as typeof tab)}
-            className={`px-4 py-2.5 text-sm border-b-2 -mb-px ${
+            className={`px-4 py-2.5 text-sm border-b-2 -mb-px flex items-center gap-1.5 ${
               tab === t.id ? "border-seal text-ink font-medium" : "border-transparent text-ink-soft"
             }`}
           >
             {t.label}
+            {t.pro && plan === "free" && <span className="text-[10px] font-mono text-seal">PRO</span>}
           </button>
         ))}
       </div>
@@ -129,14 +244,51 @@ export function ResumeEditor({
       <div className="flex-1 grid lg:grid-cols-2 min-h-0">
         <div className="overflow-y-auto p-6 border-r border-rule">
           {tab === "edit" && <EditForm data={data} setData={setData} />}
+          {tab === "agent" && <AgentPanel data={data} setData={setData} />}
+          {tab === "score" && <ScorePanel data={data} plan={plan} />}
           {tab === "match" && <JobMatchPanel data={data} />}
-          {tab === "cover-letter" && <CoverLetterPanel data={data} />}
+          {tab === "cover-letter" && (
+            <UpgradeGate locked={plan === "free"} feature="The cover letter builder">
+              <CoverLetterPanel data={data} />
+            </UpgradeGate>
+          )}
+          {tab === "resignation-letter" && (
+            <UpgradeGate locked={plan === "free"} feature="The resignation letter builder">
+              <ResignationLetterPanel initialName={data.contact.fullName} />
+            </UpgradeGate>
+          )}
         </div>
         <div className="overflow-y-auto p-6 bg-rule/10">
           <ResumePreview data={data} template={template} />
         </div>
       </div>
     </main>
+  );
+}
+
+// ---------- Upgrade gate ----------
+
+function UpgradeGate({
+  locked,
+  feature,
+  children,
+}: {
+  locked: boolean;
+  feature: string;
+  children: React.ReactNode;
+}) {
+  if (!locked) return <>{children}</>;
+  return (
+    <div className="max-w-xl paper-sheet rounded-sm p-8 text-center">
+      <p className="text-xs uppercase tracking-wide text-seal font-mono mb-2">Pro feature</p>
+      <p className="text-ink-soft mb-5">{feature} is available on the Pro plan.</p>
+      <Link
+        href="/pricing"
+        className="inline-block bg-seal text-white px-5 py-2.5 rounded-sm text-sm font-medium hover:opacity-90"
+      >
+        Upgrade to Pro
+      </Link>
+    </div>
   );
 }
 
@@ -212,13 +364,7 @@ function EditForm({
       </Section>
 
       <Section title="Summary">
-        <textarea
-          value={data.summary}
-          onChange={(e) => setData((d) => ({ ...d, summary: e.target.value }))}
-          rows={3}
-          placeholder="2-3 sentence pitch: your role, years of experience, and what you're great at."
-          className="w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
-        />
+        <SummaryField data={data} setData={setData} />
       </Section>
 
       <Section title="Experience" action={<AddButton onClick={addExperience} label="Add role" />}>
@@ -266,6 +412,71 @@ function EditForm({
           className="w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
         />
       </Section>
+    </div>
+  );
+}
+
+function SummaryField({
+  data,
+  setData,
+}: {
+  data: ResumeData;
+  setData: React.Dispatch<React.SetStateAction<ResumeData>>;
+}) {
+  const [options, setOptions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  async function generate() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/ai/generate-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ experience: data.experience, skills: data.skills, targetRole: data.experience[0]?.role }),
+      });
+      const body = await res.json();
+      if (res.ok) setOptions(body.options);
+      else alert(body.error ?? "Couldn't generate summary options.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex gap-2 items-start">
+        <textarea
+          value={data.summary}
+          onChange={(e) => setData((d) => ({ ...d, summary: e.target.value }))}
+          rows={3}
+          placeholder="2-3 sentence pitch: your role, years of experience, and what you're great at."
+          className="flex-1 w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+        />
+        <button
+          onClick={generate}
+          disabled={loading}
+          title="Generate with AI"
+          className="text-xs bg-seal-soft text-seal px-2 py-1 rounded-sm hover:opacity-80 disabled:opacity-50 shrink-0"
+        >
+          {loading ? "…" : "✦ AI"}
+        </button>
+      </div>
+      {options.length > 0 && (
+        <div className="mt-1.5 space-y-1">
+          {options.map((opt, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                setData((d) => ({ ...d, summary: opt }));
+                setOptions([]);
+              }}
+              className="block w-full text-left text-xs bg-paper border border-rule rounded-sm px-2 py-1.5 hover:border-seal"
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -375,6 +586,178 @@ function ExperienceCard({
       <button onClick={onRemove} className="text-xs text-red-600 hover:underline">
         Remove role
       </button>
+    </div>
+  );
+}
+
+// ---------- AI Agent panel ----------
+
+type ChatMessage = { role: "user" | "assistant"; content: string; actions?: string[] };
+
+function AgentPanel({
+  data,
+  setData,
+}: {
+  data: ResumeData;
+  setData: React.Dispatch<React.SetStateAction<ResumeData>>;
+}) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function send() {
+    const text = input.trim();
+    if (!text || loading) return;
+    setInput("");
+    const nextMessages: ChatMessage[] = [...messages, { role: "user", content: text }];
+    setMessages(nextMessages);
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/ai/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeData: data,
+          history: nextMessages.map((m) => ({ role: m.role, content: m.content })),
+          userMessage: text,
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        setMessages((m) => [...m, { role: "assistant", content: body.error ?? "Something went wrong." }]);
+        return;
+      }
+      setData(body.resumeData);
+      setMessages((m) => [...m, { role: "assistant", content: body.reply, actions: body.actionsTaken }]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="max-w-xl flex flex-col h-full">
+      <div className="paper-sheet rounded-sm p-4 mb-3">
+        <p className="text-xs uppercase tracking-wide text-seal font-mono mb-1">AI Resume Agent</p>
+        <p className="text-sm text-ink-soft">
+          Tell it what to change — &quot;tighten my summary&quot;, &quot;add a bullet about the Q3 migration
+          project&quot;, &quot;remove my second job&quot; — and it edits the resume directly.
+        </p>
+      </div>
+
+      <div className="flex-1 space-y-3 mb-3">
+        {messages.map((m, i) => (
+          <div key={i} className={m.role === "user" ? "text-right" : ""}>
+            <div
+              className={`inline-block max-w-[85%] text-left rounded-sm px-3 py-2 text-sm ${
+                m.role === "user" ? "bg-ink text-paper" : "paper-sheet"
+              }`}
+            >
+              <p className="whitespace-pre-wrap">{m.content}</p>
+              {m.actions && m.actions.length > 0 && (
+                <ul className="mt-2 pt-2 border-t border-rule/40 space-y-0.5">
+                  {m.actions.map((a, ai) => (
+                    <li key={ai} className="text-xs text-seal flex items-center gap-1">
+                      <span>✓</span> {a}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        ))}
+        {loading && <p className="text-sm text-ink-soft">Thinking…</p>}
+      </div>
+
+      <div className="flex gap-2">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && send()}
+          placeholder="e.g. Add a bullet about leading the migration"
+          className="flex-1 border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+        />
+        <button
+          onClick={send}
+          disabled={loading}
+          className="bg-seal text-white text-sm px-4 py-2 rounded-sm hover:opacity-90 disabled:opacity-60"
+        >
+          Send
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Score panel (Rezi Score) ----------
+
+function ScorePanel({ data, plan }: { data: ResumeData; plan: Plan }) {
+  const result = scoreResumeQuality(data);
+  const isPro = plan === "pro";
+
+  return (
+    <div className="max-w-xl space-y-4">
+      <div className="paper-sheet rounded-sm p-6">
+        <div className="flex items-center gap-4">
+          <div className="relative w-20 h-20 shrink-0">
+            <svg viewBox="0 0 80 80" className="w-20 h-20 -rotate-90">
+              <circle cx="40" cy="40" r="34" fill="none" stroke="var(--rule)" strokeWidth="8" />
+              <circle
+                cx="40" cy="40" r="34" fill="none" stroke="var(--seal)" strokeWidth="8"
+                strokeDasharray={`${2 * Math.PI * 34 * (result.overall / 100)} ${2 * Math.PI * 34}`}
+                strokeLinecap="round"
+              />
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center font-mono font-semibold text-lg">
+              {result.overall}
+            </span>
+          </div>
+          <div>
+            <p className="font-display font-bold text-lg">Resume Score</p>
+            <p className="text-sm text-ink-soft">
+              {result.overall >= 80
+                ? "Strong resume — minor polish left."
+                : result.overall >= 50
+                ? "Solid start — a few gaps to close."
+                : "Early stage — fill in the sections below."}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {!isPro && (
+        <div className="paper-sheet rounded-sm p-4 text-sm text-ink-soft flex items-center justify-between">
+          <span>Free plan shows your overall score only.</span>
+          <Link href="/pricing" className="text-seal font-medium hover:underline shrink-0 ml-3">
+            Unlock full breakdown →
+          </Link>
+        </div>
+      )}
+
+      {isPro && (
+        <div className="space-y-3">
+          {result.sections.map((s) => (
+            <div key={s.key} className="paper-sheet rounded-sm p-4">
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-medium text-sm">{s.label}</span>
+                <span className="font-mono text-sm text-seal">{s.score}</span>
+              </div>
+              <div className="h-1.5 bg-rule/40 rounded-full overflow-hidden mb-2">
+                <div className="h-full bg-seal" style={{ width: `${s.score}%` }} />
+              </div>
+              {s.tips.length > 0 && (
+                <ul className="space-y-1 mt-2">
+                  {s.tips.map((tip, i) => (
+                    <li key={i} className="text-xs text-ink-soft pl-3 relative before:content-['•'] before:absolute before:left-0">
+                      {tip}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -534,21 +917,106 @@ function CoverLetterPanel({ data }: { data: ResumeData }) {
   );
 }
 
+// ---------- Resignation letter panel ----------
+
+function ResignationLetterPanel({ initialName }: { initialName: string }) {
+  const [employeeName, setEmployeeName] = useState(initialName);
+  const [companyName, setCompanyName] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [lastDay, setLastDay] = useState("");
+  const [tone, setTone] = useState<"warm" | "neutral" | "brief">("neutral");
+  const [letter, setLetter] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function generate() {
+    if (!employeeName.trim() || !companyName.trim() || !jobTitle.trim() || !lastDay.trim()) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/ai/resignation-letter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ employeeName, companyName, jobTitle, lastDay, tone }),
+      });
+      const body = await res.json();
+      if (res.ok) setLetter(body.letter);
+      else setError(body.error ?? "Couldn't generate a resignation letter.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="max-w-xl space-y-4">
+      <Section title="Details">
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="Your name" value={employeeName} onChange={setEmployeeName} />
+          <Input label="Job title" value={jobTitle} onChange={setJobTitle} />
+          <Input label="Company" value={companyName} onChange={setCompanyName} />
+          <Input label="Last working day" value={lastDay} onChange={setLastDay} />
+        </div>
+        <label className="block mt-3">
+          <span className="text-xs text-ink-soft">Tone</span>
+          <select
+            value={tone}
+            onChange={(e) => setTone(e.target.value as typeof tone)}
+            className="mt-0.5 w-full border border-rule rounded-sm px-2 py-1.5 text-sm bg-paper-raised"
+          >
+            <option value="neutral">Neutral</option>
+            <option value="warm">Warm &amp; appreciative</option>
+            <option value="brief">Brief</option>
+          </select>
+        </label>
+        <button
+          onClick={generate}
+          disabled={loading}
+          className="mt-3 bg-seal text-white text-sm px-4 py-2 rounded-sm hover:opacity-90 disabled:opacity-60"
+        >
+          {loading ? "Writing…" : "Generate resignation letter"}
+        </button>
+        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+      </Section>
+
+      {letter && (
+        <div className="paper-sheet rounded-sm p-5">
+          <div className="flex justify-end mb-2">
+            <button
+              onClick={() => navigator.clipboard.writeText(letter)}
+              className="text-xs text-ink-soft hover:text-ink"
+            >
+              Copy
+            </button>
+          </div>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed">{letter}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ---------- Live preview ----------
 
 function ResumePreview({ data, template }: { data: ResumeData; template: string }) {
-  const dense = template === "compact";
+  if (template === "modern") return <ModernPreview data={data} />;
+  if (template === "bold") return <BoldPreview data={data} />;
+  return <ClassicPreview data={data} dense={template === "compact"} />;
+}
+
+const contactLine = (data: ResumeData) =>
+  [data.contact.email, data.contact.phone, data.contact.location, data.contact.linkedin, data.contact.website]
+    .filter(Boolean)
+    .join("  •  ");
+
+// Standard + Compact - serif name, understated hairline section rules
+function ClassicPreview({ data, dense }: { data: ResumeData; dense: boolean }) {
   return (
     <div
       className={`paper-sheet rounded-sm mx-auto max-w-2xl ${dense ? "p-6 text-[13px]" : "p-10"}`}
       style={{ fontFamily: "var(--font-sans)" }}
     >
       <h2 className="font-display font-bold text-2xl">{data.contact.fullName || "Your Name"}</h2>
-      <p className="text-xs text-ink-soft mt-1">
-        {[data.contact.email, data.contact.phone, data.contact.location, data.contact.linkedin, data.contact.website]
-          .filter(Boolean)
-          .join("  •  ")}
-      </p>
+      <p className="text-xs text-ink-soft mt-1">{contactLine(data)}</p>
 
       {data.summary && (
         <>
@@ -610,6 +1078,163 @@ function ResumePreview({ data, template }: { data: ResumeData; template: string 
             Skills
           </h3>
           <p className="text-sm">{data.skills.join(" • ")}</p>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Modern - sans-serif, colored header band, left-accent section headers, skill chips
+function ModernPreview({ data }: { data: ResumeData }) {
+  return (
+    <div className="paper-sheet rounded-sm mx-auto max-w-2xl overflow-hidden" style={{ fontFamily: "var(--font-sans)" }}>
+      <div className="bg-ink text-paper px-8 py-6">
+        <h2 className="font-bold text-2xl tracking-tight">{data.contact.fullName || "Your Name"}</h2>
+        <p className="text-xs opacity-80 mt-1">{contactLine(data)}</p>
+      </div>
+      <div className="p-8">
+        {data.summary && (
+          <>
+            <h3 className="text-xs uppercase tracking-wide font-semibold text-seal mt-1 mb-1.5 pl-2 border-l-2 border-seal">
+              Summary
+            </h3>
+            <p className="text-sm leading-relaxed mb-4">{data.summary}</p>
+          </>
+        )}
+
+        {data.experience.length > 0 && (
+          <>
+            <h3 className="text-xs uppercase tracking-wide font-semibold text-seal mt-4 mb-1.5 pl-2 border-l-2 border-seal">
+              Experience
+            </h3>
+            {data.experience.map((exp) => (
+              <div key={exp.id} className="mt-3">
+                <div className="flex justify-between text-sm">
+                  <span className="font-semibold">{exp.role || "Role"}</span>
+                  <span className="text-xs text-ink-soft font-mono">
+                    {exp.startDate} – {exp.endDate}
+                  </span>
+                </div>
+                <p className="text-xs text-ink-soft mb-1">{exp.company}</p>
+                <ul className="space-y-0.5">
+                  {exp.bullets.filter(Boolean).map((b, i) => (
+                    <li key={i} className="text-sm pl-4 relative before:content-['—'] before:absolute before:left-0 before:text-seal">
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </>
+        )}
+
+        {data.education.length > 0 && (
+          <>
+            <h3 className="text-xs uppercase tracking-wide font-semibold text-seal mt-4 mb-1.5 pl-2 border-l-2 border-seal">
+              Education
+            </h3>
+            {data.education.map((edu) => (
+              <div key={edu.id} className="flex justify-between text-sm mt-1">
+                <span className="font-medium">
+                  {edu.degree || "Degree"} {edu.school && `— ${edu.school}`}
+                </span>
+                <span className="text-xs text-ink-soft font-mono">
+                  {edu.startDate} – {edu.endDate}
+                </span>
+              </div>
+            ))}
+          </>
+        )}
+
+        {data.skills.length > 0 && (
+          <>
+            <h3 className="text-xs uppercase tracking-wide font-semibold text-seal mt-4 mb-1.5 pl-2 border-l-2 border-seal">
+              Skills
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {data.skills.map((s) => (
+                <span key={s} className="text-xs bg-seal-soft text-seal px-2 py-0.5 rounded-full">
+                  {s}
+                </span>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Bold - large uppercase name, heavy rule, uppercase blocked section titles
+function BoldPreview({ data }: { data: ResumeData }) {
+  return (
+    <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-10" style={{ fontFamily: "var(--font-sans)" }}>
+      <h2 className="font-display font-bold text-4xl uppercase tracking-tight leading-none">
+        {data.contact.fullName || "Your Name"}
+      </h2>
+      <div className="h-1 bg-seal w-16 my-3" />
+      <p className="text-xs text-ink-soft">{contactLine(data)}</p>
+
+      {data.summary && (
+        <>
+          <h3 className="text-sm uppercase tracking-widest font-bold bg-ink text-paper inline-block px-2 py-0.5 mt-6 mb-2">
+            Summary
+          </h3>
+          <p className="text-sm leading-relaxed">{data.summary}</p>
+        </>
+      )}
+
+      {data.experience.length > 0 && (
+        <>
+          <h3 className="text-sm uppercase tracking-widest font-bold bg-ink text-paper inline-block px-2 py-0.5 mt-6 mb-2">
+            Experience
+          </h3>
+          {data.experience.map((exp) => (
+            <div key={exp.id} className="mt-3">
+              <div className="flex justify-between text-sm">
+                <span className="font-bold uppercase tracking-wide">
+                  {exp.role || "Role"} <span className="font-normal normal-case text-ink-soft">— {exp.company}</span>
+                </span>
+                <span className="text-xs text-ink-soft font-mono">
+                  {exp.startDate} – {exp.endDate}
+                </span>
+              </div>
+              <ul className="mt-1 space-y-0.5">
+                {exp.bullets.filter(Boolean).map((b, i) => (
+                  <li key={i} className="text-sm pl-4 relative before:content-['▸'] before:absolute before:left-0 before:text-seal before:font-bold">
+                    {b}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </>
+      )}
+
+      {data.education.length > 0 && (
+        <>
+          <h3 className="text-sm uppercase tracking-widest font-bold bg-ink text-paper inline-block px-2 py-0.5 mt-6 mb-2">
+            Education
+          </h3>
+          {data.education.map((edu) => (
+            <div key={edu.id} className="flex justify-between text-sm mt-1">
+              <span className="font-bold">
+                {edu.degree || "Degree"} <span className="font-normal text-ink-soft">— {edu.school}</span>
+              </span>
+              <span className="text-xs text-ink-soft font-mono">
+                {edu.startDate} – {edu.endDate}
+              </span>
+            </div>
+          ))}
+        </>
+      )}
+
+      {data.skills.length > 0 && (
+        <>
+          <h3 className="text-sm uppercase tracking-widest font-bold bg-ink text-paper inline-block px-2 py-0.5 mt-6 mb-2">
+            Skills
+          </h3>
+          <p className="text-sm font-medium">{data.skills.join("  /  ")}</p>
         </>
       )}
     </div>
