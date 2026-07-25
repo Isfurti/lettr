@@ -1,29 +1,12 @@
 import Link from "next/link";
 import { HeroScoreDemo } from "@/components/HeroScoreDemo";
 import { Reveal } from "@/components/Reveal";
+import { PublicNav } from "@/components/PublicNav";
 
 export default function Home() {
   return (
     <main className="flex-1 flex flex-col bg-paper">
-      <header className="border-b border-rule">
-        <div className="max-w-6xl mx-auto w-full px-8 py-5 flex items-center justify-between">
-          <span className="font-display font-semibold text-xl">Lettr</span>
-          <nav className="hidden sm:flex items-center gap-8 text-sm text-ink-soft">
-            <Link href="#features" className="hover:text-ink">Features</Link>
-            <Link href="/templates" className="hover:text-ink">Templates</Link>
-            <Link href="/pricing" className="hover:text-ink">Pricing</Link>
-          </nav>
-          <div className="flex items-center gap-5">
-            <Link href="/login" className="text-sm text-ink-soft hover:text-ink">Sign in</Link>
-            <Link
-              href="/signup"
-              className="bg-ink text-white px-4 py-2 rounded-sm text-sm font-medium hover:opacity-90 transition-opacity"
-            >
-              Build Resume
-            </Link>
-          </div>
-        </div>
-      </header>
+      <PublicNav />
 
       {/* Hero */}
       <section className="max-w-6xl mx-auto w-full px-8 pt-16 pb-24 grid md:grid-cols-2 gap-16 items-center">
@@ -200,6 +183,8 @@ export default function Home() {
             <p className="text-xs uppercase tracking-wide text-ink-soft mb-3">Resources</p>
             <div className="space-y-2 text-sm">
               <Link href="/support" className="block hover:text-seal">Support</Link>
+              <Link href="/privacy" className="block hover:text-seal">Privacy Policy</Link>
+              <Link href="/terms" className="block hover:text-seal">Terms of Service</Link>
             </div>
           </div>
           <div>

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Footer } from "@/components/Footer";
+import { PublicNav } from "@/components/PublicNav";
 
 export default function SupportPage() {
   const [email, setEmail] = useState("");
@@ -25,16 +27,22 @@ export default function SupportPage() {
 
   if (status === "sent") {
     return (
+      <>
+      <PublicNav />
       <main className="flex-1 flex items-center justify-center px-6 py-16">
         <div className="paper-sheet rounded-sm p-8 max-w-sm text-center">
           <p className="font-display font-bold text-lg mb-2">Message sent</p>
           <p className="text-sm text-ink-soft">We&apos;ll get back to you at {email}.</p>
         </div>
       </main>
+      <Footer />
+      </>
     );
   }
 
   return (
+    <>
+    <PublicNav />
     <main className="flex-1 flex items-center justify-center px-6 py-16">
       <form onSubmit={submit} className="w-full max-w-sm space-y-4">
         <div>
@@ -83,5 +91,7 @@ export default function SupportPage() {
         </button>
       </form>
     </main>
+    <Footer />
+    </>
   );
 }

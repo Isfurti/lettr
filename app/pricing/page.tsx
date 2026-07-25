@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Reveal } from "@/components/Reveal";
+import { Footer } from "@/components/Footer";
+import { PublicNav } from "@/components/PublicNav";
 
 const COMPARISON: { feature: string; free: string | boolean; pro: string | boolean }[] = [
   { feature: "Resumes", free: "1", pro: "Unlimited" },
@@ -61,6 +63,7 @@ export default function PricingPage() {
 
   return (
     <main className="flex-1">
+      <PublicNav />
       <section className="max-w-3xl mx-auto w-full px-8 pt-20 pb-16 text-center">
         <h1 className="font-display text-5xl font-bold leading-tight mb-6">
           Invest in your career&apos;s first impression.
@@ -198,6 +201,8 @@ export default function PricingPage() {
           </Reveal>
         </div>
       </section>
+
+      <Footer />
     </main>
   );
 }

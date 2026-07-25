@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { Footer } from "@/components/Footer";
+import { PublicNav } from "@/components/PublicNav";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -44,6 +46,8 @@ export default function SignupPage() {
   }
 
   return (
+    <>
+    <PublicNav />
     <main className="flex-1 flex items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">
         <h1 className="font-display font-bold text-2xl mb-1">Create your account</h1>
@@ -81,6 +85,8 @@ export default function SignupPage() {
         </p>
       </div>
     </main>
+    <Footer />
+    </>
   );
 }
 

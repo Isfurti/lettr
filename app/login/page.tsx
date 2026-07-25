@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { Footer } from "@/components/Footer";
+import { PublicNav } from "@/components/PublicNav";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -41,6 +43,8 @@ export default function LoginPage() {
   }
 
   return (
+    <>
+    <PublicNav />
     <main className="flex-1 flex items-center justify-center px-6 py-20 relative overflow-hidden">
       <div
         ref={decorRef}
@@ -107,5 +111,7 @@ export default function LoginPage() {
         </p>
       </div>
     </main>
+    <Footer />
+    </>
   );
 }
