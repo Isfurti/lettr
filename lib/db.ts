@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { randomUUID } from "node:crypto";
 
 // Every call site in the app only uses the exported functions below, so
 // swapping providers (e.g. a different Postgres host, or connection pooling
@@ -52,6 +53,15 @@ function ensureSchema(): Promise<void> {
         status TEXT NOT NULL DEFAULT 'open',
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+
+      CREATE TABLE IF NOT EXISTS activity_log (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        action TEXT NOT NULL,
+        detail TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_activity_log_user ON activity_log(user_id, created_at DESC);
 
       CREATE TABLE IF NOT EXISTS resumes (
         id TEXT PRIMARY KEY,
@@ -290,6 +300,57 @@ export async function listRecentUsers(limit = 6): Promise<RecentUserRow[]> {
   const res = await pool.query(
     "SELECT id, email, name, plan, created_at FROM users ORDER BY created_at DESC LIMIT $1",
     [limit]
+  );
+  return res.rows;
+}
+
+export type ActivityRow = { id: string; user_id: string; action: string; detail: string | null; created_at: string };
+
+export async function logActivity(userId: string, action: string, detail?: string) {
+  await ensureSchema();
+  await pool.query(
+    "INSERT INTO activity_log (id, user_id, action, detail) VALUES ($1, $2, $3, $4)",
+    [randomUUID(), userId, action, detail ?? null]
+  );
+}
+
+export async function listRecentActivity(userId: string, limit = 5): Promise<ActivityRow[]> {
+  await ensureSchema();
+  const res = await pool.query(
+    "SELECT * FROM activity_log WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2",
+    [userId, limit]
+  );
+  return res.rows;
+}
+
+export type AdminUserRow = {
+  id: string;
+  email: string;
+  name: string | null;
+  plan: string;
+  created_at: string;
+  resume_count: number;
+};
+
+export async function listAllUsers(search?: string): Promise<AdminUserRow[]> {
+  await ensureSchema();
+  const res = await pool.query(
+    `SELECT u.id, u.email, u.name, u.plan, u.created_at,
+            COUNT(r.id)::int AS resume_count
+     FROM users u
+     LEFT JOIN resumes r ON r.user_id = u.id
+     WHERE ($1::text IS NULL OR u.email ILIKE '%' || $1 || '%' OR u.name ILIKE '%' || $1 || '%')
+     GROUP BY u.id
+     ORDER BY u.created_at DESC`,
+    [search || null]
+  );
+  return res.rows;
+}
+
+export async function getTemplatePopularity(): Promise<{ template: string; count: number }[]> {
+  await ensureSchema();
+  const res = await pool.query(
+    "SELECT template, COUNT(*)::int AS count FROM resumes GROUP BY template ORDER BY count DESC"
   );
   return res.rows;
 }

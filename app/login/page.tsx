@@ -6,6 +6,7 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { PublicNav } from "@/components/PublicNav";
+import { OAuthButtons } from "@/components/OAuthButtons";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -102,6 +103,8 @@ export default function LoginPage() {
             {loading ? "Signing in…" : "Sign in"}
           </button>
         </form>
+
+        <OAuthButtons />
 
         <p className="text-sm text-ink-soft mt-8 text-center">
           Don&apos;t have an account?{" "}

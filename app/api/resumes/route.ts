@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { auth } from "@/lib/auth";
-import { listResumesForUser, upsertResume, countResumesForUser, getUserById } from "@/lib/db";
+import { listResumesForUser, upsertResume, countResumesForUser, getUserById, logActivity } from "@/lib/db";
 import { emptyResume } from "@/lib/types";
 import { canCreateResume, type Plan } from "@/lib/limits";
 
@@ -42,6 +42,8 @@ export async function POST(req: Request) {
     template,
     data: JSON.stringify(body.data ?? emptyResume),
   });
+
+  await logActivity(userId, "resume_created", title);
 
   return NextResponse.json({ id, title, template }, { status: 201 });
 }

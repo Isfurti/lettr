@@ -1,14 +1,16 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { listResumesForUser, getUserById } from "@/lib/db";
+import { listResumesForUser, getUserById, listRecentActivity } from "@/lib/db";
 import { PLAN_LIMITS, type Plan } from "@/lib/limits";
 import { scoreResumeQuality } from "@/lib/resume-score";
+import { formatActivityLabel, timeAgo } from "@/lib/activity-format";
 import type { ResumeData } from "@/lib/types";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ScoreRing } from "@/components/ScoreRing";
 import { NewResumeButton } from "@/components/NewResumeButton";
 import { BillingPortalButton } from "@/components/BillingPortalButton";
+import { ResumeSearch } from "@/components/ResumeSearch";
 
 export default async function DashboardPage({
   searchParams,
@@ -19,7 +21,11 @@ export default async function DashboardPage({
   if (!session?.user) redirect("/login");
 
   const userId = (session.user as { id: string }).id;
-  const [resumeRows, user] = await Promise.all([listResumesForUser(userId), getUserById(userId)]);
+  const [resumeRows, user, recentActivity] = await Promise.all([
+    listResumesForUser(userId),
+    getUserById(userId),
+    listRecentActivity(userId, 5),
+  ]);
   const plan = (user?.plan ?? "free") as Plan;
   const resumeLimit = PLAN_LIMITS[plan].maxResumes;
   const atResumeLimit = resumeRows.length >= resumeLimit;
@@ -111,82 +117,68 @@ export default async function DashboardPage({
             ) : (
               <p className="text-sm text-ink-soft">Create a resume to see your score here.</p>
             )}
+
+            <div className="mt-6 pt-5 border-t border-rule">
+              <p className="text-xs uppercase tracking-wide text-ink-soft font-medium mb-3">Quick actions</p>
+              <div className="flex flex-wrap gap-x-6 gap-y-1">
+                <Link href="/templates" className="text-sm py-1 hover:text-seal">
+                  Browse templates →
+                </Link>
+                <Link href="/support" className="text-sm py-1 hover:text-seal">
+                  Contact support →
+                </Link>
+                {mostRecent && (
+                  <Link href={`/builder/${mostRecent.id}`} className="text-sm py-1 hover:text-seal">
+                    Write a cover letter →
+                  </Link>
+                )}
+                {plan === "pro" ? (
+                  <BillingPortalButton />
+                ) : (
+                  <Link href="/pricing" className="text-sm py-1 text-seal font-medium">
+                    Upgrade to Pro →
+                  </Link>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="paper-sheet rounded-sm p-6">
-            <p className="text-xs uppercase tracking-wide text-ink-soft font-medium mb-3">Quick actions</p>
-            <div className="space-y-1">
-              <Link href="/templates" className="block text-sm py-2 hover:text-seal">
-                Browse templates →
-              </Link>
-              <Link href="/support" className="block text-sm py-2 hover:text-seal">
-                Contact support →
-              </Link>
-              {plan === "pro" ? (
-                <div className="pt-1">
-                  <BillingPortalButton />
-                </div>
-              ) : (
-                <Link href="/pricing" className="block text-sm py-2 text-seal font-medium">
-                  Upgrade to Pro →
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display font-semibold text-xl">My Resumes</h2>
-        </div>
-
-        {resumes.length === 0 ? (
-          <div className="paper-sheet rounded-sm p-10 text-center">
-            <p className="text-ink-soft mb-4">You haven&apos;t created a resume yet.</p>
-            <NewResumeButton label="Create your first resume" />
-          </div>
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {resumes.map((r) => {
-              const s = scoreResumeQuality(r.data);
-              return (
-                <Link
-                  key={r.id}
-                  href={`/builder/${r.id}`}
-                  className="paper-sheet rounded-sm p-4 hover:-translate-y-0.5 transition-transform"
-                >
-                  <div className="aspect-[3/4] bg-app-bg rounded-sm mb-3 p-3 flex flex-col gap-1.5 overflow-hidden">
-                    <div className="h-2 w-3/5 bg-ink/70 rounded-sm" />
-                    <div className="h-1.5 w-2/5 bg-ink-soft/40 rounded-sm mb-1" />
-                    {[1, 0.9, 0.7, 0.85, 0.6, 0.75].map((w, i) => (
-                      <div key={i} className="h-1 bg-ink-soft/20 rounded-sm" style={{ width: `${w * 100}%` }} />
-                    ))}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium text-sm truncate">{r.title}</p>
-                    <span className="text-xs font-mono bg-seal-soft text-seal-deep px-1.5 py-0.5 rounded-sm shrink-0 ml-2">
-                      {s.overall}
-                    </span>
-                  </div>
-                  <p className="text-xs text-ink-soft mt-1">
-                    Updated {new Date(r.updated_at).toLocaleDateString()} · {r.template}
-                  </p>
-                </Link>
-              );
-            })}
-            {!atResumeLimit && (
-              <NewResumeCard />
+            <p className="text-xs uppercase tracking-wide text-ink-soft font-medium mb-3">Recent activity</p>
+            {recentActivity.length === 0 ? (
+              <p className="text-sm text-ink-soft">Nothing yet — actions you take will show up here.</p>
+            ) : (
+              <ul className="space-y-3">
+                {recentActivity.map((a) => {
+                  const { title, icon } = formatActivityLabel(a.action);
+                  return (
+                    <li key={a.id} className="flex items-start gap-2.5">
+                      <span className="text-seal shrink-0">{icon}</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{title}</p>
+                        <p className="text-xs text-ink-soft truncate">
+                          {timeAgo(a.created_at)} {a.detail ? `· ${a.detail}` : ""}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </div>
-        )}
-      </main>
-    </div>
-  );
-}
+        </div>
 
-function NewResumeCard() {
-  return (
-    <div className="border-2 border-dashed border-rule rounded-sm aspect-[3/4] flex items-center justify-center">
-      <NewResumeButton label="+ Create New" />
+        <ResumeSearch
+          resumes={resumes.map((r) => ({
+            id: r.id,
+            title: r.title,
+            template: r.template,
+            updated_at: r.updated_at,
+            score: scoreResumeQuality(r.data).overall,
+          }))}
+          atResumeLimit={atResumeLimit}
+        />
+      </main>
     </div>
   );
 }

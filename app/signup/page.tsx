@@ -6,6 +6,7 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { PublicNav } from "@/components/PublicNav";
+import { OAuthButtons } from "@/components/OAuthButtons";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -76,6 +77,8 @@ export default function SignupPage() {
             {loading ? "Creating account…" : "Create account"}
           </button>
         </form>
+
+        <OAuthButtons />
 
         <p className="text-sm text-ink-soft mt-6">
           Already have an account?{" "}

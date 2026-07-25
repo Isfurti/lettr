@@ -1,14 +1,9 @@
-import { redirect, notFound } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/admin-auth";
 import { getAdminOverview, listRecentUsers } from "@/lib/db";
 import { AdminSidebar } from "@/components/AdminSidebar";
 
 export default async function AdminOverviewPage() {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
-
-  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  if (!adminEmail || session.user.email?.trim().toLowerCase() !== adminEmail) notFound();
+  await requireAdmin();
 
   const [overview, recentUsers] = await Promise.all([getAdminOverview(), listRecentUsers(6)]);
 

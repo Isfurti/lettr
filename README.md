@@ -62,6 +62,35 @@ To enable it:
 
 Without real Stripe keys, everything else in the app still works — the app just can't process real upgrades (the `/pricing` page's checkout button will error).
 
+## Social login setup (Google + LinkedIn)
+
+Both are optional — the app works fine with just email/password login if you
+skip this. When configured, "Continue with Google" / "Continue with LinkedIn"
+appear on the login and signup pages automatically (no code change needed,
+just add the env vars).
+
+**Account linking:** if someone signs up with a password using
+`jane@example.com`, then later clicks "Continue with Google" using that same
+Google account, they're signed into the *same* account — not a duplicate.
+This is handled in `lib/oauth-user.ts` (tested against real Postgres in
+`tests/oauth-user.test.ts`).
+
+### Google
+Reuses the same Google Cloud OAuth app as Google Drive export (`GOOGLE_CLIENT_ID`
+/ `GOOGLE_CLIENT_SECRET`) — you need **two** redirect URIs registered on it,
+not one:
+1. `https://your-domain.com/api/auth/callback/google` (for login)
+2. `https://your-domain.com/api/google/callback` (for Drive export — see below)
+
+Add both under **Google Cloud Console → Credentials → your OAuth client →
+Authorized redirect URIs**.
+
+### LinkedIn
+1. Create an app at **linkedin.com/developers**
+2. Under **Products**, request **"Sign In with LinkedIn using OpenID Connect"**
+3. Under **Auth**, add redirect URL: `https://your-domain.com/api/auth/callback/linkedin`
+4. Copy the **Client ID** and **Client Secret** into `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET`
+
 ## Google Drive setup (Pro feature)
 
 Lets Pro users save a resume PDF straight to their own Google Drive.

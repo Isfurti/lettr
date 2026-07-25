@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getUserById } from "@/lib/db";
+import { getUserById, logActivity } from "@/lib/db";
 import { canExportDocx, type Plan } from "@/lib/limits";
 import { generateResumeDocx } from "@/lib/generate-docx";
 import type { ResumeData } from "@/lib/types";
@@ -22,6 +22,7 @@ export async function POST(req: Request) {
   if (!resume) return NextResponse.json({ error: "Missing resume data" }, { status: 400 });
 
   const buffer = await generateResumeDocx(resume);
+  await logActivity(userId, "docx_exported", resume.contact.fullName || "resume");
 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {

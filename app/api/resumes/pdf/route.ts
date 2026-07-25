@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { auth } from "@/lib/auth";
-import { getUserById, incrementPdfDownloadCount } from "@/lib/db";
+import { getUserById, incrementPdfDownloadCount, logActivity } from "@/lib/db";
 import { canDownloadPdf, type Plan } from "@/lib/limits";
 import { ResumePdfDocument } from "@/components/ResumePdfDocument";
 import type { ResumeData } from "@/lib/types";
@@ -25,6 +25,7 @@ export async function POST(req: Request) {
 
   const buffer = await renderToBuffer(ResumePdfDocument({ resume, template }));
   await incrementPdfDownloadCount(userId);
+  await logActivity(userId, "pdf_exported", resume.contact.fullName || "resume");
 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {

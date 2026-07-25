@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { polishBullet } from "@/lib/ai";
+import { logActivity } from "@/lib/db";
 
 const Schema = z.object({
   roughBullet: z.string().min(3).max(1000),
@@ -21,6 +22,7 @@ export async function POST(req: Request) {
 
   try {
     const options = await polishBullet(parsed.data);
+    await logActivity((session.user as { id: string }).id, "ai_polish_applied", parsed.data.role);
     return NextResponse.json({ options });
   } catch (err) {
     const message = err instanceof Error ? err.message : "AI generation failed";
