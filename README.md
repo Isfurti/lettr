@@ -14,7 +14,7 @@ generation, PDF export, and account/auth.
 - **NextAuth (Auth.js v5)** — credentials (email/password) auth, bcrypt hashing
 - **Anthropic API** (`@anthropic-ai/sdk`) — AI bullet rewriting + cover letters
 - **@react-pdf/renderer** — server-side PDF export
-- **Tailwind CSS 4**
+- **Tailwind CSS 4** with a custom design system: navy/gold/cream editorial palette, self-hosted Playfair Display + Inter fonts (via `@fontsource`, bundled at build time — no runtime dependency on Google's font CDN)
 - **Vitest** — unit tests for the ATS scoring engine and the database layer (run against a real local Postgres instance)
 
 ## Local setup
@@ -47,7 +47,7 @@ immediately.
 
 Lettr's Free vs Pro plan matches Rezi's actual published pricing:
 
-| | Free | Pro ($29/mo) |
+| | Free | Pro ($19/mo) |
 |---|---|---|
 | Resumes | 1 | Unlimited |
 | PDF downloads | 3 | Unlimited |
@@ -55,7 +55,7 @@ Lettr's Free vs Pro plan matches Rezi's actual published pricing:
 | Resignation letter builder | ❌ | ✅ |
 
 To enable it:
-1. Create a Stripe account, go to **Products**, create a recurring $29/month price. Copy its Price ID into `STRIPE_PRO_PRICE_ID`.
+1. Create a Stripe account, go to **Products**, create a recurring $19/month price. Copy its Price ID into `STRIPE_PRO_PRICE_ID`.
 2. Copy your **Secret key** from the Stripe dashboard into `STRIPE_SECRET_KEY`.
 3. Add a webhook endpoint in Stripe pointing at `https://your-domain.com/api/billing/webhook`, subscribed to `checkout.session.completed`, `customer.subscription.updated`, and `customer.subscription.deleted`. Copy the signing secret into `STRIPE_WEBHOOK_SECRET`.
 4. For local testing, use the Stripe CLI: `stripe listen --forward-to localhost:3000/api/billing/webhook`
@@ -175,3 +175,20 @@ tests/
   summary, experience, education, and skills edits. It does not yet call
   the ATS scorer or cover-letter generator as tools within the same
   conversation - those stay on their own tabs.
+- No Privacy Policy or Terms of Service pages yet — needed before real launch
+
+## Design system
+
+The visual design (navy/gold/cream palette, Playfair Display headings, sidebar
+app layout) was rebuilt to match a set of reference mockups. Two things were
+deliberately **not** copied from those mockups, on principle rather than
+preference:
+- The reference landing page included a customer-logo bar (real companies)
+  and named customer testimonials. Lettr has no actual customers yet, so
+  reproducing those would be misleading marketing — the current landing page
+  uses the same structure with honest placeholder content instead.
+- The reference admin dashboard showed specific numbers (total users, revenue,
+  AI usage volume). Rather than copy those numbers, `/admin` queries and
+  displays Lettr's actual database — real user counts, real plan breakdown,
+  real signups-per-week chart. It'll show real (small) numbers until there
+  are real users, which is correct behavior, not a bug.

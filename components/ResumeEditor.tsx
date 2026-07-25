@@ -7,6 +7,8 @@ import type { ResumeData, ExperienceEntry, EducationEntry } from "@/lib/types";
 import type { AtsResult } from "@/lib/ats-score";
 import { scoreResumeQuality } from "@/lib/resume-score";
 import type { Plan } from "@/lib/limits";
+import { TopNav } from "@/components/TopNav";
+import { ScoreRing } from "@/components/ScoreRing";
 
 const TEMPLATES = ["classic", "modern", "compact", "bold"];
 
@@ -126,18 +128,27 @@ export function ResumeEditor({
     router.push("/dashboard");
   }
 
+  const liveScore = scoreResumeQuality(data);
+
   return (
-    <main className="flex-1 flex flex-col">
+    <main className="flex-1 flex flex-col bg-paper">
+      <TopNav active="resumes" userInitial="•" />
+
       <div className="border-b border-rule px-6 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 min-w-0">
           <Link href="/dashboard" className="text-sm text-ink-soft hover:text-ink shrink-0">
             ← Dashboard
           </Link>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="font-display font-bold text-lg bg-transparent focus:outline-none border-b border-transparent focus:border-rule min-w-0"
-          />
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-seal font-medium">
+              Project: {data.experience[0]?.role || "Untitled"}
+            </p>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="font-display font-semibold text-xl bg-transparent focus:outline-none border-b border-transparent focus:border-rule min-w-0 w-full"
+            />
+          </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <select
@@ -258,7 +269,18 @@ export function ResumeEditor({
             </UpgradeGate>
           )}
         </div>
-        <div className="overflow-y-auto p-6 bg-rule/10">
+        <div className="overflow-y-auto p-6 bg-rule/10 relative">
+          <div className="hidden xl:block absolute top-8 right-8 z-10 paper-sheet rounded-sm px-4 py-3 w-40">
+            <div className="mx-auto mb-1 flex justify-center">
+              <ScoreRing value={liveScore.overall} size={56} strokeWidth={8} />
+            </div>
+            <p className="text-center text-xs font-medium">
+              {liveScore.overall >= 70 ? "ATS Ready" : "Needs work"}
+            </p>
+            <p className="text-center text-[10px] text-ink-soft uppercase tracking-wide mt-0.5">
+              Live score
+            </p>
+          </div>
           <ResumePreview data={data} template={template} />
         </div>
       </div>
@@ -699,19 +721,7 @@ function ScorePanel({ data, plan }: { data: ResumeData; plan: Plan }) {
     <div className="max-w-xl space-y-4">
       <div className="paper-sheet rounded-sm p-6">
         <div className="flex items-center gap-4">
-          <div className="relative w-20 h-20 shrink-0">
-            <svg viewBox="0 0 80 80" className="w-20 h-20 -rotate-90">
-              <circle cx="40" cy="40" r="34" fill="none" stroke="var(--rule)" strokeWidth="8" />
-              <circle
-                cx="40" cy="40" r="34" fill="none" stroke="var(--seal)" strokeWidth="8"
-                strokeDasharray={`${2 * Math.PI * 34 * (result.overall / 100)} ${2 * Math.PI * 34}`}
-                strokeLinecap="round"
-              />
-            </svg>
-            <span className="absolute inset-0 flex items-center justify-center font-mono font-semibold text-lg">
-              {result.overall}
-            </span>
-          </div>
+          <ScoreRing value={result.overall} size={80} strokeWidth={8} />
           <div>
             <p className="font-display font-bold text-lg">Resume Score</p>
             <p className="text-sm text-ink-soft">
@@ -807,19 +817,7 @@ function JobMatchPanel({ data }: { data: ResumeData }) {
       {result && (
         <div className="paper-sheet rounded-sm p-5">
           <div className="flex items-center gap-4 mb-4">
-            <div className="relative w-16 h-16 shrink-0">
-              <svg viewBox="0 0 80 80" className="w-16 h-16 -rotate-90">
-                <circle cx="40" cy="40" r="34" fill="none" stroke="var(--rule)" strokeWidth="8" />
-                <circle
-                  cx="40" cy="40" r="34" fill="none" stroke="var(--seal)" strokeWidth="8"
-                  strokeDasharray={`${2 * Math.PI * 34 * (result.score / 100)} ${2 * Math.PI * 34}`}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <span className="absolute inset-0 flex items-center justify-center font-mono font-semibold text-sm">
-                {result.score}
-              </span>
-            </div>
+            <ScoreRing value={result.score} size={64} strokeWidth={8} />
             <p className="text-sm text-ink-soft">
               {result.matchedKeywords.length} of {result.totalKeywords} key terms found in your resume.
             </p>

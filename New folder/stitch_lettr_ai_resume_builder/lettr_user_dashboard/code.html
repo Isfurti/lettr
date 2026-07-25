@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dashboard | Lettr AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&amp;family=Manrope:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#d3e4fe",
+                    "inverse-primary": "#b7c7eb",
+                    "secondary-fixed": "#ffdea4",
+                    "on-primary-container": "#8393b5",
+                    "on-tertiary-fixed": "#1c1c17",
+                    "surface-container-lowest": "#ffffff",
+                    "on-background": "#0b1c30",
+                    "on-error-container": "#93000a",
+                    "error": "#ba1a1a",
+                    "on-secondary-fixed": "#261900",
+                    "on-error": "#ffffff",
+                    "inverse-surface": "#213145",
+                    "error-container": "#ffdad6",
+                    "primary-container": "#1b2b48",
+                    "surface-variant": "#d3e4fe",
+                    "surface-container-low": "#eff4ff",
+                    "on-primary": "#ffffff",
+                    "secondary": "#7b5800",
+                    "outline": "#75777e",
+                    "secondary-container": "#fecd6e",
+                    "primary": "#041632",
+                    "on-surface-variant": "#44474d",
+                    "on-tertiary-fixed-variant": "#474741",
+                    "outline-variant": "#c5c6ce",
+                    "on-surface": "#0b1c30",
+                    "surface": "#f8f9ff",
+                    "tertiary-fixed": "#e5e2db",
+                    "surface-bright": "#f8f9ff",
+                    "on-secondary-fixed-variant": "#5d4200",
+                    "on-primary-fixed": "#091b37",
+                    "surface-tint": "#4f5e7e",
+                    "on-primary-fixed-variant": "#374765",
+                    "secondary-fixed-dim": "#efc062",
+                    "primary-fixed": "#d7e2ff",
+                    "background": "#f8f9ff",
+                    "on-secondary-container": "#775600",
+                    "surface-container-high": "#dce9ff",
+                    "on-tertiary-container": "#94928b",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-container": "#2b2b26",
+                    "on-secondary": "#ffffff",
+                    "surface-dim": "#cbdbf5",
+                    "tertiary-fixed-dim": "#c9c6bf",
+                    "inverse-on-surface": "#eaf1ff",
+                    "primary-fixed-dim": "#b7c7eb",
+                    "surface-container": "#e5eeff",
+                    "tertiary": "#171712"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "stack-sm": "8px",
+                    "section-gap": "120px",
+                    "margin-mobile": "20px",
+                    "stack-md": "16px",
+                    "margin-desktop": "64px",
+                    "container-max": "1280px",
+                    "stack-lg": "32px",
+                    "gutter": "24px"
+            },
+            "fontFamily": {
+                    "display-lg-mobile": ["\"Source Serif 4\""],
+                    "button": ["Manrope"],
+                    "headline-md": ["\"Source Serif 4\""],
+                    "headline-lg": ["\"Source Serif 4\""],
+                    "display-lg": ["\"Source Serif 4\""],
+                    "body-lg": ["Manrope"],
+                    "label-caps": ["Manrope"],
+                    "body-md": ["Manrope"]
+            },
+            "fontSize": {
+                    "display-lg-mobile": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "button": ["15px", {"lineHeight": "1", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "display-lg": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #F9F6EE; /* Editorial Cream Base */
+            color: #041632; /* Primary Navy */
+            font-family: 'Manrope', sans-serif;
+        }
+        .editorial-shadow {
+            box-shadow: 0 4px 20px rgba(4, 22, 50, 0.08);
+        }
+        .resume-card:hover .resume-overlay {
+            opacity: 1;
+        }
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-desktop h-20 max-w-container-max mx-auto bg-surface shadow-sm">
+<div class="flex items-center gap-stack-lg">
+<span class="font-display-lg text-headline-md font-bold text-primary tracking-tight">Lettr</span>
+<nav class="hidden md:flex gap-stack-lg">
+<a class="font-body-md text-body-md text-primary font-bold border-b-2 border-secondary" href="#">Dashboard</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-secondary transition-colors duration-200" href="#">Resumes</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-secondary transition-colors duration-200" href="#">Letters</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-secondary transition-colors duration-200" href="#">Templates</a>
+</nav>
+</div>
+<div class="flex items-center gap-stack-md">
+<div class="relative hidden lg:block">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg text-body-md focus:ring-2 focus:ring-primary" placeholder="Search assets..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-container-high rounded-full">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-container-high rounded-full">settings</button>
+<button class="bg-secondary text-on-secondary px-6 py-2.5 rounded-lg font-button text-button hover:bg-secondary-container hover:text-on-secondary-container transition-all active:scale-95">Build Resume</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="Close-up studio portrait of a confident professional man in his late 30s with short hair and a tailored navy suit. The lighting is soft and cinematic, highlighting sophisticated features against a clean, light cream editorial background. The aesthetic is premium, high-end, and authoritative." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCL5SvGtmeZiX_FiTzlBkNl18aVap7eVQPXUmzwsQC9620Tn3jkphs0rQol2vhh8u-Rd3zXKhvXB0pnGZWZouRfUKLgTr5mknLQdgVNPvgaM8azw0EWAZ_lt_heDpJdUAwcqwOebf-oT0cPQitHjzuZ3H9KZkrVKaU4U81WMcoBest9D5Xgu4hwEpF1pp__eLQDTtP9OvOPm0NvlwtK21eHlCDONbTDvHpYh71i65UY_7smSo9cn6E27zAkf_JFMWZPTLn_gMbHRYHo"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-primary flex flex-col py-stack-lg z-40 pt-24 hidden lg:flex">
+<div class="px-6 mb-stack-lg">
+<p class="font-label-caps text-label-caps text-inverse-on-surface opacity-60">MAIN NAVIGATION</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-4 px-6 py-3 bg-secondary-container text-on-secondary-container rounded-lg mx-2 transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Overview</span>
+</a>
+<a class="flex items-center gap-4 px-6 py-3 text-on-primary-fixed-variant opacity-80 hover:opacity-100 hover:bg-primary-fixed-dim/10 mx-2 transition-all" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-body-md text-body-md">Users</span>
+</a>
+<a class="flex items-center gap-4 px-6 py-3 text-on-primary-fixed-variant opacity-80 hover:opacity-100 hover:bg-primary-fixed-dim/10 mx-2 transition-all" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md text-body-md">Analytics</span>
+</a>
+<a class="flex items-center gap-4 px-6 py-3 text-on-primary-fixed-variant opacity-80 hover:opacity-100 hover:bg-primary-fixed-dim/10 mx-2 transition-all" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-body-md text-body-md">Templates</span>
+</a>
+<a class="flex items-center gap-4 px-6 py-3 text-on-primary-fixed-variant opacity-80 hover:opacity-100 hover:bg-primary-fixed-dim/10 mx-2 transition-all" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-body-md text-body-md">Subscriptions</span>
+</a>
+<a class="flex items-center gap-4 px-6 py-3 text-on-primary-fixed-variant opacity-80 hover:opacity-100 hover:bg-primary-fixed-dim/10 mx-2 transition-all" href="#">
+<span class="material-symbols-outlined">settings_suggest</span>
+<span class="font-body-md text-body-md">System</span>
+</a>
+</nav>
+<div class="mt-auto px-4">
+<button class="w-full py-4 px-6 flex items-center gap-4 text-on-primary hover:bg-white/5 rounded-lg transition-all">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-body-md text-body-md">Sign Out</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="lg:ml-64 pt-24 min-h-screen px-margin-mobile md:px-margin-desktop pb-section-gap">
+<div class="max-w-container-max mx-auto space-y-stack-lg">
+<!-- Header & Quick Actions -->
+<section class="flex flex-col md:flex-row justify-between items-start md:items-end gap-stack-md pb-stack-lg border-b border-outline-variant">
+<div>
+<h1 class="font-display-lg text-headline-lg text-primary">Welcome back, Alexander.</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-xl">Your career trajectory is looking strong. You have 3 active resumes optimized for Senior Leadership roles.</p>
+</div>
+<div class="flex gap-stack-md w-full md:w-auto">
+<button class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary text-on-primary px-8 py-3 rounded-lg font-button text-button hover:bg-primary-container transition-all">
+<span class="material-symbols-outlined">add</span> New Resume
+                    </button>
+<button class="flex-1 md:flex-none flex items-center justify-center gap-2 border border-primary text-primary px-8 py-3 rounded-lg font-button text-button hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined">edit_document</span> Cover Letter
+                    </button>
+</div>
+</section>
+<!-- Top Grid: Career Insights & Quick Start -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- AI Career Insights Widget -->
+<div class="lg:col-span-8 bg-white editorial-shadow rounded-xl p-stack-lg border border-outline-variant/30 flex flex-col md:flex-row gap-stack-lg">
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-stack-sm">
+<span class="material-symbols-outlined text-secondary">insights</span>
+<h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">AI Career Insights</h2>
+</div>
+<h3 class="font-headline-md text-headline-md text-primary mb-4">ATS Optimization Score</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">Your current "Senior Product Strategy" resume is outperforming 84% of applicants in your field. Consider adding "Cross-functional Leadership" to hit 95%.</p>
+<div class="flex flex-wrap gap-stack-md">
+<div class="flex items-center gap-3 bg-secondary-fixed/30 px-4 py-2 rounded-full">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-body-md text-body-md text-on-secondary-fixed-variant">Strategy Expert</span>
+</div>
+<div class="flex items-center gap-3 bg-secondary-fixed/30 px-4 py-2 rounded-full">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-body-md text-body-md text-on-secondary-fixed-variant">High Impact</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[200px]">
+<div class="relative w-32 h-32">
+<svg class="w-full h-full">
+<circle class="text-surface-container-high stroke-current" cx="64" cy="64" fill="transparent" r="58" stroke-width="8"></circle>
+<circle class="text-secondary stroke-current progress-ring__circle" cx="64" cy="64" fill="transparent" r="58" stroke-dasharray="364.42" stroke-dashoffset="58.3" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-display-lg text-headline-lg text-primary">84</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">OPTIMIZED</span>
+</div>
+</div>
+<p class="mt-4 font-body-md text-body-md text-secondary font-bold">+12% from last week</p>
+</div>
+</div>
+<!-- Recent Activity Feed -->
+<div class="lg:col-span-4 bg-white editorial-shadow rounded-xl p-stack-lg border border-outline-variant/30">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-stack-lg">Recent Activity</h2>
+<ul class="space-y-stack-md">
+<li class="flex gap-4">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[18px] text-inverse-primary">download</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-primary font-bold">Resume Exported</p>
+<p class="text-[13px] text-on-surface-variant">2 hours ago • Product_Lead_V2.pdf</p>
+</div>
+</li>
+<li class="flex gap-4">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[18px] text-on-secondary-container">auto_fix_high</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-primary font-bold">AI Polish Applied</p>
+<p class="text-[13px] text-on-surface-variant">Yesterday • Executive_Bio.docx</p>
+</div>
+</li>
+<li class="flex gap-4 opacity-60">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[18px] text-outline">description</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-primary font-bold">Draft Created</p>
+<p class="text-[13px] text-on-surface-variant">3 days ago • Board_Director_Role</p>
+</div>
+</li>
+</ul>
+<button class="w-full mt-6 text-center font-button text-button text-secondary hover:underline transition-all">View all history</button>
+</div>
+</div>
+<!-- My Resumes Section -->
+<section class="space-y-stack-md pt-stack-lg">
+<div class="flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md text-primary">My Resumes</h2>
+<a class="font-button text-button text-secondary flex items-center gap-1 hover:gap-2 transition-all" href="#">
+                        View Library <span class="material-symbols-outlined">arrow_forward</span>
+</a>
+</div>
+<!-- Bento-style Resume Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Resume Card 1 -->
+<div class="resume-card group relative bg-white editorial-shadow border border-outline-variant/30 rounded-lg overflow-hidden transition-all hover:-translate-y-1">
+<div class="aspect-[1/1.414] bg-surface-container-low p-6 overflow-hidden relative">
+<!-- Paper Simulation -->
+<div class="bg-white w-full h-full shadow-lg p-8 flex flex-col gap-4 transform group-hover:scale-[1.02] transition-transform duration-500">
+<div class="h-2 w-1/2 bg-primary/20"></div>
+<div class="h-4 w-3/4 bg-primary/40"></div>
+<div class="space-y-2 mt-4">
+<div class="h-2 w-full bg-on-surface-variant/10"></div>
+<div class="h-2 w-full bg-on-surface-variant/10"></div>
+<div class="h-2 w-5/6 bg-on-surface-variant/10"></div>
+</div>
+<div class="space-y-2 mt-6">
+<div class="h-3 w-1/3 bg-primary/30"></div>
+<div class="h-2 w-full bg-on-surface-variant/10"></div>
+<div class="h-2 w-full bg-on-surface-variant/10"></div>
+</div>
+</div>
+<!-- Overlay Actions -->
+<div class="resume-overlay absolute inset-0 bg-primary/60 flex items-center justify-center gap-4 opacity-0 transition-opacity duration-300">
+<button class="w-12 h-12 rounded-full bg-white text-primary flex items-center justify-center hover:bg-secondary hover:text-white transition-all">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="w-12 h-12 rounded-full bg-white text-primary flex items-center justify-center hover:bg-secondary hover:text-white transition-all">
+<span class="material-symbols-outlined">download</span>
+</button>
+</div>
+</div>
+<div class="p-6 border-t border-outline-variant/30">
+<div class="flex justify-between items-start mb-2">
+<h4 class="font-body-md text-body-md font-bold text-primary">Senior Product Manager</h4>
+<span class="bg-secondary-container/20 text-on-secondary-container px-2 py-0.5 rounded text-[10px] font-bold">ATS 94%</span>
+</div>
+<p class="text-[13px] text-on-surface-variant mb-4">Updated 2 days ago • Executive Template</p>
+</div>
+</div>
+<!-- Resume Card 2 -->
+<div class="resume-card group relative bg-white editorial-shadow border border-outline-variant/30 rounded-lg overflow-hidden transition-all hover:-translate-y-1">
+<div class="aspect-[1/1.414] bg-surface-container-low p-6 overflow-hidden relative">
+<div class="bg-white w-full h-full shadow-lg p-8 flex flex-col gap-4 transform group-hover:scale-[1.02] transition-transform duration-500">
+<div class="flex justify-between">
+<div class="h-8 w-8 rounded-full bg-secondary/20"></div>
+<div class="h-2 w-1/3 bg-primary/20"></div>
+</div>
+<div class="h-4 w-1/2 bg-primary/40 mx-auto mt-4"></div>
+<div class="space-y-2 mt-6">
+<div class="h-2 w-full bg-on-surface-variant/10"></div>
+<div class="h-2 w-full bg-on-surface-variant/10"></div>
+<div class="h-2 w-full bg-on-surface-variant/10"></div>
+</div>
+</div>
+<div class="resume-overlay absolute inset-0 bg-primary/60 flex items-center justify-center gap-4 opacity-0 transition-opacity duration-300">
+<button class="w-12 h-12 rounded-full bg-white text-primary flex items-center justify-center hover:bg-secondary hover:text-white transition-all">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="w-12 h-12 rounded-full bg-white text-primary flex items-center justify-center hover:bg-secondary hover:text-white transition-all">
+<span class="material-symbols-outlined">download</span>
+</button>
+</div>
+</div>
+<div class="p-6 border-t border-outline-variant/30">
+<div class="flex justify-between items-start mb-2">
+<h4 class="font-body-md text-body-md font-bold text-primary">Strategic Consultant</h4>
+<span class="bg-surface-container-high text-on-surface-variant px-2 py-0.5 rounded text-[10px] font-bold">ATS 82%</span>
+</div>
+<p class="text-[13px] text-on-surface-variant mb-4">Updated 1 week ago • Modern Serif</p>
+</div>
+</div>
+<!-- Empty State / New Card -->
+<button class="group border-2 border-dashed border-outline-variant rounded-lg aspect-[1/1.414] flex flex-col items-center justify-center gap-4 hover:border-secondary hover:bg-secondary/5 transition-all">
+<div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-all">
+<span class="material-symbols-outlined text-3xl">add</span>
+</div>
+<span class="font-body-md text-body-md font-bold text-on-surface-variant group-hover:text-secondary">Create New Document</span>
+</button>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer -->
+<footer class="lg:ml-64 bg-surface-container-low border-t border-outline-variant">
+<div class="w-full py-stack-lg px-margin-desktop flex flex-col md:flex-row justify-between items-center max-w-container-max mx-auto">
+<div class="flex flex-col items-center md:items-start mb-stack-md md:mb-0">
+<span class="font-display-lg text-headline-sm text-primary mb-2">Lettr</span>
+<p class="font-label-caps text-label-caps text-on-surface-variant">© 2024 Lettr AI. Executive Resume Craftsmanship.</p>
+</div>
+<nav class="flex gap-stack-lg">
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-secondary underline transition-all" href="#">Privacy Policy</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-secondary underline transition-all" href="#">Terms of Service</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-secondary underline transition-all" href="#">Help Center</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-secondary underline transition-all" href="#">Career Advice</a>
+</nav>
+</div>
+</footer>
+<script>
+        // Simple micro-interaction for progress circle
+        document.addEventListener('DOMContentLoaded', () => {
+            const circle = document.querySelector('.progress-ring__circle');
+            if (circle) {
+                const radius = circle.r.baseVal.value;
+                const circumference = radius * 2 * Math.PI;
+                circle.style.strokeDasharray = `${circumference} ${circumference}`;
+                
+                const setProgress = (percent) => {
+                    const offset = circumference - (percent / 100 * circumference);
+                    circle.style.strokeDashoffset = offset;
+                };
+
+                // Animate to 84%
+                setTimeout(() => setProgress(84), 500);
+            }
+        });
+    </script>
+</body></html>

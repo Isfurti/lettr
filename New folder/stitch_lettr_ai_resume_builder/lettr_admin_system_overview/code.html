@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lettr Admin Portal | Executive Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Manrope:wght@400;600;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@100..900&family=Source+Serif+4:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#d3e4fe",
+                        "inverse-primary": "#b7c7eb",
+                        "secondary-fixed": "#ffdea4",
+                        "on-primary-container": "#8393b5",
+                        "on-tertiary-fixed": "#1c1c17",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#0b1c30",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed": "#261900",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#213145",
+                        "error-container": "#ffdad6",
+                        "primary-container": "#1b2b48",
+                        "surface-variant": "#d3e4fe",
+                        "surface-container-low": "#eff4ff",
+                        "on-primary": "#ffffff",
+                        "secondary": "#7b5800",
+                        "outline": "#75777e",
+                        "secondary-container": "#fecd6e",
+                        "primary": "#041632",
+                        "on-surface-variant": "#44474d",
+                        "on-tertiary-fixed-variant": "#474741",
+                        "outline-variant": "#c5c6ce",
+                        "on-surface": "#0b1c30",
+                        "surface": "#f8f9ff",
+                        "tertiary-fixed": "#e5e2db",
+                        "surface-bright": "#f8f9ff",
+                        "on-secondary-fixed-variant": "#5d4200",
+                        "on-primary-fixed": "#091b37",
+                        "surface-tint": "#4f5e7e",
+                        "on-primary-fixed-variant": "#374765",
+                        "secondary-fixed-dim": "#efc062",
+                        "primary-fixed": "#d7e2ff",
+                        "background": "#f8f9ff",
+                        "on-secondary-container": "#775600",
+                        "surface-container-high": "#dce9ff",
+                        "on-tertiary-container": "#94928b",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#2b2b26",
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#cbdbf5",
+                        "tertiary-fixed-dim": "#c9c6bf",
+                        "inverse-on-surface": "#eaf1ff",
+                        "primary-fixed-dim": "#b7c7eb",
+                        "surface-container": "#e5eeff",
+                        "tertiary": "#171712"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "stack-sm": "8px",
+                        "section-gap": "120px",
+                        "margin-mobile": "20px",
+                        "stack-md": "16px",
+                        "margin-desktop": "64px",
+                        "container-max": "1280px",
+                        "stack-lg": "32px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["\"Source Serif 4\""],
+                        "headline-md": ["\"Source Serif 4\""],
+                        "headline-lg": ["\"Source Serif 4\""],
+                        "body-lg": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "label-caps": ["Manrope"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .editorial-shadow {
+            box-shadow: 0 4px 20px rgba(4, 22, 50, 0.15);
+        }
+        .chart-grid {
+            background-image: linear-gradient(to right, #e5e6e8 1px, transparent 1px), linear-gradient(to bottom, #e5e6e8 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md overflow-x-hidden">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-primary dark:bg-primary-container text-on-primary shadow-lg flex flex-col py-stack-lg z-50">
+<!-- Brand Header -->
+<div class="px-6 mb-stack-lg">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-10 h-10 bg-secondary-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="shield_person">shield_person</span>
+</div>
+<h1 class="font-display-lg text-headline-md font-bold text-inverse-primary tracking-tight">Admin Portal</h1>
+</div>
+<p class="text-on-primary-fixed-variant opacity-70 text-xs font-label-caps tracking-widest">SYSTEM MANAGEMENT</p>
+</div>
+<!-- Navigation Links -->
+<nav class="flex-1 space-y-1">
+<!-- Active: Overview -->
+<a class="flex items-center gap-4 py-3 px-4 bg-secondary-container text-on-secondary-container rounded-lg mx-2 transition-transform Active: translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-md">Overview</span>
+</a>
+<a class="flex items-center gap-4 py-3 px-4 text-on-primary-fixed-variant opacity-80 hover:opacity-100 hover:bg-primary-fixed-dim/10 mx-2 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-body-md">Users</span>
+</a>
+<a class="flex items-center gap-4 py-3 px-4 text-on-primary-fixed-variant opacity-80 hover:opacity-100 hover:bg-primary-fixed-dim/10 mx-2 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-body-md">Analytics</span>
+</a>
+<a class="flex items-center gap-4 py-3 px-4 text-on-primary-fixed-variant opacity-80 hover:opacity-100 hover:bg-primary-fixed-dim/10 mx-2 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-body-md">Templates</span>
+</a>
+<a class="flex items-center gap-4 py-3 px-4 text-on-primary-fixed-variant opacity-80 hover:opacity-100 hover:bg-primary-fixed-dim/10 mx-2 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-body-md">Subscriptions</span>
+</a>
+<a class="flex items-center gap-4 py-3 px-4 text-on-primary-fixed-variant opacity-80 hover:opacity-100 hover:bg-primary-fixed-dim/10 mx-2 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings_suggest">settings_suggest</span>
+<span class="font-body-md">System</span>
+</a>
+</nav>
+<!-- Footer Actions -->
+<div class="mt-auto px-2 space-y-4">
+<button class="w-full flex items-center justify-center gap-2 py-3 bg-secondary text-on-secondary rounded-lg font-button hover:bg-secondary-fixed transition-colors">
+<span class="material-symbols-outlined" data-icon="health_and_safety">health_and_safety</span>
+                System Health
+            </button>
+<hr class="border-on-primary-fixed-variant opacity-20 mx-4"/>
+<a class="flex items-center gap-4 py-3 px-4 text-on-primary-fixed-variant opacity-80 hover:opacity-100 hover:bg-primary-fixed-dim/10 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-body-md">Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-margin-desktop min-h-screen max-w-container-max">
+<!-- Header -->
+<header class="mb-stack-lg flex justify-between items-end">
+<div>
+<h2 class="font-display-lg text-display-lg text-primary tracking-tight">Executive Overview</h2>
+<p class="text-on-surface-variant font-body-lg">Internal dashboard for Lettr platform performance and user management.</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="text-right">
+<p class="font-label-caps text-label-caps text-secondary">SYSTEM STATUS</p>
+<div class="flex items-center gap-2 text-primary font-bold">
+<span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                        Operational
+                    </div>
+</div>
+</div>
+</header>
+<!-- Key Metrics Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-stack-lg">
+<div class="bg-surface-container-low p-stack-md rounded-lg editorial-shadow border-b-2 border-primary">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-2">TOTAL USERS</p>
+<h3 class="font-headline-lg text-headline-lg text-primary">124,892</h3>
+<p class="text-xs text-emerald-600 mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+                    +12.4% this month
+                </p>
+</div>
+<div class="bg-surface-container-low p-stack-md rounded-lg editorial-shadow border-b-2 border-secondary">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-2">SUBSCRIPTION REVENUE</p>
+<h3 class="font-headline-lg text-headline-lg text-primary">$1.2M</h3>
+<p class="text-xs text-emerald-600 mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+                    +8.1% vs target
+                </p>
+</div>
+<div class="bg-surface-container-low p-stack-md rounded-lg editorial-shadow border-b-2 border-primary">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-2">AI USAGE VOLUME</p>
+<h3 class="font-headline-lg text-headline-lg text-primary">892k</h3>
+<p class="text-xs text-on-surface-variant mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="bolt">bolt</span>
+                    Tokens / Avg Session
+                </p>
+</div>
+<div class="bg-surface-container-low p-stack-md rounded-lg editorial-shadow border-b-2 border-secondary">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-2">TEMPLATE PERFORMANCE</p>
+<h3 class="font-headline-lg text-headline-lg text-primary">94.2%</h3>
+<p class="text-xs text-on-surface-variant mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span>
+                    Conversion Rate
+                </p>
+</div>
+</section>
+<!-- Charts Section -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-gutter mb-stack-lg">
+<!-- User Growth (Line Chart Simulation) -->
+<div class="lg:col-span-2 bg-white p-stack-lg rounded-xl editorial-shadow relative overflow-hidden">
+<div class="flex justify-between items-center mb-stack-md">
+<h4 class="font-headline-md text-headline-md text-primary">User Growth Trends</h4>
+<select class="bg-surface border-none text-xs font-label-caps text-on-surface-variant focus:ring-0">
+<option>Last 30 Days</option>
+<option>Last Quarter</option>
+</select>
+</div>
+<div class="h-64 w-full relative">
+<!-- Fake Grid Lines -->
+<div class="absolute inset-0 flex flex-col justify-between opacity-10">
+<div class="border-b border-primary w-full"></div>
+<div class="border-b border-primary w-full"></div>
+<div class="border-b border-primary w-full"></div>
+<div class="border-b border-primary w-full"></div>
+</div>
+<!-- Fake SVG Line Chart -->
+<svg class="w-full h-full drop-shadow-lg" viewbox="0 0 800 200">
+<path d="M0,180 Q100,160 200,140 T400,100 T600,60 T800,20" fill="none" stroke="#041632" stroke-linecap="round" stroke-width="4"></path>
+<path d="M0,180 Q100,160 200,140 T400,100 T600,60 T800,20 L800,200 L0,200 Z" fill="url(#grad1)" opacity="0.1"></path>
+<defs>
+<lineargradient id="grad1" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:#041632;stop-opacity:1"></stop>
+<stop offset="100%" style="stop-color:#041632;stop-opacity:0"></stop>
+</lineargradient>
+</defs>
+<!-- Active Point -->
+<circle cx="600" cy="60" fill="#7b5800" r="6"></circle>
+</svg>
+<div class="absolute top-[40px] left-[580px] bg-primary text-white text-[10px] py-1 px-2 rounded">
+                        +2.4k Peak
+                    </div>
+</div>
+<div class="mt-4 flex justify-between text-[10px] font-label-caps text-on-surface-variant">
+<span>Week 1</span>
+<span>Week 2</span>
+<span>Week 3</span>
+<span>Week 4</span>
+</div>
+</div>
+<!-- Subscription Distribution (Donut Chart Simulation) -->
+<div class="bg-white p-stack-lg rounded-xl editorial-shadow flex flex-col items-center">
+<h4 class="font-headline-md text-headline-md text-primary w-full mb-stack-md">Tier Distribution</h4>
+<div class="relative w-48 h-48 mb-6">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<circle cx="18" cy="18" fill="transparent" r="15.9" stroke="#eff4ff" stroke-width="4"></circle>
+<circle cx="18" cy="18" fill="transparent" r="15.9" stroke="#7b5800" stroke-dasharray="65 100" stroke-linecap="round" stroke-width="4"></circle>
+<circle cx="18" cy="18" fill="transparent" r="15.9" stroke="#041632" stroke-dasharray="25 100" stroke-dashoffset="-65" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-headline-md font-bold text-primary">82%</span>
+<span class="text-[10px] font-label-caps text-on-surface-variant">PAID TIER</span>
+</div>
+</div>
+<div class="w-full space-y-2">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span class="text-sm">Executive Pro</span>
+</div>
+<span class="font-bold">65%</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-secondary"></span>
+<span class="text-sm">Manager Plus</span>
+</div>
+<span class="font-bold">25%</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-surface-container-high"></span>
+<span class="text-sm">Basic</span>
+</div>
+<span class="font-bold">10%</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Management Table -->
+<section class="bg-white rounded-xl editorial-shadow overflow-hidden">
+<div class="p-stack-lg border-b border-outline-variant flex justify-between items-center">
+<h4 class="font-headline-md text-headline-md text-primary">Recent User Signups</h4>
+<button class="text-primary hover:text-secondary font-label-caps text-label-caps flex items-center gap-2">
+                    VIEW ALL USERS
+                    <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-surface font-label-caps text-label-caps text-on-surface-variant">
+<tr>
+<th class="px-6 py-4">User Details</th>
+<th class="px-6 py-4">Tier</th>
+<th class="px-6 py-4">Status</th>
+<th class="px-6 py-4">Sign-up Date</th>
+<th class="px-6 py-4 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary text-xs font-bold">JD</div>
+<div>
+<p class="font-bold text-primary">Julianne Devis</p>
+<p class="text-xs text-on-surface-variant">j.devis@enterprise.com</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded">EXECUTIVE</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span class="text-sm">Active</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm">Oct 24, 2023</td>
+<td class="px-6 py-4 text-right">
+<button class="p-2 hover:bg-outline-variant rounded transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary text-xs font-bold">MK</div>
+<div>
+<p class="font-bold text-primary">Marcus King</p>
+<p class="text-xs text-on-surface-variant">m.king@techflow.io</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-surface-container-highest text-on-surface-variant text-[10px] font-bold rounded">BASIC</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-amber-500"></span>
+<span class="text-sm">Pending Verification</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm">Oct 23, 2023</td>
+<td class="px-6 py-4 text-right">
+<button class="p-2 hover:bg-outline-variant rounded transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary text-xs font-bold">SL</div>
+<div>
+<p class="font-bold text-primary">Sarah Lin</p>
+<p class="text-xs text-on-surface-variant">sarah.lin@creatives.co</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded">EXECUTIVE</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span class="text-sm">Active</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm">Oct 22, 2023</td>
+<td class="px-6 py-4 text-right">
+<button class="p-2 hover:bg-outline-variant rounded transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- System Health Footer Widget -->
+<section class="mt-stack-lg grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="bg-surface-container-low p-stack-md rounded-lg flex items-center gap-4 border border-outline-variant">
+<div class="w-10 h-10 rounded bg-emerald-100 flex items-center justify-center">
+<span class="material-symbols-outlined text-emerald-700" data-icon="cloud_done">cloud_done</span>
+</div>
+<div>
+<p class="text-xs font-label-caps text-on-surface-variant">API GATEWAY</p>
+<p class="font-bold text-primary">99.9% Uptime</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-stack-md rounded-lg flex items-center gap-4 border border-outline-variant">
+<div class="w-10 h-10 rounded bg-emerald-100 flex items-center justify-center">
+<span class="material-symbols-outlined text-emerald-700" data-icon="database">database</span>
+</div>
+<div>
+<p class="text-xs font-label-caps text-on-surface-variant">DATABASE CLUSTER</p>
+<p class="font-bold text-primary">Optimal Performance</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-stack-md rounded-lg flex items-center gap-4 border border-outline-variant">
+<div class="w-10 h-10 rounded bg-amber-100 flex items-center justify-center">
+<span class="material-symbols-outlined text-amber-700" data-icon="psychology">psychology</span>
+</div>
+<div>
+<p class="text-xs font-label-caps text-on-surface-variant">AI ENGINE QUEUE</p>
+<p class="font-bold text-primary">Moderate Load</p>
+</div>
+</div>
+</section>
+<!-- Editorial Footer -->
+<footer class="mt-section-gap w-full py-stack-lg border-t border-outline-variant flex flex-col md:flex-row justify-between items-center">
+<div class="flex items-center gap-2 mb-4 md:mb-0">
+<span class="font-display-lg text-headline-sm text-primary">Lettr AI</span>
+<span class="text-on-surface-variant opacity-40">|</span>
+<p class="font-label-caps text-label-caps text-on-surface-variant">© 2024 Admin Control</p>
+</div>
+<div class="flex gap-stack-lg">
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-secondary transition-all" href="#">Privacy Policy</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-secondary transition-all" href="#">Terms of Service</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-secondary transition-all" href="#">System Help</a>
+</div>
+</footer>
+</main>
+<!-- Micro-interaction script -->
+<script>
+        document.querySelectorAll('a, button').forEach(el => {
+            el.addEventListener('mousedown', () => {
+                el.style.transform = 'scale(0.98)';
+            });
+            el.addEventListener('mouseup', () => {
+                el.style.transform = '';
+            });
+        });
+
+        // Simple animation for the progress ring dashoffset
+        window.addEventListener('DOMContentLoaded', () => {
+            const rings = document.querySelectorAll('circle[stroke-dasharray]');
+            rings.forEach(ring => {
+                const dash = ring.getAttribute('stroke-dasharray');
+                ring.style.strokeDasharray = '0 100';
+                setTimeout(() => {
+                    ring.style.transition = 'stroke-dasharray 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
+                    ring.style.strokeDasharray = dash;
+                }, 100);
+            });
+        });
+    </script>
+</body></html>

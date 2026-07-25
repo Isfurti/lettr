@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&amp;family=Manrope:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary": "#171712",
+                    "tertiary-fixed-dim": "#c9c6bf",
+                    "surface-container-highest": "#d3e4fe",
+                    "error": "#ba1a1a",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#e5e2db",
+                    "on-tertiary-container": "#94928b",
+                    "surface-dim": "#cbdbf5",
+                    "on-primary-fixed": "#091b37",
+                    "error-container": "#ffdad6",
+                    "surface-container-high": "#dce9ff",
+                    "on-tertiary-fixed-variant": "#474741",
+                    "secondary-fixed": "#ffdea4",
+                    "primary-fixed-dim": "#b7c7eb",
+                    "on-error": "#ffffff",
+                    "primary": "#041632",
+                    "on-secondary-fixed-variant": "#5d4200",
+                    "primary-fixed": "#d7e2ff",
+                    "on-surface": "#0b1c30",
+                    "surface-variant": "#d3e4fe",
+                    "surface": "#f8f9ff",
+                    "on-secondary": "#ffffff",
+                    "on-surface-variant": "#44474d",
+                    "on-secondary-fixed": "#261900",
+                    "inverse-on-surface": "#eaf1ff",
+                    "primary-container": "#1b2b48",
+                    "on-tertiary": "#ffffff",
+                    "inverse-surface": "#213145",
+                    "surface-tint": "#4f5e7e",
+                    "surface-container": "#e5eeff",
+                    "surface-container-low": "#eff4ff",
+                    "surface-bright": "#f8f9ff",
+                    "secondary": "#7b5800",
+                    "on-primary-fixed-variant": "#374765",
+                    "secondary-container": "#fecd6e",
+                    "on-background": "#0b1c30",
+                    "on-primary-container": "#8393b5",
+                    "background": "#f8f9ff",
+                    "on-error-container": "#93000a",
+                    "tertiary-container": "#2b2b26",
+                    "outline": "#75777e",
+                    "secondary-fixed-dim": "#efc062",
+                    "on-secondary-container": "#775600",
+                    "outline-variant": "#c5c6ce",
+                    "inverse-primary": "#b7c7eb",
+                    "on-tertiary-fixed": "#1c1c17",
+                    "cream-base": "#F9F6EE"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "stack-md": "16px",
+                    "section-gap": "120px",
+                    "container-max": "1280px",
+                    "margin-mobile": "20px",
+                    "margin-desktop": "64px",
+                    "gutter": "24px",
+                    "stack-lg": "32px",
+                    "stack-sm": "8px"
+            },
+            "fontFamily": {
+                    "headline-md": ["\"Source Serif 4\""],
+                    "headline-lg": ["\"Source Serif 4\""],
+                    "label-caps": ["Manrope"],
+                    "display-lg-mobile": ["\"Source Serif 4\""],
+                    "body-lg": ["Manrope"],
+                    "display-lg": ["\"Source Serif 4\""],
+                    "body-md": ["Manrope"],
+                    "button": ["Manrope"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "label-caps": ["12px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                    "display-lg-mobile": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "display-lg": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "button": ["15px", {"lineHeight": "1", "letterSpacing": "0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .premium-shadow {
+            box-shadow: 0 20px 40px -15px rgba(4, 22, 50, 0.15);
+        }
+        .editorial-input {
+            border-bottom: 1px solid #75777e;
+            background-color: transparent;
+            transition: border-color 0.2s ease;
+        }
+        .editorial-input:focus {
+            outline: none;
+            border-color: #041632;
+        }
+    </style>
+</head>
+<body class="bg-cream-base text-on-surface font-body-md antialiased">
+<!-- TopAppBar -->
+<header class="w-full h-20 bg-surface-container-lowest border-b border-outline-variant/30 sticky top-0 z-50">
+<div class="flex justify-between items-center max-w-container-max mx-auto px-margin-desktop h-full">
+<div class="font-headline-lg text-headline-lg font-bold text-primary">Lettr</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200" href="#">Features</a>
+<a class="text-primary font-bold border-b-2 border-primary pb-1" href="#">Pricing</a>
+<a class="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200" href="#">Reviews</a>
+</nav>
+<button class="bg-secondary text-on-primary font-button text-button px-6 py-3 rounded hover:opacity-90 transition-all">Build Resume</button>
+</div>
+</header>
+<main class="min-h-screen">
+<!-- Hero Section -->
+<section class="py-24 text-center max-w-container-max mx-auto px-margin-desktop">
+<h1 class="font-display-lg text-display-lg mb-6">Invest in your career's <br/>first impression.</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-12">
+                Choose the plan that matches your career trajectory. From entry-level precision to executive-grade authority.
+            </p>
+<!-- Toggle for Annual -->
+<div class="flex items-center justify-center gap-4 mb-16">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Monthly</span>
+<button class="relative w-12 h-6 bg-primary-container rounded-full p-1 transition-colors" id="billing-toggle">
+<div class="w-4 h-4 bg-white rounded-full transition-transform transform translate-x-6"></div>
+</button>
+<span class="font-label-caps text-label-caps text-primary">Annual <span class="text-secondary">(Save 20%)</span></span>
+</div>
+</section>
+<!-- Pricing Cards -->
+<section class="pb-section-gap max-w-container-max mx-auto px-margin-desktop">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter items-stretch">
+<!-- Basic Plan -->
+<div class="bg-white p-10 border border-outline-variant/30 flex flex-col premium-shadow transition-transform hover:-translate-y-1">
+<div class="mb-8">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-2">ENTRY LEVEL</h3>
+<div class="font-headline-lg text-headline-lg text-primary">Basic</div>
+</div>
+<div class="mb-8">
+<span class="font-display-lg text-headline-lg">$0</span>
+<span class="text-on-surface-variant">/ forever</span>
+</div>
+<ul class="space-y-4 mb-12 flex-grow">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'opsz' 20;">check_circle</span>
+<span class="text-on-surface-variant">1 Standard Resume</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'opsz' 20;">check_circle</span>
+<span class="text-on-surface-variant">Basic PDF Export</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline" style="font-variation-settings: 'opsz' 20;">close</span>
+<span class="text-outline">No AI Rewriting</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline" style="font-variation-settings: 'opsz' 20;">close</span>
+<span class="text-outline">No ATS Scoring</span>
+</li>
+</ul>
+<button class="w-full py-4 border border-primary text-primary font-button text-button hover:bg-primary/5 transition-colors">Get Started</button>
+</div>
+<!-- Executive Pro Plan (Featured) -->
+<div class="bg-primary text-white p-10 flex flex-col relative overflow-hidden transform md:-mt-4 md:mb-4 premium-shadow">
+<div class="absolute top-4 right-[-35px] bg-secondary text-on-primary font-label-caps text-[10px] px-10 py-1 rotate-45 shadow-lg">
+                        MOST POPULAR
+                    </div>
+<div class="mb-8">
+<h3 class="font-label-caps text-label-caps text-secondary-container mb-2">PROFESSIONAL</h3>
+<div class="font-headline-lg text-headline-lg">Executive Pro</div>
+</div>
+<div class="mb-8">
+<span class="font-display-lg text-headline-lg" id="pro-price">$19</span>
+<span class="text-on-primary-container">/ month</span>
+</div>
+<ul class="space-y-4 mb-12 flex-grow">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-container" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="">Unlimited Resumes</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-container" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="">AI Bullet Rewriting</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-container" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="">ATS Scoring &amp; Feedback</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-container" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="">Custom Cover Letters</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-container" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="">1-on-1 AI Interview Prep</span>
+</li>
+</ul>
+<button class="w-full py-4 bg-secondary text-on-primary font-button text-button hover:opacity-90 transition-all">Select Pro Plan</button>
+</div>
+<!-- Manager Plus Plan -->
+<div class="bg-white p-10 border border-outline-variant/30 flex flex-col premium-shadow transition-transform hover:-translate-y-1">
+<div class="mb-8">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-2">LIFETIME VALUE</h3>
+<div class="font-headline-lg text-headline-lg text-primary">Manager Plus</div>
+</div>
+<div class="mb-8">
+<span class="font-display-lg text-headline-lg">$249</span>
+<span class="text-on-surface-variant">/ one-time</span>
+</div>
+<ul class="space-y-4 mb-12 flex-grow">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'opsz' 20;">check_circle</span>
+<span class="text-on-surface-variant">All Pro Features Forever</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'opsz' 20;">check_circle</span>
+<span class="text-on-surface-variant">Priority Human Review</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'opsz' 20;">check_circle</span>
+<span class="text-on-surface-variant">Job Application Auto-Fill</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'opsz' 20;">check_circle</span>
+<span class="text-on-surface-variant">Private Career Portal</span>
+</li>
+</ul>
+<button class="w-full py-4 border border-primary text-primary font-button text-button hover:bg-primary/5 transition-colors">Claim Lifetime</button>
+</div>
+</div>
+</section>
+<!-- Feature Comparison Table -->
+<section class="py-section-gap bg-surface-container-low">
+<div class="max-w-container-max mx-auto px-margin-desktop">
+<div class="text-center mb-16">
+<h2 class="font-headline-lg text-headline-lg mb-4">Compare all features</h2>
+<p class="font-body-md text-on-surface-variant">The fine details of career craftsmanship.</p>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant text-primary font-label-caps text-label-caps">
+<th class="py-6 px-4 w-2/5">FEATURE</th>
+<th class="py-6 px-4 text-center">BASIC</th>
+<th class="py-6 px-4 text-center bg-white/50">PRO</th>
+<th class="py-6 px-4 text-center">PLUS</th>
+</tr>
+</thead>
+<tbody class="font-body-md">
+<tr class="border-b border-outline-variant/30">
+<td class="py-6 px-4 font-semibold text-primary">ATS Scoring System</td>
+<td class="py-6 px-4 text-center text-outline">Basic</td>
+<td class="py-6 px-4 text-center bg-white/50 font-bold">Advanced</td>
+<td class="py-6 px-4 text-center font-bold">Premium</td>
+</tr>
+<tr class="border-b border-outline-variant/30">
+<td class="py-6 px-4 font-semibold text-primary">AI Bullet Point Rewriting</td>
+<td class="py-6 px-4 text-center"><span class="material-symbols-outlined text-outline">remove</span></td>
+<td class="py-6 px-4 text-center bg-white/50"><span class="material-symbols-outlined text-secondary">check</span></td>
+<td class="py-6 px-4 text-center"><span class="material-symbols-outlined text-secondary">check</span></td>
+</tr>
+<tr class="border-b border-outline-variant/30">
+<td class="py-6 px-4 font-semibold text-primary">Unlimited Resume Versions</td>
+<td class="py-6 px-4 text-center"><span class="material-symbols-outlined text-outline">remove</span></td>
+<td class="py-6 px-4 text-center bg-white/50"><span class="material-symbols-outlined text-secondary">check</span></td>
+<td class="py-6 px-4 text-center"><span class="material-symbols-outlined text-secondary">check</span></td>
+</tr>
+<tr class="border-b border-outline-variant/30">
+<td class="py-6 px-4 font-semibold text-primary">Export Formats</td>
+<td class="py-6 px-4 text-center">PDF Only</td>
+<td class="py-6 px-4 text-center bg-white/50">PDF, DOCX, TXT</td>
+<td class="py-6 px-4 text-center">All + JSON</td>
+</tr>
+<tr class="border-b border-outline-variant/30">
+<td class="py-6 px-4 font-semibold text-primary">AI Interview Coach</td>
+<td class="py-6 px-4 text-center"><span class="material-symbols-outlined text-outline">remove</span></td>
+<td class="py-6 px-4 text-center bg-white/50">Limited</td>
+<td class="py-6 px-4 text-center font-bold">Unlimited</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- FAQ Section -->
+<section class="py-section-gap max-w-container-max mx-auto px-margin-desktop">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<div class="md:col-span-4">
+<h2 class="font-headline-lg text-headline-lg mb-4 sticky top-32">Frequently Asked Questions</h2>
+<p class="text-on-surface-variant font-body-md">Can't find what you're looking for? <a class="text-primary underline" href="#">Talk to our career experts.</a></p>
+</div>
+<div class="md:col-span-8 space-y-12">
+<div>
+<h4 class="font-headline-md text-headline-md mb-4 text-primary">Can I cancel my subscription anytime?</h4>
+<p class="text-on-surface-variant font-body-md leading-relaxed">Yes. Our Pro subscription is billed monthly or annually and can be cancelled at any time through your dashboard. You will retain access to your premium features until the end of your current billing period.</p>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md mb-4 text-primary">How does the ATS scoring work?</h4>
+<p class="text-on-surface-variant font-body-md leading-relaxed">Our proprietary algorithm analyzes your resume against 50+ common Applicant Tracking Systems used by Fortune 500 companies. It identifies missing keywords, formatting issues, and structural errors that might cause your resume to be rejected automatically.</p>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md mb-4 text-primary">What is "AI Bullet Rewriting"?</h4>
+<p class="text-on-surface-variant font-body-md leading-relaxed">It's our flagship feature. We use GPT-4 tuned on successful executive resumes to turn passive descriptions ("Responsible for sales") into high-impact, data-driven achievements ("Architected a $2M revenue growth strategy").</p>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md mb-4 text-primary">Is there a student discount?</h4>
+<p class="text-on-surface-variant font-body-md leading-relaxed">Absolutely. We offer a 50% discount for students and recent graduates within 12 months of graduation. Simply contact our support team with a valid student email address.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Call to Action -->
+<section class="py-section-gap bg-primary text-white overflow-hidden relative">
+<div class="absolute inset-0 opacity-10">
+<div class="grid grid-cols-12 h-full w-full">
+<div class="border-r border-white/20"></div><div class="border-r border-white/20"></div><div class="border-r border-white/20"></div><div class="border-r border-white/20"></div><div class="border-r border-white/20"></div><div class="border-r border-white/20"></div><div class="border-r border-white/20"></div><div class="border-r border-white/20"></div><div class="border-r border-white/20"></div><div class="border-r border-white/20"></div><div class="border-r border-white/20"></div><div class=""></div>
+</div>
+</div>
+<div class="max-w-container-max mx-auto px-margin-desktop text-center relative z-10">
+<h2 class="font-display-lg text-display-lg mb-8">Ready to write your next chapter?</h2>
+<div class="flex flex-col sm:flex-row gap-4 justify-center">
+<button class="bg-secondary text-on-primary px-8 py-4 font-button text-button hover:opacity-90 transition-all rounded">Create Your Free Resume</button>
+<button class="bg-transparent border border-white/30 text-white px-8 py-4 font-button text-button hover:bg-white/10 transition-all rounded">View Success Stories</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-stack-lg bg-surface-container-lowest border-t border-outline-variant/30">
+<div class="flex flex-col md:flex-row justify-between items-center max-w-container-max mx-auto px-margin-desktop gap-gutter">
+<div class="font-headline-md text-headline-md font-bold text-primary">Lettr</div>
+<nav class="flex gap-8">
+<a class="text-on-surface-variant hover:text-secondary transition-colors duration-200" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors duration-200" href="#">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors duration-200" href="#">Career Advice</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors duration-200" href="#">Contact</a>
+</nav>
+<div class="font-label-caps text-label-caps text-on-surface-variant">
+                © 2024 Lettr AI. All rights reserved.
+            </div>
+</div>
+</footer>
+<script>
+        // Micro-interaction for Billing Toggle
+        const toggle = document.getElementById('billing-toggle');
+        const proPrice = document.getElementById('pro-price');
+        let isAnnual = true;
+
+        toggle.addEventListener('click', () => {
+            isAnnual = !isAnnual;
+            const circle = toggle.querySelector('div');
+            
+            if (isAnnual) {
+                circle.classList.add('translate-x-6');
+                circle.classList.remove('translate-x-0');
+                proPrice.innerText = '$19';
+                toggle.classList.replace('bg-outline', 'bg-primary-container');
+            } else {
+                circle.classList.add('translate-x-0');
+                circle.classList.remove('translate-x-6');
+                proPrice.innerText = '$24';
+                toggle.classList.replace('bg-primary-container', 'bg-outline');
+            }
+            
+            // Animation for price change
+            proPrice.classList.add('opacity-0', 'scale-90');
+            setTimeout(() => {
+                proPrice.classList.remove('opacity-0', 'scale-90');
+            }, 50);
+        });
+    </script>
+</body></html>

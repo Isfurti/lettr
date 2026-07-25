@@ -1,26 +1,41 @@
 @import "tailwindcss";
 
 :root {
-  --paper: #faf7f0;
+  /* "Paper and Ink" system, from the Stitch DESIGN.md spec */
+  --paper: #f9f6ee; /* Editorial Cream Base - used everywhere, including dashboard/admin */
   --paper-raised: #ffffff;
-  --ink: #1b2a4a;
-  --ink-soft: #5b6472;
-  --rule: #dcd5c4;
-  --seal: #b8912c;
-  --seal-soft: #f1e6c8;
-  --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", "URW Palladio L", serif;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+  --app-bg: #f9f6ee;
+
+  --ink: #041632; /* Primary Navy */
+  --ink-soft: #44474d; /* on-surface-variant / slate */
+  --navy-deep: #041632;
+
+  --rule: #d8d2c3; /* warm-toned neutral divider, matches the cream system */
+  --rule-cool: #d8d2c3;
+
+  --seal: #7b5800; /* Secondary Gold-Brown */
+  --seal-soft: #f9f1e0; /* chip background, per DESIGN.md */
+  --seal-deep: #5d4200;
+  --seal-bright: #fecd6e; /* secondary-container, for toggles/highlights */
+
+  --font-display: "Source Serif 4", Georgia, serif;
+  --font-sans: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, ui-monospace, monospace;
 }
 
 @theme inline {
   --color-paper: var(--paper);
   --color-paper-raised: var(--paper-raised);
+  --color-app-bg: var(--app-bg);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
+  --color-navy-deep: var(--navy-deep);
   --color-rule: var(--rule);
+  --color-rule-cool: var(--rule-cool);
   --color-seal: var(--seal);
   --color-seal-soft: var(--seal-soft);
+  --color-seal-deep: var(--seal-deep);
+  --color-seal-bright: var(--seal-bright);
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
@@ -33,6 +48,49 @@ body {
 
 .paper-sheet {
   background: var(--paper-raised);
-  box-shadow: 0 1px 2px rgba(27, 42, 74, 0.06), 0 12px 28px -12px rgba(27, 42, 74, 0.18);
+  box-shadow: 0 20px 40px -15px rgba(4, 22, 50, 0.15);
 }
 
+.app-shell {
+  background: var(--app-bg);
+}
+
+.sidebar-nav-item-active {
+  background: var(--seal);
+  color: #ffffff;
+}
+
+.score-ring-track {
+  stroke: var(--seal-soft);
+}
+
+.score-ring-fill {
+  stroke: var(--seal);
+  transition: stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Editorial input style, per DESIGN.md: bottom-border-only, transitions to navy on focus */
+.editorial-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--ink-soft);
+  border-radius: 0;
+  padding: 8px 0;
+  transition: border-color 0.2s ease;
+}
+.editorial-input:focus {
+  outline: none;
+  border-bottom-color: var(--ink);
+  box-shadow: none;
+}
+
+/* Scroll-reveal utility - see components/Reveal.tsx */
+.reveal-init {
+  opacity: 0;
+  transform: translateY(2.5rem);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}

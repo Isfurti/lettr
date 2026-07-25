@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { listSupportMessages } from "@/lib/db";
 import { ResolveButton } from "@/components/ResolveButton";
+import { AdminSidebar } from "@/components/AdminSidebar";
 
 function fingerprint(value: string) {
   // Shows enough to spot whitespace/hidden-character mismatches without
@@ -26,7 +27,7 @@ export default async function AdminSupportPage() {
   if (!isMatch) {
     return (
       <main className="flex-1 max-w-lg mx-auto w-full px-8 py-12">
-        <h1 className="font-display font-bold text-xl mb-4">Admin check failed</h1>
+        <h1 className="font-display font-semibold text-xl mb-4">Admin check failed</h1>
         <p className="text-sm text-ink-soft mb-6">
           You&apos;re logged in, but your email doesn&apos;t match <code>ADMIN_EMAIL</code>. Compare
           these fingerprints against what you typed into Vercel — a mismatched length usually means
@@ -53,42 +54,44 @@ export default async function AdminSupportPage() {
   const resolved = messages.filter((m) => m.status === "resolved");
 
   return (
-    <main className="flex-1 max-w-3xl mx-auto w-full px-8 py-12">
-      <p className="text-xs uppercase tracking-[0.18em] text-seal font-mono mb-1">Admin</p>
-      <h1 className="font-display font-bold text-2xl mb-8">Support inbox</h1>
+    <div className="flex-1 flex app-shell">
+      <AdminSidebar />
+      <main className="flex-1 px-10 py-10 max-w-4xl">
+        <h1 className="font-display font-semibold text-3xl mb-8">Support inbox</h1>
 
-      <h2 className="font-display font-bold text-sm uppercase tracking-wide text-ink-soft mb-3">
-        Open ({open.length})
-      </h2>
-      <div className="space-y-3 mb-10">
-        {open.length === 0 && <p className="text-sm text-ink-soft">Nothing open. 🎉</p>}
-        {open.map((m) => (
-          <div key={m.id} className="paper-sheet rounded-sm p-4">
-            <div className="flex items-center justify-between mb-1">
-              <p className="font-medium text-sm">{m.subject}</p>
-              <span className="text-xs text-ink-soft font-mono">{new Date(m.created_at).toLocaleString()}</span>
-            </div>
-            <p className="text-xs text-ink-soft mb-2">{m.email}</p>
-            <p className="text-sm whitespace-pre-wrap mb-3">{m.message}</p>
-            <ResolveButton id={m.id} />
-          </div>
-        ))}
-      </div>
-
-      {resolved.length > 0 && (
-        <>
-          <h2 className="font-display font-bold text-sm uppercase tracking-wide text-ink-soft mb-3">
-            Resolved ({resolved.length})
-          </h2>
-          <div className="space-y-2 opacity-60">
-            {resolved.map((m) => (
-              <div key={m.id} className="paper-sheet rounded-sm p-3">
-                <p className="text-sm">{m.subject} — {m.email}</p>
+        <h2 className="font-display font-semibold text-sm uppercase tracking-wide text-ink-soft mb-3">
+          Open ({open.length})
+        </h2>
+        <div className="space-y-3 mb-10">
+          {open.length === 0 && <p className="text-sm text-ink-soft">Nothing open. 🎉</p>}
+          {open.map((m) => (
+            <div key={m.id} className="paper-sheet rounded-sm p-4">
+              <div className="flex items-center justify-between mb-1">
+                <p className="font-medium text-sm">{m.subject}</p>
+                <span className="text-xs text-ink-soft font-mono">{new Date(m.created_at).toLocaleString()}</span>
               </div>
-            ))}
-          </div>
-        </>
-      )}
-    </main>
+              <p className="text-xs text-ink-soft mb-2">{m.email}</p>
+              <p className="text-sm whitespace-pre-wrap mb-3">{m.message}</p>
+              <ResolveButton id={m.id} />
+            </div>
+          ))}
+        </div>
+
+        {resolved.length > 0 && (
+          <>
+            <h2 className="font-display font-semibold text-sm uppercase tracking-wide text-ink-soft mb-3">
+              Resolved ({resolved.length})
+            </h2>
+            <div className="space-y-2 opacity-60">
+              {resolved.map((m) => (
+                <div key={m.id} className="paper-sheet rounded-sm p-3">
+                  <p className="text-sm">{m.subject} — {m.email}</p>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </main>
+    </div>
   );
 }

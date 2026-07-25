@@ -243,4 +243,55 @@ export async function updateSupportMessageStatus(id: string, status: "open" | "r
   await pool.query("UPDATE support_messages SET status = $1 WHERE id = $2", [status, id]);
 }
 
+export type AdminOverview = {
+  totalUsers: number;
+  proUsers: number;
+  freeUsers: number;
+  totalResumes: number;
+  openSupportCount: number;
+  signupsByWeek: { week: string; count: number }[];
+};
+
+export async function getAdminOverview(): Promise<AdminOverview> {
+  await ensureSchema();
+
+  const [userCounts, resumeCount, supportCount, weeklySignups] = await Promise.all([
+    pool.query(
+      "SELECT COUNT(*) FILTER (WHERE plan = 'pro')::int AS pro, COUNT(*) FILTER (WHERE plan = 'free')::int AS free FROM users"
+    ),
+    pool.query("SELECT COUNT(*)::int AS count FROM resumes"),
+    pool.query("SELECT COUNT(*)::int AS count FROM support_messages WHERE status = 'open'"),
+    pool.query(`
+      SELECT to_char(date_trunc('week', created_at), 'YYYY-MM-DD') AS week, COUNT(*)::int AS count
+      FROM users
+      WHERE created_at > now() - interval '8 weeks'
+      GROUP BY 1
+      ORDER BY 1 ASC
+    `),
+  ]);
+
+  const pro = userCounts.rows[0].pro as number;
+  const free = userCounts.rows[0].free as number;
+
+  return {
+    totalUsers: pro + free,
+    proUsers: pro,
+    freeUsers: free,
+    totalResumes: resumeCount.rows[0].count,
+    openSupportCount: supportCount.rows[0].count,
+    signupsByWeek: weeklySignups.rows,
+  };
+}
+
+export type RecentUserRow = { id: string; email: string; name: string | null; plan: string; created_at: string };
+
+export async function listRecentUsers(limit = 6): Promise<RecentUserRow[]> {
+  await ensureSchema();
+  const res = await pool.query(
+    "SELECT id, email, name, plan, created_at FROM users ORDER BY created_at DESC LIMIT $1",
+    [limit]
+  );
+  return res.rows;
+}
+
 export default pool;

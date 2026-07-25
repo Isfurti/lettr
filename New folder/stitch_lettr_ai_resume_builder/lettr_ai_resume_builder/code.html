@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lettr | Premium AI Resume Craftsmanship</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#d3e4fe",
+                    "inverse-primary": "#b7c7eb",
+                    "secondary-fixed": "#ffdea4",
+                    "on-primary-container": "#8393b5",
+                    "on-tertiary-fixed": "#1c1c17",
+                    "surface-container-lowest": "#ffffff",
+                    "on-background": "#0b1c30",
+                    "on-error-container": "#93000a",
+                    "error": "#ba1a1a",
+                    "on-secondary-fixed": "#261900",
+                    "on-error": "#ffffff",
+                    "inverse-surface": "#213145",
+                    "error-container": "#ffdad6",
+                    "primary-container": "#1b2b48",
+                    "surface-variant": "#d3e4fe",
+                    "surface-container-low": "#eff4ff",
+                    "on-primary": "#ffffff",
+                    "secondary": "#7b5800",
+                    "outline": "#75777e",
+                    "secondary-container": "#fecd6e",
+                    "primary": "#041632",
+                    "on-surface-variant": "#44474d",
+                    "on-tertiary-fixed-variant": "#474741",
+                    "outline-variant": "#c5c6ce",
+                    "on-surface": "#0b1c30",
+                    "surface": "#f8f9ff",
+                    "tertiary-fixed": "#e5e2db",
+                    "surface-bright": "#f8f9ff",
+                    "on-secondary-fixed-variant": "#5d4200",
+                    "on-primary-fixed": "#091b37",
+                    "surface-tint": "#4f5e7e",
+                    "on-primary-fixed-variant": "#374765",
+                    "secondary-fixed-dim": "#efc062",
+                    "primary-fixed": "#d7e2ff",
+                    "background": "#f8f9ff",
+                    "on-secondary-container": "#775600",
+                    "surface-container-high": "#dce9ff",
+                    "on-tertiary-container": "#94928b",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-container": "#2b2b26",
+                    "on-secondary": "#ffffff",
+                    "surface-dim": "#cbdbf5",
+                    "tertiary-fixed-dim": "#c9c6bf",
+                    "inverse-on-surface": "#eaf1ff",
+                    "primary-fixed-dim": "#b7c7eb",
+                    "surface-container": "#e5eeff",
+                    "tertiary": "#171712"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "stack-sm": "8px",
+                    "section-gap": "120px",
+                    "margin-mobile": "20px",
+                    "stack-md": "16px",
+                    "margin-desktop": "64px",
+                    "container-max": "1280px",
+                    "stack-lg": "32px",
+                    "gutter": "24px"
+            },
+            "fontFamily": {
+                    "display-lg-mobile": ["\"Source Serif 4\""],
+                    "button": ["Manrope"],
+                    "headline-md": ["\"Source Serif 4\""],
+                    "headline-lg": ["\"Source Serif 4\""],
+                    "display-lg": ["\"Source Serif 4\""],
+                    "body-lg": ["Manrope"],
+                    "label-caps": ["Manrope"],
+                    "body-md": ["Manrope"]
+            },
+            "fontSize": {
+                    "display-lg-mobile": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "button": ["15px", {"lineHeight": "1", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "display-lg": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #f8f9ff;
+            color: #0b1c30;
+            overflow-x: hidden;
+        }
+        .resume-shadow {
+            box-shadow: 0 4px 20px rgba(4, 22, 50, 0.15);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f8f9ff;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c5c6ce;
+            border-radius: 10px;
+        }
+        .editorial-input {
+            border: none;
+            border-bottom: 1px solid #c5c6ce;
+            background: transparent;
+            padding: 8px 0;
+            transition: border-color 0.2s ease;
+        }
+        .editorial-input:focus {
+            outline: none;
+            border-bottom-color: #041632;
+            ring: 0;
+        }
+        .a4-aspect {
+            aspect-ratio: 1 / 1.414;
+        }
+        .score-ring {
+            transition: stroke-dashoffset 1s ease-out;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 md:px-16 h-20 bg-surface shadow-sm max-w-full">
+<div class="flex items-center gap-8">
+<span class="font-display-lg text-headline-md font-bold text-primary tracking-tight">Lettr</span>
+<nav class="hidden md:flex gap-6">
+<a class="text-on-surface-variant hover:text-secondary transition-colors duration-200 font-body-md" href="#">Dashboard</a>
+<a class="text-primary font-bold border-b-2 border-secondary font-body-md" href="#">Resumes</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors duration-200 font-body-md" href="#">Letters</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors duration-200 font-body-md" href="#">Templates</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-container-low rounded-full">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-container-low rounded-full">settings_suggest</button>
+<button class="bg-secondary text-on-primary px-6 py-3 font-button text-button rounded-lg hover:brightness-90 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">auto_fix_high</span>
+                Build Resume
+            </button>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A high-end professional portrait of a senior executive, soft lighting, neutral background, editorial style, navy and cream tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCot2R_h4WlU0N690fqE4v6p_cbqjhUBEgzU3Ydyh6xZAvBwT0TOsxbD6WuuR8Kxdn58NoFXafgRvTmz-6tcD-EoDj1LhQzRs10Phnu49QbfHZWJ58bagOvqT0lVNuCLQuRCZUWMLIBsZ7W8UD5_xY7ZA9rmCZrvxM9oLHEceW4FP0-D-hWUUugxkXR-krlPgO8eUxTkvRyxnzfqz7UYOL09rfWIHL1-UL10oVegUgNniZe8uQeQiwFrF9LEsELmXLRpW7DaPYzZWki"/>
+</div>
+</div>
+</header>
+<main class="pt-20 h-screen flex overflow-hidden">
+<!-- Left: Editor Pane -->
+<section class="w-full md:w-5/12 bg-surface-container-low border-r border-outline-variant overflow-y-auto custom-scrollbar p-8">
+<div class="max-w-xl mx-auto space-y-12 pb-24">
+<!-- Section Header -->
+<div class="space-y-2">
+<span class="font-label-caps text-label-caps text-secondary">PROJECT: SENIOR PRODUCT DESIGNER</span>
+<h1 class="font-headline-lg text-headline-lg text-primary">Resume Editor</h1>
+</div>
+<!-- Personal Info -->
+<div class="space-y-6">
+<div class="flex items-center gap-2 text-primary font-bold">
+<span class="material-symbols-outlined">person</span>
+<h2 class="uppercase tracking-widest text-sm">Personal Identity</h2>
+</div>
+<div class="grid grid-cols-2 gap-stack-lg">
+<div class="flex flex-col">
+<label class="font-label-caps text-[10px] text-on-surface-variant">FULL NAME</label>
+<input class="editorial-input font-headline-md text-primary" type="text" value="Alexander Sterling"/>
+</div>
+<div class="flex flex-col">
+<label class="font-label-caps text-[10px] text-on-surface-variant">ROLE TITLE</label>
+<input class="editorial-input font-body-lg italic" type="text" value="Principal Product Strategist"/>
+</div>
+</div>
+</div>
+<!-- Work Experience -->
+<div class="space-y-6">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2 text-primary font-bold">
+<span class="material-symbols-outlined">work</span>
+<h2 class="uppercase tracking-widest text-sm">Professional Experience</h2>
+</div>
+<button class="text-secondary font-button text-sm flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-[16px]">add</span> Add Entry
+                        </button>
+</div>
+<div class="p-6 bg-white rounded-xl shadow-sm border border-outline-variant space-y-4">
+<div class="flex justify-between items-start">
+<div class="space-y-1">
+<input class="font-bold text-primary w-full outline-none focus:text-secondary transition-colors" type="text" value="Lead Design Consultant"/>
+<p class="text-on-surface-variant font-label-caps text-[11px]">VANGUARD TECHNOLOGIES | 2020 — PRESENT</p>
+</div>
+<button class="bg-secondary-container/20 text-on-secondary-container px-3 py-1 rounded text-[11px] font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">auto_awesome</span> AI Rewrite
+                            </button>
+</div>
+<textarea class="w-full bg-surface-container-lowest p-4 rounded border-none text-body-md leading-relaxed h-32 focus:ring-1 focus:ring-primary" placeholder="Describe your achievements...">Spearheaded the complete overhaul of the flagship SaaS platform, resulting in a 42% increase in user retention over 18 months. Orchestrated cross-functional design sprints for 12+ product teams...</textarea>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed text-[11px] font-bold rounded-full">SaaS Optimization</span>
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed text-[11px] font-bold rounded-full">Design Sprints</span>
+</div>
+</div>
+</div>
+<!-- Skills & ATS Optimizer -->
+<div class="space-y-6">
+<div class="flex items-center gap-2 text-primary font-bold">
+<span class="material-symbols-outlined">psychology</span>
+<h2 class="uppercase tracking-widest text-sm">Competencies &amp; Skills</h2>
+</div>
+<div class="flex flex-wrap gap-3">
+<div class="flex items-center gap-2 px-4 py-2 bg-white border border-outline-variant rounded-lg hover:border-secondary transition-colors cursor-pointer">
+<span class="text-body-md">Strategic Planning</span>
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-white border border-outline-variant rounded-lg hover:border-secondary transition-colors cursor-pointer">
+<span class="text-body-md">UX Architecture</span>
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-white border border-outline-variant rounded-lg hover:border-secondary transition-colors cursor-pointer">
+<span class="text-body-md">Data Analysis</span>
+<span class="material-symbols-outlined text-outline-variant text-[16px]">add_circle</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right: Preview Pane -->
+<section class="hidden md:flex flex-1 bg-surface-dim items-start justify-center overflow-y-auto custom-scrollbar p-12">
+<div class="relative">
+<!-- Floating Tools -->
+<div class="absolute -left-20 top-0 flex flex-col gap-4">
+<button class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform" title="Select Template">
+<span class="material-symbols-outlined">dashboard_customize</span>
+</button>
+<button class="w-12 h-12 bg-white text-primary rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform border border-outline-variant" title="Download PDF">
+<span class="material-symbols-outlined">download</span>
+</button>
+<button class="w-12 h-12 bg-white text-primary rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform border border-outline-variant" title="Share Link">
+<span class="material-symbols-outlined">share</span>
+</button>
+</div>
+<!-- ATS Widget -->
+<div class="absolute -right-24 top-0 w-48 bg-white p-6 rounded-2xl shadow-xl border border-outline-variant space-y-4">
+<div class="flex flex-col items-center">
+<div class="relative w-24 h-24 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-container-high" cx="48" cy="48" fill="transparent" r="40" stroke="currentColor" stroke-width="6"></circle>
+<circle class="text-secondary score-ring" cx="48" cy="48" fill="transparent" r="40" stroke="currentColor" stroke-dasharray="251.2" stroke-dashoffset="20" stroke-width="6"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-headline-md font-bold text-primary">92</span>
+<span class="text-[10px] font-label-caps text-on-surface-variant">/ 100</span>
+</div>
+</div>
+<p class="mt-2 text-center text-body-md font-bold text-primary">ATS Ready</p>
+<p class="text-[10px] text-center text-on-surface-variant uppercase tracking-widest mt-1">Optimization Score</p>
+</div>
+<div class="space-y-2">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+<span class="text-[11px] text-on-surface-variant">Strong Keyword Density</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+<span class="text-[11px] text-on-surface-variant">Classic Structure</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+<span class="text-[11px] text-on-surface-variant">Needs More Metrics</span>
+</div>
+</div>
+</div>
+<!-- Resume Preview Sheet -->
+<div class="w-[600px] a4-aspect bg-white p-12 resume-shadow flex flex-col gap-8 select-none pointer-events-none">
+<!-- Header -->
+<div class="border-b-2 border-primary pb-6 flex justify-between items-end">
+<div>
+<h1 class="font-display-lg text-4xl text-primary uppercase tracking-tighter">Alexander Sterling</h1>
+<p class="font-body-lg italic text-secondary-container font-bold text-on-secondary-container inline-block px-2">Principal Product Strategist</p>
+</div>
+<div class="text-right text-[10px] font-label-caps space-y-1">
+<p>LONDON, UK</p>
+<p>+44 20 7946 0958</p>
+<p>A.STERLING@EXECUTIVE.COM</p>
+</div>
+</div>
+<!-- Summary -->
+<div class="space-y-2">
+<h3 class="font-label-caps text-xs text-primary border-b border-outline-variant pb-1">EXECUTIVE SUMMARY</h3>
+<p class="text-[13px] leading-relaxed text-on-surface">Visionary Product Strategist with over 12 years of experience driving digital transformation for Tier-1 technology firms. Expert in bridging the gap between complex engineering capabilities and intuitive user experience design. Proven track record of scaling products from MVP to market leadership through data-driven design and cross-functional leadership.</p>
+</div>
+<!-- Experience -->
+<div class="space-y-6">
+<h3 class="font-label-caps text-xs text-primary border-b border-outline-variant pb-1">EXPERIENCE</h3>
+<div class="space-y-2">
+<div class="flex justify-between items-baseline">
+<h4 class="font-bold text-sm">VANGUARD TECHNOLOGIES</h4>
+<span class="font-label-caps text-[10px]">2020 — PRESENT</span>
+</div>
+<p class="text-[11px] font-bold italic text-on-surface-variant uppercase tracking-widest">Lead Design Consultant</p>
+<ul class="text-[12px] leading-relaxed list-disc list-inside space-y-1 text-on-surface">
+<li>Spearheaded the complete overhaul of the flagship SaaS platform, resulting in a 42% increase in user retention over 18 months.</li>
+<li>Orchestrated cross-functional design sprints for 12+ product teams, streamlining the development lifecycle by 30%.</li>
+<li>Implemented a centralized Design System that reduced design debt by 25% across 4 global offices.</li>
+</ul>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-baseline">
+<h4 class="font-bold text-sm">LUMINA CREATIVE</h4>
+<span class="font-label-caps text-[10px]">2016 — 2020</span>
+</div>
+<p class="text-[11px] font-bold italic text-on-surface-variant uppercase tracking-widest">Senior Product Designer</p>
+<ul class="text-[12px] leading-relaxed list-disc list-inside space-y-1 text-on-surface">
+<li>Lead the UI/UX strategy for a mobile-first banking application, securing $15M in Series B funding.</li>
+<li>Conducted extensive ethnographic research across 5 European markets to inform product localization.</li>
+</ul>
+</div>
+</div>
+<!-- Education & Skills Footer -->
+<div class="mt-auto grid grid-cols-2 gap-8">
+<div class="space-y-2">
+<h3 class="font-label-caps text-xs text-primary border-b border-outline-variant pb-1">EDUCATION</h3>
+<div class="text-[11px]">
+<p class="font-bold">ROYAL COLLEGE OF ART</p>
+<p>MA Service Design, 2015</p>
+</div>
+</div>
+<div class="space-y-2">
+<h3 class="font-label-caps text-xs text-primary border-b border-outline-variant pb-1">CORE SKILLS</h3>
+<div class="flex flex-wrap gap-2">
+<span class="text-[10px] px-2 py-0.5 bg-surface-container-low border border-outline-variant">Product Strategy</span>
+<span class="text-[10px] px-2 py-0.5 bg-surface-container-low border border-outline-variant">UX Architecture</span>
+<span class="text-[10px] px-2 py-0.5 bg-surface-container-low border border-outline-variant">Design Ops</span>
+</div>
+</div>
+</div>
+<!-- Watermark -->
+<div class="pt-8 border-t border-outline-variant flex justify-center opacity-30">
+<span class="font-display-lg text-sm font-bold text-primary tracking-widest">LETTR AI CRAFTED</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer for context -->
+<footer class="fixed bottom-0 w-full py-4 px-16 flex justify-between items-center bg-surface border-t border-outline-variant z-50">
+<p class="text-label-caps font-label-caps text-on-surface-variant">© 2024 Lettr AI. Executive Resume Craftsmanship.</p>
+<div class="flex gap-6">
+<a class="text-label-caps font-label-caps text-on-surface-variant hover:text-secondary underline transition-all" href="#">Privacy Policy</a>
+<a class="text-label-caps font-label-caps text-on-surface-variant hover:text-secondary underline transition-all" href="#">Help Center</a>
+<a class="text-label-caps font-label-caps text-on-surface-variant hover:text-secondary underline transition-all" href="#">Career Advice</a>
+</div>
+</footer>
+<script>
+        // Micro-interaction: Update Score Circle
+        window.addEventListener('DOMContentLoaded', () => {
+            const circle = document.querySelector('.score-ring');
+            if (circle) {
+                // score is 92, so offset = circumference * (1 - 92/100)
+                // circumference = 2 * PI * 40 = 251.2
+                const offset = 251.2 * (1 - 0.92);
+                setTimeout(() => {
+                    circle.style.strokeDashoffset = offset;
+                }, 500);
+            }
+        });
+
+        // Editor Input Feedback
+        const inputs = document.querySelectorAll('.editorial-input, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.closest('.p-6')?.classList.add('ring-1', 'ring-secondary');
+            });
+            input.addEventListener('blur', () => {
+                input.closest('.p-6')?.classList.remove('ring-1', 'ring-secondary');
+            });
+        });
+    </script>
+</body></html>
