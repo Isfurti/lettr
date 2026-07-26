@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Settings } from "lucide-react";
+import { Bell, Settings, Home } from "lucide-react";
 
 export function TopNav({
   active,
@@ -38,6 +38,9 @@ export function TopNav({
         </nav>
       </div>
       <div className="flex items-center gap-4">
+        <Link href="/" className="text-ink-soft hover:text-ink" title="Visit homepage">
+          <Home className="w-[18px] h-[18px]" strokeWidth={1.75} />
+        </Link>
         <Link href="/support" className="text-ink-soft hover:text-ink" title="Support">
           <Bell className="w-[18px] h-[18px]" strokeWidth={1.75} />
         </Link>

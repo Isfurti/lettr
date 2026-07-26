@@ -171,6 +171,30 @@ tests/
   ats-score.test.ts, db.test.ts
 ```
 
+## Rate limiting
+
+The 5 endpoints that call Anthropic's API (bullet rewriting, summary writer,
+cover letter, resignation letter, AI agent) are rate-limited per user via a
+Postgres-backed sliding window (`lib/rate-limit.ts`) — 15-20 requests per 10
+minutes depending on the endpoint. This is backed by the database (not an
+in-memory counter) because Vercel runs multiple serverless instances that
+don't share memory — an in-memory limiter would be trivially bypassed.
+
+## Email verification & password reset
+
+Both require `RESEND_API_KEY` to actually send emails:
+- **Without it**: new accounts are auto-verified (we can't gate on an email
+  we're incapable of sending), and password reset requests are accepted but
+  no email goes out — there's currently no way to actually reset a password
+  without Resend configured.
+- **With it**: new accounts start unverified with a banner + resend option
+  on the dashboard; `/forgot-password` sends a real reset link.
+
+Unverified users are **not blocked** from using the app — the banner is a
+nudge, not a gate. If you want verification enforced before certain actions
+(e.g. before Pro checkout), that's a small addition to make, not built in
+by default.
+
 ## Going to production
 
 1. **Database**: already Postgres — for production, point `DATABASE_URL` at a

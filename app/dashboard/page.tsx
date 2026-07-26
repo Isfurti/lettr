@@ -11,6 +11,7 @@ import { ScoreRing } from "@/components/ScoreRing";
 import { NewResumeButton } from "@/components/NewResumeButton";
 import { BillingPortalButton } from "@/components/BillingPortalButton";
 import { ResumeSearch } from "@/components/ResumeSearch";
+import { VerifyEmailBanner } from "@/components/VerifyEmailBanner";
 
 export default async function DashboardPage({
   searchParams,
@@ -43,6 +44,7 @@ export default async function DashboardPage({
       <AppSidebar eyebrow="Resume workspace" />
 
       <main className="flex-1 px-10 py-10 max-w-6xl">
+        {user && !user.email_verified && <VerifyEmailBanner />}
         {drive_connected && (
           <div className="mb-6 bg-seal-soft text-seal-deep text-sm rounded-sm px-4 py-3">
             Google Drive connected. You can now save resumes straight to Drive from the builder.

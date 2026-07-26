@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { getUserById } from "@/lib/db";
 import { canUseCoverLetterBuilder, type Plan } from "@/lib/limits";
 import { generateCoverLetter } from "@/lib/ai";
+import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 
 const Schema = z.object({
   resume: z.any(),
@@ -21,6 +22,14 @@ export async function POST(req: Request) {
   const check = canUseCoverLetterBuilder(plan);
   if (!check.allowed) {
     return NextResponse.json({ error: check.reason, upgradeRequired: true }, { status: 402 });
+  }
+
+  const rateLimit = await checkAndRecordRateLimit(userId, "cover-letter", 15, 10);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: `Too many requests. Try again in ${rateLimit.retryAfterSeconds}s.` },
+      { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
+    );
   }
 
   const body = await req.json().catch(() => null);

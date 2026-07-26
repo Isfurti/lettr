@@ -43,6 +43,11 @@ function ensureSchema(): Promise<void> {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS google_access_token TEXT;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS google_refresh_token TEXT;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS google_token_expiry TIMESTAMPTZ;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT false;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_token TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_expiry TIMESTAMPTZ;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_token TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_expiry TIMESTAMPTZ;
 
       CREATE TABLE IF NOT EXISTS support_messages (
         id TEXT PRIMARY KEY,
@@ -62,6 +67,14 @@ function ensureSchema(): Promise<void> {
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
       CREATE INDEX IF NOT EXISTS idx_activity_log_user ON activity_log(user_id, created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS rate_limit_events (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        endpoint TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_rate_limit_lookup ON rate_limit_events(user_id, endpoint, created_at);
 
       CREATE TABLE IF NOT EXISTS resumes (
         id TEXT PRIMARY KEY,
@@ -91,6 +104,11 @@ export type UserRow = {
   google_access_token: string | null;
   google_refresh_token: string | null;
   google_token_expiry: string | null;
+  email_verified: boolean;
+  email_verification_token: string | null;
+  email_verification_expiry: string | null;
+  password_reset_token: string | null;
+  password_reset_expiry: string | null;
   created_at: string;
 };
 
@@ -116,11 +134,11 @@ export async function getUserById(id: string): Promise<UserRow | undefined> {
   return res.rows[0];
 }
 
-export async function createUser(u: { id: string; email: string; passwordHash: string; name?: string }) {
+export async function createUser(u: { id: string; email: string; passwordHash: string; name?: string; emailVerified?: boolean }) {
   await ensureSchema();
   await pool.query(
-    "INSERT INTO users (id, email, password_hash, name) VALUES ($1, $2, $3, $4)",
-    [u.id, u.email, u.passwordHash, u.name ?? null]
+    "INSERT INTO users (id, email, password_hash, name, email_verified) VALUES ($1, $2, $3, $4, $5)",
+    [u.id, u.email, u.passwordHash, u.name ?? null, u.emailVerified ?? false]
   );
 }
 
@@ -353,6 +371,69 @@ export async function getTemplatePopularity(): Promise<{ template: string; count
     "SELECT template, COUNT(*)::int AS count FROM resumes GROUP BY template ORDER BY count DESC"
   );
   return res.rows;
+}
+
+export async function countRecentRateLimitEvents(
+  userId: string,
+  endpoint: string,
+  windowStart: Date
+): Promise<{ count: number; oldest: string | null }> {
+  await ensureSchema();
+  const res = await pool.query(
+    "SELECT COUNT(*)::int AS count, MIN(created_at) AS oldest FROM rate_limit_events WHERE user_id = $1 AND endpoint = $2 AND created_at > $3",
+    [userId, endpoint, windowStart.toISOString()]
+  );
+  return res.rows[0];
+}
+
+export async function recordRateLimitEvent(userId: string, endpoint: string) {
+  await ensureSchema();
+  await pool.query(
+    "INSERT INTO rate_limit_events (id, user_id, endpoint) VALUES ($1, $2, $3)",
+    [randomUUID(), userId, endpoint]
+  );
+}
+
+export async function setEmailVerificationToken(userId: string, token: string, expiry: Date) {
+  await ensureSchema();
+  await pool.query(
+    "UPDATE users SET email_verification_token = $1, email_verification_expiry = $2 WHERE id = $3",
+    [token, expiry.toISOString(), userId]
+  );
+}
+
+export async function verifyEmailByToken(token: string): Promise<UserRow | undefined> {
+  await ensureSchema();
+  const res = await pool.query(
+    "UPDATE users SET email_verified = true, email_verification_token = NULL, email_verification_expiry = NULL WHERE email_verification_token = $1 AND email_verification_expiry > now() RETURNING *",
+    [token]
+  );
+  return res.rows[0];
+}
+
+export async function setPasswordResetToken(userId: string, token: string, expiry: Date) {
+  await ensureSchema();
+  await pool.query(
+    "UPDATE users SET password_reset_token = $1, password_reset_expiry = $2 WHERE id = $3",
+    [token, expiry.toISOString(), userId]
+  );
+}
+
+export async function getUserByPasswordResetToken(token: string): Promise<UserRow | undefined> {
+  await ensureSchema();
+  const res = await pool.query(
+    "SELECT * FROM users WHERE password_reset_token = $1 AND password_reset_expiry > now()",
+    [token]
+  );
+  return res.rows[0];
+}
+
+export async function resetPassword(userId: string, newPasswordHash: string) {
+  await ensureSchema();
+  await pool.query(
+    "UPDATE users SET password_hash = $1, password_reset_token = NULL, password_reset_expiry = NULL WHERE id = $2",
+    [newPasswordHash, userId]
+  );
 }
 
 export default pool;
