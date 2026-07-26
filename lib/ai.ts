@@ -187,6 +187,102 @@ Respond ONLY with a JSON array of exactly 3 strings, no preamble, no markdown fe
   return parseJsonArraySafely(text);
 }
 
+/**
+ * Extracts structured resume data from raw text pulled out of an uploaded
+ * PDF/DOCX/TXT resume. Returns data matching ResumeData - never invents
+ * experience or education entries that aren't clearly present in the text.
+ */
+export async function extractResumeFromText(rawText: string): Promise<ResumeData> {
+  const client = getClient();
+
+  const prompt = `Extract structured resume data from the following resume text. This text was
+mechanically extracted from a PDF or Word document, so formatting/line breaks may be imperfect -
+use your judgment to reconstruct the correct structure.
+
+Rules:
+- Only extract information that is actually present in the text. Do not invent, guess, or
+  hallucinate any experience, education, dates, or skills that aren't there.
+- If a field isn't present (e.g. no phone number, no LinkedIn), omit it or use an empty string.
+- Preserve the person's actual bullet point wording - do not rewrite or improve it, this is an
+  import, not a rewrite.
+- Dates should stay in whatever format they appear in the original (don't reformat).
+
+Resume text:
+"""
+${rawText.slice(0, 15000)}
+"""
+
+Respond ONLY with a JSON object matching this exact shape, no preamble, no markdown fences:
+{
+  "contact": { "fullName": string, "email": string, "phone": string, "location": string, "linkedin": string, "website": string },
+  "summary": string,
+  "experience": [{ "role": string, "company": string, "startDate": string, "endDate": string, "bullets": string[] }],
+  "education": [{ "school": string, "degree": string, "startDate": string, "endDate": string }],
+  "skills": string[]
+}`;
+
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: 3000,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const text = response.content
+    .map((block) => (block.type === "text" ? block.text : ""))
+    .join("");
+
+  const cleaned = text.replace(/```json|```/g, "").trim();
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error("Couldn't parse the resume - the file may not contain readable resume text.");
+  }
+
+  return normalizeExtractedResume(parsed);
+}
+
+function normalizeExtractedResume(raw: unknown): ResumeData {
+  const r = raw as Record<string, unknown>;
+  const contact = (r.contact as Record<string, unknown>) ?? {};
+  const experience = Array.isArray(r.experience) ? r.experience : [];
+  const education = Array.isArray(r.education) ? r.education : [];
+
+  return {
+    contact: {
+      fullName: String(contact.fullName ?? ""),
+      email: String(contact.email ?? ""),
+      phone: contact.phone ? String(contact.phone) : undefined,
+      location: contact.location ? String(contact.location) : undefined,
+      linkedin: contact.linkedin ? String(contact.linkedin) : undefined,
+      website: contact.website ? String(contact.website) : undefined,
+    },
+    summary: String(r.summary ?? ""),
+    experience: experience.map((e) => {
+      const exp = e as Record<string, unknown>;
+      return {
+        id: crypto.randomUUID(),
+        role: String(exp.role ?? ""),
+        company: String(exp.company ?? ""),
+        startDate: String(exp.startDate ?? ""),
+        endDate: String(exp.endDate ?? ""),
+        bullets: Array.isArray(exp.bullets) ? exp.bullets.map(String) : [],
+      };
+    }),
+    education: education.map((e) => {
+      const edu = e as Record<string, unknown>;
+      return {
+        id: crypto.randomUUID(),
+        school: String(edu.school ?? ""),
+        degree: String(edu.degree ?? ""),
+        startDate: String(edu.startDate ?? ""),
+        endDate: String(edu.endDate ?? ""),
+      };
+    }),
+    skills: Array.isArray(r.skills) ? r.skills.map(String) : [],
+  };
+}
+
 function parseJsonArraySafely(text: string): string[] {  const cleaned = text.replace(/```json|```/g, "").trim();
   try {
     const parsed = JSON.parse(cleaned);

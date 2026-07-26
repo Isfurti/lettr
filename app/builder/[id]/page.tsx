@@ -17,6 +17,7 @@ export default async function BuilderPage({ params }: { params: Promise<{ id: st
   const data = JSON.parse(row.data) as ResumeData;
   const plan = (user?.plan ?? "free") as Plan;
   const googleDriveConnected = Boolean(user?.google_refresh_token);
+  const userInitial = (session.user.name || session.user.email || "?")[0]?.toUpperCase();
 
   return (
     <ResumeEditor
@@ -26,6 +27,7 @@ export default async function BuilderPage({ params }: { params: Promise<{ id: st
       initialData={data}
       plan={plan}
       googleDriveConnected={googleDriveConnected}
+      userInitial={userInitial}
     />
   );
 }

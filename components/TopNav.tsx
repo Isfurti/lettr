@@ -7,7 +7,7 @@ export function TopNav({
   active,
   userInitial,
 }: {
-  active?: "dashboard" | "resumes" | "templates";
+  active?: "templates";
   userInitial?: string;
 }) {
   return (
@@ -17,18 +17,6 @@ export function TopNav({
           Lettr
         </Link>
         <nav className="hidden sm:flex items-center gap-7 text-sm">
-          <Link
-            href="/dashboard"
-            className={active === "dashboard" ? "text-ink font-medium border-b-2 border-seal pb-1" : "text-ink-soft hover:text-ink"}
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/dashboard"
-            className={active === "resumes" ? "text-ink font-medium border-b-2 border-seal pb-1" : "text-ink-soft hover:text-ink"}
-          >
-            Resumes
-          </Link>
           <Link
             href="/templates"
             className={active === "templates" ? "text-ink font-medium border-b-2 border-seal pb-1" : "text-ink-soft hover:text-ink"}
@@ -54,9 +42,13 @@ export function TopNav({
           ✦ Build Resume
         </Link>
         {userInitial && (
-          <div className="w-8 h-8 rounded-full bg-ink text-white text-xs font-medium flex items-center justify-center">
+          <Link
+            href="/dashboard"
+            title="Go to dashboard"
+            className="w-8 h-8 rounded-full bg-ink text-white text-xs font-medium flex items-center justify-center hover:opacity-90 transition-opacity"
+          >
             {userInitial}
-          </div>
+          </Link>
         )}
       </div>
     </header>

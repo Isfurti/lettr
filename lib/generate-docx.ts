@@ -1,7 +1,7 @@
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, BorderStyle } from "docx";
 import type { ResumeData } from "./types";
+import { DEFAULT_ACCENT_COLOR } from "./customization";
 
-const SEAL = "B8912C";
 const INK = "1B2A4A";
 const MUTED = "5B6472";
 
@@ -11,16 +11,18 @@ function contactLine(resume: ResumeData): string {
     .join("   •   ");
 }
 
-function sectionHeading(text: string): Paragraph {
+function sectionHeading(text: string, seal: string): Paragraph {
   return new Paragraph({
     heading: HeadingLevel.HEADING_2,
     spacing: { before: 240, after: 100 },
     border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: INK } },
-    children: [new TextRun({ text: text.toUpperCase(), color: SEAL, bold: true, size: 20 })],
+    children: [new TextRun({ text: text.toUpperCase(), color: seal, bold: true, size: 20 })],
   });
 }
 
 export async function generateResumeDocx(resume: ResumeData): Promise<Buffer> {
+  const seal = (resume.customization?.accentColor || DEFAULT_ACCENT_COLOR).replace("#", "");
+
   const children: Paragraph[] = [
     new Paragraph({
       spacing: { after: 40 },
@@ -33,12 +35,12 @@ export async function generateResumeDocx(resume: ResumeData): Promise<Buffer> {
   ];
 
   if (resume.summary) {
-    children.push(sectionHeading("Summary"));
+    children.push(sectionHeading("Summary", seal));
     children.push(new Paragraph({ spacing: { after: 100 }, children: [new TextRun({ text: resume.summary, size: 20 })] }));
   }
 
   if (resume.experience.length > 0) {
-    children.push(sectionHeading("Experience"));
+    children.push(sectionHeading("Experience", seal));
     for (const exp of resume.experience) {
       children.push(
         new Paragraph({
@@ -63,7 +65,7 @@ export async function generateResumeDocx(resume: ResumeData): Promise<Buffer> {
   }
 
   if (resume.education.length > 0) {
-    children.push(sectionHeading("Education"));
+    children.push(sectionHeading("Education", seal));
     for (const edu of resume.education) {
       children.push(
         new Paragraph({
@@ -79,7 +81,7 @@ export async function generateResumeDocx(resume: ResumeData): Promise<Buffer> {
   }
 
   if (resume.skills.length > 0) {
-    children.push(sectionHeading("Skills"));
+    children.push(sectionHeading("Skills", seal));
     children.push(new Paragraph({ children: [new TextRun({ text: resume.skills.join("  •  "), size: 20 })] }));
   }
 

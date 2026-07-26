@@ -16,6 +16,11 @@ export type EducationEntry = {
   endDate: string;
 };
 
+export type ResumeCustomization = {
+  accentColor?: string; // hex, e.g. "#b8862e" - defaults to app seal gold if unset
+  fontChoice?: "editorial" | "elegant" | "classic"; // preview-only, see lib/fonts.ts
+};
+
 export type ResumeData = {
   contact: {
     fullName: string;
@@ -29,6 +34,7 @@ export type ResumeData = {
   experience: ExperienceEntry[];
   education: EducationEntry[];
   skills: string[];
+  customization?: ResumeCustomization;
 };
 
 export const emptyResume: ResumeData = {
@@ -37,4 +43,5 @@ export const emptyResume: ResumeData = {
   experience: [],
   education: [],
   skills: [],
+  customization: {},
 };

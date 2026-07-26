@@ -9,8 +9,9 @@ import { scoreResumeQuality } from "@/lib/resume-score";
 import type { Plan } from "@/lib/limits";
 import { TopNav } from "@/components/TopNav";
 import { ScoreRing } from "@/components/ScoreRing";
+import { DEFAULT_ACCENT_COLOR, getFontPair, darkenHex, softenHex, ACCENT_COLORS, FONT_PAIRS } from "@/lib/customization";
 
-const TEMPLATES = ["classic", "modern", "compact", "bold"];
+const TEMPLATES = ["classic", "modern", "compact", "bold", "sidebar", "minimal", "executive", "technical", "timeline", "elegant"];
 
 export function ResumeEditor({
   resumeId,
@@ -19,6 +20,7 @@ export function ResumeEditor({
   initialData,
   plan,
   googleDriveConnected,
+  userInitial,
 }: {
   resumeId: string;
   initialTitle: string;
@@ -26,6 +28,7 @@ export function ResumeEditor({
   initialData: ResumeData;
   plan: Plan;
   googleDriveConnected: boolean;
+  userInitial: string;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(initialTitle);
@@ -132,7 +135,7 @@ export function ResumeEditor({
 
   return (
     <main className="flex-1 flex flex-col bg-paper">
-      <TopNav active="resumes" userInitial="•" />
+      <TopNav userInitial={userInitial} />
 
       <div className="border-b border-rule px-6 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 min-w-0">
@@ -372,8 +375,48 @@ function EditForm({
     setData((d) => ({ ...d, education: d.education.filter((e) => e.id !== id) }));
   }
 
+  function updateCustomization<K extends keyof NonNullable<ResumeData["customization"]>>(
+    key: K,
+    value: NonNullable<ResumeData["customization"]>[K]
+  ) {
+    setData((d) => ({ ...d, customization: { ...d.customization, [key]: value } }));
+  }
+
   return (
     <div className="space-y-8 max-w-xl">
+      <Section title="Design">
+        <p className="text-xs text-ink-soft mb-2">Accent color</p>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {ACCENT_COLORS.map((c) => {
+            const active = (data.customization?.accentColor || DEFAULT_ACCENT_COLOR) === c.hex;
+            return (
+              <button
+                key={c.id}
+                onClick={() => updateCustomization("accentColor", c.hex)}
+                title={c.label}
+                className={`w-7 h-7 rounded-full border-2 transition-transform ${active ? "border-ink scale-110" : "border-transparent hover:scale-105"}`}
+                style={{ backgroundColor: c.hex }}
+              />
+            );
+          })}
+        </div>
+        <p className="text-xs text-ink-soft mb-2">Font pair <span className="text-ink-soft/60">(preview only — PDF uses the default)</span></p>
+        <div className="flex flex-wrap gap-2">
+          {FONT_PAIRS.map((f) => {
+            const active = (data.customization?.fontChoice || "editorial") === f.id;
+            return (
+              <button
+                key={f.id}
+                onClick={() => updateCustomization("fontChoice", f.id)}
+                className={`text-xs px-3 py-1.5 rounded-sm border ${active ? "border-ink bg-ink text-white" : "border-rule hover:bg-app-bg"}`}
+              >
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+      </Section>
+
       <Section title="Contact">
         <div className="grid grid-cols-2 gap-3">
           <Input label="Full name" value={data.contact.fullName} onChange={(v) => updateContact("fullName", v)} />
@@ -996,9 +1039,40 @@ function ResignationLetterPanel({ initialName }: { initialName: string }) {
 // ---------- Live preview ----------
 
 function ResumePreview({ data, template }: { data: ResumeData; template: string }) {
-  if (template === "modern") return <ModernPreview data={data} />;
-  if (template === "bold") return <BoldPreview data={data} />;
-  return <ClassicPreview data={data} dense={template === "compact"} />;
+  const accentColor = data.customization?.accentColor || DEFAULT_ACCENT_COLOR;
+  const fontPair = getFontPair(data.customization?.fontChoice);
+
+  const overrideStyle = {
+    "--color-seal": accentColor,
+    "--color-seal-soft": softenHex(accentColor),
+    "--color-seal-deep": darkenHex(accentColor),
+    "--font-display": fontPair.display,
+    "--font-sans": fontPair.body,
+  } as React.CSSProperties;
+
+  return (
+    <div style={overrideStyle}>
+      {template === "modern" ? (
+        <ModernPreview data={data} />
+      ) : template === "bold" ? (
+        <BoldPreview data={data} />
+      ) : template === "sidebar" ? (
+        <SidebarPreview data={data} />
+      ) : template === "minimal" ? (
+        <MinimalPreview data={data} />
+      ) : template === "executive" ? (
+        <ExecutivePreview data={data} />
+      ) : template === "technical" ? (
+        <TechnicalPreview data={data} />
+      ) : template === "timeline" ? (
+        <TimelinePreview data={data} />
+      ) : template === "elegant" ? (
+        <ElegantPreview data={data} />
+      ) : (
+        <ClassicPreview data={data} dense={template === "compact"} />
+      )}
+    </div>
+  );
 }
 
 const contactLine = (data: ResumeData) =>
@@ -1234,6 +1308,300 @@ function BoldPreview({ data }: { data: ResumeData }) {
           </h3>
           <p className="text-sm font-medium">{data.skills.join("  /  ")}</p>
         </>
+      )}
+    </div>
+  );
+}
+
+// Sidebar - two-column, contact/skills in a colored side rail
+function SidebarPreview({ data }: { data: ResumeData }) {
+  return (
+    <div className="paper-sheet rounded-sm mx-auto max-w-2xl overflow-hidden grid grid-cols-[1fr_2fr]" style={{ fontFamily: "var(--font-sans)" }}>
+      <div className="bg-seal text-white p-6">
+        <h2 className="font-display font-bold text-xl leading-tight mb-4">{data.contact.fullName || "Your Name"}</h2>
+        <div className="space-y-1 text-xs opacity-90 mb-6">
+          {[data.contact.email, data.contact.phone, data.contact.location, data.contact.linkedin, data.contact.website]
+            .filter(Boolean)
+            .map((line, i) => (
+              <p key={i} className="break-words">{line}</p>
+            ))}
+        </div>
+        {data.skills.length > 0 && (
+          <>
+            <h3 className="text-[10px] uppercase tracking-widest font-bold mb-2 opacity-80">Skills</h3>
+            <div className="flex flex-wrap gap-1">
+              {data.skills.map((s) => (
+                <span key={s} className="text-[10px] bg-white/15 rounded-sm px-1.5 py-0.5">{s}</span>
+              ))}
+            </div>
+          </>
+        )}
+        {data.education.length > 0 && (
+          <>
+            <h3 className="text-[10px] uppercase tracking-widest font-bold mt-6 mb-2 opacity-80">Education</h3>
+            {data.education.map((edu) => (
+              <div key={edu.id} className="text-xs mb-2">
+                <p className="font-semibold">{edu.degree}</p>
+                <p className="opacity-80">{edu.school}</p>
+                <p className="opacity-70 text-[10px]">{edu.startDate} – {edu.endDate}</p>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+      <div className="p-6">
+        {data.summary && (
+          <>
+            <h3 className="text-xs uppercase tracking-wide text-seal font-semibold mb-1.5">Summary</h3>
+            <p className="text-sm leading-relaxed mb-4">{data.summary}</p>
+          </>
+        )}
+        {data.experience.length > 0 && (
+          <>
+            <h3 className="text-xs uppercase tracking-wide text-seal font-semibold mb-1.5">Experience</h3>
+            {data.experience.map((exp) => (
+              <div key={exp.id} className="mt-3">
+                <div className="flex justify-between text-sm">
+                  <span className="font-semibold">{exp.role || "Role"}</span>
+                  <span className="text-xs text-ink-soft font-mono">{exp.startDate} – {exp.endDate}</span>
+                </div>
+                <p className="text-xs text-ink-soft mb-1">{exp.company}</p>
+                <ul className="space-y-0.5">
+                  {exp.bullets.filter(Boolean).map((b, i) => (
+                    <li key={i} className="text-sm pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-seal">{b}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Minimal - zero color, maximum ATS-parser safety, pure typographic hierarchy
+function MinimalPreview({ data }: { data: ResumeData }) {
+  return (
+    <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-10 text-black" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
+      <h2 className="text-2xl font-bold">{data.contact.fullName || "Your Name"}</h2>
+      <p className="text-xs mt-1">{contactLine(data)}</p>
+
+      {data.summary && (
+        <>
+          <h3 className="text-xs font-bold uppercase mt-5 mb-1">Summary</h3>
+          <p className="text-sm leading-relaxed">{data.summary}</p>
+        </>
+      )}
+      {data.experience.length > 0 && (
+        <>
+          <h3 className="text-xs font-bold uppercase mt-5 mb-1">Experience</h3>
+          {data.experience.map((exp) => (
+            <div key={exp.id} className="mt-2">
+              <p className="text-sm font-bold">{exp.role || "Role"}, {exp.company}</p>
+              <p className="text-xs">{exp.startDate} - {exp.endDate}</p>
+              <ul className="mt-1">
+                {exp.bullets.filter(Boolean).map((b, i) => (
+                  <li key={i} className="text-sm">- {b}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </>
+      )}
+      {data.education.length > 0 && (
+        <>
+          <h3 className="text-xs font-bold uppercase mt-5 mb-1">Education</h3>
+          {data.education.map((edu) => (
+            <p key={edu.id} className="text-sm">{edu.degree}, {edu.school} ({edu.startDate} - {edu.endDate})</p>
+          ))}
+        </>
+      )}
+      {data.skills.length > 0 && (
+        <>
+          <h3 className="text-xs font-bold uppercase mt-5 mb-1">Skills</h3>
+          <p className="text-sm">{data.skills.join(", ")}</p>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Executive - large refined serif name, generous whitespace, thin accent rule
+function ExecutivePreview({ data }: { data: ResumeData }) {
+  return (
+    <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-12" style={{ fontFamily: "var(--font-sans)" }}>
+      <h2 className="font-display text-3xl text-center mb-1">{data.contact.fullName || "Your Name"}</h2>
+      <div className="h-px bg-seal w-24 mx-auto my-3" />
+      <p className="text-xs text-ink-soft text-center mb-8">{contactLine(data)}</p>
+
+      {data.summary && <p className="text-sm text-center leading-relaxed mb-8 italic text-ink-soft">{data.summary}</p>}
+
+      {data.experience.length > 0 && (
+        <>
+          <h3 className="text-xs uppercase tracking-[0.2em] text-seal text-center mb-4">Experience</h3>
+          {data.experience.map((exp) => (
+            <div key={exp.id} className="mt-4 text-center">
+              <p className="font-display text-base">{exp.role || "Role"}</p>
+              <p className="text-xs text-ink-soft mb-1">{exp.company} · {exp.startDate} – {exp.endDate}</p>
+              <ul className="text-sm max-w-md mx-auto text-left mt-2 space-y-0.5">
+                {exp.bullets.filter(Boolean).map((b, i) => (
+                  <li key={i} className="pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-seal">{b}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </>
+      )}
+      {data.education.length > 0 && (
+        <>
+          <h3 className="text-xs uppercase tracking-[0.2em] text-seal text-center mt-8 mb-3">Education</h3>
+          {data.education.map((edu) => (
+            <p key={edu.id} className="text-sm text-center">{edu.degree} — {edu.school}</p>
+          ))}
+        </>
+      )}
+      {data.skills.length > 0 && (
+        <p className="text-sm text-center mt-8 text-ink-soft">{data.skills.join(" · ")}</p>
+      )}
+    </div>
+  );
+}
+
+// Technical - monospace accents for engineers, left-aligned dense structure
+function TechnicalPreview({ data }: { data: ResumeData }) {
+  return (
+    <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-8" style={{ fontFamily: "var(--font-sans)" }}>
+      <h2 className="font-mono font-bold text-xl">{data.contact.fullName || "Your Name"}</h2>
+      <p className="font-mono text-xs text-seal mt-1">{contactLine(data)}</p>
+
+      {data.summary && (
+        <>
+          <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">// summary</h3>
+          <p className="text-sm leading-relaxed">{data.summary}</p>
+        </>
+      )}
+      {data.experience.length > 0 && (
+        <>
+          <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">// experience</h3>
+          {data.experience.map((exp) => (
+            <div key={exp.id} className="mt-3 border-l-2 border-seal pl-3">
+              <p className="font-mono text-sm font-semibold">{exp.role || "role"}<span className="text-seal">()</span> <span className="text-ink-soft font-normal">@ {exp.company}</span></p>
+              <p className="font-mono text-[10px] text-ink-soft">{exp.startDate} – {exp.endDate}</p>
+              <ul className="mt-1 space-y-0.5">
+                {exp.bullets.filter(Boolean).map((b, i) => (
+                  <li key={i} className="text-sm pl-3 relative before:content-['>'] before:absolute before:left-0 before:text-seal before:font-mono">{b}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </>
+      )}
+      {data.education.length > 0 && (
+        <>
+          <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">// education</h3>
+          {data.education.map((edu) => (
+            <p key={edu.id} className="text-sm">{edu.degree} — {edu.school}</p>
+          ))}
+        </>
+      )}
+      {data.skills.length > 0 && (
+        <>
+          <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">// stack</h3>
+          <div className="flex flex-wrap gap-1.5">
+            {data.skills.map((s) => (
+              <span key={s} className="font-mono text-xs bg-seal-soft text-seal-deep px-1.5 py-0.5 rounded-sm">{s}</span>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Timeline - visual connecting line down the left of experience entries
+function TimelinePreview({ data }: { data: ResumeData }) {
+  return (
+    <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-10" style={{ fontFamily: "var(--font-sans)" }}>
+      <h2 className="font-display font-bold text-2xl">{data.contact.fullName || "Your Name"}</h2>
+      <p className="text-xs text-ink-soft mt-1 mb-6">{contactLine(data)}</p>
+
+      {data.summary && <p className="text-sm leading-relaxed mb-6">{data.summary}</p>}
+
+      {data.experience.length > 0 && (
+        <>
+          <h3 className="text-xs uppercase tracking-wide text-seal font-semibold mb-3">Experience</h3>
+          <div className="relative pl-5 border-l-2 border-rule space-y-5">
+            {data.experience.map((exp) => (
+              <div key={exp.id} className="relative">
+                <span className="absolute -left-[26px] top-1 w-3 h-3 rounded-full bg-seal border-2 border-paper-raised" />
+                <div className="flex justify-between text-sm">
+                  <span className="font-semibold">{exp.role || "Role"}</span>
+                  <span className="text-xs text-ink-soft font-mono">{exp.startDate} – {exp.endDate}</span>
+                </div>
+                <p className="text-xs text-ink-soft mb-1">{exp.company}</p>
+                <ul className="space-y-0.5">
+                  {exp.bullets.filter(Boolean).map((b, i) => (
+                    <li key={i} className="text-sm pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-seal">{b}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      {data.education.length > 0 && (
+        <>
+          <h3 className="text-xs uppercase tracking-wide text-seal font-semibold mt-6 mb-2">Education</h3>
+          {data.education.map((edu) => (
+            <p key={edu.id} className="text-sm">{edu.degree} — {edu.school} <span className="text-ink-soft text-xs">({edu.startDate}–{edu.endDate})</span></p>
+          ))}
+        </>
+      )}
+      {data.skills.length > 0 && (
+        <p className="text-sm mt-6 text-ink-soft">{data.skills.join(" • ")}</p>
+      )}
+    </div>
+  );
+}
+
+// Elegant - thin hairlines, italic role titles, understated color
+function ElegantPreview({ data }: { data: ResumeData }) {
+  return (
+    <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-10" style={{ fontFamily: "var(--font-sans)" }}>
+      <h2 className="font-display text-2xl">{data.contact.fullName || "Your Name"}</h2>
+      <p className="text-xs text-ink-soft mt-1 pb-4 border-b border-rule">{contactLine(data)}</p>
+
+      {data.summary && <p className="text-sm leading-relaxed mt-4 mb-2">{data.summary}</p>}
+
+      {data.experience.length > 0 && (
+        <>
+          <h3 className="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2">Experience</h3>
+          {data.experience.map((exp) => (
+            <div key={exp.id} className="mt-3 pb-3 border-b border-rule/60 last:border-0">
+              <div className="flex justify-between">
+                <span className="text-sm italic">{exp.role || "Role"}, {exp.company}</span>
+                <span className="text-xs text-ink-soft">{exp.startDate} – {exp.endDate}</span>
+              </div>
+              <ul className="mt-1 space-y-0.5">
+                {exp.bullets.filter(Boolean).map((b, i) => (
+                  <li key={i} className="text-sm pl-3 relative before:content-['·'] before:absolute before:left-0 before:text-seal">{b}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </>
+      )}
+      {data.education.length > 0 && (
+        <>
+          <h3 className="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2">Education</h3>
+          {data.education.map((edu) => (
+            <p key={edu.id} className="text-sm italic">{edu.degree}, {edu.school}</p>
+          ))}
+        </>
+      )}
+      {data.skills.length > 0 && (
+        <p className="text-sm mt-6 text-ink-soft">{data.skills.join("  ·  ")}</p>
       )}
     </div>
   );
