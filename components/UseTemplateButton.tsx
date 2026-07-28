@@ -14,14 +14,20 @@ export function UseTemplateButton({ template, label = "Use this template" }: { t
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: "Untitled Resume", template }),
     });
-    const body = await res.json();
     setLoading(false);
 
+    if (res.status === 401) {
+      router.push(`/signup?next=/templates&template=${template}`);
+      return;
+    }
     if (res.status === 402) {
       router.push("/pricing");
       return;
     }
-    if (res.ok) router.push(`/builder/${body.id}`);
+    if (res.ok) {
+      const body = await res.json();
+      router.push(`/builder/${body.id}`);
+    }
   }
 
   return (

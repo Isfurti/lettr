@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-auth";
 import { listAllUsers } from "@/lib/db";
 import { AdminSidebar } from "@/components/AdminSidebar";
@@ -52,9 +53,9 @@ export default async function AdminUsersPage({
                 </tr>
               )}
               {users.map((u) => (
-                <tr key={u.id} className="border-t border-rule">
+                <tr key={u.id} className="border-t border-rule hover:bg-app-bg/50">
                   <td className="px-6 py-3">
-                    <div className="flex items-center gap-3">
+                    <Link href={`/admin/users/${u.id}`} className="flex items-center gap-3">
                       <div className="w-7 h-7 rounded-full bg-ink text-white text-xs flex items-center justify-center shrink-0">
                         {(u.name || u.email)[0]?.toUpperCase()}
                       </div>
@@ -62,7 +63,7 @@ export default async function AdminUsersPage({
                         <p className="font-medium">{u.name || "—"}</p>
                         <p className="text-xs text-ink-soft">{u.email}</p>
                       </div>
-                    </div>
+                    </Link>
                   </td>
                   <td className="px-6 py-3">
                     <span className={`text-xs font-mono uppercase px-2 py-0.5 rounded-sm ${u.plan === "pro" ? "bg-seal-soft text-seal-deep" : "bg-rule/40"}`}>

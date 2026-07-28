@@ -14,8 +14,13 @@ import "./globals.css";
 import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
-  title: "Lettr — resumes that get past the filter",
+  metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:3000"),
+  title: {
+    default: "Lettr — AI Resume Builder",
+    template: "%s",
+  },
   description: "AI-assisted resume builder with ATS scoring and tailored cover letters.",
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({

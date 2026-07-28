@@ -76,6 +76,16 @@ function ensureSchema(): Promise<void> {
       );
       CREATE INDEX IF NOT EXISTS idx_rate_limit_lookup ON rate_limit_events(user_id, endpoint, created_at);
 
+      CREATE TABLE IF NOT EXISTS admin_audit_log (
+        id TEXT PRIMARY KEY,
+        admin_user_id TEXT NOT NULL,
+        action TEXT NOT NULL,
+        target_user_id TEXT,
+        detail TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_admin_audit_log_created ON admin_audit_log(created_at DESC);
+
       CREATE TABLE IF NOT EXISTS resumes (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -434,6 +444,45 @@ export async function resetPassword(userId: string, newPasswordHash: string) {
     "UPDATE users SET password_hash = $1, password_reset_token = NULL, password_reset_expiry = NULL WHERE id = $2",
     [newPasswordHash, userId]
   );
+}
+
+export type AdminAuditRow = {
+  id: string;
+  admin_user_id: string;
+  action: string;
+  target_user_id: string | null;
+  detail: string | null;
+  created_at: string;
+};
+
+export async function logAdminAction(params: {
+  adminUserId: string;
+  action: string;
+  targetUserId?: string;
+  detail?: string;
+}) {
+  await ensureSchema();
+  await pool.query(
+    "INSERT INTO admin_audit_log (id, admin_user_id, action, target_user_id, detail) VALUES ($1, $2, $3, $4, $5)",
+    [randomUUID(), params.adminUserId, params.action, params.targetUserId ?? null, params.detail ?? null]
+  );
+}
+
+export async function listAdminAuditLog(limit = 50): Promise<AdminAuditRow[]> {
+  await ensureSchema();
+  const res = await pool.query("SELECT * FROM admin_audit_log ORDER BY created_at DESC LIMIT $1", [limit]);
+  return res.rows;
+}
+
+/**
+ * Deletes a user account entirely. Their resumes and activity log rows
+ * cascade-delete automatically via foreign key ON DELETE CASCADE; support
+ * messages are preserved but disassociated (ON DELETE SET NULL), so past
+ * support history isn't silently erased.
+ */
+export async function deleteUserAccount(userId: string) {
+  await ensureSchema();
+  await pool.query("DELETE FROM users WHERE id = $1", [userId]);
 }
 
 export default pool;

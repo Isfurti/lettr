@@ -1,11 +1,47 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { HeroScoreDemo } from "@/components/HeroScoreDemo";
 import { Reveal } from "@/components/Reveal";
 import { PublicNav } from "@/components/PublicNav";
 
+export const metadata: Metadata = {
+  title: "Lettr — AI Resume Builder with ATS Score & Cover Letters",
+  description:
+    "Build an ATS-optimized resume with AI. Get an instant match score against any job description, AI-rewritten bullet points, and a tailored cover letter — free to start.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Lettr — AI Resume Builder with ATS Score & Cover Letters",
+    description: "Build an ATS-optimized resume with AI. Instant match scoring, AI bullet rewriting, tailored cover letters.",
+    url: "/",
+    siteName: "Lettr",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lettr — AI Resume Builder",
+    description: "Build an ATS-optimized resume with AI — free to start.",
+  },
+};
+
 export default function Home() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Lettr",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    description: "AI-assisted resume builder with ATS scoring, AI bullet rewriting, and tailored cover letters.",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+      description: "Free plan available; Pro plan at $19/month",
+    },
+  };
+
   return (
     <main className="flex-1 flex flex-col bg-paper">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <PublicNav />
 
       {/* Hero */}

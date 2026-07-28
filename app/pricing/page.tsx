@@ -1,10 +1,20 @@
-"use client";
-
-import { useState } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Reveal } from "@/components/Reveal";
 import { Footer } from "@/components/Footer";
 import { PublicNav } from "@/components/PublicNav";
+import { UpgradeButton } from "@/components/UpgradeButton";
+
+export const metadata: Metadata = {
+  title: "Pricing | Lettr — Free AI Resume Builder",
+  description: "Free resume builder with AI bullet rewriting and resume scoring. Upgrade to Pro for cover letters, unlimited exports, and more.",
+  alternates: { canonical: "/pricing" },
+  openGraph: {
+    title: "Lettr Pricing — Free to start, $19/mo for Pro",
+    description: "Free resume builder with AI writing tools. Pro unlocks cover letters, resignation letters, and unlimited exports.",
+    url: "/pricing",
+  },
+};
 
 const COMPARISON: { feature: string; free: string | boolean; pro: string | boolean }[] = [
   { feature: "Resumes", free: "1", pro: "Unlimited" },
@@ -40,27 +50,6 @@ const FAQS = [
 ];
 
 export default function PricingPage() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function upgrade() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/billing/checkout", { method: "POST" });
-      const body = await res.json();
-      if (!res.ok) {
-        setError(body.error ?? "Couldn't start checkout.");
-        setLoading(false);
-        return;
-      }
-      window.location.href = body.url;
-    } catch {
-      setError("Couldn't reach the server.");
-      setLoading(false);
-    }
-  }
-
   return (
     <main className="flex-1">
       <PublicNav />
@@ -116,14 +105,7 @@ export default function PricingPage() {
               <FeatureLine included dark>AI resignation letter builder</FeatureLine>
               <FeatureLine included dark>DOCX &amp; Google Drive export</FeatureLine>
             </ul>
-            <button
-              onClick={upgrade}
-              disabled={loading}
-              className="w-full py-3.5 bg-seal rounded-sm font-medium hover:opacity-90 disabled:opacity-60 transition-opacity"
-            >
-              {loading ? "Redirecting…" : "Upgrade to Pro"}
-            </button>
-            {error && <p className="text-sm text-red-300 mt-2">{error}</p>}
+            <UpgradeButton />
           </Reveal>
         </div>
       </section>

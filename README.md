@@ -195,6 +195,19 @@ nudge, not a gate. If you want verification enforced before certain actions
 (e.g. before Pro checkout), that's a small addition to make, not built in
 by default.
 
+## SEO
+
+**Technical/on-page (done):**
+- Unique `<title>` and meta description per public page (landing, pricing, templates, privacy, terms)
+- `/robots.txt` and `/sitemap.xml` generated dynamically (`app/robots.ts`, `app/sitemap.ts`)
+- Open Graph + Twitter card tags for social link previews
+- JSON-LD structured data (`SoftwareApplication`) on the landing page — honest fields only, no fabricated ratings/reviews
+- **`/templates` is now publicly crawlable** — it previously redirected to `/login` before a visitor (or Googlebot) could see it at all, which meant zero SEO value for a page that should realistically rank for "resume templates" searches. Auth is now only required when actually creating a resume, not for browsing.
+
+**Requires `NEXTAUTH_URL` to be set to your real production domain** in Vercel — the sitemap/robots/canonical URLs all derive from it. If it's still unset or pointing at localhost, fix that first or none of this resolves to real URLs in production.
+
+**Content SEO (not done, and honestly the bigger lever):** the "resume examples for nurses," "how to write a resume with no experience" style pages that actually drive most of this category's organic traffic aren't built. That's a sustained content practice, not a one-time task — see the conversation this was built in for a longer discussion of what that would take.
+
 ## Going to production
 
 1. **Database**: already Postgres — for production, point `DATABASE_URL` at a

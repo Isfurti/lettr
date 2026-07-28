@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/admin-auth";
 import { AdminSidebar } from "@/components/AdminSidebar";
-import pool from "@/lib/db";
+import pool, { listAdminAuditLog } from "@/lib/db";
 
 async function checkDb(): Promise<{ ok: boolean; error?: string }> {
   try {
@@ -13,7 +13,7 @@ async function checkDb(): Promise<{ ok: boolean; error?: string }> {
 
 export default async function AdminSystemPage() {
   await requireAdmin();
-  const db = await checkDb();
+  const [db, auditLog] = await Promise.all([checkDb(), listAdminAuditLog(25)]);
 
   const integrations = [
     { name: "Anthropic (AI features)", configured: Boolean(process.env.ANTHROPIC_API_KEY) },
@@ -55,7 +55,7 @@ export default async function AdminSystemPage() {
           ))}
         </div>
 
-        <p className="text-xs text-ink-soft mt-4">
+        <p className="text-xs text-ink-soft mt-4 mb-8">
           &quot;Configured&quot; only checks that the environment variable is present — it doesn&apos;t verify the
           credential is valid. Check{" "}
           <a href="/api/health" target="_blank" rel="noreferrer" className="text-seal hover:underline">
@@ -63,6 +63,23 @@ export default async function AdminSystemPage() {
           </a>{" "}
           directly for the raw JSON, or an uptime monitor for continuous checks.
         </p>
+
+        <div className="paper-sheet rounded-sm overflow-hidden">
+          <div className="px-6 py-3 border-b border-rule">
+            <p className="text-xs uppercase tracking-wide text-ink-soft font-medium">Admin audit log</p>
+            <p className="text-xs text-ink-soft mt-0.5">Every admin action that touched a user's data.</p>
+          </div>
+          {auditLog.length === 0 ? (
+            <p className="text-sm text-ink-soft px-6 py-6">No admin actions recorded yet.</p>
+          ) : (
+            auditLog.map((a) => (
+              <div key={a.id} className="flex items-center justify-between px-6 py-3 border-b border-rule last:border-b-0 text-sm">
+                <span>{a.action.replace(/_/g, " ")}{a.detail ? ` — ${a.detail}` : ""}</span>
+                <span className="text-xs text-ink-soft font-mono shrink-0 ml-3">{new Date(a.created_at).toLocaleString()}</span>
+              </div>
+            ))
+          )}
+        </div>
       </main>
     </div>
   );
