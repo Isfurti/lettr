@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/admin-auth";
 import { listSupportMessages } from "@/lib/db";
 import { ResolveButton } from "@/components/ResolveButton";
 import { AdminSidebar } from "@/components/AdminSidebar";
@@ -19,12 +20,10 @@ export default async function AdminSupportPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const adminEmailRaw = process.env.ADMIN_EMAIL;
   const yourEmailRaw = session.user.email ?? "";
-  const isMatch =
-    !!adminEmailRaw && yourEmailRaw.trim().toLowerCase() === adminEmailRaw.trim().toLowerCase();
 
-  if (!isMatch) {
+  if (!isAdminEmail(yourEmailRaw)) {
+    const adminEmailRaw = process.env.ADMIN_EMAIL;
     return (
       <main className="flex-1 max-w-lg mx-auto w-full px-8 py-12">
         <h1 className="font-display font-semibold text-xl mb-4">Admin check failed</h1>

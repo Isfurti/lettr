@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/admin-auth";
 import { AppSidebar } from "@/components/AppSidebar";
 import { FeedbackForm } from "@/components/FeedbackForm";
 
@@ -9,7 +10,7 @@ export default async function FeedbackPage() {
 
   return (
     <div className="flex-1 flex app-shell">
-      <AppSidebar eyebrow="Resume workspace" />
+      <AppSidebar eyebrow="Resume workspace" isAdmin={isAdminEmail(session.user.email)} />
       <main className="flex-1 px-10 py-10 max-w-xl">
         <h1 className="font-display font-semibold text-3xl mb-1">How's Lettr working for you?</h1>
         <p className="text-ink-soft mb-8">

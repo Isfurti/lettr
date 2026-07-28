@@ -11,6 +11,7 @@ import {
   LogOut,
   ExternalLink,
   MessageSquare,
+  ShieldAlert,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -20,7 +21,15 @@ const NAV_ITEMS = [
   { href: "/pricing", label: "Subscription", icon: Mail },
 ];
 
-export function AppSidebar({ title = "Lettr", eyebrow }: { title?: string; eyebrow?: string }) {
+export function AppSidebar({
+  title = "Lettr",
+  eyebrow,
+  isAdmin = false,
+}: {
+  title?: string;
+  eyebrow?: string;
+  isAdmin?: boolean;
+}) {
   const pathname = usePathname();
 
   return (
@@ -57,6 +66,15 @@ export function AppSidebar({ title = "Lettr", eyebrow }: { title?: string; eyebr
       </nav>
 
       <div className="px-3 pb-6 space-y-0.5">
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm bg-admin-accent-deep hover:bg-admin-accent transition-colors font-medium mb-2"
+          >
+            <ShieldAlert className="w-4 h-4" strokeWidth={2} />
+            Admin Portal
+          </Link>
+        )}
         <Link
           href="/"
           className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm text-white/60 hover:text-white hover:bg-white/5 transition-colors"

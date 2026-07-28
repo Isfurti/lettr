@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/admin-auth";
 import { listResumesForUser, getUserById, listRecentActivity } from "@/lib/db";
 import { PLAN_LIMITS, type Plan } from "@/lib/limits";
 import { scoreResumeQuality } from "@/lib/resume-score";
@@ -38,11 +39,12 @@ export default async function DashboardPage({
   const score = mostRecent ? scoreResumeQuality(mostRecent.data) : null;
 
   const displayName = session.user.name || session.user.email?.split("@")[0] || "there";
+  const isAdmin = isAdminEmail(session.user.email);
   const initial = displayName[0]?.toUpperCase() ?? "?";
 
   return (
     <div className="flex-1 flex app-shell">
-      <AppSidebar eyebrow="Resume workspace" />
+      <AppSidebar eyebrow="Resume workspace" isAdmin={isAdmin} />
 
       <main className="flex-1 px-10 py-10 max-w-6xl">
         {user && !user.email_verified && <VerifyEmailBanner />}
