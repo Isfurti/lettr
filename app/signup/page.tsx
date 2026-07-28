@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { PublicNav } from "@/components/PublicNav";
 import { OAuthButtons } from "@/components/OAuthButtons";
+import { completeGuestExport } from "@/lib/guest-draft";
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,58 +37,76 @@ export default function SignupPage() {
     }
 
     const signInResult = await signIn("credentials", { email, password, redirect: false });
-    setLoading(false);
 
     if (signInResult?.error) {
+      setLoading(false);
       setError("Account created — please log in.");
       router.push("/login");
       return;
     }
 
+    // If they were mid-export as a guest, finish that instead of just
+    // dropping them on the dashboard - this is the whole point of letting
+    // people build before signing up.
+    if (searchParams.get("continue") === "export") {
+      const handled = await completeGuestExport((path) => router.push(path));
+      setLoading(false);
+      if (handled) return;
+    }
+
+    setLoading(false);
     router.push("/dashboard");
   }
 
   return (
+    <div className="w-full max-w-sm">
+      <h1 className="font-display font-bold text-2xl mb-1">Create your account</h1>
+      <p className="text-ink-soft text-sm mb-8">Free to start. No credit card.</p>
+
+      <form onSubmit={onSubmit} className="space-y-4">
+        <Field label="Name" value={name} onChange={setName} required />
+        <Field label="Email" type="email" value={email} onChange={setEmail} required />
+        <Field
+          label="Password"
+          type="password"
+          value={password}
+          onChange={setPassword}
+          required
+          minLength={8}
+          hint="At least 8 characters"
+        />
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-ink text-paper py-2.5 rounded-sm font-medium hover:bg-ink/90 disabled:opacity-60 transition-colors"
+        >
+          {loading ? "Creating account…" : "Create account"}
+        </button>
+      </form>
+
+      <OAuthButtons />
+
+      <p className="text-sm text-ink-soft mt-6">
+        Already have an account?{" "}
+        <Link href="/login" className="text-ink underline underline-offset-2">
+          Log in
+        </Link>
+      </p>
+    </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
     <>
     <PublicNav />
     <main className="flex-1 flex items-center justify-center px-6 py-16">
-      <div className="w-full max-w-sm">
-        <h1 className="font-display font-bold text-2xl mb-1">Create your account</h1>
-        <p className="text-ink-soft text-sm mb-8">Free to start. No credit card.</p>
-
-        <form onSubmit={onSubmit} className="space-y-4">
-          <Field label="Name" value={name} onChange={setName} required />
-          <Field label="Email" type="email" value={email} onChange={setEmail} required />
-          <Field
-            label="Password"
-            type="password"
-            value={password}
-            onChange={setPassword}
-            required
-            minLength={8}
-            hint="At least 8 characters"
-          />
-
-          {error && <p className="text-sm text-red-600">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-ink text-paper py-2.5 rounded-sm font-medium hover:bg-ink/90 disabled:opacity-60 transition-colors"
-          >
-            {loading ? "Creating account…" : "Create account"}
-          </button>
-        </form>
-
-        <OAuthButtons />
-
-        <p className="text-sm text-ink-soft mt-6">
-          Already have an account?{" "}
-          <Link href="/login" className="text-ink underline underline-offset-2">
-            Log in
-          </Link>
-        </p>
-      </div>
+      <Suspense fallback={<p className="text-sm text-ink-soft">Loading…</p>}>
+        <SignupForm />
+      </Suspense>
     </main>
     <Footer />
     </>

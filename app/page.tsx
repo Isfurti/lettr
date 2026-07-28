@@ -59,7 +59,7 @@ export default function Home() {
           </p>
           <div className="flex items-center gap-4">
             <Link
-              href="/signup"
+              href="/builder/new"
               className="inline-block bg-seal text-white px-6 py-3 rounded-sm font-medium hover:opacity-90 transition-opacity"
             >
               Build your resume — free
@@ -186,7 +186,7 @@ export default function Home() {
           <h2 className="font-display font-semibold text-4xl mb-8">The smarter way to get hired.</h2>
           <div className="flex items-center justify-center gap-4">
             <Link
-              href="/signup"
+              href="/builder/new"
               className="bg-seal text-white px-6 py-3 rounded-sm font-medium hover:opacity-90 transition-opacity"
             >
               Build your resume

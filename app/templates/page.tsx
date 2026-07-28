@@ -62,7 +62,7 @@ export default async function TemplatesPage() {
                     </span>
                   ))}
                 </div>
-                <UseTemplateButton template={t.id} />
+                <UseTemplateButton template={t.id} isLoggedIn={Boolean(session?.user)} />
               </div>
             </div>
           ))}

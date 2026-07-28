@@ -319,7 +319,7 @@ function UpgradeGate({
 
 // ---------- Edit form ----------
 
-function EditForm({
+export function EditForm({
   data,
   setData,
 }: {
@@ -756,7 +756,7 @@ function AgentPanel({
 
 // ---------- Score panel (Rezi Score) ----------
 
-function ScorePanel({ data, plan }: { data: ResumeData; plan: Plan }) {
+export function ScorePanel({ data, plan }: { data: ResumeData; plan: Plan }) {
   const result = scoreResumeQuality(data);
   const isPro = plan === "pro";
 
@@ -817,7 +817,7 @@ function ScorePanel({ data, plan }: { data: ResumeData; plan: Plan }) {
 
 // ---------- Job match panel ----------
 
-function JobMatchPanel({ data }: { data: ResumeData }) {
+export function JobMatchPanel({ data }: { data: ResumeData }) {
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<AtsResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -1038,7 +1038,7 @@ function ResignationLetterPanel({ initialName }: { initialName: string }) {
 
 // ---------- Live preview ----------
 
-function ResumePreview({ data, template }: { data: ResumeData; template: string }) {
+export function ResumePreview({ data, template }: { data: ResumeData; template: string }) {
   const accentColor = data.customization?.accentColor || DEFAULT_ACCENT_COLOR;
   const fontPair = getFontPair(data.customization?.fontChoice);
 

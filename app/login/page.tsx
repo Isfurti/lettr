@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { PublicNav } from "@/components/PublicNav";
 import { OAuthButtons } from "@/components/OAuthButtons";
+import { completeGuestExport } from "@/lib/guest-draft";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -34,19 +36,25 @@ export default function LoginPage() {
     setLoading(true);
 
     const result = await signIn("credentials", { email, password, redirect: false });
-    setLoading(false);
 
     if (result?.error) {
+      setLoading(false);
       setError("Invalid email or password.");
       return;
     }
+
+    if (searchParams.get("continue") === "export") {
+      const handled = await completeGuestExport((path) => router.push(path));
+      setLoading(false);
+      if (handled) return;
+    }
+
+    setLoading(false);
     router.push("/dashboard");
   }
 
   return (
     <>
-    <PublicNav />
-    <main className="flex-1 flex items-center justify-center px-6 py-20 relative overflow-hidden">
       <div
         ref={decorRef}
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-ink/5 rounded-full blur-[120px] pointer-events-none"
@@ -118,6 +126,18 @@ export default function LoginPage() {
           </Link>
         </p>
       </div>
+    </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <>
+    <PublicNav />
+    <main className="flex-1 flex items-center justify-center px-6 py-20 relative overflow-hidden">
+      <Suspense fallback={<p className="text-sm text-ink-soft">Loading…</p>}>
+        <LoginForm />
+      </Suspense>
     </main>
     <Footer />
     </>

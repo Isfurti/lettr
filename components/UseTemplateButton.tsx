@@ -3,11 +3,26 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function UseTemplateButton({ template, label = "Use this template" }: { template: string; label?: string }) {
+export function UseTemplateButton({
+  template,
+  label = "Use this template",
+  isLoggedIn = false,
+}: {
+  template: string;
+  label?: string;
+  isLoggedIn?: boolean;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function use() {
+    // Not logged in - skip the API entirely and drop them straight into the
+    // guest builder. No account, no 401 round trip, just start building.
+    if (!isLoggedIn) {
+      router.push(`/builder/new?template=${template}`);
+      return;
+    }
+
     setLoading(true);
     const res = await fetch("/api/resumes", {
       method: "POST",
@@ -16,10 +31,6 @@ export function UseTemplateButton({ template, label = "Use this template" }: { t
     });
     setLoading(false);
 
-    if (res.status === 401) {
-      router.push(`/signup?next=/templates&template=${template}`);
-      return;
-    }
     if (res.status === 402) {
       router.push("/pricing");
       return;

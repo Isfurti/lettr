@@ -34,7 +34,7 @@ export function PublicNav() {
             <>
               <Link href="/login" className="text-sm text-ink-soft hover:text-ink">Sign in</Link>
               <Link
-                href="/signup"
+                href="/builder/new"
                 className="bg-ink text-white px-4 py-2 rounded-sm text-sm font-medium hover:opacity-90 transition-opacity"
               >
                 Build Resume

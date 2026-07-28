@@ -208,6 +208,34 @@ by default.
 
 **Content SEO (not done, and honestly the bigger lever):** the "resume examples for nurses," "how to write a resume with no experience" style pages that actually drive most of this category's organic traffic aren't built. That's a sustained content practice, not a one-time task — see the conversation this was built in for a longer discussion of what that would take.
 
+## Guest builder (build before signing up)
+
+Anyone can start building a resume at `/builder/new` with zero account —
+manual editing, live preview, Resume Score, and Job Match all work for
+anonymous visitors. Their draft is saved in the browser's `localStorage`
+(see `lib/guest-draft.ts`), not on the server, since there's no account yet
+to attach it to.
+
+**What requires login:** AI features (bullet rewriting, cover letter, AI
+agent) and actually downloading a file. Clicking Export shows a modal
+prompting signup/login rather than calling the export API directly.
+
+**What happens after they sign up:** `completeGuestExport()` in
+`lib/guest-draft.ts` reads the local draft, creates a real saved resume via
+the normal `/api/resumes` endpoint, immediately triggers the export they
+originally clicked, and lands them in the real editor — their work is never
+lost across the signup step.
+
+**The watermark** is a CSS overlay on the live preview only ("SIGN IN TO
+DOWNLOAD"), not baked into any actual file — since download is gated behind
+login entirely, there's never a scenario where an anonymous user holds a
+watermarked (or any) real export. Once logged in, the file has no watermark.
+
+**Known testing limitation:** the localStorage/redirect handoff itself
+needs a real browser to fully exercise end-to-end; what's verified here is
+that the server-side API sequence it depends on (create resume → export)
+works correctly with real data.
+
 ## Going to production
 
 1. **Database**: already Postgres — for production, point `DATABASE_URL` at a
