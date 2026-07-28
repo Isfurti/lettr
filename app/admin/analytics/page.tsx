@@ -13,7 +13,7 @@ export default async function AdminAnalyticsPage() {
   const maxTemplateCount = Math.max(1, ...templatePopularity.map((p) => p.count));
 
   return (
-    <div className="flex-1 flex app-shell">
+    <div className="flex-1 flex admin-shell">
       <AdminSidebar />
       <main className="flex-1 px-10 py-10 max-w-6xl">
         <h1 className="font-display font-semibold text-3xl mb-1">Analytics</h1>
@@ -36,7 +36,7 @@ export default async function AdminAnalyticsPage() {
                 {overview.signupsByWeek.map((w) => (
                   <div key={w.week} className="flex-1 flex flex-col items-center gap-2">
                     <div
-                      className="w-full bg-seal rounded-t-sm"
+                      className="w-full bg-admin-accent rounded-t-sm"
                       style={{ height: `${Math.max(4, (w.count / maxWeekCount) * 130)}px` }}
                       title={`${w.count} signups`}
                     />
@@ -60,7 +60,7 @@ export default async function AdminAnalyticsPage() {
                       <span className="text-ink-soft font-mono">{t.count}</span>
                     </div>
                     <div className="h-1.5 bg-app-bg rounded-full overflow-hidden">
-                      <div className="h-full bg-seal rounded-full" style={{ width: `${(t.count / maxTemplateCount) * 100}%` }} />
+                      <div className="h-full bg-admin-accent rounded-full" style={{ width: `${(t.count / maxTemplateCount) * 100}%` }} />
                     </div>
                   </div>
                 ))}
@@ -75,7 +75,7 @@ export default async function AdminAnalyticsPage() {
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="paper-sheet rounded-sm p-5 border-t-2 border-t-seal">
+    <div className="paper-sheet rounded-sm p-5 border-t-2 border-t-admin-accent">
       <p className="text-xs uppercase tracking-wide text-ink-soft mb-1">{label}</p>
       <p className="font-display font-semibold text-2xl">{value}</p>
     </div>

@@ -236,6 +236,34 @@ needs a real browser to fully exercise end-to-end; what's verified here is
 that the server-side API sequence it depends on (create resume → export)
 works correctly with real data.
 
+## Admin visual distinction
+
+The admin portal uses a deliberately different color language from the
+user-facing app — dark crimson sidebar instead of navy, a light rose-tinted
+content background instead of cream, a permanent "⚠ Real user data — act
+carefully" label, and a warning-stripe accent bar. This isn't just styling:
+since admin has full read/write access to real user data (including
+deleting accounts), making it visually unmistakable which panel you're in
+is a real safety measure, not a preference.
+
+## Resume import (upload an existing resume)
+
+Authenticated users can upload a PDF/DOCX/TXT resume (`/api/resumes/import`)
+and have AI extract it into a new, editable resume — text extraction via
+`pdf-parse` and `mammoth`, structuring via `extractResumeFromText()` in
+`lib/ai.ts`. Subject to the same free-tier resume cap and AI rate limit as
+everything else.
+
+**A real bug worth knowing about if you touch this code:** `pdf-parse`
+depends on `pdfjs-dist`, which dynamically loads a worker file at runtime.
+Next.js's bundler doesn't handle that dynamic import correctly by default —
+it works fine in an isolated script but breaks in the actual built server
+with a "cannot find module .../pdf.worker.mjs" error. The fix is
+`serverExternalPackages: ["pdf-parse", "pdfjs-dist"]` in `next.config.ts`,
+which tells Next.js to leave this package's module resolution to Node
+directly rather than bundling it. If you ever remove or "clean up" that
+config line, PDF import will silently break again.
+
 ## Going to production
 
 1. **Database**: already Postgres — for production, point `DATABASE_URL` at a

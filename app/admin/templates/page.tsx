@@ -12,7 +12,7 @@ export default async function AdminTemplatesPage() {
   const maxCount = Math.max(1, ...popularity.map((p) => p.count));
 
   return (
-    <div className="flex-1 flex app-shell">
+    <div className="flex-1 flex admin-shell">
       <AdminSidebar />
       <main className="flex-1 px-10 py-10 max-w-6xl">
         <h1 className="font-display font-semibold text-3xl mb-1">Templates</h1>
@@ -34,7 +34,7 @@ export default async function AdminTemplatesPage() {
                     </div>
                     <div className="h-2 bg-app-bg rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-seal rounded-full transition-all"
+                        className="h-full bg-admin-accent rounded-full transition-all"
                         style={{ width: `${(count / maxCount) * 100}%` }}
                       />
                     </div>

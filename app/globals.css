@@ -18,6 +18,19 @@
   --seal-deep: #5d4200;
   --seal-bright: #fecd6e; /* secondary-container, for toggles/highlights */
 
+  /* Admin-only palette - deliberately different from the user-facing
+     navy/gold system, so there's no mistaking which panel you're in.
+     Crimson reads as "caution" - appropriate given admin has full
+     read/write access to real user data. The sidebar is dark crimson
+     (vs. the user dashboard's dark navy); the content area is a light
+     rose tint (vs. the user dashboard's cream) so existing white cards
+     stay readable without a full dark-mode rewrite. */
+  --admin-bg: #fbeef0;
+  --admin-sidebar: #1a0709;
+  --admin-accent: #b4293f;
+  --admin-accent-soft: #f7dde1;
+  --admin-accent-deep: #7a1c2b;
+
   --font-display: "Source Serif 4", Georgia, serif;
   --font-sans: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, ui-monospace, monospace;
@@ -36,6 +49,11 @@
   --color-seal-soft: var(--seal-soft);
   --color-seal-deep: var(--seal-deep);
   --color-seal-bright: var(--seal-bright);
+  --color-admin-bg: var(--admin-bg);
+  --color-admin-sidebar: var(--admin-sidebar);
+  --color-admin-accent: var(--admin-accent);
+  --color-admin-accent-soft: var(--admin-accent-soft);
+  --color-admin-accent-deep: var(--admin-accent-deep);
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
@@ -55,9 +73,28 @@ body {
   background: var(--app-bg);
 }
 
+.admin-shell {
+  background: var(--admin-bg);
+}
+
 .sidebar-nav-item-active {
   background: var(--seal);
   color: #ffffff;
+}
+
+.admin-nav-item-active {
+  background: var(--admin-accent);
+  color: #ffffff;
+}
+
+.admin-stripe {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--admin-accent),
+    var(--admin-accent) 10px,
+    var(--admin-accent-deep) 10px,
+    var(--admin-accent-deep) 20px
+  );
 }
 
 .score-ring-track {

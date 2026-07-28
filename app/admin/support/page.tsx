@@ -54,7 +54,7 @@ export default async function AdminSupportPage() {
   const resolved = messages.filter((m) => m.status === "resolved");
 
   return (
-    <div className="flex-1 flex app-shell">
+    <div className="flex-1 flex admin-shell">
       <AdminSidebar />
       <main className="flex-1 px-10 py-10 max-w-4xl">
         <h1 className="font-display font-semibold text-3xl mb-8">Support inbox</h1>

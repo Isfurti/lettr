@@ -13,7 +13,7 @@ export default async function AdminUsersPage({
   const users = await listAllUsers(q);
 
   return (
-    <div className="flex-1 flex app-shell">
+    <div className="flex-1 flex admin-shell">
       <AdminSidebar />
       <main className="flex-1 px-10 py-10 max-w-6xl">
         <div className="flex items-center justify-between mb-8">
@@ -66,7 +66,7 @@ export default async function AdminUsersPage({
                     </Link>
                   </td>
                   <td className="px-6 py-3">
-                    <span className={`text-xs font-mono uppercase px-2 py-0.5 rounded-sm ${u.plan === "pro" ? "bg-seal-soft text-seal-deep" : "bg-rule/40"}`}>
+                    <span className={`text-xs font-mono uppercase px-2 py-0.5 rounded-sm ${u.plan === "pro" ? "bg-admin-accent-soft text-admin-accent-deep" : "bg-rule/40"}`}>
                       {u.plan}
                     </span>
                   </td>

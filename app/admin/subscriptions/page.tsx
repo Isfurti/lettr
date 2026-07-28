@@ -9,18 +9,18 @@ export default async function AdminSubscriptionsPage() {
   const mrr = proUsers.length * 19; // real count × real price, not a fabricated number
 
   return (
-    <div className="flex-1 flex app-shell">
+    <div className="flex-1 flex admin-shell">
       <AdminSidebar />
       <main className="flex-1 px-10 py-10 max-w-6xl">
         <h1 className="font-display font-semibold text-3xl mb-1">Subscriptions</h1>
         <p className="text-ink-soft mb-8">{proUsers.length} active Pro subscriber{proUsers.length === 1 ? "" : "s"}.</p>
 
         <div className="grid sm:grid-cols-2 gap-4 mb-8">
-          <div className="paper-sheet rounded-sm p-5 border-t-2 border-t-seal">
+          <div className="paper-sheet rounded-sm p-5 border-t-2 border-t-admin-accent">
             <p className="text-xs uppercase tracking-wide text-ink-soft mb-1">Pro subscribers</p>
             <p className="font-display font-semibold text-2xl">{proUsers.length}</p>
           </div>
-          <div className="paper-sheet rounded-sm p-5 border-t-2 border-t-seal">
+          <div className="paper-sheet rounded-sm p-5 border-t-2 border-t-admin-accent">
             <p className="text-xs uppercase tracking-wide text-ink-soft mb-1">Estimated MRR</p>
             <p className="font-display font-semibold text-2xl">${mrr}</p>
             <p className="text-xs text-ink-soft mt-1">{proUsers.length} × $19/mo — before any Stripe fees, discounts, or churn this month</p>
@@ -56,7 +56,7 @@ export default async function AdminSubscriptionsPage() {
                       href="https://dashboard.stripe.com/customers"
                       target="_blank"
                       rel="noreferrer"
-                      className="text-seal text-xs hover:underline"
+                      className="text-admin-accent text-xs hover:underline"
                     >
                       View in Stripe →
                     </a>

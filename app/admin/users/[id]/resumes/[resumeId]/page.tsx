@@ -27,13 +27,13 @@ export default async function AdminResumeViewPage({
   });
 
   return (
-    <div className="flex-1 flex app-shell">
+    <div className="flex-1 flex admin-shell">
       <AdminSidebar />
       <main className="flex-1 px-10 py-10 max-w-2xl">
         <Link href={`/admin/users/${id}`} className="text-sm text-ink-soft hover:text-ink mb-4 inline-block">
           ← Back to {user.name || user.email}
         </Link>
-        <p className="text-xs uppercase tracking-wide text-seal font-medium mb-1">Read-only admin view</p>
+        <p className="text-xs uppercase tracking-wide text-admin-accent font-medium mb-1">Read-only admin view</p>
         <h1 className="font-display font-semibold text-2xl mb-6">{row.title}</h1>
 
         <div className="paper-sheet rounded-sm p-8">
@@ -46,14 +46,14 @@ export default async function AdminResumeViewPage({
 
           {data.summary && (
             <>
-              <h3 className="text-xs uppercase tracking-wide text-seal font-semibold mt-4 mb-1">Summary</h3>
+              <h3 className="text-xs uppercase tracking-wide text-admin-accent font-semibold mt-4 mb-1">Summary</h3>
               <p className="text-sm">{data.summary}</p>
             </>
           )}
 
           {data.experience.length > 0 && (
             <>
-              <h3 className="text-xs uppercase tracking-wide text-seal font-semibold mt-4 mb-1">Experience</h3>
+              <h3 className="text-xs uppercase tracking-wide text-admin-accent font-semibold mt-4 mb-1">Experience</h3>
               {data.experience.map((exp) => (
                 <div key={exp.id} className="mt-2">
                   <p className="text-sm font-medium">{exp.role} — {exp.company} ({exp.startDate}–{exp.endDate})</p>
@@ -67,7 +67,7 @@ export default async function AdminResumeViewPage({
 
           {data.education.length > 0 && (
             <>
-              <h3 className="text-xs uppercase tracking-wide text-seal font-semibold mt-4 mb-1">Education</h3>
+              <h3 className="text-xs uppercase tracking-wide text-admin-accent font-semibold mt-4 mb-1">Education</h3>
               {data.education.map((edu) => (
                 <p key={edu.id} className="text-sm">{edu.degree} — {edu.school} ({edu.startDate}–{edu.endDate})</p>
               ))}
@@ -76,7 +76,7 @@ export default async function AdminResumeViewPage({
 
           {data.skills.length > 0 && (
             <>
-              <h3 className="text-xs uppercase tracking-wide text-seal font-semibold mt-4 mb-1">Skills</h3>
+              <h3 className="text-xs uppercase tracking-wide text-admin-accent font-semibold mt-4 mb-1">Skills</h3>
               <p className="text-sm">{data.skills.join(" • ")}</p>
             </>
           )}

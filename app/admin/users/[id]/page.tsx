@@ -26,7 +26,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   });
 
   return (
-    <div className="flex-1 flex app-shell">
+    <div className="flex-1 flex admin-shell">
       <AdminSidebar />
       <main className="flex-1 px-10 py-10 max-w-4xl">
         <Link href="/admin/users" className="text-sm text-ink-soft hover:text-ink mb-4 inline-block">
@@ -39,7 +39,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             <p className="text-ink-soft">{user.email}</p>
             <p className="text-xs text-ink-soft mt-1">
               Joined {new Date(user.created_at).toLocaleDateString()} ·{" "}
-              <span className={`font-mono uppercase ${user.plan === "pro" ? "text-seal" : ""}`}>{user.plan}</span>
+              <span className={`font-mono uppercase ${user.plan === "pro" ? "text-admin-accent" : ""}`}>{user.plan}</span>
             </p>
           </div>
           <AdminUserActions userId={id} currentPlan={user.plan} />
@@ -61,7 +61,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                   <p className="font-medium text-sm">{r.title}</p>
                   <p className="text-xs text-ink-soft">{r.template} · updated {new Date(r.updated_at).toLocaleDateString()}</p>
                 </div>
-                <span className="text-xs font-mono bg-seal-soft text-seal-deep px-2 py-0.5 rounded-sm">{score.overall}</span>
+                <span className="text-xs font-mono bg-admin-accent-soft text-admin-accent-deep px-2 py-0.5 rounded-sm">{score.overall}</span>
               </Link>
             );
           })}

@@ -25,7 +25,7 @@ export default async function AdminSystemPage() {
   ];
 
   return (
-    <div className="flex-1 flex app-shell">
+    <div className="flex-1 flex admin-shell">
       <AdminSidebar />
       <main className="flex-1 px-10 py-10 max-w-3xl">
         <h1 className="font-display font-semibold text-3xl mb-1">System</h1>
@@ -36,7 +36,7 @@ export default async function AdminSystemPage() {
             <p className="font-medium">Database</p>
             <p className="text-xs text-ink-soft">{db.ok ? "Connected" : db.error}</p>
           </div>
-          <span className={`text-xs font-mono uppercase px-2.5 py-1 rounded-sm ${db.ok ? "bg-seal-soft text-seal-deep" : "bg-red-50 text-red-700"}`}>
+          <span className={`text-xs font-mono uppercase px-2.5 py-1 rounded-sm ${db.ok ? "bg-admin-accent-soft text-admin-accent-deep" : "bg-red-50 text-red-700"}`}>
             {db.ok ? "Operational" : "Error"}
           </span>
         </div>
@@ -48,7 +48,7 @@ export default async function AdminSystemPage() {
           {integrations.map((i) => (
             <div key={i.name} className="flex items-center justify-between px-6 py-3 border-b border-rule last:border-b-0">
               <p className="text-sm">{i.name}</p>
-              <span className={`text-xs font-mono uppercase px-2 py-0.5 rounded-sm ${i.configured ? "bg-seal-soft text-seal-deep" : "bg-rule/40 text-ink-soft"}`}>
+              <span className={`text-xs font-mono uppercase px-2 py-0.5 rounded-sm ${i.configured ? "bg-admin-accent-soft text-admin-accent-deep" : "bg-rule/40 text-ink-soft"}`}>
                 {i.configured ? "Configured" : "Not set"}
               </span>
             </div>
@@ -58,7 +58,7 @@ export default async function AdminSystemPage() {
         <p className="text-xs text-ink-soft mt-4 mb-8">
           &quot;Configured&quot; only checks that the environment variable is present — it doesn&apos;t verify the
           credential is valid. Check{" "}
-          <a href="/api/health" target="_blank" rel="noreferrer" className="text-seal hover:underline">
+          <a href="/api/health" target="_blank" rel="noreferrer" className="text-admin-accent hover:underline">
             /api/health
           </a>{" "}
           directly for the raw JSON, or an uptime monitor for continuous checks.

@@ -9,6 +9,7 @@ import type { ResumeData } from "@/lib/types";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ScoreRing } from "@/components/ScoreRing";
 import { NewResumeButton } from "@/components/NewResumeButton";
+import { ImportResumeButton } from "@/components/ImportResumeButton";
 import { BillingPortalButton } from "@/components/BillingPortalButton";
 import { ResumeSearch } from "@/components/ResumeSearch";
 import { VerifyEmailBanner } from "@/components/VerifyEmailBanner";
@@ -67,7 +68,10 @@ export default async function DashboardPage({
           </div>
           <div className="flex items-center gap-3 shrink-0">
             {!atResumeLimit ? (
-              <NewResumeButton label="+ New Resume" />
+              <>
+                <ImportResumeButton />
+                <NewResumeButton label="+ New Resume" />
+              </>
             ) : (
               <Link href="/pricing" className="bg-ink text-white px-4 py-2.5 rounded-sm text-sm font-medium hover:opacity-90">
                 Upgrade for more

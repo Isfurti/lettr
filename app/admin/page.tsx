@@ -11,7 +11,7 @@ export default async function AdminOverviewPage() {
   const maxWeekCount = Math.max(1, ...overview.signupsByWeek.map((w) => w.count));
 
   return (
-    <div className="flex-1 flex app-shell">
+    <div className="flex-1 flex admin-shell">
       <AdminSidebar />
 
       <main className="flex-1 px-10 py-10 max-w-6xl">
@@ -21,7 +21,7 @@ export default async function AdminOverviewPage() {
             <p className="text-ink-soft">Real usage data for the Lettr platform — no estimates.</p>
           </div>
           <div className="text-right">
-            <p className="text-xs uppercase tracking-wide text-seal font-medium">System status</p>
+            <p className="text-xs uppercase tracking-wide text-admin-accent font-medium">System status</p>
             <p className="text-sm font-medium flex items-center gap-1.5 justify-end mt-1">
               <span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> Operational
             </p>
@@ -45,7 +45,7 @@ export default async function AdminOverviewPage() {
                 {overview.signupsByWeek.map((w) => (
                   <div key={w.week} className="flex-1 flex flex-col items-center gap-2">
                     <div
-                      className="w-full bg-seal rounded-t-sm"
+                      className="w-full bg-admin-accent rounded-t-sm"
                       style={{ height: `${Math.max(4, (w.count / maxWeekCount) * 130)}px` }}
                       title={`${w.count} signups`}
                     />
@@ -74,7 +74,7 @@ export default async function AdminOverviewPage() {
             </div>
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between">
-                <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-seal inline-block" /> Pro</span>
+                <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-admin-accent inline-block" /> Pro</span>
                 <span className="font-mono">{overview.proUsers}</span>
               </div>
               <div className="flex justify-between">
@@ -115,7 +115,7 @@ export default async function AdminOverviewPage() {
                       </div>
                     </td>
                     <td className="px-6 py-3">
-                      <span className={`text-xs font-mono uppercase px-2 py-0.5 rounded-sm ${u.plan === "pro" ? "bg-seal-soft text-seal-deep" : "bg-rule/40"}`}>
+                      <span className={`text-xs font-mono uppercase px-2 py-0.5 rounded-sm ${u.plan === "pro" ? "bg-admin-accent-soft text-admin-accent-deep" : "bg-rule/40"}`}>
                         {u.plan}
                       </span>
                     </td>
@@ -135,7 +135,7 @@ export default async function AdminOverviewPage() {
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="paper-sheet rounded-sm p-5 border-t-2 border-t-seal">
+    <div className="paper-sheet rounded-sm p-5 border-t-2 border-t-admin-accent">
       <p className="text-xs uppercase tracking-wide text-ink-soft mb-1">{label}</p>
       <p className="font-display font-semibold text-2xl">{value}</p>
       {sub && <p className="text-xs text-ink-soft mt-1">{sub}</p>}
