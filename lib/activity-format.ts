@@ -4,6 +4,8 @@ export function formatActivityLabel(action: string): { title: string; icon: stri
       return { title: "Resume created", icon: "📄" };
     case "resume_imported":
       return { title: "Resume imported", icon: "📥" };
+    case "review_submitted":
+      return { title: "Left feedback", icon: "💬" };
     case "pdf_exported":
       return { title: "PDF exported", icon: "⬇" };
     case "docx_exported":

@@ -13,6 +13,7 @@ import {
   CreditCard,
   Settings,
   Inbox,
+  Star,
   LogOut,
 } from "lucide-react";
 
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { href: "/admin", label: "Overview", icon: LayoutGrid },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/reviews", label: "Reviews", icon: Star },
   { href: "/admin/templates", label: "Templates", icon: FileText },
   { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
   { href: "/admin/system", label: "System", icon: Settings },

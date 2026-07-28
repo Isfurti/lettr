@@ -57,3 +57,11 @@ export async function sendPasswordResetEmail(email: string, token: string): Prom
     text: `Someone requested a password reset for this Lettr account. If that was you, set a new password here:\n\n${link}\n\nThis link expires in 1 hour. If you didn't request this, you can safely ignore this email.`,
   });
 }
+
+export async function sendReviewReplyEmail(email: string, reply: string): Promise<{ sent: boolean; reason?: string }> {
+  return sendEmail({
+    to: email,
+    subject: "Thanks for your feedback on Lettr",
+    text: `${reply}\n\n— The Lettr team`,
+  });
+}

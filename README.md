@@ -264,6 +264,20 @@ which tells Next.js to leave this package's module resolution to Node
 directly rather than bundling it. If you ever remove or "clean up" that
 config line, PDF import will silently break again.
 
+## Reviews & feedback loop
+
+Users leave a star rating + written feedback at `/dashboard/feedback`. AI
+analyzes it (`analyzeReview()` in `lib/ai.ts`) into sentiment, specific
+likes/dislikes pulled from their actual wording (not generic categories),
+and a genuine personalized reply - shown immediately in the UI and emailed
+if Resend is configured.
+
+**Admin gets a dedicated "what don't they like" view** at `/admin/reviews`,
+not just a raw list of reviews to read one by one - every extracted dislike
+across every review is flattened into one panel, most recent first, each
+tagged with who said it and their rating. Real stats (total, average
+rating, distribution) computed live, no fabricated numbers.
+
 ## Going to production
 
 1. **Database**: already Postgres — for production, point `DATABASE_URL` at a

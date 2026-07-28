@@ -86,6 +86,19 @@ function ensureSchema(): Promise<void> {
       );
       CREATE INDEX IF NOT EXISTS idx_admin_audit_log_created ON admin_audit_log(created_at DESC);
 
+      CREATE TABLE IF NOT EXISTS reviews (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        rating INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        sentiment TEXT,
+        likes JSONB NOT NULL DEFAULT '[]',
+        dislikes JSONB NOT NULL DEFAULT '[]',
+        ai_reply TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_reviews_created ON reviews(created_at DESC);
+
       CREATE TABLE IF NOT EXISTS resumes (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -483,6 +496,72 @@ export async function listAdminAuditLog(limit = 50): Promise<AdminAuditRow[]> {
 export async function deleteUserAccount(userId: string) {
   await ensureSchema();
   await pool.query("DELETE FROM users WHERE id = $1", [userId]);
+}
+
+export type ReviewRow = {
+  id: string;
+  user_id: string;
+  rating: number;
+  content: string;
+  sentiment: string | null;
+  likes: string[];
+  dislikes: string[];
+  ai_reply: string | null;
+  created_at: string;
+};
+
+export async function createReview(params: {
+  id: string;
+  userId: string;
+  rating: number;
+  content: string;
+  sentiment: string;
+  likes: string[];
+  dislikes: string[];
+  aiReply: string;
+}) {
+  await ensureSchema();
+  await pool.query(
+    `INSERT INTO reviews (id, user_id, rating, content, sentiment, likes, dislikes, ai_reply)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8)`,
+    [
+      params.id,
+      params.userId,
+      params.rating,
+      params.content,
+      params.sentiment,
+      JSON.stringify(params.likes),
+      JSON.stringify(params.dislikes),
+      params.aiReply,
+    ]
+  );
+}
+
+export type ReviewWithUser = ReviewRow & { user_email: string; user_name: string | null };
+
+export async function listAllReviews(limit = 100): Promise<ReviewWithUser[]> {
+  await ensureSchema();
+  const res = await pool.query(
+    `SELECT r.*, u.email AS user_email, u.name AS user_name
+     FROM reviews r JOIN users u ON u.id = r.user_id
+     ORDER BY r.created_at DESC LIMIT $1`,
+    [limit]
+  );
+  return res.rows;
+}
+
+export async function getReviewStats(): Promise<{ total: number; avgRating: number; distribution: Record<number, number> }> {
+  await ensureSchema();
+  const res = await pool.query("SELECT rating, COUNT(*)::int AS count FROM reviews GROUP BY rating");
+  const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  let total = 0;
+  let ratingSum = 0;
+  for (const row of res.rows) {
+    distribution[row.rating] = row.count;
+    total += row.count;
+    ratingSum += row.rating * row.count;
+  }
+  return { total, avgRating: total === 0 ? 0 : Math.round((ratingSum / total) * 10) / 10, distribution };
 }
 
 export default pool;

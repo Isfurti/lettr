@@ -283,6 +283,66 @@ function normalizeExtractedResume(raw: unknown): ResumeData {
   };
 }
 
+export type ReviewAnalysis = {
+  sentiment: "positive" | "neutral" | "negative" | "mixed";
+  likes: string[];
+  dislikes: string[];
+  reply: string;
+};
+
+/**
+ * Analyzes a user's review to extract specific likes/dislikes (for the
+ * admin "what users don't like" view) and writes a genuine, specific reply
+ * - not a generic "thanks for your feedback" template.
+ */
+export async function analyzeReview(rating: number, content: string): Promise<ReviewAnalysis> {
+  const client = getClient();
+
+  const prompt = `A user left this review of Lettr, an AI resume builder, with a star rating of ${rating}/5:
+
+"${content}"
+
+Analyze it and respond with ONLY a JSON object, no preamble, no markdown fences, in this exact shape:
+{
+  "sentiment": "positive" | "neutral" | "negative" | "mixed",
+  "likes": string[],
+  "dislikes": string[],
+  "reply": string
+}
+
+Rules:
+- "likes" and "dislikes" should be short, specific phrases pulled from what they actually said - not
+  generic categories. If they didn't mention any dislikes, return an empty array - don't invent one to
+  seem balanced.
+- "reply" should be a short (2-4 sentence), warm, specific reply as if from the Lettr team - reference
+  the actual things they mentioned (praise or complaints) rather than a generic "thanks for your
+  feedback!" message. If they raised a real problem, acknowledge it honestly and don't over-promise a
+  fix timeline. Don't be sycophantic or over-the-top - genuine and brief.`;
+
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: 700,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const text = response.content
+    .map((block) => (block.type === "text" ? block.text : ""))
+    .join("");
+
+  const cleaned = text.replace(/```json|```/g, "").trim();
+  try {
+    const parsed = JSON.parse(cleaned);
+    return {
+      sentiment: ["positive", "neutral", "negative", "mixed"].includes(parsed.sentiment) ? parsed.sentiment : "neutral",
+      likes: Array.isArray(parsed.likes) ? parsed.likes.map(String) : [],
+      dislikes: Array.isArray(parsed.dislikes) ? parsed.dislikes.map(String) : [],
+      reply: typeof parsed.reply === "string" ? parsed.reply : "Thanks for sharing your feedback with us.",
+    };
+  } catch {
+    return { sentiment: "neutral", likes: [], dislikes: [], reply: "Thanks for sharing your feedback with us." };
+  }
+}
+
 function parseJsonArraySafely(text: string): string[] {  const cleaned = text.replace(/```json|```/g, "").trim();
   try {
     const parsed = JSON.parse(cleaned);

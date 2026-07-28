@@ -10,11 +10,13 @@ import {
   Sparkles,
   LogOut,
   ExternalLink,
+  MessageSquare,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
   { href: "/templates", label: "Templates", icon: LayoutTemplate },
+  { href: "/dashboard/feedback", label: "Feedback", icon: MessageSquare },
   { href: "/pricing", label: "Subscription", icon: Mail },
 ];
 
