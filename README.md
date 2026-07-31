@@ -329,6 +329,31 @@ uploaded image (matching pixel color, matching dimensions), that toggling
 the photo off produces zero embedded images even when one was uploaded, and
 that the dividers toggle produces measurably different PDF output.
 
+## Bug fixes: colors not applying, photo not adjustable
+
+**Accent color wasn't actually changing anything.** Root cause: Tailwind
+v4's `@theme inline` compiles `.text-seal` directly to `color:var(--seal)`,
+not `color:var(--color-seal)`. The color-override code in
+`ResumePreview` (`components/ResumeEditor.tsx`) was setting
+`--color-seal` on the wrapper div - a variable nothing actually reads.
+Confirmed by inspecting the real compiled CSS output, not just reasoning
+about it. Fixed by overriding `--seal`/`--seal-soft`/`--seal-deep`
+directly. This never affected PDF export, which computes colors as plain
+JS values with no CSS variables involved at all - which is exactly why the
+earlier PDF-based color testing passed while the live preview was
+silently broken the whole time.
+
+**Uploaded photos couldn't be repositioned or cropped.** There was only
+Replace-entirely or Remove-entirely - if a face wasn't centered,
+`object-cover`'s automatic crop was final with no way to fix it. Built a
+real adjuster (`components/PhotoAdjuster.tsx`): drag to reposition, slider
+to zoom, bakes the result to a canvas on Apply. The original (pre-crop)
+image is kept in `customization.photoOriginalDataUrl` specifically so
+"Adjust" can always be reopened later and re-crop from scratch, rather
+than progressively degrading an already-cropped image. Also fixed a
+smaller real bug found along the way: the file input never reset its
+value, so re-selecting the same file silently did nothing.
+
 ## Going to production
 
 1. **Database**: already Postgres — for production, point `DATABASE_URL` at a

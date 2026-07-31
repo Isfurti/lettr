@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { PhotoAdjuster } from "@/components/PhotoAdjuster";
 
-const MAX_DIMENSION = 400; // px - plenty for a resume-sized circular avatar
-const JPEG_QUALITY = 0.85;
+const MAX_DIMENSION = 800; // px - the "original" kept for re-cropping later; larger than the final baked output
+const JPEG_QUALITY = 0.9;
 
 function resizeImageFile(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -31,18 +32,26 @@ function resizeImageFile(file: File): Promise<string> {
   });
 }
 
+export type PhotoState = {
+  photoDataUrl?: string;
+  photoOriginalDataUrl?: string;
+  photoZoom?: number;
+  photoOffsetX?: number;
+  photoOffsetY?: number;
+  showPhoto?: boolean;
+};
+
 export function PhotoUpload({
-  photoDataUrl,
-  showPhoto,
+  state,
   onChange,
 }: {
-  photoDataUrl?: string;
-  showPhoto?: boolean;
-  onChange: (photoDataUrl: string | undefined, showPhoto: boolean) => void;
+  state: PhotoState;
+  onChange: (next: PhotoState) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [adjusting, setAdjusting] = useState(false);
 
   async function handleFile(file: File) {
     if (!file.type.startsWith("image/")) {
@@ -57,26 +66,46 @@ export function PhotoUpload({
     setError(null);
     try {
       const resized = await resizeImageFile(file);
-      onChange(resized, true);
+      // Store as the working "original" and immediately open the adjuster
+      // on it, starting from a centered, unzoomed crop - rather than
+      // silently auto-cropping with no way to fix a bad result.
+      onChange({ ...state, photoOriginalDataUrl: resized, photoZoom: 1, photoOffsetX: 50, photoOffsetY: 50 });
+      setAdjusting(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't process that image.");
     } finally {
       setLoading(false);
+      // Reset so selecting the SAME file again still fires onChange -
+      // browsers otherwise silently no-op a repeat selection of an
+      // unchanged file input value.
+      if (inputRef.current) inputRef.current.value = "";
     }
+  }
+
+  function applyAdjustment(result: { croppedDataUrl: string; zoom: number; offsetX: number; offsetY: number }) {
+    onChange({
+      ...state,
+      photoDataUrl: result.croppedDataUrl,
+      photoZoom: result.zoom,
+      photoOffsetX: result.offsetX,
+      photoOffsetY: result.offsetY,
+      showPhoto: true,
+    });
+    setAdjusting(false);
   }
 
   return (
     <div className="flex items-center gap-4">
       <div className="w-16 h-16 rounded-full bg-app-bg border border-rule overflow-hidden shrink-0 flex items-center justify-center">
-        {photoDataUrl ? (
+        {state.photoDataUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={photoDataUrl} alt="Profile" className="w-full h-full object-cover" />
+          <img src={state.photoDataUrl} alt="Profile" className="w-full h-full object-cover" />
         ) : (
           <span className="text-ink-soft text-xs">No photo</span>
         )}
       </div>
       <div>
-        <div className="flex items-center gap-2 mb-1.5">
+        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
           <input
             ref={inputRef}
             type="file"
@@ -93,24 +122,33 @@ export function PhotoUpload({
             disabled={loading}
             className="text-xs border border-rule rounded-sm px-3 py-1.5 hover:bg-app-bg disabled:opacity-60"
           >
-            {loading ? "Processing…" : photoDataUrl ? "Replace photo" : "Upload photo"}
+            {loading ? "Processing…" : state.photoDataUrl ? "Replace photo" : "Upload photo"}
           </button>
-          {photoDataUrl && (
+          {state.photoOriginalDataUrl && (
             <button
               type="button"
-              onClick={() => onChange(undefined, false)}
+              onClick={() => setAdjusting(true)}
+              className="text-xs border border-rule rounded-sm px-3 py-1.5 hover:bg-app-bg"
+            >
+              Adjust
+            </button>
+          )}
+          {state.photoDataUrl && (
+            <button
+              type="button"
+              onClick={() => onChange({ photoDataUrl: undefined, photoOriginalDataUrl: undefined, showPhoto: false })}
               className="text-xs text-red-600 hover:underline"
             >
               Remove
             </button>
           )}
         </div>
-        {photoDataUrl && (
+        {state.photoDataUrl && (
           <label className="flex items-center gap-2 text-xs text-ink-soft">
             <input
               type="checkbox"
-              checked={showPhoto ?? true}
-              onChange={(e) => onChange(photoDataUrl, e.target.checked)}
+              checked={state.showPhoto ?? true}
+              onChange={(e) => onChange({ ...state, showPhoto: e.target.checked })}
             />
             Show photo on resume
           </label>
@@ -120,6 +158,17 @@ export function PhotoUpload({
           Entirely optional - common in some countries, often discouraged for US/UK ATS-heavy applications.
         </p>
       </div>
+
+      {adjusting && state.photoOriginalDataUrl && (
+        <PhotoAdjuster
+          imageDataUrl={state.photoOriginalDataUrl}
+          initialZoom={state.photoZoom ?? 1}
+          initialOffsetX={state.photoOffsetX ?? 50}
+          initialOffsetY={state.photoOffsetY ?? 50}
+          onApply={applyAdjustment}
+          onCancel={() => setAdjusting(false)}
+        />
+      )}
     </div>
   );
 }

@@ -422,10 +422,16 @@ export function EditForm({
       <Section title="Layout">
         <p className="text-xs text-ink-soft mb-2">Profile photo</p>
         <PhotoUpload
-          photoDataUrl={data.customization?.photoDataUrl}
-          showPhoto={data.customization?.showPhoto}
-          onChange={(photoDataUrl, showPhoto) => {
-            setData((d) => ({ ...d, customization: { ...d.customization, photoDataUrl, showPhoto } }));
+          state={{
+            photoDataUrl: data.customization?.photoDataUrl,
+            photoOriginalDataUrl: data.customization?.photoOriginalDataUrl,
+            photoZoom: data.customization?.photoZoom,
+            photoOffsetX: data.customization?.photoOffsetX,
+            photoOffsetY: data.customization?.photoOffsetY,
+            showPhoto: data.customization?.showPhoto,
+          }}
+          onChange={(next) => {
+            setData((d) => ({ ...d, customization: { ...d.customization, ...next } }));
           }}
         />
 
@@ -1075,9 +1081,9 @@ export function ResumePreview({ data, template }: { data: ResumeData; template: 
   const fontPair = getFontPair(data.customization?.fontChoice);
 
   const overrideStyle = {
-    "--color-seal": accentColor,
-    "--color-seal-soft": softenHex(accentColor),
-    "--color-seal-deep": darkenHex(accentColor),
+    "--seal": accentColor,
+    "--seal-soft": softenHex(accentColor),
+    "--seal-deep": darkenHex(accentColor),
     "--font-display": fontPair.display,
     "--font-sans": fontPair.body,
   } as React.CSSProperties;
