@@ -3,6 +3,12 @@ import Link from "next/link";
 import { HeroScoreDemo } from "@/components/HeroScoreDemo";
 import { Reveal } from "@/components/Reveal";
 import { PublicNav } from "@/components/PublicNav";
+import { getFeaturedReviews } from "@/lib/db";
+
+// Revalidate hourly rather than fetching featured reviews on every single
+// page load - this is the highest-traffic page, no reason to hit the
+// database per-visitor for content that changes rarely.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Lettr — AI Resume Builder with ATS Score & Cover Letters",
@@ -23,7 +29,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
+  const featuredReviews = await getFeaturedReviews(6);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -116,6 +124,29 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Real user reviews - only shown once at least one exists and has been
+          admin-approved for public display. No placeholder content here on
+          purpose - an empty section beats a fabricated one. */}
+      {featuredReviews.length > 0 && (
+        <section className="border-t border-rule">
+          <div className="max-w-6xl mx-auto w-full px-8 py-20">
+            <p className="text-xs uppercase tracking-wide text-seal font-medium mb-2 text-center">What people are saying</p>
+            <h2 className="font-display font-semibold text-3xl mb-12 text-center">Real feedback, unedited.</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              {featuredReviews.map((r, i) => (
+                <Reveal key={r.id} delay={i * 60} className="paper-sheet rounded-sm p-6 flex flex-col">
+                  <p className="text-seal mb-3">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</p>
+                  <p className="text-sm leading-relaxed flex-1 mb-4">&ldquo;{r.content}&rdquo;</p>
+                  <p className="text-xs text-ink-soft font-medium">
+                    {r.user_name ? r.user_name.split(" ")[0] : "A Lettr user"}
+                  </p>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Comparison */}
       <section className="bg-navy-deep text-white">

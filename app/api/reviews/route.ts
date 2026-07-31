@@ -10,6 +10,7 @@ import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 const Schema = z.object({
   rating: z.number().int().min(1).max(5),
   content: z.string().min(10).max(3000),
+  consentToFeature: z.boolean().default(false),
 });
 
 export async function POST(req: Request) {
@@ -50,6 +51,7 @@ export async function POST(req: Request) {
     likes: analysis.likes,
     dislikes: analysis.dislikes,
     aiReply: analysis.reply,
+    consentToFeature: parsed.data.consentToFeature,
   });
 
   await logActivity(userId, "review_submitted", `${parsed.data.rating}★`);

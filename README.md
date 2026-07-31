@@ -278,6 +278,31 @@ across every review is flattened into one panel, most recent first, each
 tagged with who said it and their rating. Real stats (total, average
 rating, distribution) computed live, no fabricated numbers.
 
+### Public testimonials on the landing page
+
+Real reviews can appear on the landing page - but only through two
+deliberate gates, since the feedback form was originally framed as private
+("a real person reads every one"), not a public testimonial submission:
+
+1. **User consent at submission** - an opt-in checkbox (unchecked by
+   default) on the feedback form, only ever offered for feedback they're
+   giving anyway - not a separate "write us a testimonial" ask.
+2. **Admin curation** - even a consented review only goes live if you
+   explicitly click "Feature on landing page" in `/admin/reviews`.
+
+This is enforced server-side, not just hidden in the UI:
+`setReviewFeatured()` in `lib/db.ts` refuses to feature a review without
+consent, and `getFeaturedReviews()` independently filters on consent too -
+tested directly in `tests/reviews.test.ts`, including a test that bypasses
+the first guard at the SQL level to prove the second one still holds.
+
+**Caching behavior worth knowing:** the landing page uses `revalidate =
+3600` (Next.js ISR), so a review you feature won't appear on the live site
+instantly - it can take up to an hour. This is deliberate: querying the
+database on every single landing-page visitor for content that changes
+rarely would be wasteful. If you need a change to show up immediately,
+redeploy (which forces a fresh build) rather than waiting.
+
 ## Going to production
 
 1. **Database**: already Postgres — for production, point `DATABASE_URL` at a

@@ -6,6 +6,7 @@ export function FeedbackForm() {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [content, setContent] = useState("");
+  const [consentToFeature, setConsentToFeature] = useState(false);
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [reply, setReply] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +23,7 @@ export function FeedbackForm() {
     const res = await fetch("/api/reviews", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rating, content }),
+      body: JSON.stringify({ rating, content, consentToFeature }),
     });
     const body = await res.json().catch(() => ({}));
 
@@ -76,6 +77,19 @@ export function FeedbackForm() {
           placeholder="e.g. The AI bullet rewriting saved me so much time, but I wish there were more template colors…"
           className="mt-1.5 w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
         />
+      </label>
+
+      <label className="flex items-start gap-2.5">
+        <input
+          type="checkbox"
+          checked={consentToFeature}
+          onChange={(e) => setConsentToFeature(e.target.checked)}
+          className="mt-0.5"
+        />
+        <span className="text-xs text-ink-soft">
+          It&apos;s okay to feature this review publicly on our website (we&apos;ll only show your
+          first name, and only if our team selects it — not automatic).
+        </span>
       </label>
 
       {error && <p className="text-sm text-red-600">{error}</p>}

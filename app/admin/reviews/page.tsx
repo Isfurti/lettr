@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/admin-auth";
 import { listAllReviews, getReviewStats } from "@/lib/db";
 import { AdminSidebar } from "@/components/AdminSidebar";
+import { FeatureReviewButton } from "@/components/FeatureReviewButton";
 
 export default async function AdminReviewsPage() {
   await requireAdmin();
@@ -95,10 +96,11 @@ export default async function AdminReviewsPage() {
               </div>
               <p className="text-sm mb-2">{r.content}</p>
               {r.ai_reply && (
-                <p className="text-xs text-ink-soft border-l-2 border-admin-accent-soft pl-2">
+                <p className="text-xs text-ink-soft border-l-2 border-admin-accent-soft pl-2 mb-3">
                   <span className="font-medium">Auto-reply sent:</span> {r.ai_reply}
                 </p>
               )}
+              <FeatureReviewButton reviewId={r.id} consentGiven={r.consent_to_feature} isFeatured={r.featured} />
             </div>
           ))}
         </div>

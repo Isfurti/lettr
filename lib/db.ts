@@ -95,9 +95,13 @@ function ensureSchema(): Promise<void> {
         likes JSONB NOT NULL DEFAULT '[]',
         dislikes JSONB NOT NULL DEFAULT '[]',
         ai_reply TEXT,
+        consent_to_feature BOOLEAN NOT NULL DEFAULT false,
+        featured BOOLEAN NOT NULL DEFAULT false,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
       CREATE INDEX IF NOT EXISTS idx_reviews_created ON reviews(created_at DESC);
+      ALTER TABLE reviews ADD COLUMN IF NOT EXISTS consent_to_feature BOOLEAN NOT NULL DEFAULT false;
+      ALTER TABLE reviews ADD COLUMN IF NOT EXISTS featured BOOLEAN NOT NULL DEFAULT false;
 
       CREATE TABLE IF NOT EXISTS resumes (
         id TEXT PRIMARY KEY,
@@ -507,6 +511,8 @@ export type ReviewRow = {
   likes: string[];
   dislikes: string[];
   ai_reply: string | null;
+  consent_to_feature: boolean;
+  featured: boolean;
   created_at: string;
 };
 
@@ -519,11 +525,12 @@ export async function createReview(params: {
   likes: string[];
   dislikes: string[];
   aiReply: string;
+  consentToFeature: boolean;
 }) {
   await ensureSchema();
   await pool.query(
-    `INSERT INTO reviews (id, user_id, rating, content, sentiment, likes, dislikes, ai_reply)
-     VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8)`,
+    `INSERT INTO reviews (id, user_id, rating, content, sentiment, likes, dislikes, ai_reply, consent_to_feature)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9)`,
     [
       params.id,
       params.userId,
@@ -533,8 +540,41 @@ export async function createReview(params: {
       JSON.stringify(params.likes),
       JSON.stringify(params.dislikes),
       params.aiReply,
+      params.consentToFeature,
     ]
   );
+}
+
+/**
+ * Sets whether a review is featured on the public landing page. Only
+ * allowed if the reviewer actually consented to being featured - enforced
+ * here (not just in the UI) so a bug in the admin page can't accidentally
+ * publish someone's feedback without their consent.
+ */
+export async function setReviewFeatured(reviewId: string, featured: boolean): Promise<{ ok: boolean; reason?: string }> {
+  await ensureSchema();
+  if (featured) {
+    const check = await pool.query("SELECT consent_to_feature FROM reviews WHERE id = $1", [reviewId]);
+    if (!check.rows[0]?.consent_to_feature) {
+      return { ok: false, reason: "This reviewer did not consent to being featured publicly." };
+    }
+  }
+  await pool.query("UPDATE reviews SET featured = $1 WHERE id = $2", [featured, reviewId]);
+  return { ok: true };
+}
+
+/** Real reviews eligible for the public landing page - both consented AND admin-approved. */
+export async function getFeaturedReviews(limit = 6): Promise<ReviewWithUser[]> {
+  await ensureSchema();
+  const res = await pool.query(
+    `SELECT r.*, u.email AS user_email, u.name AS user_name
+     FROM reviews r JOIN users u ON u.id = r.user_id
+     WHERE r.featured = true AND r.consent_to_feature = true
+     ORDER BY r.rating DESC, r.created_at DESC
+     LIMIT $1`,
+    [limit]
+  );
+  return res.rows;
 }
 
 export type ReviewWithUser = ReviewRow & { user_email: string; user_name: string | null };
