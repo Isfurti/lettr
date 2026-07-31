@@ -303,6 +303,32 @@ database on every single landing-page visitor for content that changes
 rarely would be wasteful. If you need a change to show up immediately,
 redeploy (which forces a fresh build) rather than waiting.
 
+## Photo, dividers, and indent customization
+
+Every template (all 9 unique designs, both live preview and PDF export)
+supports:
+- **Profile photo** - uploaded via `components/PhotoUpload.tsx`, resized
+  client-side to max 400px JPEG before storage (so a multi-MB phone photo
+  doesn't bloat the database row). Stored as a base64 data URL directly in
+  the resume's `customization.photoDataUrl` - no blob storage needed.
+- **Section dividers** toggle - what "divider" means varies sensibly by
+  template (a border line, a left accent bar, a solid block heading, a
+  connecting line between timeline entries) rather than one rigid rule
+  applied identically everywhere.
+- **Bullet indent** toggle - hanging indent vs. flush-left with an inline
+  bullet character.
+
+All three are threaded through both the live preview (`ResumeEditor.tsx`)
+and PDF export (`ResumePdfDocument.tsx`) via `layoutFlags()` - a shared
+helper so the two rendering engines read the same three fields consistently
+rather than duplicating the logic per template.
+
+**Verified with a real generated test photo, not just a successful HTTP
+response:** confirmed via `pdfimages` that the PDF genuinely embeds the
+uploaded image (matching pixel color, matching dimensions), that toggling
+the photo off produces zero embedded images even when one was uploaded, and
+that the dividers toggle produces measurably different PDF output.
+
 ## Going to production
 
 1. **Database**: already Postgres — for production, point `DATABASE_URL` at a

@@ -10,6 +10,7 @@ import type { Plan } from "@/lib/limits";
 import { TopNav } from "@/components/TopNav";
 import { ScoreRing } from "@/components/ScoreRing";
 import { DEFAULT_ACCENT_COLOR, getFontPair, darkenHex, softenHex, ACCENT_COLORS, FONT_PAIRS } from "@/lib/customization";
+import { PhotoUpload } from "@/components/PhotoUpload";
 
 const TEMPLATES = ["classic", "modern", "compact", "bold", "sidebar", "minimal", "executive", "technical", "timeline", "elegant"];
 
@@ -414,6 +415,36 @@ export function EditForm({
               </button>
             );
           })}
+        </div>
+      </Section>
+
+      <Section title="Layout">
+        <p className="text-xs text-ink-soft mb-2">Profile photo</p>
+        <PhotoUpload
+          photoDataUrl={data.customization?.photoDataUrl}
+          showPhoto={data.customization?.showPhoto}
+          onChange={(photoDataUrl, showPhoto) => {
+            setData((d) => ({ ...d, customization: { ...d.customization, photoDataUrl, showPhoto } }));
+          }}
+        />
+
+        <div className="flex gap-6 mt-5">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={data.customization?.showDividers ?? true}
+              onChange={(e) => updateCustomization("showDividers", e.target.checked)}
+            />
+            Section dividers
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={data.customization?.indentBullets ?? true}
+              onChange={(e) => updateCustomization("indentBullets", e.target.checked)}
+            />
+            Indent bullets
+          </label>
         </div>
       </Section>
 
@@ -1082,28 +1113,34 @@ const contactLine = (data: ResumeData) =>
 
 // Standard + Compact - serif name, understated hairline section rules
 function ClassicPreview({ data, dense }: { data: ResumeData; dense: boolean }) {
+  const showDividers = data.customization?.showDividers ?? true;
+  const indent = data.customization?.indentBullets ?? true;
+  const photo = data.customization?.showPhoto ? data.customization?.photoDataUrl : undefined;
+  const heading = `text-xs uppercase tracking-wide font-mono text-seal mt-5 mb-1 pb-1 ${showDividers ? "border-b border-rule" : ""}`;
+
   return (
     <div
       className={`paper-sheet rounded-sm mx-auto max-w-2xl ${dense ? "p-6 text-[13px]" : "p-10"}`}
       style={{ fontFamily: "var(--font-sans)" }}
     >
-      <h2 className="font-display font-bold text-2xl">{data.contact.fullName || "Your Name"}</h2>
-      <p className="text-xs text-ink-soft mt-1">{contactLine(data)}</p>
+      <div className="flex items-center gap-4">
+        {photo && <img src={photo} alt="" className="w-16 h-16 rounded-full object-cover shrink-0" />}
+        <div>
+          <h2 className="font-display font-bold text-2xl">{data.contact.fullName || "Your Name"}</h2>
+          <p className="text-xs text-ink-soft mt-1">{contactLine(data)}</p>
+        </div>
+      </div>
 
       {data.summary && (
         <>
-          <h3 className="text-xs uppercase tracking-wide font-mono text-seal mt-5 mb-1 border-b border-rule pb-1">
-            Summary
-          </h3>
+          <h3 className={heading}>Summary</h3>
           <p className="text-sm leading-relaxed">{data.summary}</p>
         </>
       )}
 
       {data.experience.length > 0 && (
         <>
-          <h3 className="text-xs uppercase tracking-wide font-mono text-seal mt-5 mb-1 border-b border-rule pb-1">
-            Experience
-          </h3>
+          <h3 className={heading}>Experience</h3>
           {data.experience.map((exp) => (
             <div key={exp.id} className="mt-2">
               <div className="flex justify-between text-sm">
@@ -1116,7 +1153,11 @@ function ClassicPreview({ data, dense }: { data: ResumeData; dense: boolean }) {
               </div>
               <ul className="mt-1 space-y-0.5">
                 {exp.bullets.filter(Boolean).map((b, i) => (
-                  <li key={i} className="text-sm pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-seal">
+                  <li
+                    key={i}
+                    className={indent ? "text-sm pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-seal" : "text-sm"}
+                  >
+                    {!indent && <span className="text-seal">• </span>}
                     {b}
                   </li>
                 ))}
@@ -1128,9 +1169,7 @@ function ClassicPreview({ data, dense }: { data: ResumeData; dense: boolean }) {
 
       {data.education.length > 0 && (
         <>
-          <h3 className="text-xs uppercase tracking-wide font-mono text-seal mt-5 mb-1 border-b border-rule pb-1">
-            Education
-          </h3>
+          <h3 className={heading}>Education</h3>
           {data.education.map((edu) => (
             <div key={edu.id} className="flex justify-between text-sm mt-1">
               <span className="font-medium">
@@ -1146,9 +1185,7 @@ function ClassicPreview({ data, dense }: { data: ResumeData; dense: boolean }) {
 
       {data.skills.length > 0 && (
         <>
-          <h3 className="text-xs uppercase tracking-wide font-mono text-seal mt-5 mb-1 border-b border-rule pb-1">
-            Skills
-          </h3>
+          <h3 className={heading}>Skills</h3>
           <p className="text-sm">{data.skills.join(" • ")}</p>
         </>
       )}
@@ -1158,27 +1195,32 @@ function ClassicPreview({ data, dense }: { data: ResumeData; dense: boolean }) {
 
 // Modern - sans-serif, colored header band, left-accent section headers, skill chips
 function ModernPreview({ data }: { data: ResumeData }) {
+  const showDividers = data.customization?.showDividers ?? true;
+  const indent = data.customization?.indentBullets ?? true;
+  const modernHeading = `text-xs uppercase tracking-wide font-semibold text-seal mt-4 mb-1.5 ${showDividers ? "pl-2 border-l-2 border-seal" : ""}`;
+
   return (
     <div className="paper-sheet rounded-sm mx-auto max-w-2xl overflow-hidden" style={{ fontFamily: "var(--font-sans)" }}>
-      <div className="bg-ink text-paper px-8 py-6">
-        <h2 className="font-bold text-2xl tracking-tight">{data.contact.fullName || "Your Name"}</h2>
-        <p className="text-xs opacity-80 mt-1">{contactLine(data)}</p>
+      <div className="bg-ink text-paper px-8 py-6 flex items-center gap-4">
+        {(data.customization?.showPhoto && data.customization?.photoDataUrl) && (
+          <img src={data.customization.photoDataUrl} alt="" className="w-16 h-16 rounded-full object-cover shrink-0 border-2 border-white/30" />
+        )}
+        <div>
+          <h2 className="font-bold text-2xl tracking-tight">{data.contact.fullName || "Your Name"}</h2>
+          <p className="text-xs opacity-80 mt-1">{contactLine(data)}</p>
+        </div>
       </div>
       <div className="p-8">
         {data.summary && (
           <>
-            <h3 className="text-xs uppercase tracking-wide font-semibold text-seal mt-1 mb-1.5 pl-2 border-l-2 border-seal">
-              Summary
-            </h3>
+            <h3 className={modernHeading}>Summary</h3>
             <p className="text-sm leading-relaxed mb-4">{data.summary}</p>
           </>
         )}
 
         {data.experience.length > 0 && (
           <>
-            <h3 className="text-xs uppercase tracking-wide font-semibold text-seal mt-4 mb-1.5 pl-2 border-l-2 border-seal">
-              Experience
-            </h3>
+            <h3 className={modernHeading}>Experience</h3>
             {data.experience.map((exp) => (
               <div key={exp.id} className="mt-3">
                 <div className="flex justify-between text-sm">
@@ -1190,7 +1232,11 @@ function ModernPreview({ data }: { data: ResumeData }) {
                 <p className="text-xs text-ink-soft mb-1">{exp.company}</p>
                 <ul className="space-y-0.5">
                   {exp.bullets.filter(Boolean).map((b, i) => (
-                    <li key={i} className="text-sm pl-4 relative before:content-['—'] before:absolute before:left-0 before:text-seal">
+                    <li
+                      key={i}
+                      className={indent ? "text-sm pl-4 relative before:content-['—'] before:absolute before:left-0 before:text-seal" : "text-sm"}
+                    >
+                      {!indent && <span className="text-seal">— </span>}
                       {b}
                     </li>
                   ))}
@@ -1202,9 +1248,7 @@ function ModernPreview({ data }: { data: ResumeData }) {
 
         {data.education.length > 0 && (
           <>
-            <h3 className="text-xs uppercase tracking-wide font-semibold text-seal mt-4 mb-1.5 pl-2 border-l-2 border-seal">
-              Education
-            </h3>
+            <h3 className={modernHeading}>Education</h3>
             {data.education.map((edu) => (
               <div key={edu.id} className="flex justify-between text-sm mt-1">
                 <span className="font-medium">
@@ -1220,9 +1264,7 @@ function ModernPreview({ data }: { data: ResumeData }) {
 
         {data.skills.length > 0 && (
           <>
-            <h3 className="text-xs uppercase tracking-wide font-semibold text-seal mt-4 mb-1.5 pl-2 border-l-2 border-seal">
-              Skills
-            </h3>
+            <h3 className={modernHeading}>Skills</h3>
             <div className="flex flex-wrap gap-1.5">
               {data.skills.map((s) => (
                 <span key={s} className="text-xs bg-seal-soft text-seal px-2 py-0.5 rounded-full">
@@ -1239,28 +1281,36 @@ function ModernPreview({ data }: { data: ResumeData }) {
 
 // Bold - large uppercase name, heavy rule, uppercase blocked section titles
 function BoldPreview({ data }: { data: ResumeData }) {
+  const showDividers = data.customization?.showDividers ?? true;
+  const indent = data.customization?.indentBullets ?? true;
+  const photo = data.customization?.showPhoto ? data.customization?.photoDataUrl : undefined;
+  const boldHeading = showDividers
+    ? "text-sm uppercase tracking-widest font-bold bg-ink text-paper inline-block px-2 py-0.5 mt-6 mb-2"
+    : "text-sm uppercase tracking-widest font-bold text-ink mt-6 mb-2";
+
   return (
     <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-10" style={{ fontFamily: "var(--font-sans)" }}>
-      <h2 className="font-display font-bold text-4xl uppercase tracking-tight leading-none">
-        {data.contact.fullName || "Your Name"}
-      </h2>
-      <div className="h-1 bg-seal w-16 my-3" />
-      <p className="text-xs text-ink-soft">{contactLine(data)}</p>
+      <div className="flex items-center gap-4">
+        {photo && <img src={photo} alt="" className="w-20 h-20 rounded-full object-cover shrink-0" />}
+        <div>
+          <h2 className="font-display font-bold text-4xl uppercase tracking-tight leading-none">
+            {data.contact.fullName || "Your Name"}
+          </h2>
+          <div className="h-1 bg-seal w-16 my-3" />
+          <p className="text-xs text-ink-soft">{contactLine(data)}</p>
+        </div>
+      </div>
 
       {data.summary && (
         <>
-          <h3 className="text-sm uppercase tracking-widest font-bold bg-ink text-paper inline-block px-2 py-0.5 mt-6 mb-2">
-            Summary
-          </h3>
+          <h3 className={boldHeading}>Summary</h3>
           <p className="text-sm leading-relaxed">{data.summary}</p>
         </>
       )}
 
       {data.experience.length > 0 && (
         <>
-          <h3 className="text-sm uppercase tracking-widest font-bold bg-ink text-paper inline-block px-2 py-0.5 mt-6 mb-2">
-            Experience
-          </h3>
+          <h3 className={boldHeading}>Experience</h3>
           {data.experience.map((exp) => (
             <div key={exp.id} className="mt-3">
               <div className="flex justify-between text-sm">
@@ -1273,7 +1323,11 @@ function BoldPreview({ data }: { data: ResumeData }) {
               </div>
               <ul className="mt-1 space-y-0.5">
                 {exp.bullets.filter(Boolean).map((b, i) => (
-                  <li key={i} className="text-sm pl-4 relative before:content-['▸'] before:absolute before:left-0 before:text-seal before:font-bold">
+                  <li
+                    key={i}
+                    className={indent ? "text-sm pl-4 relative before:content-['▸'] before:absolute before:left-0 before:text-seal before:font-bold" : "text-sm"}
+                  >
+                    {!indent && <span className="text-seal font-bold">▸ </span>}
                     {b}
                   </li>
                 ))}
@@ -1285,9 +1339,7 @@ function BoldPreview({ data }: { data: ResumeData }) {
 
       {data.education.length > 0 && (
         <>
-          <h3 className="text-sm uppercase tracking-widest font-bold bg-ink text-paper inline-block px-2 py-0.5 mt-6 mb-2">
-            Education
-          </h3>
+          <h3 className={boldHeading}>Education</h3>
           {data.education.map((edu) => (
             <div key={edu.id} className="flex justify-between text-sm mt-1">
               <span className="font-bold">
@@ -1303,9 +1355,7 @@ function BoldPreview({ data }: { data: ResumeData }) {
 
       {data.skills.length > 0 && (
         <>
-          <h3 className="text-sm uppercase tracking-widest font-bold bg-ink text-paper inline-block px-2 py-0.5 mt-6 mb-2">
-            Skills
-          </h3>
+          <h3 className={boldHeading}>Skills</h3>
           <p className="text-sm font-medium">{data.skills.join("  /  ")}</p>
         </>
       )}
@@ -1315,9 +1365,17 @@ function BoldPreview({ data }: { data: ResumeData }) {
 
 // Sidebar - two-column, contact/skills in a colored side rail
 function SidebarPreview({ data }: { data: ResumeData }) {
+  const showDividers = data.customization?.showDividers ?? true;
+  const indent = data.customization?.indentBullets ?? true;
+  const photo = data.customization?.showPhoto ? data.customization?.photoDataUrl : undefined;
+  const sideDivider = showDividers ? "border-t border-white/20 pt-4" : "";
+
   return (
     <div className="paper-sheet rounded-sm mx-auto max-w-2xl overflow-hidden grid grid-cols-[1fr_2fr]" style={{ fontFamily: "var(--font-sans)" }}>
       <div className="bg-seal text-white p-6">
+        {photo && (
+          <img src={photo} alt="" className="w-20 h-20 rounded-full object-cover mb-4 border-2 border-white/40" />
+        )}
         <h2 className="font-display font-bold text-xl leading-tight mb-4">{data.contact.fullName || "Your Name"}</h2>
         <div className="space-y-1 text-xs opacity-90 mb-6">
           {[data.contact.email, data.contact.phone, data.contact.location, data.contact.linkedin, data.contact.website]
@@ -1327,18 +1385,18 @@ function SidebarPreview({ data }: { data: ResumeData }) {
             ))}
         </div>
         {data.skills.length > 0 && (
-          <>
+          <div className={`mt-6 ${sideDivider}`}>
             <h3 className="text-[10px] uppercase tracking-widest font-bold mb-2 opacity-80">Skills</h3>
             <div className="flex flex-wrap gap-1">
               {data.skills.map((s) => (
                 <span key={s} className="text-[10px] bg-white/15 rounded-sm px-1.5 py-0.5">{s}</span>
               ))}
             </div>
-          </>
+          </div>
         )}
         {data.education.length > 0 && (
-          <>
-            <h3 className="text-[10px] uppercase tracking-widest font-bold mt-6 mb-2 opacity-80">Education</h3>
+          <div className={`mt-6 ${sideDivider}`}>
+            <h3 className="text-[10px] uppercase tracking-widest font-bold mb-2 opacity-80">Education</h3>
             {data.education.map((edu) => (
               <div key={edu.id} className="text-xs mb-2">
                 <p className="font-semibold">{edu.degree}</p>
@@ -1346,7 +1404,7 @@ function SidebarPreview({ data }: { data: ResumeData }) {
                 <p className="opacity-70 text-[10px]">{edu.startDate} – {edu.endDate}</p>
               </div>
             ))}
-          </>
+          </div>
         )}
       </div>
       <div className="p-6">
@@ -1368,7 +1426,13 @@ function SidebarPreview({ data }: { data: ResumeData }) {
                 <p className="text-xs text-ink-soft mb-1">{exp.company}</p>
                 <ul className="space-y-0.5">
                   {exp.bullets.filter(Boolean).map((b, i) => (
-                    <li key={i} className="text-sm pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-seal">{b}</li>
+                    <li
+                      key={i}
+                      className={indent ? "text-sm pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-seal" : "text-sm"}
+                    >
+                      {!indent && <span className="text-seal">• </span>}
+                      {b}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -1382,27 +1446,38 @@ function SidebarPreview({ data }: { data: ResumeData }) {
 
 // Minimal - zero color, maximum ATS-parser safety, pure typographic hierarchy
 function MinimalPreview({ data }: { data: ResumeData }) {
+  const showDividers = data.customization?.showDividers ?? true;
+  const indent = data.customization?.indentBullets ?? true;
+  const minimalHeading = `text-xs font-bold uppercase mt-5 mb-1 ${showDividers ? "border-b border-black pb-0.5" : ""}`;
+
   return (
     <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-10 text-black" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
-      <h2 className="text-2xl font-bold">{data.contact.fullName || "Your Name"}</h2>
-      <p className="text-xs mt-1">{contactLine(data)}</p>
+      <div className="flex items-center gap-4 mb-1">
+        {(data.customization?.showPhoto && data.customization?.photoDataUrl) && (
+          <img src={data.customization.photoDataUrl} alt="" className="w-14 h-14 rounded-full object-cover shrink-0 grayscale" />
+        )}
+        <div>
+          <h2 className="text-2xl font-bold">{data.contact.fullName || "Your Name"}</h2>
+          <p className="text-xs mt-1">{contactLine(data)}</p>
+        </div>
+      </div>
 
       {data.summary && (
         <>
-          <h3 className="text-xs font-bold uppercase mt-5 mb-1">Summary</h3>
+          <h3 className={minimalHeading}>Summary</h3>
           <p className="text-sm leading-relaxed">{data.summary}</p>
         </>
       )}
       {data.experience.length > 0 && (
         <>
-          <h3 className="text-xs font-bold uppercase mt-5 mb-1">Experience</h3>
+          <h3 className={minimalHeading}>Experience</h3>
           {data.experience.map((exp) => (
             <div key={exp.id} className="mt-2">
               <p className="text-sm font-bold">{exp.role || "Role"}, {exp.company}</p>
               <p className="text-xs">{exp.startDate} - {exp.endDate}</p>
               <ul className="mt-1">
                 {exp.bullets.filter(Boolean).map((b, i) => (
-                  <li key={i} className="text-sm">- {b}</li>
+                  <li key={i} className={indent ? "text-sm pl-3" : "text-sm"}>- {b}</li>
                 ))}
               </ul>
             </div>
@@ -1411,7 +1486,7 @@ function MinimalPreview({ data }: { data: ResumeData }) {
       )}
       {data.education.length > 0 && (
         <>
-          <h3 className="text-xs font-bold uppercase mt-5 mb-1">Education</h3>
+          <h3 className={minimalHeading}>Education</h3>
           {data.education.map((edu) => (
             <p key={edu.id} className="text-sm">{edu.degree}, {edu.school} ({edu.startDate} - {edu.endDate})</p>
           ))}
@@ -1419,7 +1494,7 @@ function MinimalPreview({ data }: { data: ResumeData }) {
       )}
       {data.skills.length > 0 && (
         <>
-          <h3 className="text-xs font-bold uppercase mt-5 mb-1">Skills</h3>
+          <h3 className={minimalHeading}>Skills</h3>
           <p className="text-sm">{data.skills.join(", ")}</p>
         </>
       )}
@@ -1429,10 +1504,17 @@ function MinimalPreview({ data }: { data: ResumeData }) {
 
 // Executive - large refined serif name, generous whitespace, thin accent rule
 function ExecutivePreview({ data }: { data: ResumeData }) {
+  const showDividers = data.customization?.showDividers ?? true;
+  const indent = data.customization?.indentBullets ?? true;
+  const photo = data.customization?.showPhoto ? data.customization?.photoDataUrl : undefined;
+
   return (
     <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-12" style={{ fontFamily: "var(--font-sans)" }}>
+      {photo && (
+        <img src={photo} alt="" className="w-20 h-20 rounded-full object-cover mx-auto mb-3" />
+      )}
       <h2 className="font-display text-3xl text-center mb-1">{data.contact.fullName || "Your Name"}</h2>
-      <div className="h-px bg-seal w-24 mx-auto my-3" />
+      {showDividers && <div className="h-px bg-seal w-24 mx-auto my-3" />}
       <p className="text-xs text-ink-soft text-center mb-8">{contactLine(data)}</p>
 
       {data.summary && <p className="text-sm text-center leading-relaxed mb-8 italic text-ink-soft">{data.summary}</p>}
@@ -1446,7 +1528,13 @@ function ExecutivePreview({ data }: { data: ResumeData }) {
               <p className="text-xs text-ink-soft mb-1">{exp.company} · {exp.startDate} – {exp.endDate}</p>
               <ul className="text-sm max-w-md mx-auto text-left mt-2 space-y-0.5">
                 {exp.bullets.filter(Boolean).map((b, i) => (
-                  <li key={i} className="pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-seal">{b}</li>
+                  <li
+                    key={i}
+                    className={indent ? "pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-seal" : ""}
+                  >
+                    {!indent && <span className="text-seal">— </span>}
+                    {b}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -1470,10 +1558,19 @@ function ExecutivePreview({ data }: { data: ResumeData }) {
 
 // Technical - monospace accents for engineers, left-aligned dense structure
 function TechnicalPreview({ data }: { data: ResumeData }) {
+  const showDividers = data.customization?.showDividers ?? true;
+  const indent = data.customization?.indentBullets ?? true;
+  const photo = data.customization?.showPhoto ? data.customization?.photoDataUrl : undefined;
+
   return (
     <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-8" style={{ fontFamily: "var(--font-sans)" }}>
-      <h2 className="font-mono font-bold text-xl">{data.contact.fullName || "Your Name"}</h2>
-      <p className="font-mono text-xs text-seal mt-1">{contactLine(data)}</p>
+      <div className="flex items-center gap-4">
+        {photo && <img src={photo} alt="" className="w-14 h-14 rounded-sm object-cover shrink-0" />}
+        <div>
+          <h2 className="font-mono font-bold text-xl">{data.contact.fullName || "Your Name"}</h2>
+          <p className="font-mono text-xs text-seal mt-1">{contactLine(data)}</p>
+        </div>
+      </div>
 
       {data.summary && (
         <>
@@ -1485,12 +1582,18 @@ function TechnicalPreview({ data }: { data: ResumeData }) {
         <>
           <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">// experience</h3>
           {data.experience.map((exp) => (
-            <div key={exp.id} className="mt-3 border-l-2 border-seal pl-3">
+            <div key={exp.id} className={`mt-3 ${showDividers ? "border-l-2 border-seal pl-3" : ""}`}>
               <p className="font-mono text-sm font-semibold">{exp.role || "role"}<span className="text-seal">()</span> <span className="text-ink-soft font-normal">@ {exp.company}</span></p>
               <p className="font-mono text-[10px] text-ink-soft">{exp.startDate} – {exp.endDate}</p>
               <ul className="mt-1 space-y-0.5">
                 {exp.bullets.filter(Boolean).map((b, i) => (
-                  <li key={i} className="text-sm pl-3 relative before:content-['>'] before:absolute before:left-0 before:text-seal before:font-mono">{b}</li>
+                  <li
+                    key={i}
+                    className={indent ? "text-sm pl-3 relative before:content-['>'] before:absolute before:left-0 before:text-seal before:font-mono" : "text-sm"}
+                  >
+                    {!indent && <span className="text-seal font-mono">&gt; </span>}
+                    {b}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -1521,17 +1624,27 @@ function TechnicalPreview({ data }: { data: ResumeData }) {
 
 // Timeline - visual connecting line down the left of experience entries
 function TimelinePreview({ data }: { data: ResumeData }) {
+  const showDividers = data.customization?.showDividers ?? true;
+  const indent = data.customization?.indentBullets ?? true;
+  const photo = data.customization?.showPhoto ? data.customization?.photoDataUrl : undefined;
+
   return (
     <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-10" style={{ fontFamily: "var(--font-sans)" }}>
-      <h2 className="font-display font-bold text-2xl">{data.contact.fullName || "Your Name"}</h2>
-      <p className="text-xs text-ink-soft mt-1 mb-6">{contactLine(data)}</p>
+      <div className="flex items-center gap-4">
+        {photo && <img src={photo} alt="" className="w-16 h-16 rounded-full object-cover shrink-0" />}
+        <div>
+          <h2 className="font-display font-bold text-2xl">{data.contact.fullName || "Your Name"}</h2>
+          <p className="text-xs text-ink-soft mt-1">{contactLine(data)}</p>
+        </div>
+      </div>
+      <div className="mb-6" />
 
       {data.summary && <p className="text-sm leading-relaxed mb-6">{data.summary}</p>}
 
       {data.experience.length > 0 && (
         <>
           <h3 className="text-xs uppercase tracking-wide text-seal font-semibold mb-3">Experience</h3>
-          <div className="relative pl-5 border-l-2 border-rule space-y-5">
+          <div className={`relative pl-5 space-y-5 ${showDividers ? "border-l-2 border-rule" : ""}`}>
             {data.experience.map((exp) => (
               <div key={exp.id} className="relative">
                 <span className="absolute -left-[26px] top-1 w-3 h-3 rounded-full bg-seal border-2 border-paper-raised" />
@@ -1542,7 +1655,13 @@ function TimelinePreview({ data }: { data: ResumeData }) {
                 <p className="text-xs text-ink-soft mb-1">{exp.company}</p>
                 <ul className="space-y-0.5">
                   {exp.bullets.filter(Boolean).map((b, i) => (
-                    <li key={i} className="text-sm pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-seal">{b}</li>
+                    <li
+                      key={i}
+                      className={indent ? "text-sm pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-seal" : "text-sm"}
+                    >
+                      {!indent && <span className="text-seal">• </span>}
+                      {b}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -1567,10 +1686,17 @@ function TimelinePreview({ data }: { data: ResumeData }) {
 
 // Elegant - thin hairlines, italic role titles, understated color
 function ElegantPreview({ data }: { data: ResumeData }) {
+  const showDividers = data.customization?.showDividers ?? true;
+  const indent = data.customization?.indentBullets ?? true;
+  const photo = data.customization?.showPhoto ? data.customization?.photoDataUrl : undefined;
+
   return (
     <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-10" style={{ fontFamily: "var(--font-sans)" }}>
-      <h2 className="font-display text-2xl">{data.contact.fullName || "Your Name"}</h2>
-      <p className="text-xs text-ink-soft mt-1 pb-4 border-b border-rule">{contactLine(data)}</p>
+      <div className="flex items-center gap-4">
+        {photo && <img src={photo} alt="" className="w-16 h-16 rounded-full object-cover shrink-0" />}
+        <h2 className="font-display text-2xl">{data.contact.fullName || "Your Name"}</h2>
+      </div>
+      <p className={`text-xs text-ink-soft mt-1 pb-4 ${showDividers ? "border-b border-rule" : ""}`}>{contactLine(data)}</p>
 
       {data.summary && <p className="text-sm leading-relaxed mt-4 mb-2">{data.summary}</p>}
 
@@ -1578,14 +1704,20 @@ function ElegantPreview({ data }: { data: ResumeData }) {
         <>
           <h3 className="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2">Experience</h3>
           {data.experience.map((exp) => (
-            <div key={exp.id} className="mt-3 pb-3 border-b border-rule/60 last:border-0">
+            <div key={exp.id} className={`mt-3 pb-3 ${showDividers ? "border-b border-rule/60 last:border-0" : ""}`}>
               <div className="flex justify-between">
                 <span className="text-sm italic">{exp.role || "Role"}, {exp.company}</span>
                 <span className="text-xs text-ink-soft">{exp.startDate} – {exp.endDate}</span>
               </div>
               <ul className="mt-1 space-y-0.5">
                 {exp.bullets.filter(Boolean).map((b, i) => (
-                  <li key={i} className="text-sm pl-3 relative before:content-['·'] before:absolute before:left-0 before:text-seal">{b}</li>
+                  <li
+                    key={i}
+                    className={indent ? "text-sm pl-3 relative before:content-['·'] before:absolute before:left-0 before:text-seal" : "text-sm"}
+                  >
+                    {!indent && <span className="text-seal">· </span>}
+                    {b}
+                  </li>
                 ))}
               </ul>
             </div>
