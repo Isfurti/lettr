@@ -354,6 +354,22 @@ than progressively degrading an already-cropped image. Also fixed a
 smaller real bug found along the way: the file input never reset its
 value, so re-selecting the same file silently did nothing.
 
+## Bug fixes: bullet AI silent failure, nav dead-ends
+
+**Clicking "✦ AI" on an empty bullet did nothing.** `polish()` in
+`ExperienceCard` (`components/ResumeEditor.tsx`) silently returned early
+if the bullet textarea was empty - no error, no feedback, just nothing.
+Now shows a real message ("Write something first, then click AI to polish
+it.") instead of failing silently. Also replaced the `alert()` popup on
+API errors with the same inline message pattern.
+
+**Nav destinations fixed per explicit instruction**, in `TopNav.tsx` and
+`AppSidebar.tsx`:
+- "Lettr" now links to the public landing page (`/`) everywhere, not `/dashboard`
+- "✦ Build Resume" now actually creates a resume and opens the builder
+  (reusing `NewResumeButton`'s logic) instead of just linking to `/dashboard`
+- Removed the home/bell/settings icon row from `TopNav` entirely
+
 ## Going to production
 
 1. **Database**: already Postgres — for production, point `DATABASE_URL` at a

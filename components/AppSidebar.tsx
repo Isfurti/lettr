@@ -34,7 +34,7 @@ export function AppSidebar({
 
   return (
     <aside className="w-64 shrink-0 bg-navy-deep text-white/90 flex flex-col min-h-screen">
-      <Link href="/dashboard" className="px-6 py-6 flex items-center gap-2.5 hover:opacity-90">
+      <Link href="/" className="px-6 py-6 flex items-center gap-2.5 hover:opacity-90">
         <div className="w-8 h-8 rounded-sm bg-seal flex items-center justify-center shrink-0">
           <Sparkles className="w-4 h-4 text-white" strokeWidth={2.5} />
         </div>

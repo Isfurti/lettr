@@ -597,6 +597,7 @@ function ExperienceCard({
 }) {
   const [aiOptions, setAiOptions] = useState<Record<number, string[]>>({});
   const [loadingBullet, setLoadingBullet] = useState<number | null>(null);
+  const [bulletError, setBulletError] = useState<Record<number, string>>({});
 
   function updateBullet(index: number, value: string) {
     const bullets = [...exp.bullets];
@@ -614,7 +615,13 @@ function ExperienceCard({
 
   async function polish(index: number) {
     const bullet = exp.bullets[index];
-    if (!bullet?.trim()) return;
+    if (!bullet?.trim()) {
+      // Was previously a silent no-op here - clicking AI on an empty
+      // bullet did nothing with zero feedback, which just looked broken.
+      setBulletError((e) => ({ ...e, [index]: "Write something first, then click AI to polish it." }));
+      return;
+    }
+    setBulletError((e) => ({ ...e, [index]: "" }));
     setLoadingBullet(index);
     try {
       const res = await fetch("/api/ai/generate-bullets", {
@@ -624,7 +631,9 @@ function ExperienceCard({
       });
       const body = await res.json();
       if (res.ok) setAiOptions((o) => ({ ...o, [index]: body.options }));
-      else alert(body.error ?? "Couldn't generate suggestions.");
+      else setBulletError((e) => ({ ...e, [index]: body.error ?? "Couldn't generate suggestions." }));
+    } catch {
+      setBulletError((e) => ({ ...e, [index]: "Couldn't reach the server. Try again." }));
     } finally {
       setLoadingBullet(null);
     }
@@ -663,6 +672,9 @@ function ExperienceCard({
                 </button>
               </div>
             </div>
+            {bulletError[i] && (
+              <p className="text-xs text-red-600 mt-1">{bulletError[i]}</p>
+            )}
             {aiOptions[i] && (
               <div className="mt-1.5 space-y-1">
                 {aiOptions[i].map((opt, oi) => (

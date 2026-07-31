@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Settings, Home } from "lucide-react";
+import { NewResumeButton } from "@/components/NewResumeButton";
 
 export function TopNav({
   active,
@@ -13,7 +13,7 @@ export function TopNav({
   return (
     <header className="border-b border-rule bg-paper-raised px-8 py-4 flex items-center justify-between">
       <div className="flex items-center gap-10">
-        <Link href="/dashboard" className="font-display font-semibold text-xl text-ink">
+        <Link href="/" className="font-display font-semibold text-xl text-ink">
           Lettr
         </Link>
         <nav className="hidden sm:flex items-center gap-7 text-sm">
@@ -26,21 +26,7 @@ export function TopNav({
         </nav>
       </div>
       <div className="flex items-center gap-4">
-        <Link href="/" className="text-ink-soft hover:text-ink" title="Visit homepage">
-          <Home className="w-[18px] h-[18px]" strokeWidth={1.75} />
-        </Link>
-        <Link href="/support" className="text-ink-soft hover:text-ink" title="Support">
-          <Bell className="w-[18px] h-[18px]" strokeWidth={1.75} />
-        </Link>
-        <Link href="/pricing" className="text-ink-soft hover:text-ink" title="Billing">
-          <Settings className="w-[18px] h-[18px]" strokeWidth={1.75} />
-        </Link>
-        <Link
-          href="/dashboard"
-          className="bg-seal text-white text-sm font-medium px-4 py-2 rounded-sm hover:opacity-90 transition-opacity flex items-center gap-1.5"
-        >
-          ✦ Build Resume
-        </Link>
+        <NewResumeButton label="✦ Build Resume" />
         {userInitial && (
           <Link
             href="/dashboard"
