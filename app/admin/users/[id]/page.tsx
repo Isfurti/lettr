@@ -40,9 +40,15 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             <p className="text-xs text-ink-soft mt-1">
               Joined {new Date(user.created_at).toLocaleDateString()} ·{" "}
               <span className={`font-mono uppercase ${user.plan === "pro" ? "text-admin-accent" : ""}`}>{user.plan}</span>
+              {" · "}
+              {user.email_verified ? (
+                <span className="text-green-700">Email verified</span>
+              ) : (
+                <span className="text-admin-accent">Email NOT verified</span>
+              )}
             </p>
           </div>
-          <AdminUserActions userId={id} currentPlan={user.plan} />
+          <AdminUserActions userId={id} currentPlan={user.plan} emailVerified={user.email_verified} />
         </div>
 
         <h2 className="font-display font-semibold text-lg mb-3">Resumes ({resumeRows.length})</h2>

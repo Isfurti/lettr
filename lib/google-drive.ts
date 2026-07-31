@@ -8,7 +8,7 @@ function getOAuthClient() {
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     throw new Error(
-      "GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET are not set. Add them to your .env.local to enable Google Drive export."
+      "GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET are not set. Add them to your .env.local (local dev) or your hosting provider's environment variables (production) to enable Google Drive export."
     );
   }
   const appUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";

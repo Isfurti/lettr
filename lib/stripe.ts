@@ -3,7 +3,7 @@ import Stripe from "stripe";
 function getStripeClient(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) {
-    throw new Error("STRIPE_SECRET_KEY is not set. Add it to your .env.local to enable billing.");
+    throw new Error("STRIPE_SECRET_KEY is not set. Add it to your .env.local (local dev) or your hosting provider's environment variables (production) to enable billing.");
   }
   return new Stripe(key);
 }
@@ -52,7 +52,7 @@ export function constructWebhookEvent(rawBody: string, signature: string): Strip
   const stripe = getStripeClient();
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret) {
-    throw new Error("STRIPE_WEBHOOK_SECRET is not set. Add it to your .env.local to verify webhooks.");
+    throw new Error("STRIPE_WEBHOOK_SECRET is not set. Add it to your .env.local (local dev) or your hosting provider's environment variables (production) to verify webhooks.");
   }
   return stripe.webhooks.constructEvent(rawBody, signature, secret);
 }

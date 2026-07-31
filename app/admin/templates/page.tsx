@@ -1,8 +1,7 @@
 import { requireAdmin } from "@/lib/admin-auth";
 import { getTemplatePopularity } from "@/lib/db";
 import { AdminSidebar } from "@/components/AdminSidebar";
-
-const ALL_TEMPLATES = ["classic", "modern", "compact", "bold"];
+import { TEMPLATE_IDS } from "@/lib/templates";
 
 export default async function AdminTemplatesPage() {
   await requireAdmin();
@@ -23,7 +22,7 @@ export default async function AdminTemplatesPage() {
             <p className="text-sm text-ink-soft">No resumes created yet.</p>
           ) : (
             <div className="space-y-5">
-              {ALL_TEMPLATES.map((t) => {
+              {TEMPLATE_IDS.map((t) => {
                 const count = countByTemplate.get(t) ?? 0;
                 const pct = total === 0 ? 0 : Math.round((count / total) * 100);
                 return (

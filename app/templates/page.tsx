@@ -4,6 +4,7 @@ import { TopNav } from "@/components/TopNav";
 import { PublicNav } from "@/components/PublicNav";
 import { Footer } from "@/components/Footer";
 import { UseTemplateButton } from "@/components/UseTemplateButton";
+import { TEMPLATE_IDS, type TemplateId } from "@/lib/templates";
 
 export const metadata: Metadata = {
   title: "Free ATS-Friendly Resume Templates | Lettr",
@@ -17,18 +18,25 @@ export const metadata: Metadata = {
   },
 };
 
-const TEMPLATES = [
-  { id: "classic", name: "The Classic", description: "Understated serif headings with hairline rules. ATS-friendly and easy to scan.", tags: ["ATS-friendly", "Traditional"] },
-  { id: "modern", name: "The Modern", description: "A dark header band and left-accent section titles, with rounded skill chips.", tags: ["Visual", "Tech"] },
-  { id: "compact", name: "The Compact", description: "Same clean structure as Classic, tightened up to fit more onto one page.", tags: ["Dense", "Experienced"] },
-  { id: "bold", name: "The Bold", description: "Large uppercase name, heavy section blocks. Built to stand out at a glance.", tags: ["High-impact", "Leadership"] },
-  { id: "sidebar", name: "The Sidebar", description: "Two-column layout with a colored contact/skills rail down the side.", tags: ["Two-column", "Design-forward"] },
-  { id: "minimal", name: "The Minimal", description: "Zero color, pure typographic hierarchy. Built for maximum ATS-parser safety.", tags: ["ATS-friendly", "Understated"] },
-  { id: "executive", name: "The Executive", description: "Centered layout, generous whitespace, a refined serif name.", tags: ["Premium", "Senior roles"] },
-  { id: "technical", name: "The Technical", description: "Monospace accents and a code-inspired structure, built for engineers.", tags: ["Tech", "Engineering"] },
-  { id: "timeline", name: "The Timeline", description: "A connecting line down the left visually links each role in sequence.", tags: ["Visual", "Career growth"] },
-  { id: "elegant", name: "The Elegant", description: "Thin hairline dividers and italic role titles for an editorial feel.", tags: ["Editorial", "Understated"] },
-];
+// Typed as Record<TemplateId, ...> rather than a plain array - if a new
+// template is ever added to TEMPLATE_IDS without adding its metadata here
+// (or vice versa), this is a compile error, not a silent runtime gap. This
+// is exactly the class of bug that let the admin templates page drift 6
+// templates out of date before.
+const TEMPLATE_META: Record<TemplateId, { name: string; description: string; tags: string[] }> = {
+  classic: { name: "The Classic", description: "Understated serif headings with hairline rules. ATS-friendly and easy to scan.", tags: ["ATS-friendly", "Traditional"] },
+  modern: { name: "The Modern", description: "A dark header band and left-accent section titles, with rounded skill chips.", tags: ["Visual", "Tech"] },
+  compact: { name: "The Compact", description: "Same clean structure as Classic, tightened up to fit more onto one page.", tags: ["Dense", "Experienced"] },
+  bold: { name: "The Bold", description: "Large uppercase name, heavy section blocks. Built to stand out at a glance.", tags: ["High-impact", "Leadership"] },
+  sidebar: { name: "The Sidebar", description: "Two-column layout with a colored contact/skills rail down the side.", tags: ["Two-column", "Design-forward"] },
+  minimal: { name: "The Minimal", description: "Zero color, pure typographic hierarchy. Built for maximum ATS-parser safety.", tags: ["ATS-friendly", "Understated"] },
+  executive: { name: "The Executive", description: "Centered layout, generous whitespace, a refined serif name.", tags: ["Premium", "Senior roles"] },
+  technical: { name: "The Technical", description: "Monospace accents and a code-inspired structure, built for engineers.", tags: ["Tech", "Engineering"] },
+  timeline: { name: "The Timeline", description: "A connecting line down the left visually links each role in sequence.", tags: ["Visual", "Career growth"] },
+  elegant: { name: "The Elegant", description: "Thin hairline dividers and italic role titles for an editorial feel.", tags: ["Editorial", "Understated"] },
+};
+
+const TEMPLATES = TEMPLATE_IDS.map((id) => ({ id, ...TEMPLATE_META[id] }));
 
 export default async function TemplatesPage() {
   const session = await auth();

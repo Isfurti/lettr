@@ -4,7 +4,7 @@ import type { ResumeData, ExperienceEntry, EducationEntry } from "./types";
 function getClient() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY is not set. Add it to your .env.local to enable the AI Resume Agent.");
+    throw new Error("ANTHROPIC_API_KEY is not set. Add it to your .env.local (local dev) or your hosting provider's environment variables (production) to enable the AI Resume Agent.");
   }
   return new Anthropic({ apiKey });
 }

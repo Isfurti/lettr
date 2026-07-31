@@ -7,7 +7,8 @@ import { EditForm, ScorePanel, JobMatchPanel, ResumePreview } from "@/components
 import { emptyResume, type ResumeData } from "@/lib/types";
 import { saveGuestDraft, loadGuestDraft } from "@/lib/guest-draft";
 
-const TEMPLATES = ["classic", "modern", "compact", "bold", "sidebar", "minimal", "executive", "technical", "timeline", "elegant"];
+import { TEMPLATE_IDS } from "@/lib/templates";
+const TEMPLATES: readonly string[] = TEMPLATE_IDS;
 
 export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string }) {
   const [title, setTitle] = useState("Untitled Resume");

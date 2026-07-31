@@ -22,7 +22,14 @@ export async function findOrCreateOAuthUser(email: string, name?: string | null)
 
   const id = randomUUID();
   const unusablePasswordHash = await bcrypt.hash(randomBytes(32).toString("hex"), 12);
-  await createUser({ id, email: normalizedEmail, passwordHash: unusablePasswordHash, name: name ?? undefined });
+  // emailVerified: true - signing in via Google/LinkedIn OAuth IS the
+  // verification. There's no separate "verify your email" step needed
+  // (or even possible) for an account that only ever exists because an
+  // OAuth provider already confirmed this person owns this email address.
+  // Defaulting this to false (the createUser default, meant for password
+  // signups) left OAuth users permanently stuck seeing an unverifiable
+  // "please verify your email" banner - a real bug, not a style choice.
+  await createUser({ id, email: normalizedEmail, passwordHash: unusablePasswordHash, name: name ?? undefined, emailVerified: true });
 
   const created = await getUserByEmail(normalizedEmail);
   if (!created) throw new Error("Failed to create OAuth user");

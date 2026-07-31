@@ -19,6 +19,12 @@ describe("findOrCreateOAuthUser", () => {
     expect(user.id).toBeTruthy();
   });
 
+  it("creates new OAuth users already email-verified - signing in via Google/LinkedIn IS the verification, there's no separate step possible", async () => {
+    const email = `oauth-verified-${randomUUID()}@example.com`;
+    const user = await findOrCreateOAuthUser(email, "Verified By OAuth");
+    expect(user.email_verified).toBe(true);
+  });
+
   it("returns the same user on a second call with the same email (idempotent)", async () => {
     const email = `oauth-${randomUUID()}@example.com`;
     const first = await findOrCreateOAuthUser(email, "First Call");

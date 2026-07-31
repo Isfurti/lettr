@@ -12,7 +12,8 @@ import { ScoreRing } from "@/components/ScoreRing";
 import { DEFAULT_ACCENT_COLOR, getFontPair, darkenHex, softenHex, ACCENT_COLORS, FONT_PAIRS } from "@/lib/customization";
 import { PhotoUpload } from "@/components/PhotoUpload";
 
-const TEMPLATES = ["classic", "modern", "compact", "bold", "sidebar", "minimal", "executive", "technical", "timeline", "elegant"];
+import { TEMPLATE_IDS } from "@/lib/templates";
+const TEMPLATES: readonly string[] = TEMPLATE_IDS;
 
 export function ResumeEditor({
   resumeId,
