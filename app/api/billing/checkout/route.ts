@@ -20,6 +20,7 @@ export async function POST() {
       userId: user.id,
       email: user.email,
       existingStripeCustomerId: user.stripe_customer_id,
+      pricingTier: user.pricing_tier ?? "full",
     });
     return NextResponse.json({ url });
   } catch (err) {

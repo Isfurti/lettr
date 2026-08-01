@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { generateSummary } from "@/lib/ai";
+import { getUserById, incrementAiWritingAssistCount } from "@/lib/db";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
+import { canUseAiWritingAssist, type Plan } from "@/lib/limits";
 
 const Schema = z.object({
   experience: z.array(z.any()).default([]),
@@ -15,6 +17,17 @@ export async function POST(req: Request) {
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const userId = (session.user as { id: string }).id;
+
+  // Same lifetime cap/counter as bullet rewriting - both count against the
+  // same 5-lifetime-calls free allowance, since they're the same kind of
+  // "AI writing assist" from a cost perspective.
+  const user = await getUserById(userId);
+  const plan = (user?.plan ?? "free") as Plan;
+  const assistCheck = canUseAiWritingAssist(plan, user?.ai_writing_assist_count ?? 0);
+  if (!assistCheck.allowed) {
+    return NextResponse.json({ error: assistCheck.reason, upgradeRequired: true }, { status: 402 });
+  }
+
   const rateLimit = await checkAndRecordRateLimit(userId, "generate-summary", 20, 10);
   if (!rateLimit.allowed) {
     return NextResponse.json(
@@ -31,6 +44,7 @@ export async function POST(req: Request) {
 
   try {
     const options = await generateSummary(parsed.data);
+    if (plan === "free") await incrementAiWritingAssistCount(userId);
     return NextResponse.json({ options });
   } catch (err) {
     const message = err instanceof Error ? err.message : "AI generation failed";

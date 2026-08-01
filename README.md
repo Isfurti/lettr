@@ -370,6 +370,63 @@ API errors with the same inline message pattern.
   (reusing `NewResumeButton`'s logic) instead of just linking to `/dashboard`
 - Removed the home/bell/settings icon row from `TopNav` entirely
 
+## Regional pricing
+
+Pro is priced in 3 tiers based on World Bank income classification (see
+`lib/pricing-region.ts`): **full** ($19, US/UK/EU/etc.), **mid** ($9,
+Brazil/Mexico/China/etc.), **value** ($5, or ₹399 for India specifically,
+since that's the planned Razorpay market — Indonesia/Philippines/etc. show
+the USD figure).
+
+**Detection**: Vercel's `x-vercel-ip-country` header, set at the edge from
+real IP geolocation — free, no third-party geo service needed, and not
+spoofable by a client-sent header (Vercel overwrites it). Only works when
+actually deployed on Vercel; elsewhere (local dev, other hosts) it's null
+and everyone gets the default "full" tier.
+
+**Captured once, at signup**, not re-detected on every page load — a
+logged-in user's price stays stable even if they later browse from a
+different location, rather than shifting under them.
+
+**Billing**: `STRIPE_PRO_PRICE_ID_FULL` / `_MID` / `_VALUE` — create 3
+separate Prices in Stripe, one per tier. The old single
+`STRIPE_PRO_PRICE_ID` still works as a fallback for the full tier if you
+haven't set up regional pricing in Stripe yet. **This only affects what
+gets displayed and which Stripe Price gets used at checkout — it doesn't
+make billing "live."** Stripe/Razorpay integration itself is still pending,
+per the existing pre-launch checklist.
+
+**Admin visibility**: `/admin/users` and `/admin/subscriptions` show each
+user's detected country/tier, and estimated MRR is computed per-subscriber
+from their actual tier rather than assuming everyone pays the same amount.
+
+## AI cost controls: Agent moved to Pro, lifetime cap on Free AI writing
+
+Two changes to bound free-tier AI cost, which previously applied to every
+active user regardless of whether they ever paid:
+
+**AI Resume Agent is now Pro-only.** It was the most expensive feature by
+far (up to 5 Anthropic calls behind a single chat message) and was
+available to free users. Gated via `canUseAiAgent()` in `lib/limits.ts`.
+
+**Bullet rewriting and summary generation are capped at 5 lifetime uses on
+Free**, not the existing per-10-minute rate limit (which resets forever and
+doesn't bound total cost - see `lib/rate-limit.ts` for that separate
+mechanism). This is a genuinely different kind of limit: a lifetime counter
+(`ai_writing_assist_count` on the `users` table, incremented via
+`incrementAiWritingAssistCount()` in `lib/db.ts`), checked via
+`canUseAiWritingAssist()` before the AI call is ever attempted - so a
+user who's hit the cap costs nothing further, ever.
+
+**Verified via an isolated boundary test** (not just unit tests): set a
+real user's counter to 4, confirmed the next call passes the gate; set it
+to 5, confirmed the next call is blocked with 402 *before* any Anthropic
+API call is attempted - proving the block genuinely prevents further cost,
+not just returns an error after the fact.
+
+A visible usage indicator ("3 of 5 free uses") shows in the editor for free
+users - see `EditForm` in `components/ResumeEditor.tsx`.
+
 ## Going to production
 
 1. **Database**: already Postgres — for production, point `DATABASE_URL` at a

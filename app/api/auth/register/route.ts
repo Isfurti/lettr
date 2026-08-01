@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { randomUUID, randomBytes } from "node:crypto";
 import { createUser, getUserByEmail, setEmailVerificationToken } from "@/lib/db";
 import { sendVerificationEmail } from "@/lib/email";
+import { getCountryFromHeaders, getTierForCountry } from "@/lib/pricing-region";
 
 const RegisterSchema = z.object({
   name: z.string().min(1).max(120),
@@ -31,11 +32,28 @@ export async function POST(req: Request) {
   const passwordHash = await bcrypt.hash(password, 12);
   const id = randomUUID();
 
+  // Captured once, at signup, rather than re-detected on every future
+  // request - this gives the user a stable price they can plan around
+  // instead of one that shifts if they later browse from a different
+  // location or a VPN. Only works on Vercel (or another host that sets
+  // this header); elsewhere it's null and they land in the default "full"
+  // tier via getTierForCountry's fallback.
+  const countryCode = getCountryFromHeaders(req.headers);
+  const pricingTier = getTierForCountry(countryCode);
+
   // If no email service is configured, we can't send a verification link at
   // all - blocking signups on an email we're incapable of sending would be
   // worse than not verifying. Auto-verify in that case instead.
   const emailServiceConfigured = Boolean(process.env.RESEND_API_KEY);
-  await createUser({ id, email: normalizedEmail, passwordHash, name, emailVerified: !emailServiceConfigured });
+  await createUser({
+    id,
+    email: normalizedEmail,
+    passwordHash,
+    name,
+    emailVerified: !emailServiceConfigured,
+    countryCode: countryCode ?? undefined,
+    pricingTier,
+  });
 
   let verificationEmailSent = false;
   if (emailServiceConfigured) {

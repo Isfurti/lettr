@@ -12,15 +12,29 @@ function getAppUrl(): string {
   return process.env.NEXTAUTH_URL || "http://localhost:3000";
 }
 
+function getPriceIdForTier(tier: string): string | undefined {
+  const tierEnvVar: Record<string, string | undefined> = {
+    full: process.env.STRIPE_PRO_PRICE_ID_FULL || process.env.STRIPE_PRO_PRICE_ID, // legacy fallback
+    mid: process.env.STRIPE_PRO_PRICE_ID_MID,
+    value: process.env.STRIPE_PRO_PRICE_ID_VALUE,
+  };
+  return tierEnvVar[tier];
+}
+
 export async function createCheckoutSession(params: {
   userId: string;
   email: string;
   existingStripeCustomerId?: string | null;
+  pricingTier?: string;
 }): Promise<string> {
   const stripe = getStripeClient();
-  const priceId = process.env.STRIPE_PRO_PRICE_ID;
+  const tier = params.pricingTier || "full";
+  const priceId = getPriceIdForTier(tier);
   if (!priceId) {
-    throw new Error("STRIPE_PRO_PRICE_ID is not set. Create a $29/mo Price in Stripe and add its ID.");
+    throw new Error(
+      `No Stripe Price configured for the "${tier}" pricing tier. Create a Price in Stripe for this region and set ` +
+        `STRIPE_PRO_PRICE_ID_${tier.toUpperCase()}.`
+    );
   }
 
   const session = await stripe.checkout.sessions.create({
@@ -31,8 +45,8 @@ export async function createCheckoutSession(params: {
     success_url: `${getAppUrl()}/dashboard?upgraded=true`,
     cancel_url: `${getAppUrl()}/pricing`,
     client_reference_id: params.userId,
-    metadata: { userId: params.userId },
-    subscription_data: { metadata: { userId: params.userId } },
+    metadata: { userId: params.userId, pricingTier: tier },
+    subscription_data: { metadata: { userId: params.userId, pricingTier: tier } },
   });
 
   if (!session.url) throw new Error("Stripe did not return a checkout URL");

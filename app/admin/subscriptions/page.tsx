@@ -1,12 +1,27 @@
 import { requireAdmin } from "@/lib/admin-auth";
 import { listAllUsers } from "@/lib/db";
 import { AdminSidebar } from "@/components/AdminSidebar";
+import { PRICING_TIERS, type PricingTier } from "@/lib/pricing-region";
 
 export default async function AdminSubscriptionsPage() {
   await requireAdmin();
   const users = await listAllUsers();
   const proUsers = users.filter((u) => u.plan === "pro");
-  const mrr = proUsers.length * 19; // real count × real price, not a fabricated number
+
+  // Each subscriber's real tier-adjusted price, not a flat assumption -
+  // this used to hardcode $19 × count, which became wrong the moment
+  // regional pricing existed.
+  function usdForUser(u: (typeof proUsers)[number]): number {
+    const tier = (u.pricing_tier as PricingTier) || "full";
+    return PRICING_TIERS[tier]?.usd ?? PRICING_TIERS.full.usd;
+  }
+  const mrr = proUsers.reduce((sum, u) => sum + usdForUser(u), 0);
+
+  const tierCounts: Record<PricingTier, number> = { full: 0, mid: 0, value: 0 };
+  for (const u of proUsers) {
+    const tier = (u.pricing_tier as PricingTier) || "full";
+    tierCounts[tier] = (tierCounts[tier] ?? 0) + 1;
+  }
 
   return (
     <div className="flex-1 flex admin-shell">
@@ -19,11 +34,17 @@ export default async function AdminSubscriptionsPage() {
           <div className="paper-sheet rounded-sm p-5 border-t-2 border-t-admin-accent">
             <p className="text-xs uppercase tracking-wide text-ink-soft mb-1">Pro subscribers</p>
             <p className="font-display font-semibold text-2xl">{proUsers.length}</p>
+            <p className="text-xs text-ink-soft mt-1">
+              {tierCounts.full} standard · {tierCounts.mid} regional (mid) · {tierCounts.value} regional (value)
+            </p>
           </div>
           <div className="paper-sheet rounded-sm p-5 border-t-2 border-t-admin-accent">
             <p className="text-xs uppercase tracking-wide text-ink-soft mb-1">Estimated MRR</p>
             <p className="font-display font-semibold text-2xl">${mrr}</p>
-            <p className="text-xs text-ink-soft mt-1">{proUsers.length} × $19/mo — before any Stripe fees, discounts, or churn this month</p>
+            <p className="text-xs text-ink-soft mt-1">
+              Computed per-subscriber from their actual pricing tier (USD-equivalent for India&apos;s INR
+              pricing) — before any Stripe fees, discounts, or churn this month.
+            </p>
           </div>
         </div>
 
@@ -32,6 +53,7 @@ export default async function AdminSubscriptionsPage() {
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-ink-soft bg-app-bg">
                 <th className="px-6 py-3 font-medium">Subscriber</th>
+                <th className="px-6 py-3 font-medium">Tier</th>
                 <th className="px-6 py-3 font-medium">Since</th>
                 <th className="px-6 py-3 font-medium">Manage</th>
               </tr>
@@ -39,7 +61,7 @@ export default async function AdminSubscriptionsPage() {
             <tbody>
               {proUsers.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="px-6 py-8 text-center text-ink-soft">
+                  <td colSpan={4} className="px-6 py-8 text-center text-ink-soft">
                     No Pro subscribers yet.
                   </td>
                 </tr>
@@ -49,6 +71,11 @@ export default async function AdminSubscriptionsPage() {
                   <td className="px-6 py-3">
                     <p className="font-medium">{u.name || "—"}</p>
                     <p className="text-xs text-ink-soft">{u.email}</p>
+                  </td>
+                  <td className="px-6 py-3">
+                    <span className="text-xs font-mono uppercase bg-admin-accent-soft text-admin-accent-deep px-2 py-0.5 rounded-sm">
+                      {u.pricing_tier || "full"}{u.country_code ? ` · ${u.country_code}` : ""}
+                    </span>
                   </td>
                   <td className="px-6 py-3 text-ink-soft text-xs">{new Date(u.created_at).toLocaleDateString()}</td>
                   <td className="px-6 py-3">

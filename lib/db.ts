@@ -40,6 +40,7 @@ function ensureSchema(): Promise<void> {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS pdf_download_count INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_writing_assist_count INTEGER NOT NULL DEFAULT 0;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS google_access_token TEXT;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS google_refresh_token TEXT;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS google_token_expiry TIMESTAMPTZ;
@@ -48,6 +49,8 @@ function ensureSchema(): Promise<void> {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_expiry TIMESTAMPTZ;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_token TEXT;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_expiry TIMESTAMPTZ;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS country_code TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS pricing_tier TEXT;
 
       CREATE TABLE IF NOT EXISTS support_messages (
         id TEXT PRIMARY KEY,
@@ -128,6 +131,7 @@ export type UserRow = {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   pdf_download_count: number;
+  ai_writing_assist_count: number;
   google_access_token: string | null;
   google_refresh_token: string | null;
   google_token_expiry: string | null;
@@ -136,6 +140,8 @@ export type UserRow = {
   email_verification_expiry: string | null;
   password_reset_token: string | null;
   password_reset_expiry: string | null;
+  country_code: string | null;
+  pricing_tier: string | null;
   created_at: string;
 };
 
@@ -161,11 +167,19 @@ export async function getUserById(id: string): Promise<UserRow | undefined> {
   return res.rows[0];
 }
 
-export async function createUser(u: { id: string; email: string; passwordHash: string; name?: string; emailVerified?: boolean }) {
+export async function createUser(u: {
+  id: string;
+  email: string;
+  passwordHash: string;
+  name?: string;
+  emailVerified?: boolean;
+  countryCode?: string;
+  pricingTier?: string;
+}) {
   await ensureSchema();
   await pool.query(
-    "INSERT INTO users (id, email, password_hash, name, email_verified) VALUES ($1, $2, $3, $4, $5)",
-    [u.id, u.email, u.passwordHash, u.name ?? null, u.emailVerified ?? false]
+    "INSERT INTO users (id, email, password_hash, name, email_verified, country_code, pricing_tier) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+    [u.id, u.email, u.passwordHash, u.name ?? null, u.emailVerified ?? false, u.countryCode ?? null, u.pricingTier ?? null]
   );
 }
 
@@ -239,6 +253,23 @@ export async function incrementPdfDownloadCount(userId: string): Promise<number>
     [userId]
   );
   return res.rows[0].pdf_download_count;
+}
+
+/**
+ * Free-tier AI writing assist (bullet rewrite + summary generation) is
+ * capped at a LIFETIME total, not the usual per-10-minute rate limit -
+ * this is a separate mechanism from lib/rate-limit.ts, which protects
+ * against rapid abuse but resets forever and doesn't bound total cost.
+ * This bounds a free user's worst-case AI cost to a small, fixed, one-time
+ * amount rather than an unbounded ongoing one.
+ */
+export async function incrementAiWritingAssistCount(userId: string): Promise<number> {
+  await ensureSchema();
+  const res = await pool.query(
+    "UPDATE users SET ai_writing_assist_count = ai_writing_assist_count + 1 WHERE id = $1 RETURNING ai_writing_assist_count",
+    [userId]
+  );
+  return res.rows[0].ai_writing_assist_count;
 }
 
 export async function setGoogleTokens(params: {
@@ -375,12 +406,14 @@ export type AdminUserRow = {
   plan: string;
   created_at: string;
   resume_count: number;
+  country_code: string | null;
+  pricing_tier: string | null;
 };
 
 export async function listAllUsers(search?: string): Promise<AdminUserRow[]> {
   await ensureSchema();
   const res = await pool.query(
-    `SELECT u.id, u.email, u.name, u.plan, u.created_at,
+    `SELECT u.id, u.email, u.name, u.plan, u.created_at, u.country_code, u.pricing_tier,
             COUNT(r.id)::int AS resume_count
      FROM users u
      LEFT JOIN resumes r ON r.user_id = u.id

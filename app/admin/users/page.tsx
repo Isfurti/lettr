@@ -40,6 +40,7 @@ export default async function AdminUsersPage({
               <tr className="text-left text-xs uppercase tracking-wide text-ink-soft bg-app-bg">
                 <th className="px-6 py-3 font-medium">User</th>
                 <th className="px-6 py-3 font-medium">Plan</th>
+                <th className="px-6 py-3 font-medium">Region</th>
                 <th className="px-6 py-3 font-medium">Resumes</th>
                 <th className="px-6 py-3 font-medium">Joined</th>
               </tr>
@@ -47,7 +48,7 @@ export default async function AdminUsersPage({
             <tbody>
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-ink-soft">
+                  <td colSpan={5} className="px-6 py-8 text-center text-ink-soft">
                     No users match &quot;{q}&quot;.
                   </td>
                 </tr>
@@ -69,6 +70,15 @@ export default async function AdminUsersPage({
                     <span className={`text-xs font-mono uppercase px-2 py-0.5 rounded-sm ${u.plan === "pro" ? "bg-admin-accent-soft text-admin-accent-deep" : "bg-rule/40"}`}>
                       {u.plan}
                     </span>
+                  </td>
+                  <td className="px-6 py-3">
+                    {u.pricing_tier ? (
+                      <span className="text-xs font-mono text-ink-soft">
+                        {u.pricing_tier}{u.country_code ? ` · ${u.country_code}` : ""}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-ink-soft/50">—</span>
+                    )}
                   </td>
                   <td className="px-6 py-3">{u.resume_count}</td>
                   <td className="px-6 py-3 text-ink-soft text-xs">{new Date(u.created_at).toLocaleDateString()}</td>

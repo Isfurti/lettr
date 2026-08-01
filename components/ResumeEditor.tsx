@@ -23,6 +23,7 @@ export function ResumeEditor({
   plan,
   googleDriveConnected,
   userInitial,
+  aiWritingAssistsUsed,
 }: {
   resumeId: string;
   initialTitle: string;
@@ -31,6 +32,7 @@ export function ResumeEditor({
   plan: Plan;
   googleDriveConnected: boolean;
   userInitial: string;
+  aiWritingAssistsUsed?: number;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(initialTitle);
@@ -238,7 +240,7 @@ export function ResumeEditor({
       <div className="border-b border-rule px-6 flex gap-1">
         {[
           { id: "edit", label: "Edit" },
-          { id: "agent", label: "AI Agent" },
+          { id: "agent", label: "AI Agent", pro: true },
           { id: "score", label: "Score" },
           { id: "match", label: "Job Match" },
           { id: "cover-letter", label: "Cover Letter", pro: true },
@@ -259,8 +261,12 @@ export function ResumeEditor({
 
       <div className="flex-1 grid lg:grid-cols-2 min-h-0">
         <div className="overflow-y-auto p-6 border-r border-rule">
-          {tab === "edit" && <EditForm data={data} setData={setData} />}
-          {tab === "agent" && <AgentPanel data={data} setData={setData} />}
+          {tab === "edit" && <EditForm data={data} setData={setData} plan={plan} aiWritingAssistsUsed={aiWritingAssistsUsed} />}
+          {tab === "agent" && (
+            <UpgradeGate locked={plan === "free"} feature="The AI Resume Agent">
+              <AgentPanel data={data} setData={setData} />
+            </UpgradeGate>
+          )}
           {tab === "score" && <ScorePanel data={data} plan={plan} />}
           {tab === "match" && <JobMatchPanel data={data} />}
           {tab === "cover-letter" && (
@@ -324,9 +330,13 @@ function UpgradeGate({
 export function EditForm({
   data,
   setData,
+  plan,
+  aiWritingAssistsUsed,
 }: {
   data: ResumeData;
   setData: React.Dispatch<React.SetStateAction<ResumeData>>;
+  plan?: Plan;
+  aiWritingAssistsUsed?: number;
 }) {
   function updateContact<K extends keyof ResumeData["contact"]>(key: K, value: string) {
     setData((d) => ({ ...d, contact: { ...d.contact, [key]: value } }));
@@ -386,6 +396,18 @@ export function EditForm({
 
   return (
     <div className="space-y-8 max-w-xl">
+      {plan === "free" && aiWritingAssistsUsed !== undefined && (
+        <div className="paper-sheet rounded-sm p-3 flex items-center justify-between text-xs">
+          <span className="text-ink-soft">
+            AI bullet/summary rewrites: <strong className="text-ink">{Math.min(aiWritingAssistsUsed, 5)} of 5</strong> free uses
+          </span>
+          {aiWritingAssistsUsed >= 5 ? (
+            <Link href="/pricing" className="text-seal font-medium hover:underline">Upgrade for unlimited →</Link>
+          ) : (
+            <span className="text-ink-soft">{5 - aiWritingAssistsUsed} left</span>
+          )}
+        </div>
+      )}
       <Section title="Design">
         <p className="text-xs text-ink-soft mb-2">Accent color</p>
         <div className="flex flex-wrap gap-2 mb-4">

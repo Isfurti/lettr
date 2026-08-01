@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { Reveal } from "@/components/Reveal";
 import { Footer } from "@/components/Footer";
 import { PublicNav } from "@/components/PublicNav";
 import { UpgradeButton } from "@/components/UpgradeButton";
+import { auth } from "@/lib/auth";
+import { getUserById } from "@/lib/db";
+import { getCountryFromHeaders, getDisplayPriceForCountry, getTierForCountry, PRICING_TIERS } from "@/lib/pricing-region";
 
 export const metadata: Metadata = {
   title: "Pricing | Lettr — Free AI Resume Builder",
   description: "Free resume builder with AI bullet rewriting and resume scoring. Upgrade to Pro for cover letters, unlimited exports, and more.",
   alternates: { canonical: "/pricing" },
   openGraph: {
-    title: "Lettr Pricing — Free to start, $19/mo for Pro",
-    description: "Free resume builder with AI writing tools. Pro unlocks cover letters, resignation letters, and unlimited exports.",
+    title: "Lettr Pricing — Free to start, upgrade anytime",
+    description: "Free resume builder with AI writing tools. Pro unlocks cover letters, resignation letters, and unlimited exports. Regional pricing available.",
     url: "/pricing",
   },
 };
@@ -19,9 +23,9 @@ export const metadata: Metadata = {
 const COMPARISON: { feature: string; free: string | boolean; pro: string | boolean }[] = [
   { feature: "Resumes", free: "1", pro: "Unlimited" },
   { feature: "PDF downloads", free: "3", pro: "Unlimited" },
-  { feature: "AI bullet rewriting", free: true, pro: true },
-  { feature: "AI resume summary writer", free: true, pro: true },
-  { feature: "AI Resume Agent (chat editing)", free: true, pro: true },
+  { feature: "AI bullet rewriting", free: "5 lifetime", pro: "Unlimited" },
+  { feature: "AI resume summary writer", free: "5 lifetime", pro: "Unlimited" },
+  { feature: "AI Resume Agent (chat editing)", free: false, pro: true },
   { feature: "Resume quality score", free: true, pro: true },
   { feature: "Job match / keyword targeting", free: true, pro: true },
   { feature: "AI cover letter builder", free: false, pro: true },
@@ -45,11 +49,34 @@ const FAQS = [
   },
   {
     q: "Is there a free plan?",
-    a: "Yes — 1 resume, 3 PDF downloads, and the core AI writing tools, no credit card required.",
+    a: "Yes — 1 resume, 3 PDF downloads, and 5 free AI bullet/summary rewrites, no credit card required.",
   },
 ];
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  // Logged-in users see their STORED tier (captured at signup) - that's
+  // what checkout will actually charge them, so showing anything else
+  // here would be misleading. Logged-out visitors see a live preview
+  // based on where they're browsing from right now.
+  const session = await auth();
+  let regionalPrice = getDisplayPriceForCountry(null); // defaults to full/$19
+
+  if (session?.user) {
+    const userId = (session.user as { id: string }).id;
+    const user = await getUserById(userId);
+    if (user?.pricing_tier) {
+      const tier = user.pricing_tier as ReturnType<typeof getTierForCountry>;
+      regionalPrice =
+        user.country_code?.toUpperCase() === "IN"
+          ? { tier, display: "₹399" }
+          : { tier, display: PRICING_TIERS[tier].displayPrice };
+    }
+  } else {
+    const headersList = await headers();
+    const country = getCountryFromHeaders(headersList);
+    regionalPrice = getDisplayPriceForCountry(country);
+  }
+
   return (
     <main className="flex-1">
       <PublicNav />
@@ -74,8 +101,8 @@ export default function PricingPage() {
             <ul className="space-y-3 mb-10 flex-1 text-sm">
               <FeatureLine included>1 resume</FeatureLine>
               <FeatureLine included>3 PDF downloads</FeatureLine>
-              <FeatureLine included>AI bullet &amp; summary writing</FeatureLine>
-              <FeatureLine included>AI Resume Agent</FeatureLine>
+              <FeatureLine included>AI bullet &amp; summary writing (5 free)</FeatureLine>
+              <FeatureLine>AI Resume Agent</FeatureLine>
               <FeatureLine>Cover &amp; resignation letters</FeatureLine>
               <FeatureLine>DOCX / Google Drive export</FeatureLine>
             </ul>
@@ -94,13 +121,18 @@ export default function PricingPage() {
             <p className="text-xs uppercase tracking-wide text-white/60 mb-2">Full access</p>
             <h2 className="font-display font-semibold text-2xl mb-6">Pro</h2>
             <div className="mb-8">
-              <span className="font-display text-4xl font-bold">$19</span>
+              <span className="font-display text-4xl font-bold">{regionalPrice.display}</span>
               <span className="text-white/60"> / month</span>
+              {regionalPrice.tier !== "full" && (
+                <p className="text-xs text-white/50 mt-1">Regional pricing — same features, adjusted for your country</p>
+              )}
             </div>
             <ul className="space-y-3 mb-10 flex-1 text-sm">
               <FeatureLine included dark>Unlimited resumes</FeatureLine>
               <FeatureLine included dark>Unlimited PDF downloads</FeatureLine>
               <FeatureLine included dark>Everything in Free</FeatureLine>
+              <FeatureLine included dark>Unlimited AI bullet &amp; summary writing</FeatureLine>
+              <FeatureLine included dark>AI Resume Agent</FeatureLine>
               <FeatureLine included dark>AI cover letter builder</FeatureLine>
               <FeatureLine included dark>AI resignation letter builder</FeatureLine>
               <FeatureLine included dark>DOCX &amp; Google Drive export</FeatureLine>

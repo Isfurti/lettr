@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { runAgentTurn } from "@/lib/ai-agent";
+import { getUserById } from "@/lib/db";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
+import { canUseAiAgent, type Plan } from "@/lib/limits";
 
 const Schema = z.object({
   resumeData: z.any(),
@@ -15,6 +17,17 @@ export async function POST(req: Request) {
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const userId = (session.user as { id: string }).id;
+
+  // Pro-only - this is the most expensive AI feature by far (up to 5
+  // Anthropic calls per single message), so it's the one gated by plan
+  // rather than just capped, unlike bullet/summary AI.
+  const user = await getUserById(userId);
+  const plan = (user?.plan ?? "free") as Plan;
+  const agentCheck = canUseAiAgent(plan);
+  if (!agentCheck.allowed) {
+    return NextResponse.json({ error: agentCheck.reason, upgradeRequired: true }, { status: 402 });
+  }
+
   // Tighter limit than the other AI endpoints - each agent turn can
   // internally make up to 5 Anthropic calls (tool-use loop), so this is
   // the endpoint most worth capping.

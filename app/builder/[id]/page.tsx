@@ -28,6 +28,7 @@ export default async function BuilderPage({ params }: { params: Promise<{ id: st
       plan={plan}
       googleDriveConnected={googleDriveConnected}
       userInitial={userInitial}
+      aiWritingAssistsUsed={user?.ai_writing_assist_count ?? 0}
     />
   );
 }

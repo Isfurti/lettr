@@ -43,7 +43,7 @@ export default async function Home() {
       "@type": "Offer",
       price: "0",
       priceCurrency: "USD",
-      description: "Free plan available; Pro plan at $19/month",
+      description: "Free plan available; Pro plan with regional pricing",
     },
   };
 

@@ -6,6 +6,8 @@ import {
   canUseResignationLetterBuilder,
   canExportDocx,
   canExportToGoogleDrive,
+  canUseAiWritingAssist,
+  canUseAiAgent,
 } from "@/lib/limits";
 
 describe("canCreateResume", () => {
@@ -58,5 +60,39 @@ describe("pro-only feature gates", () => {
   });
   it("blocks Google Drive export on free", () => {
     expect(canExportToGoogleDrive("free").allowed).toBe(false);
+  });
+});
+
+describe("canUseAiWritingAssist - lifetime cap, not a rate limit", () => {
+  it("allows a free user under the 5-call lifetime cap", () => {
+    expect(canUseAiWritingAssist("free", 0).allowed).toBe(true);
+    expect(canUseAiWritingAssist("free", 4).allowed).toBe(true);
+  });
+
+  it("blocks a free user at exactly the lifetime cap", () => {
+    const result = canUseAiWritingAssist("free", 5);
+    expect(result.allowed).toBe(false);
+    if (!result.allowed) expect(result.reason).toMatch(/upgrade/i);
+  });
+
+  it("blocks a free user well past the cap too - doesn't somehow re-allow at higher counts", () => {
+    expect(canUseAiWritingAssist("free", 500).allowed).toBe(false);
+  });
+
+  it("never blocks a pro user, at any count", () => {
+    expect(canUseAiWritingAssist("pro", 0).allowed).toBe(true);
+    expect(canUseAiWritingAssist("pro", 100000).allowed).toBe(true);
+  });
+});
+
+describe("canUseAiAgent - moved to Pro-only", () => {
+  it("blocks free users", () => {
+    const result = canUseAiAgent("free");
+    expect(result.allowed).toBe(false);
+    if (!result.allowed) expect(result.reason).toMatch(/pro/i);
+  });
+
+  it("allows pro users", () => {
+    expect(canUseAiAgent("pro").allowed).toBe(true);
   });
 });
