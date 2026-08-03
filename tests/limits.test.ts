@@ -8,6 +8,7 @@ import {
   canExportToGoogleDrive,
   canUseAiWritingAssist,
   canUseAiAgent,
+  canUseTemplate,
 } from "@/lib/limits";
 
 describe("canCreateResume", () => {
@@ -94,5 +95,37 @@ describe("canUseAiAgent - moved to Pro-only", () => {
 
   it("allows pro users", () => {
     expect(canUseAiAgent("pro").allowed).toBe(true);
+  });
+});
+
+describe("canUseTemplate - free tier limited to 2 templates", () => {
+  it("allows free users to use Classic", () => {
+    expect(canUseTemplate("free", "classic").allowed).toBe(true);
+  });
+
+  it("allows free users to use Modern", () => {
+    expect(canUseTemplate("free", "modern").allowed).toBe(true);
+  });
+
+  it("blocks free users from Pro-only templates", () => {
+    const result = canUseTemplate("free", "sidebar");
+    expect(result.allowed).toBe(false);
+    if (!result.allowed) expect(result.reason).toMatch(/pro/i);
+  });
+
+  it("blocks free users from every non-free template, not just one example", () => {
+    for (const t of ["compact", "bold", "sidebar", "minimal", "executive", "technical", "timeline", "elegant"]) {
+      expect(canUseTemplate("free", t).allowed).toBe(false);
+    }
+  });
+
+  it("allows pro users to use any template, including the free ones", () => {
+    expect(canUseTemplate("pro", "classic").allowed).toBe(true);
+    expect(canUseTemplate("pro", "sidebar").allowed).toBe(true);
+    expect(canUseTemplate("pro", "elegant").allowed).toBe(true);
+  });
+
+  it("blocks an unknown/invalid template id for free users rather than defaulting to allowed", () => {
+    expect(canUseTemplate("free", "not-a-real-template").allowed).toBe(false);
   });
 });

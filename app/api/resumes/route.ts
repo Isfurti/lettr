@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { auth } from "@/lib/auth";
 import { listResumesForUser, upsertResume, countResumesForUser, getUserById, logActivity } from "@/lib/db";
 import { emptyResume } from "@/lib/types";
-import { canCreateResume, type Plan } from "@/lib/limits";
+import { canCreateResume, canUseTemplate, type Plan } from "@/lib/limits";
 
 export async function GET() {
   const session = await auth();
@@ -33,6 +33,12 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const title = typeof body.title === "string" ? body.title : "Untitled Resume";
   const template = typeof body.template === "string" ? body.template : "classic";
+
+  const templateCheck = canUseTemplate(plan, template);
+  if (!templateCheck.allowed) {
+    return NextResponse.json({ error: templateCheck.reason, upgradeRequired: true }, { status: 402 });
+  }
+
   const id = randomUUID();
 
   await upsertResume({

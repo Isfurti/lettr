@@ -11,7 +11,18 @@ function getClient() {
   return new Anthropic({ apiKey });
 }
 
+// Two tiers, routed by task complexity - not everything needs the same
+// model. MODEL (Sonnet) is kept for tasks where output quality genuinely
+// benefits from stronger reasoning: cover letters (persuasive writing
+// tailored to a specific job) and the AI Agent (lib/ai-agent.ts, tool-use
+// reasoning across multiple steps). MODEL_FAST (Haiku) handles everything
+// else - bullet rewriting, summaries, resignation letters, resume
+// extraction, and review analysis are all well-defined, mostly mechanical
+// tasks (rewrite this, extract that, classify this) that don't need the
+// expensive model to do well, and are also the highest-volume calls -
+// exactly where routing saves the most in aggregate.
 const MODEL = "claude-sonnet-4-6";
+const MODEL_FAST = "claude-haiku-4-5-20251001";
 
 /**
  * Turn a rough, unpolished bullet point into 3 achievement-focused,
@@ -42,7 +53,7 @@ Rough accomplishment: "${params.roughBullet}"
 Respond ONLY with a JSON array of exactly 3 strings, no preamble, no markdown fences.`;
 
   const response = await client.messages.create({
-    model: MODEL,
+    model: MODEL_FAST,
     max_tokens: 500,
     messages: [{ role: "user", content: prompt }],
   });
@@ -131,7 +142,7 @@ Rules:
 Sign off with the employee's name.`;
 
   const response = await client.messages.create({
-    model: MODEL,
+    model: MODEL_FAST,
     max_tokens: 600,
     messages: [{ role: "user", content: prompt }],
   });
@@ -175,7 +186,7 @@ Rules:
 Respond ONLY with a JSON array of exactly 3 strings, no preamble, no markdown fences.`;
 
   const response = await client.messages.create({
-    model: MODEL,
+    model: MODEL_FAST,
     max_tokens: 600,
     messages: [{ role: "user", content: prompt }],
   });
@@ -222,7 +233,7 @@ Respond ONLY with a JSON object matching this exact shape, no preamble, no markd
 }`;
 
   const response = await client.messages.create({
-    model: MODEL,
+    model: MODEL_FAST,
     max_tokens: 3000,
     messages: [{ role: "user", content: prompt }],
   });
@@ -320,7 +331,7 @@ Rules:
   fix timeline. Don't be sycophantic or over-the-top - genuine and brief.`;
 
   const response = await client.messages.create({
-    model: MODEL,
+    model: MODEL_FAST,
     max_tokens: 700,
     messages: [{ role: "user", content: prompt }],
   });

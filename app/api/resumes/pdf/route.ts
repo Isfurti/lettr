@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { auth } from "@/lib/auth";
 import { getUserById, incrementPdfDownloadCount, logActivity } from "@/lib/db";
-import { canDownloadPdf, type Plan } from "@/lib/limits";
+import { canDownloadPdf, canUseTemplate, type Plan } from "@/lib/limits";
 import { ResumePdfDocument } from "@/components/ResumePdfDocument";
 import type { ResumeData } from "@/lib/types";
 
@@ -22,6 +22,13 @@ export async function POST(req: Request) {
   const resume = body?.resume as ResumeData | undefined;
   const template = typeof body?.template === "string" ? body.template : "classic";
   if (!resume) return NextResponse.json({ error: "Missing resume data" }, { status: 400 });
+
+  // Template comes raw from the request here, not re-derived from what's
+  // saved in the DB - so this needs its own check, not just create/save.
+  const templateCheck = canUseTemplate(plan, template);
+  if (!templateCheck.allowed) {
+    return NextResponse.json({ error: templateCheck.reason, upgradeRequired: true }, { status: 402 });
+  }
 
   const buffer = await renderToBuffer(ResumePdfDocument({ resume, template }));
   await incrementPdfDownloadCount(userId);

@@ -7,7 +7,7 @@ import { EditForm, ScorePanel, JobMatchPanel, ResumePreview } from "@/components
 import { emptyResume, type ResumeData } from "@/lib/types";
 import { saveGuestDraft, loadGuestDraft } from "@/lib/guest-draft";
 
-import { TEMPLATE_IDS } from "@/lib/templates";
+import { TEMPLATE_IDS, isTemplateFree } from "@/lib/templates";
 const TEMPLATES: readonly string[] = TEMPLATE_IDS;
 
 export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string }) {
@@ -63,7 +63,7 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
             className="text-sm border border-rule rounded-sm px-2 py-1.5 bg-paper-raised"
           >
             {TEMPLATES.map((t) => (
-              <option key={t} value={t}>{t[0].toUpperCase() + t.slice(1)}</option>
+              <option key={t} value={t}>{t[0].toUpperCase() + t.slice(1)}{!isTemplateFree(t) ? " (Pro)" : ""}</option>
             ))}
           </select>
           <button

@@ -4,16 +4,18 @@ import { TopNav } from "@/components/TopNav";
 import { PublicNav } from "@/components/PublicNav";
 import { Footer } from "@/components/Footer";
 import { UseTemplateButton } from "@/components/UseTemplateButton";
-import { TEMPLATE_IDS, type TemplateId } from "@/lib/templates";
+import { TEMPLATE_IDS, isTemplateFree, type TemplateId } from "@/lib/templates";
+import { getUserById } from "@/lib/db";
+import type { Plan } from "@/lib/limits";
 
 export const metadata: Metadata = {
-  title: "Free ATS-Friendly Resume Templates | Lettr",
+  title: "Resume Templates | Lettr — 2 Free, 8 Pro",
   description:
-    "10 free, ATS-friendly resume templates — Classic, Modern, Sidebar, Executive, and more. Customize colors and fonts, then export to PDF or Word.",
+    "10 ATS-friendly resume templates — 2 free (Classic, Modern), 8 more with Pro. Customize colors and fonts, then export to PDF or Word.",
   alternates: { canonical: "/templates" },
   openGraph: {
-    title: "Free ATS-Friendly Resume Templates | Lettr",
-    description: "10 free, ATS-friendly resume templates. Customize colors and fonts, export to PDF or Word.",
+    title: "Resume Templates | Lettr",
+    description: "10 ATS-friendly resume templates. 2 free to start, the rest with Pro.",
     url: "/templates",
   },
 };
@@ -42,38 +44,56 @@ export default async function TemplatesPage() {
   const session = await auth();
   const initial = session?.user ? (session.user.name || session.user.email || "?")[0]?.toUpperCase() : undefined;
 
+  let plan: Plan = "free";
+  if (session?.user) {
+    const user = await getUserById((session.user as { id: string }).id);
+    plan = (user?.plan ?? "free") as Plan;
+  }
+
   return (
     <div className="flex-1 flex flex-col bg-paper">
       {session?.user ? <TopNav active="templates" userInitial={initial} /> : <PublicNav />}
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-8 py-12">
         <p className="text-xs uppercase tracking-wide text-seal font-medium mb-2">Curated collection</p>
-        <h1 className="font-display font-semibold text-4xl mb-3">Free Resume Templates</h1>
+        <h1 className="font-display font-semibold text-4xl mb-3">Resume Templates</h1>
         <p className="text-ink-soft max-w-xl mb-10">
-          10 layouts, each built around the same ATS-safe structure. Pick one, customize the color
-          and font, and export to PDF or Word — free to start.
+          10 layouts, all built around the same ATS-safe structure. <strong>Classic and Modern are
+          free</strong> — the other 8 are part of Pro.
         </p>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {TEMPLATES.map((t) => (
-            <div key={t.id} className="paper-sheet rounded-sm overflow-hidden flex flex-col">
-              <div className="aspect-[3/4] bg-app-bg p-3">
-                <TemplateThumbnail id={t.id} />
-              </div>
-              <div className="p-4 flex-1 flex flex-col">
-                <p className="font-display font-semibold mb-1">{t.name}</p>
-                <p className="text-xs text-ink-soft mb-3 flex-1">{t.description}</p>
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  {t.tags.map((tag) => (
-                    <span key={tag} className="text-[10px] uppercase tracking-wide bg-seal-soft text-seal-deep px-1.5 py-0.5 rounded-sm">
-                      {tag}
-                    </span>
-                  ))}
+          {TEMPLATES.map((t) => {
+            const free = isTemplateFree(t.id);
+            return (
+              <div key={t.id} className="paper-sheet rounded-sm overflow-hidden flex flex-col relative">
+                {!free && (
+                  <span className="absolute top-2 right-2 z-10 text-[10px] font-mono uppercase bg-ink text-white px-1.5 py-0.5 rounded-sm">
+                    Pro
+                  </span>
+                )}
+                <div className="aspect-[3/4] bg-app-bg p-3">
+                  <TemplateThumbnail id={t.id} />
                 </div>
-                <UseTemplateButton template={t.id} isLoggedIn={Boolean(session?.user)} />
+                <div className="p-4 flex-1 flex flex-col">
+                  <p className="font-display font-semibold mb-1">{t.name}</p>
+                  <p className="text-xs text-ink-soft mb-3 flex-1">{t.description}</p>
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {t.tags.map((tag) => (
+                      <span key={tag} className="text-[10px] uppercase tracking-wide bg-seal-soft text-seal-deep px-1.5 py-0.5 rounded-sm">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <UseTemplateButton
+                    template={t.id}
+                    isLoggedIn={Boolean(session?.user)}
+                    locked={Boolean(session?.user) && plan === "free" && !free}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </main>
       <Footer />

@@ -49,11 +49,28 @@ export async function completeGuestExport(navigate: (path: string) => void): Pro
   const draft = loadGuestDraft();
   if (!draft?.pendingExport) return false;
 
-  const createRes = await fetch("/api/resumes", {
+  let createRes = await fetch("/api/resumes", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title: "Untitled Resume", template: draft.template, data: draft.data }),
   });
+
+  // If their chosen template isn't available on the plan they just signed
+  // up with (a guest could explore any template, but Free only unlocks
+  // 2), don't just fail and silently discard everything they wrote - retry
+  // once with a guaranteed-free template so their actual content survives.
+  // They can switch templates again from the real editor once they see
+  // which ones need Pro.
+  let effectiveTemplate = draft.template;
+  if (createRes.status === 402) {
+    effectiveTemplate = "classic";
+    createRes = await fetch("/api/resumes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "Untitled Resume", template: effectiveTemplate, data: draft.data }),
+    });
+  }
+
   if (!createRes.ok) return false;
   const { id } = await createRes.json();
 
@@ -61,7 +78,7 @@ export async function completeGuestExport(navigate: (path: string) => void): Pro
   const exportRes = await fetch(exportPath, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ resume: draft.data, template: draft.template }),
+    body: JSON.stringify({ resume: draft.data, template: effectiveTemplate }),
   });
 
   if (exportRes.ok) {

@@ -427,6 +427,70 @@ not just returns an error after the fact.
 A visible usage indicator ("3 of 5 free uses") shows in the editor for free
 users - see `EditForm` in `components/ResumeEditor.tsx`.
 
+## Free-tier template restriction (2 of 10)
+
+Free plan gets **Classic and Modern** only; the other 8 templates require
+Pro. Configured in `lib/templates.ts` (`FREE_TEMPLATE_IDS`), checked via
+`canUseTemplate()` in `lib/limits.ts`.
+
+**This is enforced at every real point a template gets used, not just the
+gallery UI** - resume creation, resume save, and PDF export all
+independently check it server-side. This matters specifically because PDF
+export takes the template as a raw request parameter rather than
+re-deriving it from what's saved in the database - a save-only check
+would've left a direct bypass. DOCX and Google Drive export don't need
+their own check since both are already fully Pro-gated regardless of
+template.
+
+**Guest builder edge case, handled deliberately**: a guest can freely
+preview any template while building (no restriction - it's just
+client-side rendering, costs nothing). If they sign up as Free after
+picking a Pro-only template, `completeGuestExport()` in `lib/guest-draft.ts`
+falls back to Classic rather than silently discarding their written
+content - they keep everything they wrote, just not their original visual
+choice, and can see why once they're in the real editor.
+
+**Also fixed while wiring this in**: `save()` in the resume editor
+previously never checked whether the save actually succeeded - it always
+displayed "Saved" regardless of the server response. Real bug, not
+specific to this feature, but this is what surfaced it. Also replaced the
+hardcoded "Upgrade for more PDFs →" / "DOCX is Pro →" link text with the
+real server-provided message, since a generic PDF-limit message would've
+been actively misleading for a template-restriction rejection.
+
+**Verified live**: confirmed save/export are both rejected for a Pro
+template on Free (before any rendering happens), confirmed the same
+requests succeed for the other free template, and confirmed the exact same
+user succeeds once upgraded to Pro - not just a mocked assertion.
+
+## AI cost optimization: model routing
+
+Not every AI feature needs the same model. `lib/ai.ts` now routes by task:
+
+- **Stays on Sonnet** (`claude-sonnet-4-6`): cover letter generation (writing
+  quality matters more here) and the AI Agent in `lib/ai-agent.ts`
+  (multi-step tool-use reasoning genuinely benefits from the stronger model)
+- **Routed to Haiku** (`claude-haiku-4-5-20251001`): bullet rewriting,
+  summary generation, resignation letters, resume import extraction, and
+  review analysis - all well-defined, mostly mechanical tasks (rewrite
+  this, extract that, classify this) that don't need the expensive model,
+  and are also the highest-volume calls, which is where routing saves the
+  most in aggregate.
+
+Real impact is bigger on Pro usage than Free: the free-tier lifetime cap
+(5 calls) already bounded free-tier cost to a small, fixed amount, so
+routing barely moves that number further. On an active Pro user's total
+AI cost, routing saves roughly 30% - the Agent and cover letter (the two
+priciest, least-routable features) intentionally stay on the expensive
+model, which is why the aggregate saving is more moderate than the ~90%
+saving on the routed features specifically.
+
+**Honest verification note**: confirmed the routed endpoints execute
+correctly end-to-end with the new model (no code-level errors), but this
+sandbox's placeholder Anthropic API key means the actual per-call cost
+reduction couldn't be measured directly - Anthropic's real usage dashboard
+(console.anthropic.com) will show the real before/after once this is live.
+
 ## Going to production
 
 1. **Database**: already Postgres — for production, point `DATABASE_URL` at a

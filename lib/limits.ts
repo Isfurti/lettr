@@ -1,3 +1,5 @@
+import { isTemplateFree } from "./templates";
+
 export type Plan = "free" | "pro";
 
 // Mirrors Rezi's actual published Free vs Pro matrix (rezi.ai/pricing).
@@ -11,7 +13,6 @@ export const PLAN_LIMITS = {
     resignationLetterBuilder: false,
     docxExport: false,
     googleDriveExport: false,
-    fullRealtimeScore: false, // "Rezi Score" - limited on free
   },
   pro: {
     maxResumes: Infinity,
@@ -22,7 +23,6 @@ export const PLAN_LIMITS = {
     resignationLetterBuilder: true,
     docxExport: true,
     googleDriveExport: true,
-    fullRealtimeScore: true,
   },
 } as const;
 
@@ -58,6 +58,15 @@ export function canUseAiWritingAssist(plan: Plan, currentCount: number): LimitCh
 export function canUseAiAgent(plan: Plan): LimitCheck {
   if (PLAN_LIMITS[plan].aiAgent) return { allowed: true };
   return { allowed: false, reason: "The AI Resume Agent is a Pro feature. Upgrade to unlock it." };
+}
+
+export function canUseTemplate(plan: Plan, templateId: string): LimitCheck {
+  if (plan === "pro") return { allowed: true };
+  if (isTemplateFree(templateId)) return { allowed: true };
+  return {
+    allowed: false,
+    reason: "This template is a Pro feature. Upgrade to unlock all 10 templates, or switch to Classic or Modern.",
+  };
 }
 
 export function canUseCoverLetterBuilder(plan: Plan): LimitCheck {

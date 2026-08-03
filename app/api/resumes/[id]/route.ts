@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getResume, upsertResume, deleteResume } from "@/lib/db";
+import { getResume, upsertResume, deleteResume, getUserById } from "@/lib/db";
+import { canUseTemplate, type Plan } from "@/lib/limits";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -24,11 +25,20 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const body = await req.json().catch(() => ({}));
+  const template = body.template ?? existing.template;
+
+  const user = await getUserById(userId);
+  const plan = (user?.plan ?? "free") as Plan;
+  const templateCheck = canUseTemplate(plan, template);
+  if (!templateCheck.allowed) {
+    return NextResponse.json({ error: templateCheck.reason, upgradeRequired: true }, { status: 402 });
+  }
+
   await upsertResume({
     id,
     userId,
     title: body.title ?? existing.title,
-    template: body.template ?? existing.template,
+    template,
     data: JSON.stringify(body.data ?? JSON.parse(existing.data)),
   });
 

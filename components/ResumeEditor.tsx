@@ -12,7 +12,7 @@ import { ScoreRing } from "@/components/ScoreRing";
 import { DEFAULT_ACCENT_COLOR, getFontPair, darkenHex, softenHex, ACCENT_COLORS, FONT_PAIRS } from "@/lib/customization";
 import { PhotoUpload } from "@/components/PhotoUpload";
 
-import { TEMPLATE_IDS } from "@/lib/templates";
+import { TEMPLATE_IDS, isTemplateFree } from "@/lib/templates";
 const TEMPLATES: readonly string[] = TEMPLATE_IDS;
 
 export function ResumeEditor({
@@ -38,33 +38,42 @@ export function ResumeEditor({
   const [title, setTitle] = useState(initialTitle);
   const [template, setTemplate] = useState(initialTemplate);
   const [data, setData] = useState<ResumeData>(initialData);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [tab, setTab] = useState<"edit" | "score" | "match" | "agent" | "cover-letter" | "resignation-letter">("edit");
-  const [pdfUpgradeRequired, setPdfUpgradeRequired] = useState(false);
-  const [docxUpgradeRequired, setDocxUpgradeRequired] = useState(false);
+  const [pdfUpgradeRequired, setPdfUpgradeRequired] = useState<string | null>(null);
+  const [docxUpgradeRequired, setDocxUpgradeRequired] = useState<string | null>(null);
   const [driveStatus, setDriveStatus] = useState<"idle" | "loading" | "upgrade" | "connect">("idle");
   const [driveLink, setDriveLink] = useState<string | null>(null);
 
   async function save() {
     setSaveStatus("saving");
-    await fetch(`/api/resumes/${resumeId}`, {
+    setSaveError(null);
+    const res = await fetch(`/api/resumes/${resumeId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, template, data }),
     });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setSaveStatus("error");
+      setSaveError(body.error ?? "Couldn't save. Try again.");
+      return;
+    }
     setSaveStatus("saved");
     setTimeout(() => setSaveStatus("idle"), 1500);
   }
 
   async function exportPdf() {
-    setPdfUpgradeRequired(false);
+    setPdfUpgradeRequired(null);
     const res = await fetch("/api/resumes/pdf", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ resume: data, template }),
     });
     if (res.status === 402) {
-      setPdfUpgradeRequired(true);
+      const body = await res.json().catch(() => ({}));
+      setPdfUpgradeRequired(body.error ?? "Upgrade to Pro to export this.");
       return;
     }
     if (!res.ok) return;
@@ -78,14 +87,15 @@ export function ResumeEditor({
   }
 
   async function exportDocx() {
-    setDocxUpgradeRequired(false);
+    setDocxUpgradeRequired(null);
     const res = await fetch("/api/resumes/docx", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ resume: data }),
     });
     if (res.status === 402) {
-      setDocxUpgradeRequired(true);
+      const body = await res.json().catch(() => ({}));
+      setDocxUpgradeRequired(body.error ?? "DOCX export is a Pro feature.");
       return;
     }
     if (!res.ok) return;
@@ -166,11 +176,12 @@ export function ResumeEditor({
             {TEMPLATES.map((t) => (
               <option key={t} value={t}>
                 {t[0].toUpperCase() + t.slice(1)}
+                {plan === "free" && !isTemplateFree(t) ? " (Pro)" : ""}
               </option>
             ))}
           </select>
           <span className="text-xs text-ink-soft font-mono w-14 text-right">
-            {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "Saved" : ""}
+            {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "Saved" : saveStatus === "error" ? "Failed" : ""}
           </span>
           <button
             onClick={save}
@@ -179,8 +190,8 @@ export function ResumeEditor({
             Save
           </button>
           {pdfUpgradeRequired ? (
-            <Link href="/pricing" className="text-sm text-seal hover:underline">
-              Upgrade for more PDFs →
+            <Link href="/pricing" className="text-sm text-seal hover:underline max-w-[180px] truncate" title={pdfUpgradeRequired}>
+              {pdfUpgradeRequired} →
             </Link>
           ) : (
             <button
@@ -191,8 +202,8 @@ export function ResumeEditor({
             </button>
           )}
           {docxUpgradeRequired ? (
-            <Link href="/pricing" className="text-sm text-seal hover:underline">
-              DOCX is Pro →
+            <Link href="/pricing" className="text-sm text-seal hover:underline max-w-[180px] truncate" title={docxUpgradeRequired}>
+              {docxUpgradeRequired} →
             </Link>
           ) : (
             <button
@@ -236,6 +247,15 @@ export function ResumeEditor({
           </button>
         </div>
       </div>
+
+      {saveError && (
+        <div className="bg-red-50 text-red-700 text-sm px-6 py-2 flex items-center justify-between">
+          <span>{saveError}</span>
+          {saveError.toLowerCase().includes("pro") && (
+            <Link href="/pricing" className="underline font-medium shrink-0 ml-3">Upgrade →</Link>
+          )}
+        </div>
+      )}
 
       <div className="border-b border-rule px-6 flex gap-1">
         {[

@@ -31,3 +31,17 @@ export const TEMPLATE_IDS = [
 ] as const;
 
 export type TemplateId = (typeof TEMPLATE_IDS)[number];
+
+/**
+ * Free plan gets 2 templates - one conservative/traditional, one visually
+ * distinct - rather than a single forced option. The other 8 are Pro-only.
+ * This list is checked server-side at every point a template actually gets
+ * used (create, save, PDF export, DOCX export, Drive export) - not just
+ * the gallery UI - since export endpoints take the template as a raw
+ * request parameter and don't re-derive it from what's saved in the DB.
+ */
+export const FREE_TEMPLATE_IDS: readonly TemplateId[] = ["classic", "modern"];
+
+export function isTemplateFree(id: string): boolean {
+  return (FREE_TEMPLATE_IDS as readonly string[]).includes(id);
+}

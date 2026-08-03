@@ -22,6 +22,7 @@ export const metadata: Metadata = {
 
 const COMPARISON: { feature: string; free: string | boolean; pro: string | boolean }[] = [
   { feature: "Resumes", free: "1", pro: "Unlimited" },
+  { feature: "Templates", free: "2 (Classic, Modern)", pro: "All 10" },
   { feature: "PDF downloads", free: "3", pro: "Unlimited" },
   { feature: "AI bullet rewriting", free: "5 lifetime", pro: "Unlimited" },
   { feature: "AI resume summary writer", free: "5 lifetime", pro: "Unlimited" },
@@ -49,7 +50,7 @@ const FAQS = [
   },
   {
     q: "Is there a free plan?",
-    a: "Yes — 1 resume, 3 PDF downloads, and 5 free AI bullet/summary rewrites, no credit card required.",
+    a: "Yes — 1 resume, 2 templates, 3 PDF downloads, and 5 free AI bullet/summary rewrites, no credit card required.",
   },
 ];
 
@@ -100,6 +101,7 @@ export default async function PricingPage() {
             </div>
             <ul className="space-y-3 mb-10 flex-1 text-sm">
               <FeatureLine included>1 resume</FeatureLine>
+              <FeatureLine included>2 templates (Classic, Modern)</FeatureLine>
               <FeatureLine included>3 PDF downloads</FeatureLine>
               <FeatureLine included>AI bullet &amp; summary writing (5 free)</FeatureLine>
               <FeatureLine>AI Resume Agent</FeatureLine>
@@ -129,6 +131,7 @@ export default async function PricingPage() {
             </div>
             <ul className="space-y-3 mb-10 flex-1 text-sm">
               <FeatureLine included dark>Unlimited resumes</FeatureLine>
+              <FeatureLine included dark>All 10 templates</FeatureLine>
               <FeatureLine included dark>Unlimited PDF downloads</FeatureLine>
               <FeatureLine included dark>Everything in Free</FeatureLine>
               <FeatureLine included dark>Unlimited AI bullet &amp; summary writing</FeatureLine>
