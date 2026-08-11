@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/admin-auth";
-import { getUserById, markEmailVerifiedByAdmin, logAdminAction } from "@/lib/db";
+import { getUserById, markEmailVerified, logAdminAction } from "@/lib/db";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdminApi();
@@ -10,7 +10,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const target = await getUserById(id);
   if (!target) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-  await markEmailVerifiedByAdmin(id);
+  await markEmailVerified(id);
 
   await logAdminAction({
     adminUserId: admin.id,

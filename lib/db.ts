@@ -637,7 +637,7 @@ export async function getReviewStats(): Promise<{ total: number; avgRating: numb
   return { total, avgRating: total === 0 ? 0 : Math.round((ratingSum / total) * 10) / 10, distribution };
 }
 
-export async function markEmailVerifiedByAdmin(userId: string) {
+export async function markEmailVerified(userId: string) {
   await ensureSchema();
   await pool.query(
     "UPDATE users SET email_verified = true, email_verification_token = NULL, email_verification_expiry = NULL WHERE id = $1",

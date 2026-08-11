@@ -195,6 +195,37 @@ nudge, not a gate. If you want verification enforced before certain actions
 (e.g. before Pro checkout), that's a small addition to make, not built in
 by default.
 
+### OAuth accounts self-heal a stuck "unverified" state automatically
+
+Real bug, found via the admin panel: accounts created via Google/LinkedIn
+sign-in were originally defaulting to `email_verified: false`, even though
+completing OAuth login already proves email ownership - there's no
+separate verification step that should even exist for these accounts. If
+`RESEND_API_KEY` was ever unset at the time (or is unset now), an affected
+account has **no way to self-serve clear the banner** - there's no email
+service to send a link to.
+
+This was first patched with a manual admin action ("Mark email verified" on
+a user's detail page in `/admin/users`) - functional, but required an admin
+to notice and click it per affected account.
+
+**`findOrCreateOAuthUser()` in `lib/oauth-user.ts` now self-heals this
+automatically, on every OAuth login, for every affected account - past or
+future, no admin involvement needed.** When an existing user record is
+found during OAuth sign-in and it's still `email_verified: false`, the
+successful OAuth login happening *right now* is treated as proof of email
+ownership and the record is corrected immediately, before the session is
+even created. The manual admin button still exists as a fallback (e.g. for
+a credentials-based account stuck unverified for unrelated reasons), but it
+should rarely be needed now.
+
+**Verified two ways, not just unit tests:** a dedicated test
+(`tests/oauth-user.test.ts`) recreates the exact stuck-account scenario end
+to end, and separately, the real function was called directly against a
+real Postgres database with a before/after check on the raw row -
+`email_verified` confirmed flipping `f → t` at the database level, with the
+pending verification token cleared too.
+
 ## SEO
 
 **Technical/on-page (done):**

@@ -1,7 +1,7 @@
 import { describe, it, expect, afterAll } from "vitest";
 import { randomUUID } from "node:crypto";
 
-import { createUser, logAdminAction, listAdminAuditLog, deleteUserAccount, getUserById, upsertResume, getResume, markEmailVerifiedByAdmin, setEmailVerificationToken } from "@/lib/db";
+import { createUser, logAdminAction, listAdminAuditLog, deleteUserAccount, getUserById, upsertResume, getResume, markEmailVerified, setEmailVerificationToken } from "@/lib/db";
 import pool from "@/lib/db";
 
 afterAll(async () => {
@@ -48,13 +48,13 @@ describe("admin audit log", () => {
   });
 });
 
-describe("markEmailVerifiedByAdmin - fixes accounts stuck in an unverifiable state", () => {
+describe("markEmailVerified - fixes accounts stuck in an unverifiable state", () => {
   it("marks an unverified user as verified", async () => {
     const id = randomUUID();
     await createUser({ id, email: `stuck-${id}@example.com`, passwordHash: "x", emailVerified: false });
     expect((await getUserById(id))?.email_verified).toBe(false);
 
-    await markEmailVerifiedByAdmin(id);
+    await markEmailVerified(id);
     expect((await getUserById(id))?.email_verified).toBe(true);
   });
 
@@ -63,7 +63,7 @@ describe("markEmailVerifiedByAdmin - fixes accounts stuck in an unverifiable sta
     await createUser({ id, email: `stuck2-${id}@example.com`, passwordHash: "x", emailVerified: false });
     await setEmailVerificationToken(id, "some-token", new Date(Date.now() + 60_000));
 
-    await markEmailVerifiedByAdmin(id);
+    await markEmailVerified(id);
 
     const user = await getUserById(id);
     expect(user?.email_verified).toBe(true);

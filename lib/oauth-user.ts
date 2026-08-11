@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { randomUUID, randomBytes } from "node:crypto";
-import { getUserByEmail, createUser, type UserRow } from "./db";
+import { getUserByEmail, createUser, markEmailVerified, type UserRow } from "./db";
 
 /**
  * Called on every OAuth (Google/LinkedIn) sign-in. Our app's own `users`
@@ -18,7 +18,20 @@ import { getUserByEmail, createUser, type UserRow } from "./db";
 export async function findOrCreateOAuthUser(email: string, name?: string | null): Promise<UserRow> {
   const normalizedEmail = email.toLowerCase();
   const existing = await getUserByEmail(normalizedEmail);
-  if (existing) return existing;
+  if (existing) {
+    // Self-healing: a successful OAuth sign-in happening right now is
+    // proof of email ownership, regardless of when this account was
+    // originally created. This catches accounts that got stuck unverified
+    // before the emailVerified:true fix below existed - automatically, on
+    // every login, for every affected user, with no admin action needed.
+    // (Previously this required an admin to manually click "Mark email
+    // verified" per affected user - a reactive patch, not a real fix.)
+    if (!existing.email_verified) {
+      await markEmailVerified(existing.id);
+      return { ...existing, email_verified: true };
+    }
+    return existing;
+  }
 
   const id = randomUUID();
   const unusablePasswordHash = await bcrypt.hash(randomBytes(32).toString("hex"), 12);
