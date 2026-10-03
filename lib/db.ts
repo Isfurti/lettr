@@ -229,6 +229,26 @@ export async function getUserByStripeCustomerId(customerId: string): Promise<Use
   return res.rows[0];
 }
 
+/**
+ * Saves a user's country + pricing tier only if none was saved yet - for
+ * accounts created via Google/LinkedIn (no request headers at signup) or
+ * before regional pricing existed. Never overwrites an existing value, so a
+ * user's price stays stable once set. Returns the updated row, or undefined
+ * if the user already had a country saved.
+ */
+export async function setUserRegionIfMissing(
+  userId: string,
+  countryCode: string,
+  pricingTier: string
+): Promise<UserRow | undefined> {
+  await ensureSchema();
+  const { rows } = await pool.query(
+    "UPDATE users SET country_code = $2, pricing_tier = $3 WHERE id = $1 AND country_code IS NULL RETURNING *",
+    [userId, countryCode, pricingTier]
+  );
+  return rows[0];
+}
+
 export async function setStripeCustomerId(userId: string, customerId: string) {
   await ensureSchema();
   await pool.query("UPDATE users SET stripe_customer_id = $1 WHERE id = $2", [customerId, userId]);
@@ -331,50 +351,96 @@ export async function updateSupportMessageStatus(id: string, status: "open" | "r
 
 export type AdminOverview = {
   totalUsers: number;
+  /** All Pro accounts: paid through Stripe + given Pro by an admin. */
   proUsers: number;
+  /** Pro with a real Stripe subscription - the only ones that bring in money. */
+  paidProUsers: number;
+  /** Pro given by an admin (no Stripe subscription) - free to them, no revenue. */
+  compedProUsers: number;
   freeUsers: number;
   totalResumes: number;
   openSupportCount: number;
   signupsByWeek: { week: string; count: number }[];
+  signupsLast30Days: number;
+  activeUsers7Days: number;
+  activeUsers30Days: number;
+  pdfDownloadsTotal: number;
+  aiRewritesTotal: number;
 };
 
-export async function getAdminOverview(): Promise<AdminOverview> {
+/**
+ * Platform-wide numbers for the admin portal. Pass the admin's own email to
+ * leave that account out, so the owner's testing doesn't inflate user,
+ * Pro or conversion figures.
+ */
+export async function getAdminOverview(excludeEmail?: string | null): Promise<AdminOverview> {
   await ensureSchema();
+  const ex = excludeEmail?.trim().toLowerCase() || null;
+  // Every query filters users through this, so the admin account is
+  // excluded consistently (or nothing is, when ex is null).
+  const userFilter = "($1::text IS NULL OR lower(u.email) <> $1)";
 
-  const [userCounts, resumeCount, supportCount, weeklySignups] = await Promise.all([
+  const [userCounts, resumeCount, supportCount, weeklySignups, activity] = await Promise.all([
     pool.query(
-      "SELECT COUNT(*) FILTER (WHERE plan = 'pro')::int AS pro, COUNT(*) FILTER (WHERE plan = 'free')::int AS free FROM users"
+      `SELECT COUNT(*)::int AS total,
+              COUNT(*) FILTER (WHERE plan = 'pro')::int AS pro,
+              COUNT(*) FILTER (WHERE plan = 'pro' AND stripe_subscription_id IS NOT NULL)::int AS paid,
+              COUNT(*) FILTER (WHERE plan = 'free')::int AS free,
+              COUNT(*) FILTER (WHERE created_at > now() - interval '30 days')::int AS signups30,
+              COALESCE(SUM(pdf_download_count), 0)::int AS pdfs,
+              COALESCE(SUM(ai_writing_assist_count), 0)::int AS ai
+       FROM users u WHERE ${userFilter}`,
+      [ex]
     ),
-    pool.query("SELECT COUNT(*)::int AS count FROM resumes"),
+    pool.query(`SELECT COUNT(*)::int AS count FROM resumes r JOIN users u ON u.id = r.user_id WHERE ${userFilter}`, [ex]),
     pool.query("SELECT COUNT(*)::int AS count FROM support_messages WHERE status = 'open'"),
-    pool.query(`
-      SELECT to_char(date_trunc('week', created_at), 'YYYY-MM-DD') AS week, COUNT(*)::int AS count
-      FROM users
-      WHERE created_at > now() - interval '8 weeks'
-      GROUP BY 1
-      ORDER BY 1 ASC
-    `),
+    pool.query(
+      `SELECT to_char(date_trunc('week', created_at), 'YYYY-MM-DD') AS week, COUNT(*)::int AS count
+       FROM users u
+       WHERE created_at > now() - interval '12 weeks' AND ${userFilter}
+       GROUP BY 1
+       ORDER BY 1 ASC`,
+      [ex]
+    ),
+    pool.query(
+      `SELECT COUNT(DISTINCT a.user_id) FILTER (WHERE a.created_at > now() - interval '7 days')::int AS active7,
+              COUNT(DISTINCT a.user_id) FILTER (WHERE a.created_at > now() - interval '30 days')::int AS active30
+       FROM activity_log a JOIN users u ON u.id = a.user_id WHERE ${userFilter}`,
+      [ex]
+    ),
   ]);
 
-  const pro = userCounts.rows[0].pro as number;
-  const free = userCounts.rows[0].free as number;
-
+  const c = userCounts.rows[0];
   return {
-    totalUsers: pro + free,
-    proUsers: pro,
-    freeUsers: free,
+    totalUsers: c.total,
+    proUsers: c.pro,
+    paidProUsers: c.paid,
+    compedProUsers: c.pro - c.paid,
+    freeUsers: c.free,
     totalResumes: resumeCount.rows[0].count,
     openSupportCount: supportCount.rows[0].count,
     signupsByWeek: weeklySignups.rows,
+    signupsLast30Days: c.signups30,
+    activeUsers7Days: activity.rows[0].active7,
+    activeUsers30Days: activity.rows[0].active30,
+    pdfDownloadsTotal: c.pdfs,
+    aiRewritesTotal: c.ai,
   };
 }
 
-export type RecentUserRow = { id: string; email: string; name: string | null; plan: string; created_at: string };
+export type RecentUserRow = {
+  id: string;
+  email: string;
+  name: string | null;
+  plan: string;
+  created_at: string;
+  stripe_subscription_id: string | null;
+};
 
 export async function listRecentUsers(limit = 6): Promise<RecentUserRow[]> {
   await ensureSchema();
   const res = await pool.query(
-    "SELECT id, email, name, plan, created_at FROM users ORDER BY created_at DESC LIMIT $1",
+    "SELECT id, email, name, plan, created_at, stripe_subscription_id FROM users ORDER BY created_at DESC LIMIT $1",
     [limit]
   );
   return res.rows;
@@ -408,17 +474,23 @@ export type AdminUserRow = {
   resume_count: number;
   country_code: string | null;
   pricing_tier: string | null;
+  stripe_subscription_id: string | null;
+  stripe_customer_id: string | null;
+  pdf_download_count: number;
+  ai_writing_assist_count: number;
+  /** Most recent recorded activity (resume created, export, AI use...), if any. */
+  last_active: string | null;
 };
 
 export async function listAllUsers(search?: string): Promise<AdminUserRow[]> {
   await ensureSchema();
   const res = await pool.query(
     `SELECT u.id, u.email, u.name, u.plan, u.created_at, u.country_code, u.pricing_tier,
-            COUNT(r.id)::int AS resume_count
+            u.stripe_subscription_id, u.stripe_customer_id, u.pdf_download_count, u.ai_writing_assist_count,
+            (SELECT COUNT(*)::int FROM resumes r WHERE r.user_id = u.id) AS resume_count,
+            (SELECT MAX(a.created_at) FROM activity_log a WHERE a.user_id = u.id) AS last_active
      FROM users u
-     LEFT JOIN resumes r ON r.user_id = u.id
      WHERE ($1::text IS NULL OR u.email ILIKE '%' || $1 || '%' OR u.name ILIKE '%' || $1 || '%')
-     GROUP BY u.id
      ORDER BY u.created_at DESC`,
     [search || null]
   );
@@ -611,6 +683,13 @@ export async function getFeaturedReviews(limit = 6): Promise<ReviewWithUser[]> {
 }
 
 export type ReviewWithUser = ReviewRow & { user_email: string; user_name: string | null };
+
+/** A user's own past feedback, newest first - shown back to them on the Feedback page. */
+export async function listReviewsForUser(userId: string, limit = 10): Promise<ReviewRow[]> {
+  await ensureSchema();
+  const res = await pool.query("SELECT * FROM reviews WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2", [userId, limit]);
+  return res.rows;
+}
 
 export async function listAllReviews(limit = 100): Promise<ReviewWithUser[]> {
   await ensureSchema();

@@ -1,6 +1,11 @@
 import { requireAdmin } from "@/lib/admin-auth";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import pool, { listAdminAuditLog } from "@/lib/db";
+import type { Metadata } from "next";
+import { getIntegrations } from "@/lib/integrations";
+import { formatDateTime } from "@/lib/format-date";
+
+export const metadata: Metadata = { title: "System | Lettr Admin" };
 
 async function checkDb(): Promise<{ ok: boolean; error?: string }> {
   try {
@@ -15,19 +20,12 @@ export default async function AdminSystemPage() {
   await requireAdmin();
   const [db, auditLog] = await Promise.all([checkDb(), listAdminAuditLog(25)]);
 
-  const integrations = [
-    { name: "Anthropic (AI features)", configured: Boolean(process.env.ANTHROPIC_API_KEY) },
-    { name: "Stripe (billing)", configured: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRO_PRICE_ID) },
-    { name: "Google (Sign in + Drive export)", configured: Boolean(process.env.GOOGLE_CLIENT_ID) },
-    { name: "LinkedIn (Sign in)", configured: Boolean(process.env.LINKEDIN_CLIENT_ID) },
-    { name: "Sentry (error tracking)", configured: Boolean(process.env.SENTRY_DSN) },
-    { name: "Resend (support email alerts)", configured: Boolean(process.env.RESEND_API_KEY) },
-  ];
+  const integrations = getIntegrations();
 
   return (
-    <div className="flex-1 flex admin-shell">
+    <div className="flex-1 flex flex-col md:flex-row admin-shell">
       <AdminSidebar />
-      <main className="flex-1 px-10 py-10 max-w-3xl">
+      <main className="flex-1 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-3xl">
         <h1 className="font-display font-semibold text-3xl mb-1">System</h1>
         <p className="text-ink-soft mb-8">Live configuration status — nothing here is cached or estimated.</p>
 
@@ -36,7 +34,7 @@ export default async function AdminSystemPage() {
             <p className="font-medium">Database</p>
             <p className="text-xs text-ink-soft">{db.ok ? "Connected" : db.error}</p>
           </div>
-          <span className={`text-xs font-mono uppercase px-2.5 py-1 rounded-sm ${db.ok ? "bg-admin-accent-soft text-admin-accent-deep" : "bg-red-50 text-red-700"}`}>
+          <span className={`text-xs font-mono uppercase px-2.5 py-1 rounded-sm ${db.ok ? "bg-green-50 text-green-800" : "bg-red-50 text-red-700"}`}>
             {db.ok ? "Operational" : "Error"}
           </span>
         </div>
@@ -46,10 +44,21 @@ export default async function AdminSystemPage() {
             <p className="text-xs uppercase tracking-wide text-ink-soft font-medium">Integrations</p>
           </div>
           {integrations.map((i) => (
-            <div key={i.name} className="flex items-center justify-between px-6 py-3 border-b border-rule last:border-b-0">
-              <p className="text-sm">{i.name}</p>
-              <span className={`text-xs font-mono uppercase px-2 py-0.5 rounded-sm ${i.configured ? "bg-admin-accent-soft text-admin-accent-deep" : "bg-rule/40 text-ink-soft"}`}>
-                {i.configured ? "Configured" : "Not set"}
+            <div key={i.name} className="flex items-start justify-between gap-3 px-6 py-3 border-b border-rule last:border-b-0">
+              <div className="min-w-0">
+                <p className="text-sm">{i.name}</p>
+                {"note" in i && i.note && <p className="text-xs text-red-700 mt-0.5 break-words">{i.note}</p>}
+              </div>
+              <span
+                className={`text-xs font-mono uppercase px-2 py-0.5 rounded-sm shrink-0 ${
+                  i.configured
+                    ? "bg-green-50 text-green-800"
+                    : i.critical
+                    ? "bg-red-50 text-red-700"
+                    : "bg-amber-50 text-amber-800"
+                }`}
+              >
+                {i.configured ? "Configured" : i.critical ? "Missing — needed" : "Not set"}
               </span>
             </div>
           ))}
@@ -73,9 +82,9 @@ export default async function AdminSystemPage() {
             <p className="text-sm text-ink-soft px-6 py-6">No admin actions recorded yet.</p>
           ) : (
             auditLog.map((a) => (
-              <div key={a.id} className="flex items-center justify-between px-6 py-3 border-b border-rule last:border-b-0 text-sm">
-                <span>{a.action.replace(/_/g, " ")}{a.detail ? ` — ${a.detail}` : ""}</span>
-                <span className="text-xs text-ink-soft font-mono shrink-0 ml-3">{new Date(a.created_at).toLocaleString()}</span>
+              <div key={a.id} className="flex items-start justify-between gap-3 px-4 sm:px-6 py-3 border-b border-rule last:border-b-0 text-sm">
+                <span className="min-w-0 break-words">{a.action.replace(/_/g, " ")}{a.detail ? ` — ${a.detail}` : ""}</span>
+                <span className="text-xs text-ink-soft font-mono shrink-0 ml-3">{formatDateTime(a.created_at)}</span>
               </div>
             ))
           )}

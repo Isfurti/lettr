@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BillingPortalButton } from "@/components/BillingPortalButton";
 import { signOut } from "next-auth/react";
 import {
   LayoutGrid,
@@ -14,23 +15,33 @@ import {
   ShieldAlert,
 } from "lucide-react";
 
-const NAV_ITEMS = [
+const BASE_NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
   { href: "/templates", label: "Templates", icon: LayoutTemplate },
   { href: "/dashboard/feedback", label: "Feedback", icon: MessageSquare },
-  { href: "/pricing", label: "Subscription", icon: Mail },
 ];
 
 export function AppSidebar({
   title = "Lettr",
   eyebrow,
   isAdmin = false,
+  plan = "free",
+  isPaidPro = false,
 }: {
   title?: string;
   eyebrow?: string;
   isAdmin?: boolean;
+  plan?: string;
+  /** Pro with a real Stripe subscription - gets "Billing" (manage/cancel) instead of the pricing page. */
+  isPaidPro?: boolean;
 }) {
   const pathname = usePathname();
+  // Free users are sent to upgrade; paying Pro users manage billing in
+  // Stripe (see BillingPortalButton below); Pro added by the team has
+  // nothing to manage, so it just shows the plans.
+  const NAV_ITEMS = isPaidPro
+    ? BASE_NAV_ITEMS
+    : [...BASE_NAV_ITEMS, { href: "/pricing", label: plan === "pro" ? "Your plan" : "Upgrade to Pro", icon: Mail }];
 
   return (
     <>
@@ -55,6 +66,11 @@ export function AppSidebar({
             </Link>
           );
         })}
+        {isPaidPro && (
+          <span className="px-3 py-1.5 shrink-0">
+            <BillingPortalButton label="Billing" className="text-xs text-white/60" />
+          </span>
+        )}
         {isAdmin && (
           <Link href="/admin" className="px-3 py-1.5 rounded-sm text-xs shrink-0 text-white/60">Admin</Link>
         )}
@@ -90,6 +106,12 @@ export function AppSidebar({
             </Link>
           );
         })}
+        {isPaidPro && (
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm text-white/60 hover:text-white hover:bg-white/5">
+            <Mail className="w-4 h-4 shrink-0" strokeWidth={2} />
+            <BillingPortalButton label="Billing" className="text-sm text-inherit hover:text-white" />
+          </div>
+        )}
       </nav>
 
       <div className="px-3 pb-6 space-y-0.5">

@@ -57,3 +57,17 @@ export function getDisplayPriceForCountry(countryCode: string | null | undefined
 export function getCountryFromHeaders(headers: Headers): string | null {
   return headers.get("x-vercel-ip-country");
 }
+
+/** What a given saved user should see/pay: their stored tier, shown in INR for India. */
+export function getDisplayPriceForUser(user: { country_code: string | null; pricing_tier: string | null }): {
+  tier: PricingTier;
+  display: string;
+} {
+  const saved = user.pricing_tier;
+  const tier: PricingTier =
+    saved && Object.prototype.hasOwnProperty.call(PRICING_TIERS, saved)
+      ? (saved as PricingTier)
+      : getTierForCountry(user.country_code);
+  if (user.country_code?.toUpperCase() === "IN") return { tier, display: INDIA_DISPLAY_PRICE };
+  return { tier, display: PRICING_TIERS[tier].displayPrice };
+}

@@ -7,7 +7,8 @@ import { PublicNav } from "@/components/PublicNav";
 import { UpgradeButton } from "@/components/UpgradeButton";
 import { auth } from "@/lib/auth";
 import { getUserById } from "@/lib/db";
-import { getCountryFromHeaders, getDisplayPriceForCountry, getTierForCountry, PRICING_TIERS } from "@/lib/pricing-region";
+import { getCountryFromHeaders, getDisplayPriceForCountry, getDisplayPriceForUser } from "@/lib/pricing-region";
+import { ensureUserRegion } from "@/lib/user-region";
 
 export const metadata: Metadata = {
   title: "Pricing | Lettr — Free AI Resume Builder",
@@ -54,27 +55,23 @@ const FAQS = [
 ];
 
 export default async function PricingPage() {
-  // Logged-in users see their STORED tier (captured at signup) - that's
-  // what checkout will actually charge them, so showing anything else
-  // here would be misleading. Logged-out visitors see a live preview
-  // based on where they're browsing from right now.
+  // Everyone sees the price for their region. Signed-in users see their
+  // SAVED tier (what checkout will actually charge); if they don't have one
+  // yet (Google/LinkedIn signups, older accounts) it's detected and saved
+  // now. Logged-out visitors see a live preview for where they're browsing from.
   const session = await auth();
-  let regionalPrice = getDisplayPriceForCountry(null); // defaults to full/$19
+  const headersList = await headers();
+  let regionalPrice = getDisplayPriceForCountry(getCountryFromHeaders(headersList));
 
   if (session?.user) {
     const userId = (session.user as { id: string }).id;
     const user = await getUserById(userId);
-    if (user?.pricing_tier) {
-      const tier = user.pricing_tier as ReturnType<typeof getTierForCountry>;
-      regionalPrice =
-        user.country_code?.toUpperCase() === "IN"
-          ? { tier, display: "₹399" }
-          : { tier, display: PRICING_TIERS[tier].displayPrice };
+    if (user) {
+      const withRegion = await ensureUserRegion(user, headersList);
+      if (withRegion.country_code || withRegion.pricing_tier) {
+        regionalPrice = getDisplayPriceForUser(withRegion);
+      }
     }
-  } else {
-    const headersList = await headers();
-    const country = getCountryFromHeaders(headersList);
-    regionalPrice = getDisplayPriceForCountry(country);
   }
 
   // Show Free in the same currency as Pro, so the page never mixes "$0" with "₹399".

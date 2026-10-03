@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { ensureUserRegion } from "@/lib/user-region";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-auth";
@@ -7,6 +9,7 @@ import { listResumesForUser, getUserById, listRecentActivity } from "@/lib/db";
 import { PLAN_LIMITS, type Plan } from "@/lib/limits";
 import { scoreResumeQuality } from "@/lib/resume-score";
 import { formatActivityLabel, timeAgo } from "@/lib/activity-format";
+import { displayTitle } from "@/lib/resume-title";
 import type { ResumeData } from "@/lib/types";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ScoreRing } from "@/components/ScoreRing";
@@ -29,27 +32,37 @@ export default async function DashboardPage({
   if (!session?.user) redirect("/login");
 
   const userId = (session.user as { id: string }).id;
-  const [resumeRows, user, recentActivity] = await Promise.all([
+  const [resumeRows, foundUser, recentActivity, headersList] = await Promise.all([
     listResumesForUser(userId),
     getUserById(userId),
     listRecentActivity(userId, 5),
+    headers(),
   ]);
+  // Fill in the user's region if it was never saved, so their pricing (and
+  // the admin Users/Subscriptions pages) are right from their next visit.
+  const user = foundUser ? await ensureUserRegion(foundUser, headersList) : foundUser;
   const plan = (user?.plan ?? "free") as Plan;
   const resumeLimit = PLAN_LIMITS[plan].maxResumes;
   const atResumeLimit = resumeRows.length >= resumeLimit;
   const { drive_connected, drive_error, import: wantsImport } = await searchParams;
 
   const resumes = resumeRows.map((r) => ({ ...r, data: JSON.parse(r.data) as ResumeData }));
-  const mostRecent = resumes[0];
-  const score = mostRecent ? scoreResumeQuality(mostRecent.data) : null;
+  const scored = resumes.map((r) => ({ ...r, quality: scoreResumeQuality(r.data) }));
+  // Spotlight the most recently edited resume that actually has content -
+  // a brand-new blank one scoring 0 tells the user nothing.
+  const mostRecent = scored.find((r) => r.quality.overall > 0) ?? scored[0];
+  const score = mostRecent ? mostRecent.quality : null;
+  const isPaidPro = plan === "pro" && Boolean(user?.stripe_subscription_id);
 
-  const displayName = session.user.name || session.user.email?.split("@")[0] || "there";
+  const rawName = session.user.name || session.user.email?.split("@")[0] || "there";
+  // Names typed in lowercase ("sagar agarwal") read better capitalised.
+  const displayName = rawName === rawName.toLowerCase() ? rawName.replace(/\b\p{L}/gu, (c) => c.toUpperCase()) : rawName;
   const isAdmin = isAdminEmail(session.user.email);
   const initial = displayName[0]?.toUpperCase() ?? "?";
 
   return (
     <div className="flex-1 flex flex-col md:flex-row app-shell">
-      <AppSidebar eyebrow="Resume workspace" isAdmin={isAdmin} />
+      <AppSidebar eyebrow="Resume workspace" isAdmin={isAdmin} plan={plan} isPaidPro={isPaidPro} />
 
       <main className="flex-1 px-4 sm:px-10 py-6 sm:py-10 max-w-6xl w-full">
         {user && !user.email_verified && <VerifyEmailBanner />}
@@ -92,7 +105,7 @@ export default async function DashboardPage({
                 : `You have ${resumes.length} resume${resumes.length === 1 ? "" : "s"} in your workspace.`}
             </p>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
             {!atResumeLimit ? (
               <>
                 <ImportResumeButton />
@@ -103,7 +116,10 @@ export default async function DashboardPage({
                 Upgrade for more
               </Link>
             )}
-            <div className="w-9 h-9 rounded-full bg-ink text-white text-sm font-medium flex items-center justify-center">
+            <div
+              title={session.user.email ?? undefined}
+              className="hidden sm:flex w-9 h-9 rounded-full bg-ink text-white text-sm font-medium items-center justify-center"
+            >
               {initial}
             </div>
           </div>
@@ -115,7 +131,7 @@ export default async function DashboardPage({
             {score && mostRecent ? (
               <>
                 <h2 className="font-display font-semibold text-xl mb-3">
-                  Your &quot;{mostRecent.title}&quot; resume
+                  {displayTitle(mostRecent)}
                 </h2>
                 <div className="flex items-center gap-6">
                   <ScoreRing value={score.overall} size={96} strokeWidth={7} />
@@ -140,10 +156,10 @@ export default async function DashboardPage({
                   </div>
                 </div>
                 <Link
-                  href={`/builder/${mostRecent.id}`}
+                  href={`/builder/${mostRecent.id}?tab=score`}
                   className="inline-block mt-4 text-sm text-seal font-medium hover:underline"
                 >
-                  Open full breakdown →
+                  {plan === "pro" ? "Open full breakdown →" : "See your next best fix →"}
                 </Link>
               </>
             ) : (
@@ -160,12 +176,14 @@ export default async function DashboardPage({
                   Contact support →
                 </Link>
                 {mostRecent && (
-                  <Link href={`/builder/${mostRecent.id}`} className="text-sm py-1 hover:text-seal">
+                  <Link href={`/builder/${mostRecent.id}?tab=cover-letter`} className="text-sm py-1 hover:text-seal">
                     Write a cover letter →
                   </Link>
                 )}
-                {plan === "pro" ? (
+                {isPaidPro ? (
                   <BillingPortalButton />
+                ) : plan === "pro" ? (
+                  <span className="text-sm py-1 text-ink-soft">Pro (added by the Lettr team)</span>
                 ) : (
                   <Link href="/pricing" className="text-sm py-1 text-seal font-medium">
                     Upgrade to Pro →
@@ -201,12 +219,13 @@ export default async function DashboardPage({
         </div>
 
         <ResumeSearch
-          resumes={resumes.map((r) => ({
+          resumes={scored.map((r) => ({
             id: r.id,
             title: r.title,
             template: r.template,
             updated_at: r.updated_at,
-            score: scoreResumeQuality(r.data).overall,
+            score: r.quality.overall,
+            data: r.data,
           }))}
           atResumeLimit={atResumeLimit}
         />

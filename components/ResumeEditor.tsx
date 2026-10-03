@@ -24,6 +24,7 @@ export function ResumeEditor({
   googleDriveConnected,
   userInitial,
   aiWritingAssistsUsed,
+  initialTab = "edit",
 }: {
   resumeId: string;
   initialTitle: string;
@@ -33,6 +34,7 @@ export function ResumeEditor({
   googleDriveConnected: boolean;
   userInitial: string;
   aiWritingAssistsUsed?: number;
+  initialTab?: "edit" | "score" | "match" | "agent" | "cover-letter" | "resignation-letter";
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(initialTitle);
@@ -40,7 +42,7 @@ export function ResumeEditor({
   const [data, setData] = useState<ResumeData>(initialData);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"edit" | "score" | "match" | "agent" | "cover-letter" | "resignation-letter">("edit");
+  const [tab, setTab] = useState<"edit" | "score" | "match" | "agent" | "cover-letter" | "resignation-letter">(initialTab);
   const [pdfUpgradeRequired, setPdfUpgradeRequired] = useState<string | null>(null);
   const [docxUpgradeRequired, setDocxUpgradeRequired] = useState<string | null>(null);
   const [driveStatus, setDriveStatus] = useState<"idle" | "loading" | "upgrade" | "connect">("idle");

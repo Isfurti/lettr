@@ -1,102 +1,136 @@
-import { requireAdmin } from "@/lib/admin-auth";
-import { listAllUsers } from "@/lib/db";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { requireAdmin, isAdminEmail } from "@/lib/admin-auth";
+import { listAllUsers, type AdminUserRow } from "@/lib/db";
+import { PRICING_TIERS, getDisplayPriceForUser, type PricingTier } from "@/lib/pricing-region";
+import { getStripeStatus } from "@/lib/integrations";
+import { formatDate } from "@/lib/format-date";
 import { AdminSidebar } from "@/components/AdminSidebar";
-import { PRICING_TIERS, type PricingTier } from "@/lib/pricing-region";
+import { AdminStatCard, PaymentsWarning } from "@/components/AdminWidgets";
+
+export const metadata: Metadata = { title: "Subscriptions | Lettr Admin" };
 
 export default async function AdminSubscriptionsPage() {
   await requireAdmin();
   const users = await listAllUsers();
-  const proUsers = users.filter((u) => u.plan === "pro");
+  const stripe = getStripeStatus();
 
-  // Each subscriber's real tier-adjusted price, not a flat assumption -
-  // this used to hardcode $19 × count, which became wrong the moment
-  // regional pricing existed.
-  function usdForUser(u: (typeof proUsers)[number]): number {
-    const tier = (u.pricing_tier as PricingTier) || "full";
-    return PRICING_TIERS[tier]?.usd ?? PRICING_TIERS.full.usd;
-  }
-  const mrr = proUsers.reduce((sum, u) => sum + usdForUser(u), 0);
+  // Only people with a Stripe subscription bring in money. Pro given by an
+  // admin ("comp") is listed separately and never counted in revenue.
+  const paid = users.filter((u) => u.plan === "pro" && u.stripe_subscription_id);
+  const comped = users.filter((u) => u.plan === "pro" && !u.stripe_subscription_id);
 
+  const tierOf = (u: AdminUserRow): PricingTier => getDisplayPriceForUser(u).tier;
+  const mrr = paid.reduce((sum, u) => sum + PRICING_TIERS[tierOf(u)].usd, 0);
   const tierCounts: Record<PricingTier, number> = { full: 0, mid: 0, value: 0 };
-  for (const u of proUsers) {
-    const tier = (u.pricing_tier as PricingTier) || "full";
-    tierCounts[tier] = (tierCounts[tier] ?? 0) + 1;
-  }
+  for (const u of paid) tierCounts[tierOf(u)] += 1;
 
   return (
-    <div className="flex-1 flex admin-shell">
+    <div className="flex-1 flex flex-col md:flex-row admin-shell">
       <AdminSidebar />
-      <main className="flex-1 px-10 py-10 max-w-6xl">
+      <main className="flex-1 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-6xl">
         <h1 className="font-display font-semibold text-3xl mb-1">Subscriptions</h1>
-        <p className="text-ink-soft mb-8">{proUsers.length} active Pro subscriber{proUsers.length === 1 ? "" : "s"}.</p>
+        <p className="text-ink-soft text-sm mb-6">
+          {paid.length} paying subscriber{paid.length === 1 ? "" : "s"} · {comped.length} comped Pro account
+          {comped.length === 1 ? "" : "s"}
+        </p>
 
-        <div className="grid sm:grid-cols-2 gap-4 mb-8">
-          <div className="paper-sheet rounded-sm p-5 border-t-2 border-t-admin-accent">
-            <p className="text-xs uppercase tracking-wide text-ink-soft mb-1">Pro subscribers</p>
-            <p className="font-display font-semibold text-2xl">{proUsers.length}</p>
-            <p className="text-xs text-ink-soft mt-1">
-              {tierCounts.full} standard · {tierCounts.mid} regional (mid) · {tierCounts.value} regional (value)
-            </p>
-          </div>
-          <div className="paper-sheet rounded-sm p-5 border-t-2 border-t-admin-accent">
-            <p className="text-xs uppercase tracking-wide text-ink-soft mb-1">Estimated MRR</p>
-            <p className="font-display font-semibold text-2xl">${mrr}</p>
-            <p className="text-xs text-ink-soft mt-1">
-              Computed per-subscriber from their actual pricing tier (USD-equivalent for India&apos;s INR
-              pricing) — before any Stripe fees, discounts, or churn this month.
-            </p>
-          </div>
+        {!stripe.ready && <PaymentsWarning missing={stripe.missing} />}
+
+        <div className="grid sm:grid-cols-3 gap-4 mb-8">
+          <AdminStatCard
+            label="Paying subscribers"
+            value={String(paid.length)}
+            sub={`${tierCounts.full} standard · ${tierCounts.mid} mid · ${tierCounts.value} value`}
+          />
+          <AdminStatCard
+            label="Monthly revenue (est.)"
+            value={`$${mrr}`}
+            sub="Paying subscribers only, at their regional price, before Stripe fees"
+          />
+          <AdminStatCard label="Comped Pro" value={String(comped.length)} sub="Pro for free — no revenue" />
         </div>
 
-        <div className="paper-sheet rounded-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-ink-soft bg-app-bg">
-                <th className="px-6 py-3 font-medium">Subscriber</th>
-                <th className="px-6 py-3 font-medium">Tier</th>
-                <th className="px-6 py-3 font-medium">Since</th>
-                <th className="px-6 py-3 font-medium">Manage</th>
-              </tr>
-            </thead>
-            <tbody>
-              {proUsers.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-ink-soft">
-                    No Pro subscribers yet.
-                  </td>
-                </tr>
-              )}
-              {proUsers.map((u) => (
-                <tr key={u.id} className="border-t border-rule">
-                  <td className="px-6 py-3">
-                    <p className="font-medium">{u.name || "—"}</p>
-                    <p className="text-xs text-ink-soft">{u.email}</p>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span className="text-xs font-mono uppercase bg-admin-accent-soft text-admin-accent-deep px-2 py-0.5 rounded-sm">
-                      {u.pricing_tier || "full"}{u.country_code ? ` · ${u.country_code}` : ""}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3 text-ink-soft text-xs">{new Date(u.created_at).toLocaleDateString()}</td>
-                  <td className="px-6 py-3">
-                    <a
-                      href="https://dashboard.stripe.com/customers"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-admin-accent text-xs hover:underline"
-                    >
-                      View in Stripe →
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="text-xs text-ink-soft mt-3">
-          Refunds, plan changes, and cancellations happen in Stripe directly — this page is read-only by design, so billing state can&apos;t drift out of sync with what Stripe actually charged.
+        <SubscriberTable title="Paying subscribers" rows={paid} empty="No paying subscribers yet." showStripe />
+        <div className="h-8" />
+        <SubscriberTable
+          title="Comped Pro (given by an admin)"
+          rows={comped}
+          empty="No comped accounts."
+          note={(u) => (isAdminEmail(u.email) ? "your account" : undefined)}
+        />
+
+        <p className="text-xs text-ink-soft mt-4">
+          Refunds, plan changes and cancellations for paying subscribers happen in Stripe — their plan here updates
+          automatically. Comped Pro can be given or removed on each user&apos;s page.
         </p>
       </main>
+    </div>
+  );
+}
+
+function SubscriberTable({
+  title,
+  rows,
+  empty,
+  showStripe = false,
+  note,
+}: {
+  title: string;
+  rows: AdminUserRow[];
+  empty: string;
+  showStripe?: boolean;
+  note?: (u: AdminUserRow) => string | undefined;
+}) {
+  return (
+    <div className="paper-sheet rounded-sm overflow-x-auto">
+      <p className="px-6 py-3 border-b border-rule font-display font-semibold">{title}</p>
+      <table className="w-full text-sm min-w-[560px]">
+        <thead>
+          <tr className="text-left text-xs uppercase tracking-wide text-ink-soft bg-app-bg">
+            <th className="px-6 py-3 font-medium">User</th>
+            <th className="px-6 py-3 font-medium">Region · price</th>
+            <th className="px-6 py-3 font-medium">Joined</th>
+            <th className="px-6 py-3 font-medium">{showStripe ? "Stripe" : ""}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.length === 0 && (
+            <tr>
+              <td colSpan={4} className="px-6 py-6 text-center text-ink-soft">{empty}</td>
+            </tr>
+          )}
+          {rows.map((u) => (
+            <tr key={u.id} className="border-t border-rule">
+              <td className="px-6 py-3">
+                <Link href={`/admin/users/${u.id}`} className="hover:underline">
+                  <p className="font-medium">
+                    {u.name || "—"}
+                    {note?.(u) && <span className="ml-2 text-[10px] uppercase text-ink-soft">({note(u)})</span>}
+                  </p>
+                  <p className="text-xs text-ink-soft">{u.email}</p>
+                </Link>
+              </td>
+              <td className="px-6 py-3 text-xs font-mono">
+                {u.country_code ? `${u.country_code} · ${getDisplayPriceForUser(u).display}` : "Not detected yet"}
+              </td>
+              <td className="px-6 py-3 text-ink-soft text-xs">{formatDate(u.created_at)}</td>
+              <td className="px-6 py-3">
+                {showStripe && u.stripe_customer_id && (
+                  <a
+                    href={`https://dashboard.stripe.com/customers/${u.stripe_customer_id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-admin-accent text-xs hover:underline"
+                  >
+                    Open in Stripe →
+                  </a>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

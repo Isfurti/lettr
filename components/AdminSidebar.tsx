@@ -39,7 +39,32 @@ export function AdminSidebar() {
   }, []);
 
   return (
-    <aside className="w-64 shrink-0 bg-admin-sidebar text-white/90 flex flex-col min-h-screen">
+    <>
+    {/* Phones: compact top bar with scrollable section links instead of the 256px sidebar. */}
+    <div className="md:hidden bg-admin-sidebar text-white/90">
+      <div className="admin-stripe h-1 w-full" />
+      <div className="px-4 py-3 flex items-center justify-between">
+        <span className="font-display font-semibold text-base text-white flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4" strokeWidth={2.5} /> Admin
+          {healthy !== null && (
+            <span className={`w-1.5 h-1.5 rounded-full ${healthy ? "bg-green-400" : "bg-red-300"}`} />
+          )}
+        </span>
+        <Link href="/dashboard" className="text-xs text-white/60 hover:text-white">← Dashboard</Link>
+      </div>
+      <nav className="flex gap-1 px-2 pb-2 overflow-x-auto whitespace-nowrap">
+        {NAV_ITEMS.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`px-3 py-1.5 rounded-sm text-xs shrink-0 ${pathname === item.href ? "bg-white/10 text-white font-medium" : "text-white/60"}`}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </nav>
+    </div>
+    <aside className="hidden md:flex w-64 shrink-0 bg-admin-sidebar text-white/90 flex-col min-h-screen">
       <div className="admin-stripe h-1.5 w-full shrink-0" />
 
       <div className="px-6 py-5 flex items-center gap-2.5 border-b border-white/10">
@@ -56,7 +81,7 @@ export function AdminSidebar() {
 
       <nav className="flex-1 px-3 mt-2 space-y-0.5">
         {NAV_ITEMS.map((item) => {
-          const active = pathname === item.href;
+          const active = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
           const Icon = item.icon;
           return (
             <Link
@@ -99,5 +124,6 @@ export function AdminSidebar() {
         </button>
       </div>
     </aside>
+    </>
   );
 }

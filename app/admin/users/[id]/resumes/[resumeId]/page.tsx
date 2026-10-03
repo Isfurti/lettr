@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getUserById, getResume, logAdminAction } from "@/lib/db";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import type { ResumeData } from "@/lib/types";
+
+export const metadata: Metadata = { title: "Resume | Lettr Admin" };
 
 export default async function AdminResumeViewPage({
   params,
@@ -27,9 +30,9 @@ export default async function AdminResumeViewPage({
   });
 
   return (
-    <div className="flex-1 flex admin-shell">
+    <div className="flex-1 flex flex-col md:flex-row admin-shell">
       <AdminSidebar />
-      <main className="flex-1 px-10 py-10 max-w-2xl">
+      <main className="flex-1 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-2xl">
         <Link href={`/admin/users/${id}`} className="text-sm text-ink-soft hover:text-ink mb-4 inline-block">
           ← Back to {user.name || user.email}
         </Link>

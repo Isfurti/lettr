@@ -1,7 +1,11 @@
+import type { Metadata } from "next";
+import { formatDate } from "@/lib/format-date";
 import { requireAdmin } from "@/lib/admin-auth";
 import { listAllReviews, getReviewStats } from "@/lib/db";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { FeatureReviewButton } from "@/components/FeatureReviewButton";
+
+export const metadata: Metadata = { title: "Reviews | Lettr Admin" };
 
 export default async function AdminReviewsPage() {
   await requireAdmin();
@@ -29,9 +33,9 @@ export default async function AdminReviewsPage() {
   };
 
   return (
-    <div className="flex-1 flex admin-shell">
+    <div className="flex-1 flex flex-col md:flex-row admin-shell">
       <AdminSidebar />
-      <main className="flex-1 px-10 py-10 max-w-4xl">
+      <main className="flex-1 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-4xl">
         <h1 className="font-display font-semibold text-3xl mb-1">Reviews</h1>
         <p className="text-ink-soft mb-8">Real feedback, analyzed for what people actually like and don't.</p>
 
@@ -71,7 +75,7 @@ export default async function AdminReviewsPage() {
                 <p className="text-sm">{p.text}</p>
                 <div className="text-right shrink-0">
                   <p className="text-xs text-ink-soft">{p.userEmail} · {p.rating}★</p>
-                  <p className="text-[10px] text-ink-soft font-mono">{new Date(p.createdAt).toLocaleDateString()}</p>
+                  <p className="text-[10px] text-ink-soft font-mono">{formatDate(p.createdAt)}</p>
                 </div>
               </div>
             ))
@@ -92,7 +96,7 @@ export default async function AdminReviewsPage() {
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-ink-soft">{r.user_name || r.user_email} · {new Date(r.created_at).toLocaleDateString()}</p>
+                <p className="text-xs text-ink-soft">{r.user_name || r.user_email} · {formatDate(r.created_at)}</p>
               </div>
               <p className="text-sm mb-2">{r.content}</p>
               {r.ai_reply && (
