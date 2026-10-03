@@ -229,12 +229,17 @@ Respond ONLY with a JSON object matching this exact shape, no preamble, no markd
   "summary": string,
   "experience": [{ "role": string, "company": string, "startDate": string, "endDate": string, "bullets": string[] }],
   "education": [{ "school": string, "degree": string, "startDate": string, "endDate": string }],
-  "skills": string[]
-}`;
+  "skills": string[],
+  "projects": [{ "name": string, "link": string, "description": string }],
+  "certifications": [{ "name": string, "issuer": string, "date": string }],
+  "languages": string[],
+  "achievements": string[]
+}
+Use empty arrays for projects, certifications, languages or achievements if the resume has none.`;
 
   const response = await client.messages.create({
     model: MODEL_FAST,
-    max_tokens: 3000,
+    max_tokens: 4000,
     messages: [{ role: "user", content: prompt }],
   });
 
@@ -291,6 +296,26 @@ function normalizeExtractedResume(raw: unknown): ResumeData {
       };
     }),
     skills: Array.isArray(r.skills) ? r.skills.map(String) : [],
+    projects: (Array.isArray(r.projects) ? r.projects : []).map((p) => {
+      const proj = p as Record<string, unknown>;
+      return {
+        id: crypto.randomUUID(),
+        name: String(proj.name ?? ""),
+        link: proj.link ? String(proj.link) : "",
+        description: String(proj.description ?? ""),
+      };
+    }),
+    certifications: (Array.isArray(r.certifications) ? r.certifications : []).map((c) => {
+      const cert = c as Record<string, unknown>;
+      return {
+        id: crypto.randomUUID(),
+        name: String(cert.name ?? ""),
+        issuer: cert.issuer ? String(cert.issuer) : "",
+        date: cert.date ? String(cert.date) : "",
+      };
+    }),
+    languages: Array.isArray(r.languages) ? r.languages.map(String) : [],
+    achievements: Array.isArray(r.achievements) ? r.achievements.map(String) : [],
   };
 }
 

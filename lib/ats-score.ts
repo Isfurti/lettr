@@ -1,4 +1,4 @@
-import type { ResumeData } from "./types";
+import { extraSections, type ResumeData } from "./types";
 
 const STOPWORDS = new Set([
   "the","and","a","an","to","of","in","for","on","with","is","are","as","at",
@@ -6,6 +6,18 @@ const STOPWORDS = new Set([
   "have","has","had","not","but","can","should","must","which","who","their",
   "they","them","he","she","his","her","its","if","than","then","also","into",
   "about","over","under","between","across","per","etc","including","include",
+  // Job-posting filler: words that appear in almost every JD but say nothing
+  // about the actual skills being hired for. Without these, a resume could
+  // "match" a JD on words like "years" or "experience" alone.
+  "years","year","experience","experienced","strong","preferred","required",
+  "requirements","requirement","need","needs","looking","ideal","candidate",
+  "candidates","role","position","job","work","working","team","teams","ability",
+  "able","skills","skill","plus","bonus","knowledge","understanding","good",
+  "great","excellent","proven","track","record","responsibilities","responsible",
+  "join","company","opportunity","help","using","use","new","based","well",
+  "within","all","any","more","most","other","such","what","when","where","how",
+  "would","could","may","might","do","does","make","like","least","minimum",
+  "senior","junior","level","mid","we're","you'll","you're","us","s",
 ]);
 
 function tokenize(text: string): string[] {
@@ -14,7 +26,7 @@ function tokenize(text: string): string[] {
     .replace(/[^a-z0-9+.#\s-]/g, " ")
     .split(/\s+/)
     .map((w) => w.trim().replace(/^[.-]+|[.-]+$/g, "")) // drop stray edge punctuation (e.g. sentence-final periods) but keep meaningful trailing symbols like c++ / c#
-    .filter((w) => w.length > 1 && !STOPWORDS.has(w));
+    .filter((w) => w.length > 1 && !STOPWORDS.has(w) && !/^[0-9+.%-]+$/.test(w)); // pure numbers like "5+" aren't keywords
 }
 
 // Extract candidate "keywords" from a job description: words/phrases that
@@ -39,6 +51,10 @@ function resumeToText(resume: ResumeData): string {
   for (const edu of resume.education) {
     parts.push(edu.degree, edu.school);
   }
+  const extra = extraSections(resume);
+  for (const p of extra.projects) parts.push(p.name, p.description);
+  for (const c of extra.certifications) parts.push(c.name, c.issuer ?? "");
+  parts.push(...extra.languages, ...extra.achievements);
   return parts.join(" ");
 }
 

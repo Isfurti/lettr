@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type { ResumeData, ExperienceEntry, EducationEntry } from "@/lib/types";
-import type { AtsResult } from "@/lib/ats-score";
+import { extraSections, type ResumeData, type ExperienceEntry, type EducationEntry, type ProjectEntry, type CertificationEntry } from "@/lib/types";
+import { scoreResumeAgainstJob, type AtsResult } from "@/lib/ats-score";
 import { scoreResumeQuality } from "@/lib/resume-score";
 import type { Plan } from "@/lib/limits";
 import { TopNav } from "@/components/TopNav";
@@ -45,6 +45,7 @@ export function ResumeEditor({
   const [docxUpgradeRequired, setDocxUpgradeRequired] = useState<string | null>(null);
   const [driveStatus, setDriveStatus] = useState<"idle" | "loading" | "upgrade" | "connect">("idle");
   const [driveLink, setDriveLink] = useState<string | null>(null);
+  const [mobileView, setMobileView] = useState<"form" | "preview">("form");
 
   async function save() {
     setSaveStatus("saving");
@@ -76,7 +77,11 @@ export function ResumeEditor({
       setPdfUpgradeRequired(body.error ?? "Upgrade to Pro to export this.");
       return;
     }
-    if (!res.ok) return;
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setSaveError(body.error ?? "Couldn't create the PDF. Please try again.");
+      return;
+    }
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -98,7 +103,11 @@ export function ResumeEditor({
       setDocxUpgradeRequired(body.error ?? "DOCX export is a Pro feature.");
       return;
     }
-    if (!res.ok) return;
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setSaveError(body.error ?? "Couldn't create the Word file. Please try again.");
+      return;
+    }
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -132,7 +141,7 @@ export function ResumeEditor({
     }
     if (!res.ok) {
       setDriveStatus("idle");
-      alert(body.error ?? "Couldn't export to Google Drive.");
+      setSaveError(body.error ?? "Couldn't export to Google Drive.");
       return;
     }
     setDriveStatus("idle");
@@ -146,31 +155,34 @@ export function ResumeEditor({
   }
 
   const liveScore = scoreResumeQuality(data);
+  const upgradeMessage = pdfUpgradeRequired || docxUpgradeRequired;
 
   return (
     <main className="flex-1 flex flex-col bg-paper">
       <TopNav userInitial={userInitial} />
 
-      <div className="border-b border-rule px-6 py-3 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4 min-w-0">
-          <Link href="/dashboard" className="text-sm text-ink-soft hover:text-ink shrink-0">
-            ← Dashboard
+      <div className="border-b border-rule px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+          <Link href="/dashboard" className="text-sm text-ink-soft hover:text-ink shrink-0" aria-label="Back to dashboard">
+            ←<span className="hidden sm:inline"> Dashboard</span>
           </Link>
-          <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-widest text-seal font-medium">
-              Project: {data.experience[0]?.role || "Untitled"}
-            </p>
+          <div className="min-w-0 flex-1">
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="font-display font-semibold text-xl bg-transparent focus:outline-none border-b border-transparent focus:border-rule min-w-0 w-full"
+              aria-label="Resume title"
+              className="font-display font-semibold text-lg sm:text-xl bg-transparent focus:outline-none border-b border-transparent focus:border-rule min-w-0 w-full"
             />
           </div>
+          <span className="text-xs text-ink-soft shrink-0" aria-live="polite">
+            {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "Saved ✓" : saveStatus === "error" ? "Not saved" : ""}
+          </span>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-2">
           <select
             value={template}
             onChange={(e) => setTemplate(e.target.value)}
+            aria-label="Template"
             className="text-sm border border-rule rounded-sm px-2 py-1.5 bg-paper-raised"
           >
             {TEMPLATES.map((t) => (
@@ -180,84 +192,77 @@ export function ResumeEditor({
               </option>
             ))}
           </select>
-          <span className="text-xs text-ink-soft font-mono w-14 text-right">
-            {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "Saved" : saveStatus === "error" ? "Failed" : ""}
-          </span>
           <button
             onClick={save}
             className="text-sm border border-rule rounded-sm px-3 py-1.5 hover:bg-paper-raised"
           >
             Save
           </button>
-          {pdfUpgradeRequired ? (
-            <Link href="/pricing" className="text-sm text-seal hover:underline max-w-[180px] truncate" title={pdfUpgradeRequired}>
-              {pdfUpgradeRequired} →
-            </Link>
-          ) : (
-            <button
-              onClick={exportPdf}
-              className="text-sm bg-seal text-white rounded-sm px-3 py-1.5 hover:opacity-90"
-            >
-              Export PDF
-            </button>
-          )}
-          {docxUpgradeRequired ? (
-            <Link href="/pricing" className="text-sm text-seal hover:underline max-w-[180px] truncate" title={docxUpgradeRequired}>
-              {docxUpgradeRequired} →
-            </Link>
-          ) : (
-            <button
-              onClick={exportDocx}
-              className="text-sm border border-rule rounded-sm px-3 py-1.5 hover:bg-paper-raised"
-            >
-              Export DOCX
-            </button>
-          )}
-          {driveStatus === "upgrade" ? (
-            <Link href="/pricing" className="text-sm text-seal hover:underline">
-              Drive is Pro →
-            </Link>
-          ) : driveStatus === "connect" ? (
-            <a href="/api/google/connect" className="text-sm text-seal hover:underline">
-              Connect Drive →
-            </a>
-          ) : driveLink ? (
-            <a
-              href={driveLink}
-              target="_blank"
-              rel="noreferrer"
-              className="text-sm text-seal hover:underline"
-            >
-              Opened in Drive ✓
-            </a>
-          ) : (
-            <button
-              onClick={exportToDrive}
-              disabled={driveStatus === "loading"}
-              className="text-sm border border-rule rounded-sm px-3 py-1.5 hover:bg-paper-raised disabled:opacity-60"
-            >
-              {driveStatus === "loading" ? "Uploading…" : googleDriveConnected ? "Save to Drive" : "Save to Drive"}
-            </button>
-          )}
           <button
-            onClick={deleteThisResume}
-            className="text-sm text-red-600 hover:underline"
+            onClick={exportPdf}
+            className="text-sm bg-seal text-white rounded-sm px-3 py-1.5 hover:opacity-90"
           >
-            Delete
+            Download PDF
           </button>
+          <details className="relative">
+            <summary className="list-none cursor-pointer text-sm border border-rule rounded-sm px-3 py-1.5 hover:bg-paper-raised select-none">
+              More ▾
+            </summary>
+            <div className="absolute right-0 mt-1 z-30 paper-sheet rounded-sm py-1 w-52 text-sm shadow-lg">
+              <button onClick={exportDocx} className="block w-full text-left px-3 py-2 hover:bg-app-bg">
+                Download Word (.docx){plan === "free" && <span className="text-[10px] font-mono text-seal ml-1.5">PRO</span>}
+              </button>
+              {driveStatus === "connect" ? (
+                <a href="/api/google/connect" className="block px-3 py-2 text-seal hover:bg-app-bg">
+                  Connect Google Drive →
+                </a>
+              ) : driveLink ? (
+                <a href={driveLink} target="_blank" rel="noreferrer" className="block px-3 py-2 text-seal hover:bg-app-bg">
+                  Open in Drive ✓
+                </a>
+              ) : (
+                <button
+                  onClick={exportToDrive}
+                  disabled={driveStatus === "loading"}
+                  className="block w-full text-left px-3 py-2 hover:bg-app-bg disabled:opacity-60"
+                >
+                  {driveStatus === "loading" ? "Uploading…" : "Save to Google Drive"}
+                  {plan === "free" && <span className="text-[10px] font-mono text-seal ml-1.5">PRO</span>}
+                </button>
+              )}
+              <div className="border-t border-rule my-1" />
+              <button onClick={deleteThisResume} className="block w-full text-left px-3 py-2 text-red-600 hover:bg-red-50">
+                Delete resume
+              </button>
+            </div>
+          </details>
         </div>
       </div>
 
-      {saveError && (
-        <div className="bg-red-50 text-red-700 text-sm px-6 py-2 flex items-center justify-between">
-          <span>{saveError}</span>
-          {saveError.toLowerCase().includes("pro") && (
-            <Link href="/pricing" className="underline font-medium shrink-0 ml-3">Upgrade →</Link>
-          )}
+      {(saveError || upgradeMessage || driveStatus === "upgrade") && (
+        <div className="bg-red-50 text-red-700 text-sm px-4 sm:px-6 py-2 flex items-center justify-between gap-3">
+          <span>{saveError || upgradeMessage || "Google Drive export is a Pro feature."}</span>
+          <div className="flex items-center gap-3 shrink-0">
+            {(upgradeMessage || driveStatus === "upgrade" || saveError?.toLowerCase().includes("pro")) && (
+              <Link href="/pricing" className="underline font-medium">Upgrade →</Link>
+            )}
+            <button
+              onClick={() => {
+                setSaveError(null);
+                setPdfUpgradeRequired(null);
+                setDocxUpgradeRequired(null);
+                if (driveStatus === "upgrade") setDriveStatus("idle");
+              }}
+              aria-label="Dismiss"
+              className="text-red-700/70 hover:text-red-700"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       )}
 
-      <div className="border-b border-rule px-6 flex gap-1">
+      <div className="border-b border-rule px-2 sm:px-6 flex gap-1 overflow-x-auto whitespace-nowrap">
         {[
           { id: "edit", label: "Edit" },
           { id: "agent", label: "AI Agent", pro: true },
@@ -269,7 +274,7 @@ export function ResumeEditor({
           <button
             key={t.id}
             onClick={() => setTab(t.id as typeof tab)}
-            className={`px-4 py-2.5 text-sm border-b-2 -mb-px flex items-center gap-1.5 ${
+            className={`px-3 sm:px-4 py-2.5 text-sm border-b-2 -mb-px flex items-center gap-1.5 shrink-0 ${
               tab === t.id ? "border-seal text-ink font-medium" : "border-transparent text-ink-soft"
             }`}
           >
@@ -279,8 +284,10 @@ export function ResumeEditor({
         ))}
       </div>
 
+      <MobileViewToggle view={mobileView} setView={setMobileView} />
+
       <div className="flex-1 grid lg:grid-cols-2 min-h-0">
-        <div className="overflow-y-auto p-6 border-r border-rule">
+        <div className={`overflow-y-auto p-4 sm:p-6 lg:border-r border-rule ${mobileView === "preview" ? "hidden lg:block" : ""}`}>
           {tab === "edit" && <EditForm data={data} setData={setData} plan={plan} aiWritingAssistsUsed={aiWritingAssistsUsed} />}
           {tab === "agent" && (
             <UpgradeGate locked={plan === "free"} feature="The AI Resume Agent">
@@ -300,7 +307,7 @@ export function ResumeEditor({
             </UpgradeGate>
           )}
         </div>
-        <div className="overflow-y-auto p-6 bg-rule/10 relative">
+        <div className={`overflow-y-auto p-4 sm:p-6 bg-rule/10 relative lg:sticky lg:top-0 lg:self-start lg:max-h-screen ${mobileView === "form" ? "hidden lg:block" : ""}`}>
           <div className="hidden xl:block absolute top-8 right-8 z-10 paper-sheet rounded-sm px-4 py-3 w-40">
             <div className="mx-auto mb-1 flex justify-center">
               <ScoreRing value={liveScore.overall} size={56} strokeWidth={8} />
@@ -316,6 +323,29 @@ export function ResumeEditor({
         </div>
       </div>
     </main>
+  );
+}
+
+/** Phones can't fit the form and the preview side by side - let them flip between the two. */
+export function MobileViewToggle({
+  view,
+  setView,
+}: {
+  view: "form" | "preview";
+  setView: (v: "form" | "preview") => void;
+}) {
+  return (
+    <div className="lg:hidden flex border-b border-rule bg-paper-raised text-sm">
+      {(["form", "preview"] as const).map((v) => (
+        <button
+          key={v}
+          onClick={() => setView(v)}
+          className={`flex-1 py-2 ${view === v ? "font-medium text-ink bg-paper" : "text-ink-soft"}`}
+        >
+          {v === "form" ? "✎ Write" : "👁 Preview"}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -352,11 +382,14 @@ export function EditForm({
   setData,
   plan,
   aiWritingAssistsUsed,
+  guest = false,
 }: {
   data: ResumeData;
   setData: React.Dispatch<React.SetStateAction<ResumeData>>;
   plan?: Plan;
   aiWritingAssistsUsed?: number;
+  /** Not signed in - AI buttons explain how to unlock them instead of calling the API. */
+  guest?: boolean;
 }) {
   function updateContact<K extends keyof ResumeData["contact"]>(key: K, value: string) {
     setData((d) => ({ ...d, contact: { ...d.contact, [key]: value } }));
@@ -407,6 +440,35 @@ export function EditForm({
     setData((d) => ({ ...d, education: d.education.filter((e) => e.id !== id) }));
   }
 
+  function addProject() {
+    const entry: ProjectEntry = { id: crypto.randomUUID(), name: "", link: "", description: "" };
+    setData((d) => ({ ...d, projects: [...(d.projects ?? []), entry] }));
+  }
+
+  function updateProject(id: string, patch: Partial<ProjectEntry>) {
+    setData((d) => ({ ...d, projects: (d.projects ?? []).map((p) => (p.id === id ? { ...p, ...patch } : p)) }));
+  }
+
+  function removeProject(id: string) {
+    setData((d) => ({ ...d, projects: (d.projects ?? []).filter((p) => p.id !== id) }));
+  }
+
+  function addCertification() {
+    const entry: CertificationEntry = { id: crypto.randomUUID(), name: "", issuer: "", date: "" };
+    setData((d) => ({ ...d, certifications: [...(d.certifications ?? []), entry] }));
+  }
+
+  function updateCertification(id: string, patch: Partial<CertificationEntry>) {
+    setData((d) => ({
+      ...d,
+      certifications: (d.certifications ?? []).map((c) => (c.id === id ? { ...c, ...patch } : c)),
+    }));
+  }
+
+  function removeCertification(id: string) {
+    setData((d) => ({ ...d, certifications: (d.certifications ?? []).filter((c) => c.id !== id) }));
+  }
+
   function updateCustomization<K extends keyof NonNullable<ResumeData["customization"]>>(
     key: K,
     value: NonNullable<ResumeData["customization"]>[K]
@@ -428,6 +490,15 @@ export function EditForm({
           )}
         </div>
       )}
+      <ProgressChecklist data={data} />
+
+      <details className="group paper-sheet rounded-sm p-4">
+        <summary className="cursor-pointer list-none flex items-center justify-between font-display font-bold text-sm uppercase tracking-wide text-ink-soft">
+          Design &amp; layout — colors, fonts, photo
+          <span className="text-xs normal-case tracking-normal font-sans font-normal group-open:hidden">Show ▾</span>
+          <span className="text-xs normal-case tracking-normal font-sans font-normal hidden group-open:inline">Hide ▴</span>
+        </summary>
+        <div className="space-y-8 mt-5">
       <Section title="Design">
         <p className="text-xs text-ink-soft mb-2">Accent color</p>
         <div className="flex flex-wrap gap-2 mb-4">
@@ -444,7 +515,7 @@ export function EditForm({
             );
           })}
         </div>
-        <p className="text-xs text-ink-soft mb-2">Font pair <span className="text-ink-soft/60">(preview only — PDF uses the default)</span></p>
+        <p className="text-xs text-ink-soft mb-2">Font pair</p>
         <div className="flex flex-wrap gap-2">
           {FONT_PAIRS.map((f) => {
             const active = (data.customization?.fontChoice || "editorial") === f.id;
@@ -496,29 +567,35 @@ export function EditForm({
           </label>
         </div>
       </Section>
+        </div>
+      </details>
 
-      <Section title="Contact">
-        <div className="grid grid-cols-2 gap-3">
-          <Input label="Full name" value={data.contact.fullName} onChange={(v) => updateContact("fullName", v)} />
-          <Input label="Email" value={data.contact.email} onChange={(v) => updateContact("email", v)} />
-          <Input label="Phone" value={data.contact.phone ?? ""} onChange={(v) => updateContact("phone", v)} />
-          <Input label="Location" value={data.contact.location ?? ""} onChange={(v) => updateContact("location", v)} />
-          <Input label="LinkedIn" value={data.contact.linkedin ?? ""} onChange={(v) => updateContact("linkedin", v)} />
-          <Input label="Website" value={data.contact.website ?? ""} onChange={(v) => updateContact("website", v)} />
+      <Section title="Contact" id="section-contact">
+        <div className="grid sm:grid-cols-2 gap-3">
+          <Input label="Full name" autoComplete="name" placeholder="Priya Sharma" value={data.contact.fullName} onChange={(v) => updateContact("fullName", v)} />
+          <Input label="Email" type="email" autoComplete="email" placeholder="priya@email.com" value={data.contact.email} onChange={(v) => updateContact("email", v)} />
+          <Input label="Phone" type="tel" autoComplete="tel" placeholder="+91 98765 43210" value={data.contact.phone ?? ""} onChange={(v) => updateContact("phone", v)} />
+          <Input label="Location" autoComplete="address-level2" placeholder="Bengaluru, India" value={data.contact.location ?? ""} onChange={(v) => updateContact("location", v)} />
+          <Input label="LinkedIn" type="url" placeholder="linkedin.com/in/yourname" value={data.contact.linkedin ?? ""} onChange={(v) => updateContact("linkedin", v)} />
+          <Input label="Website" type="url" autoComplete="url" placeholder="yourname.com" value={data.contact.website ?? ""} onChange={(v) => updateContact("website", v)} />
         </div>
       </Section>
 
-      <Section title="Summary">
-        <SummaryField data={data} setData={setData} />
+      <Section title="Summary" id="section-summary">
+        <SummaryField data={data} setData={setData} guest={guest} />
       </Section>
 
-      <Section title="Experience" action={<AddButton onClick={addExperience} label="Add role" />}>
+      <Section title="Experience" id="section-experience" action={<AddButton onClick={addExperience} label="Add role" />}>
+        {data.experience.length === 0 && (
+          <EmptyHint onClick={addExperience} text="Add your most recent job first — internships and freelance work count too." />
+        )}
         <div className="space-y-5">
           {data.experience.map((exp) => (
             <ExperienceCard
               key={exp.id}
               exp={exp}
               role={exp.role}
+              guest={guest}
               onChange={(patch) => updateExperience(exp.id, patch)}
               onRemove={() => removeExperience(exp.id)}
             />
@@ -526,15 +603,18 @@ export function EditForm({
         </div>
       </Section>
 
-      <Section title="Education" action={<AddButton onClick={addEducation} label="Add school" />}>
+      <Section title="Education" id="section-education" action={<AddButton onClick={addEducation} label="Add school" />}>
+        {data.education.length === 0 && (
+          <EmptyHint onClick={addEducation} text="Add your degree, college or school." />
+        )}
         <div className="space-y-3">
           {data.education.map((edu) => (
             <div key={edu.id} className="paper-sheet rounded-sm p-3 space-y-2">
-              <div className="grid grid-cols-2 gap-2">
-                <Input label="School" value={edu.school} onChange={(v) => updateEducation(edu.id, { school: v })} />
-                <Input label="Degree" value={edu.degree} onChange={(v) => updateEducation(edu.id, { degree: v })} />
-                <Input label="Start" value={edu.startDate} onChange={(v) => updateEducation(edu.id, { startDate: v })} />
-                <Input label="End" value={edu.endDate} onChange={(v) => updateEducation(edu.id, { endDate: v })} />
+              <div className="grid sm:grid-cols-2 gap-2">
+                <Input label="School / college" value={edu.school} onChange={(v) => updateEducation(edu.id, { school: v })} />
+                <Input label="Degree" placeholder="B.Tech, Computer Science" value={edu.degree} onChange={(v) => updateEducation(edu.id, { degree: v })} />
+                <MonthYearInput label="Start" value={edu.startDate} onChange={(v) => updateEducation(edu.id, { startDate: v })} />
+                <MonthYearInput label="End (or expected)" value={edu.endDate} onChange={(v) => updateEducation(edu.id, { endDate: v })} />
               </div>
               <button onClick={() => removeEducation(edu.id)} className="text-xs text-red-600 hover:underline">
                 Remove
@@ -544,34 +624,179 @@ export function EditForm({
         </div>
       </Section>
 
-      <Section title="Skills">
-        <input
-          value={data.skills.join(", ")}
-          onChange={(e) =>
-            setData((d) => ({
-              ...d,
-              skills: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-            }))
-          }
-          placeholder="Comma-separated, e.g. Python, Django, AWS"
-          className="w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+      <Section title="Skills" id="section-skills">
+        <CommaListInput
+          value={data.skills}
+          onChange={(skills) => setData((d) => ({ ...d, skills }))}
+          placeholder="Comma-separated, e.g. Python, Excel, Project management"
         />
       </Section>
+
+      <div className="pt-2 border-t border-rule">
+        <p className="text-xs text-ink-soft mb-6">
+          Optional sections — add the ones that help your story. Empty sections don&apos;t appear on your resume.
+        </p>
+        <div className="space-y-8">
+          <Section title="Projects" action={<AddButton onClick={addProject} label="Add project" />}>
+            <div className="space-y-3">
+              {(data.projects ?? []).map((p) => (
+                <div key={p.id} className="paper-sheet rounded-sm p-3 space-y-2">
+                  <div className="grid sm:grid-cols-2 gap-2">
+                    <Input label="Project name" value={p.name} onChange={(v) => updateProject(p.id, { name: v })} />
+                    <Input label="Link (optional)" type="url" placeholder="github.com/you/project" value={p.link ?? ""} onChange={(v) => updateProject(p.id, { link: v })} />
+                  </div>
+                  <label className="block">
+                    <span className="text-xs text-ink-soft">What you did and the result</span>
+                    <textarea
+                      value={p.description}
+                      onChange={(e) => updateProject(p.id, { description: e.target.value })}
+                      rows={2}
+                      className="mt-0.5 w-full border border-rule rounded-sm px-2 py-1.5 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+                    />
+                  </label>
+                  <button onClick={() => removeProject(p.id)} className="text-xs text-red-600 hover:underline">Remove</button>
+                </div>
+              ))}
+            </div>
+          </Section>
+
+          <Section title="Certifications" action={<AddButton onClick={addCertification} label="Add certification" />}>
+            <div className="space-y-3">
+              {(data.certifications ?? []).map((c) => (
+                <div key={c.id} className="paper-sheet rounded-sm p-3 space-y-2">
+                  <div className="grid sm:grid-cols-3 gap-2">
+                    <Input label="Certification" placeholder="AWS Solutions Architect" value={c.name} onChange={(v) => updateCertification(c.id, { name: v })} />
+                    <Input label="Issued by" placeholder="Amazon Web Services" value={c.issuer ?? ""} onChange={(v) => updateCertification(c.id, { issuer: v })} />
+                    <MonthYearInput label="Date" value={c.date ?? ""} onChange={(v) => updateCertification(c.id, { date: v })} />
+                  </div>
+                  <button onClick={() => removeCertification(c.id)} className="text-xs text-red-600 hover:underline">Remove</button>
+                </div>
+              ))}
+            </div>
+          </Section>
+
+          <Section title="Achievements & awards">
+            <LineListInput
+              value={data.achievements ?? []}
+              onChange={(achievements) => setData((d) => ({ ...d, achievements }))}
+              placeholder={"One per line, e.g.\nEmployee of the Quarter, Q2 2025\nWon Smart India Hackathon 2023"}
+            />
+          </Section>
+
+          <Section title="Languages">
+            <CommaListInput
+              value={data.languages ?? []}
+              onChange={(languages) => setData((d) => ({ ...d, languages }))}
+              placeholder="e.g. English (fluent), Hindi (native), German (basic)"
+            />
+          </Section>
+        </div>
+      </div>
+
     </div>
+  );
+}
+
+// ---------- Guided progress ----------
+// A lightweight step guide at the top of the form: shows which core sections
+// are done and jumps to the next one, so a blank form never feels like a wall.
+
+function ProgressChecklist({ data }: { data: ResumeData }) {
+  const steps = [
+    { id: "section-contact", label: "Contact", done: Boolean(data.contact.fullName.trim() && data.contact.email.trim()) },
+    { id: "section-summary", label: "Summary", done: data.summary.trim().length > 0 },
+    {
+      id: "section-experience",
+      label: "Experience",
+      done: data.experience.some((e) => e.role.trim() && e.bullets.some((b) => b.trim())),
+    },
+    { id: "section-education", label: "Education", done: data.education.some((e) => e.school.trim() || e.degree.trim()) },
+    { id: "section-skills", label: "Skills", done: data.skills.length >= 3 },
+  ];
+  const doneCount = steps.filter((s) => s.done).length;
+  const next = steps.find((s) => !s.done);
+
+  function jump(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  return (
+    <div className="paper-sheet rounded-sm p-4">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-medium">
+          {doneCount === steps.length ? "All core sections done ✓" : `Step ${doneCount + 1} of ${steps.length}`}
+        </p>
+        {next && (
+          <button onClick={() => jump(next.id)} className="text-xs text-seal font-medium hover:underline">
+            Next: {next.label} →
+          </button>
+        )}
+      </div>
+      <div className="h-1.5 bg-rule/40 rounded-full overflow-hidden mb-3">
+        <div className="h-full bg-seal transition-all" style={{ width: `${(doneCount / steps.length) * 100}%` }} />
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {steps.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => jump(s.id)}
+            className={`text-xs px-2 py-1 rounded-full border ${
+              s.done ? "bg-seal-soft border-transparent text-seal-deep" : "border-rule text-ink-soft hover:border-ink-soft"
+            }`}
+          >
+            {s.done ? "✓ " : ""}
+            {s.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EmptyHint({ text, onClick }: { text: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full text-left text-sm text-ink-soft border border-dashed border-rule rounded-sm px-4 py-3 hover:border-seal hover:text-ink"
+    >
+      + {text}
+    </button>
+  );
+}
+
+/** Shown in place of a real AI call when nobody is signed in - an explanation, not an error. */
+function AiSignInHint() {
+  return (
+    <p className="text-xs text-ink-soft mt-1.5 bg-seal-soft/60 rounded-sm px-2 py-1.5">
+      ✦ AI writing is free with an account (5 rewrites included).{" "}
+      <Link href="/signup?continue=builder" className="text-seal font-medium hover:underline">
+        Create a free account
+      </Link>{" "}
+      — your draft comes with you.
+    </p>
   );
 }
 
 function SummaryField({
   data,
   setData,
+  guest = false,
 }: {
   data: ResumeData;
   setData: React.Dispatch<React.SetStateAction<ResumeData>>;
+  guest?: boolean;
 }) {
   const [options, setOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showSignInHint, setShowSignInHint] = useState(false);
 
   async function generate() {
+    if (guest) {
+      setShowSignInHint(true);
+      return;
+    }
+    setError(null);
     setLoading(true);
     try {
       const res = await fetch("/api/ai/generate-summary", {
@@ -579,9 +804,11 @@ function SummaryField({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ experience: data.experience, skills: data.skills, targetRole: data.experience[0]?.role }),
       });
-      const body = await res.json();
+      const body = await res.json().catch(() => ({}));
       if (res.ok) setOptions(body.options);
-      else alert(body.error ?? "Couldn't generate summary options.");
+      else setError(body.error ?? "Couldn't generate summary options.");
+    } catch {
+      setError("Couldn't reach the server. Try again.");
     } finally {
       setLoading(false);
     }
@@ -606,6 +833,15 @@ function SummaryField({
           {loading ? "…" : "✦ AI"}
         </button>
       </div>
+      {showSignInHint && <AiSignInHint />}
+      {error && (
+        <p className="text-xs text-red-600 mt-1">
+          {error}{" "}
+          {error.toLowerCase().includes("upgrade") && (
+            <Link href="/pricing" className="underline font-medium">See Pro →</Link>
+          )}
+        </p>
+      )}
       {options.length > 0 && (
         <div className="mt-1.5 space-y-1">
           {options.map((opt, i) => (
@@ -629,14 +865,17 @@ function SummaryField({
 function ExperienceCard({
   exp,
   role,
+  guest = false,
   onChange,
   onRemove,
 }: {
   exp: ExperienceEntry;
   role: string;
+  guest?: boolean;
   onChange: (patch: Partial<ExperienceEntry>) => void;
   onRemove: () => void;
 }) {
+  const [signInHintFor, setSignInHintFor] = useState<number | null>(null);
   const [aiOptions, setAiOptions] = useState<Record<number, string[]>>({});
   const [loadingBullet, setLoadingBullet] = useState<number | null>(null);
   const [bulletError, setBulletError] = useState<Record<number, string>>({});
@@ -663,6 +902,10 @@ function ExperienceCard({
       setBulletError((e) => ({ ...e, [index]: "Write something first, then click AI to polish it." }));
       return;
     }
+    if (guest) {
+      setSignInHintFor(index);
+      return;
+    }
     setBulletError((e) => ({ ...e, [index]: "" }));
     setLoadingBullet(index);
     try {
@@ -683,12 +926,15 @@ function ExperienceCard({
 
   return (
     <div className="paper-sheet rounded-sm p-4 space-y-3">
-      <div className="grid grid-cols-2 gap-2">
-        <Input label="Role" value={exp.role} onChange={(v) => onChange({ role: v })} />
+      <div className="grid sm:grid-cols-2 gap-2">
+        <Input label="Job title" placeholder="Marketing Manager" value={exp.role} onChange={(v) => onChange({ role: v })} />
         <Input label="Company" value={exp.company} onChange={(v) => onChange({ company: v })} />
-        <Input label="Start" value={exp.startDate} onChange={(v) => onChange({ startDate: v })} />
-        <Input label="End" value={exp.endDate} onChange={(v) => onChange({ endDate: v })} />
+        <MonthYearInput label="Start" value={exp.startDate} onChange={(v) => onChange({ startDate: v })} />
+        <MonthYearInput label="End" value={exp.endDate} onChange={(v) => onChange({ endDate: v })} allowPresent />
       </div>
+      <p className="text-xs text-ink-soft">
+        Bullets: what you did + the result, with a number if you can (&ldquo;Cut onboarding time 30%&rdquo;).
+      </p>
 
       <div className="space-y-2">
         {exp.bullets.map((b, i) => (
@@ -698,6 +944,8 @@ function ExperienceCard({
                 value={b}
                 onChange={(e) => updateBullet(i, e.target.value)}
                 rows={2}
+                aria-label={`Bullet ${i + 1}`}
+                placeholder={i === 0 ? "e.g. Launched referral program that brought in 1,200 new users in 3 months" : ""}
                 className="flex-1 border border-rule rounded-sm px-2 py-1.5 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
               />
               <div className="flex flex-col gap-1">
@@ -709,13 +957,19 @@ function ExperienceCard({
                 >
                   {loadingBullet === i ? "…" : "✦ AI"}
                 </button>
-                <button onClick={() => removeBullet(i)} className="text-xs text-red-600">
+                <button onClick={() => removeBullet(i)} className="text-xs text-red-600" aria-label="Remove bullet" title="Remove bullet">
                   ✕
                 </button>
               </div>
             </div>
+            {signInHintFor === i && <AiSignInHint />}
             {bulletError[i] && (
-              <p className="text-xs text-red-600 mt-1">{bulletError[i]}</p>
+              <p className="text-xs text-red-600 mt-1">
+                {bulletError[i]}{" "}
+                {bulletError[i].toLowerCase().includes("upgrade") && (
+                  <Link href="/pricing" className="underline font-medium">See Pro →</Link>
+                )}
+              </p>
             )}
             {aiOptions[i] && (
               <div className="mt-1.5 space-y-1">
@@ -864,20 +1118,36 @@ export function ScorePanel({ data, plan }: { data: ResumeData; plan: Plan }) {
                 ? "Strong resume — minor polish left."
                 : result.overall >= 50
                 ? "Solid start — a few gaps to close."
-                : "Early stage — fill in the sections below."}
+                : "Early stage — fill in more sections on the Edit tab."}
             </p>
           </div>
         </div>
       </div>
 
-      {!isPro && (
-        <div className="paper-sheet rounded-sm p-4 text-sm text-ink-soft flex items-center justify-between">
-          <span>Free plan shows your overall score only.</span>
-          <Link href="/pricing" className="text-seal font-medium hover:underline shrink-0 ml-3">
-            Unlock full breakdown →
-          </Link>
-        </div>
-      )}
+      {!isPro && (() => {
+        // Free users still get the single most useful next step - a score
+        // with zero guidance is frustrating. The full per-section breakdown
+        // stays Pro.
+        const topTip = [...result.sections].sort((a, b) => a.score - b.score).find((sec) => sec.tips.length > 0);
+        return (
+          <>
+            {topTip && (
+              <div className="paper-sheet rounded-sm p-4">
+                <p className="text-xs uppercase tracking-wide text-seal font-medium mb-1">Your next best fix</p>
+                <p className="text-sm">
+                  <span className="font-medium">{topTip.label}:</span> {topTip.tips[0]}
+                </p>
+              </div>
+            )}
+            <div className="paper-sheet rounded-sm p-4 text-sm text-ink-soft flex items-center justify-between gap-3">
+              <span>Pro shows a section-by-section breakdown with every tip.</span>
+              <Link href="/pricing" className="text-seal font-medium hover:underline shrink-0">
+                See Pro →
+              </Link>
+            </div>
+          </>
+        );
+      })()}
 
       {isPro && (
         <div className="space-y-3">
@@ -912,22 +1182,30 @@ export function ScorePanel({ data, plan }: { data: ResumeData; plan: Plan }) {
 export function JobMatchPanel({ data }: { data: ResumeData }) {
   const [jd, setJd] = useState("");
   const [result, setResult] = useState<AtsResult | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function check() {
-    if (!jd.trim() || jd.trim().length < 10) return;
-    setLoading(true);
+  // Carry over a job description pasted into the homepage demo.
+  useEffect(() => {
     try {
-      const res = await fetch("/api/ai/ats-score", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resume: data, jobDescription: jd }),
-      });
-      const body = await res.json();
-      if (res.ok) setResult(body);
-    } finally {
-      setLoading(false);
+      const pending = window.localStorage.getItem("lettr_pending_jd");
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only storage, must run after mount
+      if (pending) setJd((current) => current || pending);
+    } catch {
+      // storage unavailable - nothing to restore
     }
+  }, []);
+
+  // Keyword matching is pure text analysis - it runs right here in the
+  // browser, so it works for guests too and never fails silently on a
+  // network/auth error.
+  function check() {
+    if (jd.trim().length < 30) {
+      setError("Paste the full job description (at least a few sentences) to get a useful match.");
+      setResult(null);
+      return;
+    }
+    setError(null);
+    setResult(scoreResumeAgainstJob(data, jd));
   }
 
   return (
@@ -942,11 +1220,11 @@ export function JobMatchPanel({ data }: { data: ResumeData }) {
         />
         <button
           onClick={check}
-          disabled={loading}
           className="mt-2 bg-seal text-white text-sm px-4 py-2 rounded-sm hover:opacity-90 disabled:opacity-60"
         >
-          {loading ? "Scoring…" : "Check match score"}
+          Check match score
         </button>
+        {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
       </Section>
 
       {result && (
@@ -959,6 +1237,11 @@ export function JobMatchPanel({ data }: { data: ResumeData }) {
           </div>
 
           <p className="text-xs uppercase tracking-wide text-ink-soft mb-1.5">Missing keywords</p>
+          {result.missingKeywords.length > 0 && (
+            <p className="text-xs text-ink-soft mb-2">
+              Add the ones that are true for you to your skills, summary or bullets — then check again.
+            </p>
+          )}
           <div className="flex flex-wrap gap-2 mb-4">
             {result.missingKeywords.length === 0 ? (
               <span className="text-sm text-ink-soft">None — great coverage.</span>
@@ -1250,6 +1533,7 @@ function ClassicPreview({ data, dense }: { data: ResumeData; dense: boolean }) {
           <p className="text-sm">{data.skills.join(" • ")}</p>
         </>
       )}
+      <ExtraSectionsPreview data={data} headingClassName={heading} />
     </div>
   );
 }
@@ -1335,6 +1619,7 @@ function ModernPreview({ data }: { data: ResumeData }) {
             </div>
           </>
         )}
+        <ExtraSectionsPreview data={data} headingClassName={modernHeading} />
       </div>
     </div>
   );
@@ -1420,6 +1705,7 @@ function BoldPreview({ data }: { data: ResumeData }) {
           <p className="text-sm font-medium">{data.skills.join("  /  ")}</p>
         </>
       )}
+      <ExtraSectionsPreview data={data} headingClassName={boldHeading} />
     </div>
   );
 }
@@ -1500,6 +1786,7 @@ function SidebarPreview({ data }: { data: ResumeData }) {
             ))}
           </>
         )}
+        <ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-4 mb-1.5" />
       </div>
     </div>
   );
@@ -1559,6 +1846,7 @@ function MinimalPreview({ data }: { data: ResumeData }) {
           <p className="text-sm">{data.skills.join(", ")}</p>
         </>
       )}
+      <ExtraSectionsPreview data={data} headingClassName={minimalHeading} />
     </div>
   );
 }
@@ -1613,6 +1901,7 @@ function ExecutivePreview({ data }: { data: ResumeData }) {
       {data.skills.length > 0 && (
         <p className="text-sm text-center mt-8 text-ink-soft">{data.skills.join(" · ")}</p>
       )}
+      <ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-[0.2em] text-seal text-center mt-8 mb-3" variant="center" />
     </div>
   );
 }
@@ -1679,6 +1968,7 @@ function TechnicalPreview({ data }: { data: ResumeData }) {
           </div>
         </>
       )}
+      <ExtraSectionsPreview data={data} headingClassName="font-mono text-xs text-ink-soft mt-5 mb-1" variant="code" />
     </div>
   );
 }
@@ -1741,6 +2031,7 @@ function TimelinePreview({ data }: { data: ResumeData }) {
       {data.skills.length > 0 && (
         <p className="text-sm mt-6 text-ink-soft">{data.skills.join(" • ")}</p>
       )}
+      <ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-6 mb-2" />
     </div>
   );
 }
@@ -1796,7 +2087,74 @@ function ElegantPreview({ data }: { data: ResumeData }) {
       {data.skills.length > 0 && (
         <p className="text-sm mt-6 text-ink-soft">{data.skills.join("  ·  ")}</p>
       )}
+      <ExtraSectionsPreview data={data} headingClassName="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2" />
     </div>
+  );
+}
+
+// ---------- Optional sections (Projects, Certifications, Languages, Achievements) ----------
+// Shared by every template so a new optional section only has to be added
+// once. Each template passes its own heading style so it still looks native.
+
+function ExtraSectionsPreview({
+  data,
+  headingClassName,
+  variant,
+}: {
+  data: ResumeData;
+  headingClassName: string;
+  variant?: "center" | "code";
+}) {
+  const { projects, certifications, languages, achievements } = extraSections(data);
+  const center = variant === "center";
+  const title = (t: string) => (variant === "code" ? `// ${t.toLowerCase()}` : t);
+  const align = center ? "text-center" : "";
+
+  return (
+    <>
+      {projects.length > 0 && (
+        <>
+          <h3 className={headingClassName}>{title("Projects")}</h3>
+          {projects.map((p) => (
+            <div key={p.id} className={`mt-2 text-sm ${align}`}>
+              <p className="font-medium">
+                {p.name}
+                {p.link && <span className="text-xs text-ink-soft font-normal"> · {p.link}</span>}
+              </p>
+              {p.description && <p className="text-sm text-ink-soft leading-relaxed">{p.description}</p>}
+            </div>
+          ))}
+        </>
+      )}
+      {certifications.length > 0 && (
+        <>
+          <h3 className={headingClassName}>{title("Certifications")}</h3>
+          {certifications.map((c) => (
+            <p key={c.id} className={`text-sm mt-1 ${align}`}>
+              <span className="font-medium">{c.name}</span>
+              {c.issuer && <span className="text-ink-soft"> — {c.issuer}</span>}
+              {c.date && <span className="text-xs text-ink-soft"> ({c.date})</span>}
+            </p>
+          ))}
+        </>
+      )}
+      {achievements.length > 0 && (
+        <>
+          <h3 className={headingClassName}>{title("Achievements")}</h3>
+          <ul className={`space-y-0.5 ${align}`}>
+            {achievements.map((a, i) => (
+              <li key={i} className="text-sm">• {a}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      {languages.length > 0 && (
+        <>
+          <h3 className={headingClassName}>{title("Languages")}</h3>
+          <p className={`text-sm ${align}`}>{languages.join(" • ")}</p>
+        </>
+      )}
+    </>
   );
 }
 
@@ -1806,13 +2164,15 @@ function Section({
   title,
   action,
   children,
+  id,
 }: {
   title: string;
   action?: React.ReactNode;
   children: React.ReactNode;
+  id?: string;
 }) {
   return (
-    <div>
+    <div id={id} className="scroll-mt-4">
       <div className="flex items-center justify-between mb-2">
         <h3 className="font-display font-bold text-sm uppercase tracking-wide text-ink-soft">{title}</h3>
         {action}
@@ -1834,19 +2194,203 @@ function Input({
   label,
   value,
   onChange,
+  type = "text",
+  placeholder,
+  autoComplete,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  type?: "text" | "email" | "tel" | "url";
+  placeholder?: string;
+  autoComplete?: string;
 }) {
+  // URLs are typed without "https://" by most people - a strict type="url"
+  // field would reject that, so we only borrow its mobile keyboard.
+  const inputMode = type === "url" ? "url" : type === "tel" ? "tel" : type === "email" ? "email" : undefined;
   return (
     <label className="block">
       <span className="text-xs text-ink-soft">{label}</span>
       <input
+        type={type === "url" ? "text" : type}
+        inputMode={inputMode}
         value={value}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-0.5 w-full border border-rule rounded-sm px-2 py-1.5 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+        className="mt-0.5 w-full border border-rule rounded-sm px-2 py-1.5 text-sm bg-paper-raised placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-seal/40 invalid:border-red-400"
       />
     </label>
+  );
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** Parses the formats people actually type ("Jan 2022", "January 2022", "01/2022", "2022-01", "2022"). */
+function parseMonthYear(value: string): { month: string; year: string } | null {
+  const v = value.trim();
+  if (!v) return { month: "", year: "" };
+  let m = v.match(/^([A-Za-z]{3,9})\.?\s+(\d{4})$/);
+  if (m) {
+    const idx = MONTHS.findIndex((mo) => mo.toLowerCase() === m![1].slice(0, 3).toLowerCase());
+    return idx >= 0 ? { month: MONTHS[idx], year: m[2] } : null;
+  }
+  m = v.match(/^(\d{1,2})[/-](\d{4})$/);
+  if (m && +m[1] >= 1 && +m[1] <= 12) return { month: MONTHS[+m[1] - 1], year: m[2] };
+  m = v.match(/^(\d{4})-(\d{1,2})$/);
+  if (m && +m[2] >= 1 && +m[2] <= 12) return { month: MONTHS[+m[2] - 1], year: m[1] };
+  m = v.match(/^(\d{4})$/);
+  if (m) return { month: "", year: m[1] };
+  return null;
+}
+
+/**
+ * Month + year dropdowns that still store a plain, human-readable string
+ * ("Jan 2022") so every template, the PDF and the DOCX keep working
+ * unchanged. Anything we can't parse (e.g. an old "Summer 2019" entry) is
+ * left as editable text rather than silently wiped.
+ */
+function MonthYearInput({
+  label,
+  value,
+  onChange,
+  allowPresent = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  allowPresent?: boolean;
+}) {
+  const isPresent = allowPresent && value.trim().toLowerCase() === "present";
+  const parsed = isPresent ? { month: "", year: "" } : parseMonthYear(value);
+  const [freeText, setFreeText] = useState(parsed === null);
+  const thisYear = new Date().getFullYear();
+  const years = Array.from({ length: 60 }, (_, i) => String(thisYear + 5 - i));
+  const selectCls =
+    "border border-rule rounded-sm px-1.5 py-1.5 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40 disabled:opacity-50";
+
+  if (freeText) {
+    return (
+      <label className="block">
+        <span className="text-xs text-ink-soft">{label}</span>
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="mt-0.5 w-full border border-rule rounded-sm px-2 py-1.5 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+        />
+        <button type="button" onClick={() => { setFreeText(false); onChange(""); }} className="text-[11px] text-seal hover:underline mt-0.5">
+          Use month/year picker
+        </button>
+      </label>
+    );
+  }
+
+  const month = parsed?.month ?? "";
+  const year = parsed?.year ?? "";
+  const emit = (m: string, y: string) => onChange(y ? (m ? `${m} ${y}` : y) : "");
+
+  return (
+    <div>
+      <span className="text-xs text-ink-soft">{label}</span>
+      <div className="mt-0.5 flex gap-1.5">
+        <select
+          aria-label={`${label} month`}
+          value={month}
+          disabled={isPresent}
+          onChange={(e) => emit(e.target.value, year || String(thisYear))}
+          className={`${selectCls} flex-1 min-w-0`}
+        >
+          <option value="">Month</option>
+          {MONTHS.map((m) => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+        <select
+          aria-label={`${label} year`}
+          value={year}
+          disabled={isPresent}
+          onChange={(e) => emit(month, e.target.value)}
+          className={`${selectCls} flex-1 min-w-0`}
+        >
+          <option value="">Year</option>
+          {years.map((y) => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </select>
+      </div>
+      {allowPresent && (
+        <label className="flex items-center gap-1.5 text-xs text-ink-soft mt-1">
+          <input type="checkbox" checked={isPresent} onChange={(e) => onChange(e.target.checked ? "Present" : "")} />
+          I currently work here
+        </label>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Comma-separated list input that keeps the raw text while typing - parsing
+ * on every keystroke would eat a trailing comma/space and make it
+ * impossible to type the next item naturally.
+ */
+function CommaListInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string[];
+  onChange: (v: string[]) => void;
+  placeholder?: string;
+}) {
+  // While focused we show exactly what they typed; otherwise we show the
+  // canonical list (so changes from the AI agent or an import still appear).
+  const [text, setText] = useState(value.join(", "));
+  const [focused, setFocused] = useState(false);
+  return (
+    <input
+      value={focused ? text : value.join(", ")}
+      onFocus={() => {
+        setText(value.join(", "));
+        setFocused(true);
+      }}
+      onChange={(e) => {
+        setText(e.target.value);
+        onChange(e.target.value.split(",").map((x) => x.trim()).filter(Boolean));
+      }}
+      onBlur={() => setFocused(false)}
+      placeholder={placeholder}
+      className="w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-seal/40"
+    />
+  );
+}
+
+/** One item per line - for achievements, where items often contain commas. */
+function LineListInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string[];
+  onChange: (v: string[]) => void;
+  placeholder?: string;
+}) {
+  const [text, setText] = useState(value.join("\n"));
+  const [focused, setFocused] = useState(false);
+  return (
+    <textarea
+      value={focused ? text : value.join("\n")}
+      rows={3}
+      onFocus={() => {
+        setText(value.join("\n"));
+        setFocused(true);
+      }}
+      onBlur={() => setFocused(false)}
+      onChange={(e) => {
+        setText(e.target.value);
+        onChange(e.target.value.split("\n").map((x) => x.trim()).filter(Boolean));
+      }}
+      placeholder={placeholder}
+      className="w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-seal/40"
+    />
   );
 }

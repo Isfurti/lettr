@@ -1,5 +1,5 @@
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, BorderStyle } from "docx";
-import type { ResumeData } from "./types";
+import { extraSections, type ResumeData } from "./types";
 import { DEFAULT_ACCENT_COLOR } from "./customization";
 
 const INK = "1B2A4A";
@@ -83,6 +83,49 @@ export async function generateResumeDocx(resume: ResumeData): Promise<Buffer> {
   if (resume.skills.length > 0) {
     children.push(sectionHeading("Skills", seal));
     children.push(new Paragraph({ children: [new TextRun({ text: resume.skills.join("  •  "), size: 20 })] }));
+  }
+
+  const extra = extraSections(resume);
+  if (extra.projects.length > 0) {
+    children.push(sectionHeading("Projects", seal));
+    for (const p of extra.projects) {
+      children.push(
+        new Paragraph({
+          spacing: { before: 100 },
+          children: [
+            new TextRun({ text: p.name, bold: true, size: 20 }),
+            ...(p.link ? [new TextRun({ text: `  ·  ${p.link}`, size: 18, color: MUTED })] : []),
+          ],
+        })
+      );
+      if (p.description) {
+        children.push(new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: p.description, size: 20 })] }));
+      }
+    }
+  }
+  if (extra.certifications.length > 0) {
+    children.push(sectionHeading("Certifications", seal));
+    for (const c of extra.certifications) {
+      children.push(
+        new Paragraph({
+          spacing: { after: 40 },
+          children: [
+            new TextRun({ text: c.name, bold: true, size: 20 }),
+            new TextRun({ text: [c.issuer, c.date].filter(Boolean).join(", ") ? ` — ${[c.issuer, c.date].filter(Boolean).join(", ")}` : "", size: 20, color: MUTED }),
+          ],
+        })
+      );
+    }
+  }
+  if (extra.achievements.length > 0) {
+    children.push(sectionHeading("Achievements", seal));
+    for (const a of extra.achievements) {
+      children.push(new Paragraph({ bullet: { level: 0 }, spacing: { after: 40 }, children: [new TextRun({ text: a, size: 20 })] }));
+    }
+  }
+  if (extra.languages.length > 0) {
+    children.push(sectionHeading("Languages", seal));
+    children.push(new Paragraph({ children: [new TextRun({ text: extra.languages.join("  •  "), size: 20 })] }));
   }
 
   const doc = new Document({

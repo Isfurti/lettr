@@ -48,14 +48,14 @@ function SignupForm() {
     // If they were mid-export as a guest, finish that instead of just
     // dropping them on the dashboard - this is the whole point of letting
     // people build before signing up.
-    if (searchParams.get("continue") === "export") {
+    if (searchParams.get("continue") === "export" || searchParams.get("continue") === "builder") {
       const handled = await completeGuestExport((path) => router.push(path));
       setLoading(false);
       if (handled) return;
     }
 
     setLoading(false);
-    router.push("/dashboard");
+    router.push(searchParams.get("continue") === "import" ? "/dashboard?import=1" : "/dashboard");
   }
 
   return (
@@ -87,7 +87,7 @@ function SignupForm() {
         </button>
       </form>
 
-      <OAuthButtons />
+      <OAuthButtons callbackUrl={searchParams.get("continue") === "import" ? "/dashboard?import=1" : "/dashboard"} />
 
       <p className="text-sm text-ink-soft mt-6">
         Already have an account?{" "}

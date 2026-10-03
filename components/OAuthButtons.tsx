@@ -2,7 +2,7 @@
 
 import { signIn } from "next-auth/react";
 
-export function OAuthButtons() {
+export function OAuthButtons({ callbackUrl = "/dashboard" }: { callbackUrl?: string }) {
   return (
     <>
       <div className="relative my-6 text-center">
@@ -15,7 +15,7 @@ export function OAuthButtons() {
       <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
-          onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+          onClick={() => signIn("google", { callbackUrl })}
           className="flex items-center justify-center gap-2.5 border border-rule py-3 rounded-sm text-sm hover:bg-app-bg transition-colors"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -28,7 +28,7 @@ export function OAuthButtons() {
         </button>
         <button
           type="button"
-          onClick={() => signIn("linkedin", { callbackUrl: "/dashboard" })}
+          onClick={() => signIn("linkedin", { callbackUrl })}
           className="flex items-center justify-center gap-2.5 border border-rule py-3 rounded-sm text-sm hover:bg-app-bg transition-colors"
         >
           <svg className="w-4 h-4" fill="#0077b5" viewBox="0 0 24 24">

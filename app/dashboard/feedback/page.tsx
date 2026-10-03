@@ -9,7 +9,7 @@ export default async function FeedbackPage() {
   if (!session?.user) redirect("/login");
 
   return (
-    <div className="flex-1 flex app-shell">
+    <div className="flex-1 flex flex-col md:flex-row app-shell">
       <AppSidebar eyebrow="Resume workspace" isAdmin={isAdminEmail(session.user.email)} />
       <main className="flex-1 px-10 py-10 max-w-xl">
         <h1 className="font-display font-semibold text-3xl mb-1">How's Lettr working for you?</h1>

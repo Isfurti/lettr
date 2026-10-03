@@ -43,14 +43,14 @@ function LoginForm() {
       return;
     }
 
-    if (searchParams.get("continue") === "export") {
+    if (searchParams.get("continue") === "export" || searchParams.get("continue") === "builder") {
       const handled = await completeGuestExport((path) => router.push(path));
       setLoading(false);
       if (handled) return;
     }
 
     setLoading(false);
-    router.push("/dashboard");
+    router.push(searchParams.get("continue") === "import" ? "/dashboard?import=1" : "/dashboard");
   }
 
   return (
@@ -117,7 +117,7 @@ function LoginForm() {
           </button>
         </form>
 
-        <OAuthButtons />
+        <OAuthButtons callbackUrl={searchParams.get("continue") === "import" ? "/dashboard?import=1" : "/dashboard"} />
 
         <p className="text-sm text-ink-soft mt-8 text-center">
           Don&apos;t have an account?{" "}

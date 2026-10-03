@@ -33,7 +33,34 @@ export function AppSidebar({
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 shrink-0 bg-navy-deep text-white/90 flex flex-col min-h-screen">
+    <>
+    {/* Phones: a compact top bar instead of a 256px sidebar that would eat the whole screen. */}
+    <div className="md:hidden bg-navy-deep text-white/90">
+      <div className="px-4 py-3 flex items-center justify-between">
+        <Link href="/" className="font-display font-semibold text-base text-white">{title}</Link>
+        <button onClick={() => signOut({ callbackUrl: "/" })} className="text-xs text-white/60 hover:text-white">
+          Sign out
+        </button>
+      </div>
+      <nav className="flex gap-1 px-2 pb-2 overflow-x-auto whitespace-nowrap">
+        {NAV_ITEMS.map((item) => {
+          const active = pathname === item.href;
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`px-3 py-1.5 rounded-sm text-xs shrink-0 ${active ? "bg-white/10 text-white font-medium" : "text-white/60"}`}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
+        {isAdmin && (
+          <Link href="/admin" className="px-3 py-1.5 rounded-sm text-xs shrink-0 text-white/60">Admin</Link>
+        )}
+      </nav>
+    </div>
+    <aside className="hidden md:flex w-64 shrink-0 bg-navy-deep text-white/90 flex-col min-h-screen">
       <Link href="/" className="px-6 py-6 flex items-center gap-2.5 hover:opacity-90">
         <div className="w-8 h-8 rounded-sm bg-seal flex items-center justify-center shrink-0">
           <Sparkles className="w-4 h-4 text-white" strokeWidth={2.5} />
@@ -91,5 +118,6 @@ export function AppSidebar({
         </button>
       </div>
     </aside>
+    </>
   );
 }

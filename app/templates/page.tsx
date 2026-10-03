@@ -4,6 +4,7 @@ import { TopNav } from "@/components/TopNav";
 import { PublicNav } from "@/components/PublicNav";
 import { Footer } from "@/components/Footer";
 import { UseTemplateButton } from "@/components/UseTemplateButton";
+import { TemplateThumbnail } from "@/components/TemplateThumbnail";
 import { TEMPLATE_IDS, isTemplateFree, type TemplateId } from "@/lib/templates";
 import { getUserById } from "@/lib/db";
 import type { Plan } from "@/lib/limits";
@@ -54,12 +55,13 @@ export default async function TemplatesPage() {
     <div className="flex-1 flex flex-col bg-paper">
       {session?.user ? <TopNav active="templates" userInitial={initial} /> : <PublicNav />}
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-8 py-12">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-8 py-10 sm:py-12">
         <p className="text-xs uppercase tracking-wide text-seal font-medium mb-2">Curated collection</p>
         <h1 className="font-display font-semibold text-4xl mb-3">Resume Templates</h1>
         <p className="text-ink-soft max-w-xl mb-10">
           10 layouts, all built around the same ATS-safe structure. <strong>Classic and Modern are
-          free</strong> — the other 8 are part of Pro.
+          free</strong> — the other 8 are part of Pro. You can preview any of them with your own content
+          before deciding.
         </p>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -72,7 +74,7 @@ export default async function TemplatesPage() {
                     Pro
                   </span>
                 )}
-                <div className="aspect-[3/4] bg-app-bg p-3">
+                <div className="aspect-[3/4] bg-app-bg p-3 border-b border-rule">
                   <TemplateThumbnail id={t.id} />
                 </div>
                 <div className="p-4 flex-1 flex flex-col">
@@ -87,6 +89,7 @@ export default async function TemplatesPage() {
                   </div>
                   <UseTemplateButton
                     template={t.id}
+                    label={free || plan === "pro" ? "Use this template" : "Try this template"}
                     isLoggedIn={Boolean(session?.user)}
                     locked={Boolean(session?.user) && plan === "free" && !free}
                   />
@@ -97,128 +100,6 @@ export default async function TemplatesPage() {
         </div>
       </main>
       <Footer />
-    </div>
-  );
-}
-
-function TemplateThumbnail({ id }: { id: string }) {
-  if (id === "modern") {
-    return (
-      <div className="w-full h-full bg-white rounded-sm overflow-hidden text-[6px]">
-        <div className="bg-ink px-2 py-2">
-          <div className="h-1.5 w-2/3 bg-white/90 rounded-sm mb-1" />
-          <div className="h-1 w-1/2 bg-white/50 rounded-sm" />
-        </div>
-        <div className="p-2 space-y-1">
-          <div className="h-1 w-1/3 bg-seal rounded-sm" />
-          <div className="h-0.5 w-full bg-ink-soft/20 rounded-sm" />
-          <div className="h-0.5 w-4/5 bg-ink-soft/20 rounded-sm" />
-          <div className="h-1 w-1/3 bg-seal rounded-sm mt-1.5" />
-          <div className="h-0.5 w-full bg-ink-soft/20 rounded-sm" />
-        </div>
-      </div>
-    );
-  }
-  if (id === "bold") {
-    return (
-      <div className="w-full h-full bg-white rounded-sm p-2 text-[6px]">
-        <div className="h-2 w-3/4 bg-ink rounded-sm mb-0.5" />
-        <div className="h-0.5 w-8 bg-seal rounded-sm mb-1.5" />
-        <div className="h-1 w-1/4 bg-ink rounded-sm mb-1" />
-        <div className="h-0.5 w-full bg-ink-soft/20 rounded-sm" />
-        <div className="h-0.5 w-4/5 bg-ink-soft/20 rounded-sm mb-1" />
-        <div className="h-1 w-1/4 bg-ink rounded-sm mb-1" />
-        <div className="h-0.5 w-full bg-ink-soft/20 rounded-sm" />
-      </div>
-    );
-  }
-  if (id === "sidebar") {
-    return (
-      <div className="w-full h-full bg-white rounded-sm overflow-hidden text-[6px] flex">
-        <div className="w-1/3 bg-seal p-1.5 space-y-1">
-          <div className="h-1.5 w-full bg-white/90 rounded-sm mb-1" />
-          <div className="h-0.5 w-full bg-white/40 rounded-sm" />
-          <div className="h-0.5 w-full bg-white/40 rounded-sm" />
-        </div>
-        <div className="flex-1 p-2 space-y-1">
-          <div className="h-1 w-1/2 bg-seal rounded-sm" />
-          <div className="h-0.5 w-full bg-ink-soft/20 rounded-sm" />
-          <div className="h-0.5 w-4/5 bg-ink-soft/20 rounded-sm" />
-        </div>
-      </div>
-    );
-  }
-  if (id === "minimal") {
-    return (
-      <div className="w-full h-full bg-white rounded-sm p-2 space-y-1 text-[6px]">
-        <div className="h-1.5 w-2/3 bg-black rounded-sm mb-1" />
-        <div className="h-0.5 w-1/4 bg-black rounded-sm" />
-        <div className="h-0.5 w-full bg-black/20 rounded-sm" />
-        <div className="h-0.5 w-4/5 bg-black/20 rounded-sm" />
-      </div>
-    );
-  }
-  if (id === "executive") {
-    return (
-      <div className="w-full h-full bg-white rounded-sm p-2 space-y-1 text-[6px] flex flex-col items-center">
-        <div className="h-1.5 w-1/2 bg-ink rounded-sm mb-0.5" />
-        <div className="h-px w-1/4 bg-seal mb-1" />
-        <div className="h-0.5 w-3/4 bg-ink-soft/20 rounded-sm" />
-        <div className="h-0.5 w-2/3 bg-ink-soft/20 rounded-sm" />
-      </div>
-    );
-  }
-  if (id === "technical") {
-    return (
-      <div className="w-full h-full bg-white rounded-sm p-2 space-y-1 text-[6px] font-mono">
-        <div className="h-1.5 w-2/3 bg-ink rounded-sm mb-1" />
-        <div className="h-0.5 w-1/3 bg-seal rounded-sm" />
-        <div className="h-0.5 w-full bg-ink-soft/20 rounded-sm border-l-2 border-seal pl-1" />
-        <div className="h-0.5 w-4/5 bg-ink-soft/20 rounded-sm border-l-2 border-seal pl-1" />
-      </div>
-    );
-  }
-  if (id === "timeline") {
-    return (
-      <div className="w-full h-full bg-white rounded-sm p-2 space-y-2 text-[6px]">
-        <div className="h-1.5 w-2/3 bg-ink rounded-sm mb-1" />
-        <div className="flex gap-1 items-start">
-          <div className="w-1 h-1 rounded-full bg-seal mt-0.5 shrink-0" />
-          <div className="flex-1 space-y-0.5">
-            <div className="h-0.5 w-full bg-ink-soft/20 rounded-sm" />
-            <div className="h-0.5 w-4/5 bg-ink-soft/20 rounded-sm" />
-          </div>
-        </div>
-        <div className="flex gap-1 items-start">
-          <div className="w-1 h-1 rounded-full bg-seal mt-0.5 shrink-0" />
-          <div className="flex-1 space-y-0.5">
-            <div className="h-0.5 w-full bg-ink-soft/20 rounded-sm" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-  if (id === "elegant") {
-    return (
-      <div className="w-full h-full bg-white rounded-sm p-2 space-y-1 text-[6px]">
-        <div className="h-1.5 w-1/2 bg-ink rounded-sm mb-0.5" />
-        <div className="h-px w-full bg-rule mb-1" />
-        <div className="h-0.5 w-1/3 bg-seal rounded-sm" />
-        <div className="h-0.5 w-full bg-ink-soft/20 rounded-sm italic" />
-      </div>
-    );
-  }
-  const dense = id === "compact";
-  return (
-    <div className={`w-full h-full bg-white rounded-sm p-2 text-[6px] ${dense ? "space-y-0.5" : "space-y-1"}`}>
-      <div className="h-1.5 w-2/3 bg-ink rounded-sm mb-0.5" />
-      <div className="h-0.5 w-1/2 bg-ink-soft/40 rounded-sm mb-1.5" />
-      <div className="h-0.5 w-1/4 bg-seal rounded-sm" />
-      <div className="h-0.5 w-full bg-ink-soft/20 rounded-sm" />
-      <div className="h-0.5 w-4/5 bg-ink-soft/20 rounded-sm mb-1" />
-      <div className="h-0.5 w-1/4 bg-seal rounded-sm" />
-      <div className="h-0.5 w-full bg-ink-soft/20 rounded-sm" />
-      <div className="h-0.5 w-3/5 bg-ink-soft/20 rounded-sm" />
     </div>
   );
 }

@@ -39,20 +39,37 @@ export function clearGuestDraft() {
   }
 }
 
+/** True when the draft has anything worth saving (not just an untouched blank form). */
+export function guestDraftHasContent(draft: GuestDraft | null): draft is GuestDraft {
+  if (!draft?.data) return false;
+  const d = draft.data;
+  return Boolean(
+    d.contact?.fullName?.trim() ||
+      d.contact?.email?.trim() ||
+      d.summary?.trim() ||
+      d.experience?.length ||
+      d.education?.length ||
+      d.skills?.length
+  );
+}
+
 /**
- * Called right after a successful signup/login when a guest was mid-export.
+ * Called right after a successful signup/login when a guest was mid-export
+ * (or just wants to keep building with AI unlocked).
  * Creates the real, saved resume from their local draft, downloads the file
  * they originally asked for, then sends them to the real editor for it.
  * Returns true if it handled everything (caller should not also redirect).
  */
 export async function completeGuestExport(navigate: (path: string) => void): Promise<boolean> {
   const draft = loadGuestDraft();
-  if (!draft?.pendingExport) return false;
+  if (!guestDraftHasContent(draft)) return false;
 
+  const name = draft.data.contact?.fullName?.trim();
+  const title = name ? `${name} — Resume` : "Untitled Resume";
   let createRes = await fetch("/api/resumes", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title: "Untitled Resume", template: draft.template, data: draft.data }),
+    body: JSON.stringify({ title, template: draft.template, data: draft.data }),
   });
 
   // If their chosen template isn't available on the plan they just signed
@@ -67,12 +84,20 @@ export async function completeGuestExport(navigate: (path: string) => void): Pro
     createRes = await fetch("/api/resumes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: "Untitled Resume", template: effectiveTemplate, data: draft.data }),
+      body: JSON.stringify({ title, template: effectiveTemplate, data: draft.data }),
     });
   }
 
   if (!createRes.ok) return false;
   const { id } = await createRes.json();
+
+  // No export was pending (e.g. they signed up to unlock AI) - just move
+  // their draft into the account and drop them back into the editor.
+  if (!draft.pendingExport) {
+    clearGuestDraft();
+    navigate(`/builder/${id}`);
+    return true;
+  }
 
   const exportPath = draft.pendingExport === "docx" ? "/api/resumes/docx" : "/api/resumes/pdf";
   const exportRes = await fetch(exportPath, {

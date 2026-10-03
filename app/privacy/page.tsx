@@ -64,8 +64,9 @@ export default function PrivacyPage() {
           <section>
             <h2 className="font-display font-semibold text-lg mb-2">Your data, your control</h2>
             <p className="text-ink-soft">
-              You can delete any resume at any time from your dashboard. To delete your account
-              entirely, contact us at{" "}
+              You can delete any resume at any time from your dashboard, and delete your whole account
+              yourself from the Account section at the bottom of your dashboard. If you need help, contact
+              us via{" "}
               <Link href="/support" className="text-seal hover:underline">the support page</Link>.
             </p>
           </section>

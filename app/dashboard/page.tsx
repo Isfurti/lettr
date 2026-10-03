@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
@@ -14,11 +15,15 @@ import { ImportResumeButton } from "@/components/ImportResumeButton";
 import { BillingPortalButton } from "@/components/BillingPortalButton";
 import { ResumeSearch } from "@/components/ResumeSearch";
 import { VerifyEmailBanner } from "@/components/VerifyEmailBanner";
+import { GuestDraftRescue } from "@/components/GuestDraftRescue";
+import { DeleteAccountButton } from "@/components/DeleteAccountButton";
+
+export const metadata: Metadata = { title: "Dashboard | Lettr", robots: { index: false } };
 
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ drive_connected?: string; drive_error?: string }>;
+  searchParams: Promise<{ drive_connected?: string; drive_error?: string; import?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
@@ -32,7 +37,7 @@ export default async function DashboardPage({
   const plan = (user?.plan ?? "free") as Plan;
   const resumeLimit = PLAN_LIMITS[plan].maxResumes;
   const atResumeLimit = resumeRows.length >= resumeLimit;
-  const { drive_connected, drive_error } = await searchParams;
+  const { drive_connected, drive_error, import: wantsImport } = await searchParams;
 
   const resumes = resumeRows.map((r) => ({ ...r, data: JSON.parse(r.data) as ResumeData }));
   const mostRecent = resumes[0];
@@ -43,11 +48,12 @@ export default async function DashboardPage({
   const initial = displayName[0]?.toUpperCase() ?? "?";
 
   return (
-    <div className="flex-1 flex app-shell">
+    <div className="flex-1 flex flex-col md:flex-row app-shell">
       <AppSidebar eyebrow="Resume workspace" isAdmin={isAdmin} />
 
-      <main className="flex-1 px-10 py-10 max-w-6xl">
+      <main className="flex-1 px-4 sm:px-10 py-6 sm:py-10 max-w-6xl w-full">
         {user && !user.email_verified && <VerifyEmailBanner />}
+        <GuestDraftRescue />
         {drive_connected && (
           <div className="mb-6 bg-seal-soft text-seal-deep text-sm rounded-sm px-4 py-3">
             Google Drive connected. You can now save resumes straight to Drive from the builder.
@@ -59,9 +65,27 @@ export default async function DashboardPage({
           </div>
         )}
 
-        <div className="flex items-start justify-between mb-8">
+        {(wantsImport || resumes.length === 0) && !atResumeLimit && (
+          <div className="mb-8 paper-sheet rounded-sm p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 border-seal">
+            <div>
+              <p className="font-display font-semibold text-lg mb-1">
+                {wantsImport ? "Upload your current resume" : "Start with the resume you already have"}
+              </p>
+              <p className="text-sm text-ink-soft">
+                Upload a PDF or Word file and Lettr fills in every section for you. Or start from a blank,
+                guided form.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
+              <ImportResumeButton />
+              <NewResumeButton label="Start from scratch" />
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
           <div>
-            <h1 className="font-display font-semibold text-3xl mb-1">Welcome back, {displayName}.</h1>
+            <h1 className="font-display font-semibold text-2xl sm:text-3xl mb-1">Welcome back, {displayName}.</h1>
             <p className="text-ink-soft">
               {resumes.length === 0
                 ? "Let's build your first resume."
@@ -186,6 +210,45 @@ export default async function DashboardPage({
           }))}
           atResumeLimit={atResumeLimit}
         />
+
+        {plan === "free" && user && (
+          <section className="mt-10 paper-sheet rounded-sm p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <p className="text-xs uppercase tracking-wide text-ink-soft font-medium">Your free plan</p>
+              <Link href="/pricing" className="text-sm text-seal font-medium hover:underline">Get unlimited with Pro →</Link>
+            </div>
+            <div className="grid sm:grid-cols-3 gap-4">
+              {[
+                { label: "Resumes", used: resumes.length, limit: PLAN_LIMITS.free.maxResumes },
+                { label: "PDF downloads", used: user.pdf_download_count ?? 0, limit: PLAN_LIMITS.free.maxPdfDownloads },
+                { label: "AI rewrites", used: user.ai_writing_assist_count ?? 0, limit: PLAN_LIMITS.free.maxAiWritingAssists },
+              ].map((u) => {
+                const used = Math.min(u.used, u.limit);
+                return (
+                  <div key={u.label}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>{u.label}</span>
+                      <span className="text-ink-soft">
+                        {used} of {u.limit} used
+                      </span>
+                    </div>
+                    <div className="h-1.5 bg-rule/40 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${used >= u.limit ? "bg-red-500" : "bg-seal"}`}
+                        style={{ width: `${(used / u.limit) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        <section className="mt-10 pt-6 border-t border-rule">
+          <p className="text-xs uppercase tracking-wide text-ink-soft font-medium mb-3">Account</p>
+          <DeleteAccountButton />
+        </section>
       </main>
     </div>
   );

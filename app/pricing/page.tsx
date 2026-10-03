@@ -24,10 +24,9 @@ const COMPARISON: { feature: string; free: string | boolean; pro: string | boole
   { feature: "Resumes", free: "1", pro: "Unlimited" },
   { feature: "Templates", free: "2 (Classic, Modern)", pro: "All 10" },
   { feature: "PDF downloads", free: "3", pro: "Unlimited" },
-  { feature: "AI bullet rewriting", free: "5 lifetime", pro: "Unlimited" },
-  { feature: "AI resume summary writer", free: "5 lifetime", pro: "Unlimited" },
+  { feature: "AI bullet & summary rewriting", free: "5 total", pro: "Unlimited" },
   { feature: "AI Resume Agent (chat editing)", free: false, pro: true },
-  { feature: "Resume quality score", free: true, pro: true },
+  { feature: "Resume quality score", free: "Score + next best fix", pro: "Full breakdown" },
   { feature: "Job match / keyword targeting", free: true, pro: true },
   { feature: "AI cover letter builder", free: false, pro: true },
   { feature: "AI resignation letter builder", free: false, pro: true },
@@ -42,7 +41,7 @@ const FAQS = [
   },
   {
     q: "How does the resume score work?",
-    a: "It's a real, deterministic check of your resume's structure — contact completeness, summary quality, whether your bullets use strong action verbs and quantified results, education, and skill count. It's not a black box; you can read the exact logic in the codebase.",
+    a: "It's a real, deterministic check of your resume's structure — contact completeness, summary quality, whether your bullets use strong action verbs and quantified results, education, and skill count. It's not a black box: the Score tab tells you exactly what to fix next.",
   },
   {
     q: "What does the AI actually rewrite?",
@@ -78,11 +77,14 @@ export default async function PricingPage() {
     regionalPrice = getDisplayPriceForCountry(country);
   }
 
+  // Show Free in the same currency as Pro, so the page never mixes "$0" with "₹399".
+  const currencySymbol = regionalPrice.display.match(/^[^\d]+/)?.[0] ?? "$";
+
   return (
     <main className="flex-1">
       <PublicNav />
-      <section className="max-w-3xl mx-auto w-full px-8 pt-20 pb-16 text-center">
-        <h1 className="font-display text-5xl font-bold leading-tight mb-6">
+      <section className="max-w-3xl mx-auto w-full px-4 sm:px-8 pt-12 sm:pt-20 pb-12 sm:pb-16 text-center">
+        <h1 className="font-display text-4xl sm:text-5xl font-bold leading-tight mb-6">
           Invest in your career&apos;s first impression.
         </h1>
         <p className="text-ink-soft text-lg max-w-xl mx-auto">
@@ -90,13 +92,13 @@ export default async function PricingPage() {
         </p>
       </section>
 
-      <section className="max-w-5xl mx-auto w-full px-8 pb-24">
+      <section className="max-w-5xl mx-auto w-full px-4 sm:px-8 pb-24">
         <div className="grid md:grid-cols-2 gap-6 items-stretch">
-          <Reveal className="paper-sheet rounded-sm p-10 flex flex-col">
+          <Reveal className="paper-sheet rounded-sm p-6 sm:p-10 flex flex-col">
             <p className="text-xs uppercase tracking-wide text-ink-soft mb-2">Entry level</p>
             <h2 className="font-display font-semibold text-2xl mb-6">Free</h2>
             <div className="mb-8">
-              <span className="font-display text-4xl font-bold">$0</span>
+              <span className="font-display text-4xl font-bold">{currencySymbol}0</span>
               <span className="text-ink-soft"> / forever</span>
             </div>
             <ul className="space-y-3 mb-10 flex-1 text-sm">
@@ -116,7 +118,7 @@ export default async function PricingPage() {
             </Link>
           </Reveal>
 
-          <Reveal delay={100} className="bg-ink text-white rounded-sm p-10 flex flex-col relative overflow-hidden md:-mt-4 md:mb-4">
+          <Reveal delay={100} className="bg-ink text-white rounded-sm p-6 sm:p-10 flex flex-col relative overflow-hidden md:-mt-4 md:mb-4">
             <div className="absolute top-4 right-[-38px] bg-seal text-white text-[10px] font-semibold tracking-wide px-10 py-1 rotate-45">
               RECOMMENDED
             </div>
@@ -146,7 +148,7 @@ export default async function PricingPage() {
       </section>
 
       <section className="bg-white border-y border-rule">
-        <div className="max-w-4xl mx-auto w-full px-8 py-20">
+        <div className="max-w-4xl mx-auto w-full px-4 sm:px-8 py-16 sm:py-20">
           <Reveal className="text-center mb-14">
             <h2 className="font-display font-semibold text-3xl mb-2">Compare plans</h2>
             <p className="text-ink-soft">Every feature, side by side.</p>
@@ -178,7 +180,7 @@ export default async function PricingPage() {
         </div>
       </section>
 
-      <section className="max-w-4xl mx-auto w-full px-8 py-20">
+      <section className="max-w-4xl mx-auto w-full px-4 sm:px-8 py-16 sm:py-20">
         <div className="grid md:grid-cols-12 gap-10">
           <Reveal className="md:col-span-4">
             <h2 className="font-display font-semibold text-2xl mb-3">Frequently asked questions</h2>
@@ -206,7 +208,7 @@ export default async function PricingPage() {
             <div key={i} className="border-r border-white/20" />
           ))}
         </div>
-        <div className="max-w-3xl mx-auto w-full px-8 py-24 text-center relative z-10">
+        <div className="max-w-3xl mx-auto w-full px-4 sm:px-8 py-20 sm:py-24 text-center relative z-10">
           <Reveal>
             <h2 className="font-display text-4xl font-bold mb-8">Ready to write your next chapter?</h2>
             <Link

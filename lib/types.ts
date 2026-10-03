@@ -16,6 +16,20 @@ export type EducationEntry = {
   endDate: string;
 };
 
+export type ProjectEntry = {
+  id: string;
+  name: string;
+  link?: string;
+  description: string;
+};
+
+export type CertificationEntry = {
+  id: string;
+  name: string;
+  issuer?: string;
+  date?: string;
+};
+
 export type ResumeCustomization = {
   accentColor?: string; // hex, e.g. "#b8862e" - defaults to app seal gold if unset
   fontChoice?: "editorial" | "elegant" | "classic"; // preview-only, see lib/fonts.ts
@@ -42,8 +56,24 @@ export type ResumeData = {
   experience: ExperienceEntry[];
   education: EducationEntry[];
   skills: string[];
+  // Optional sections - older saved resumes won't have these, so every
+  // reader must treat them as possibly undefined (use the helpers below).
+  projects?: ProjectEntry[];
+  certifications?: CertificationEntry[];
+  languages?: string[];
+  achievements?: string[];
   customization?: ResumeCustomization;
 };
+
+/** Safe accessors for the optional sections, so render code never has to null-check. */
+export function extraSections(data: ResumeData) {
+  return {
+    projects: (data.projects ?? []).filter((p) => p.name.trim() || p.description.trim()),
+    certifications: (data.certifications ?? []).filter((c) => c.name.trim()),
+    languages: (data.languages ?? []).filter((l) => l.trim()),
+    achievements: (data.achievements ?? []).filter((a) => a.trim()),
+  };
+}
 
 export const emptyResume: ResumeData = {
   contact: { fullName: "", email: "" },

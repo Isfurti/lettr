@@ -1,5 +1,7 @@
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
-import type { ResumeData } from "@/lib/types";
+import type { Style } from "@react-pdf/types";
+import { extraSections, type ResumeData } from "@/lib/types";
+import { pdfFonts } from "@/lib/pdf-fonts";
 import { DEFAULT_ACCENT_COLOR, darkenHex, softenHex } from "@/lib/customization";
 
 const INK = "#1b2a4a";
@@ -50,12 +52,13 @@ export function ResumePdfDocument({ resume, template = "classic" }: { resume: Re
 // ---------- Standard / Compact ----------
 
 function ClassicPdf({ resume, seal, dense }: { resume: ResumeData; seal: string; dense: boolean }) {
+  const f = pdfFonts(resume);
   const { showDividers, indent, photo } = layoutFlags(resume);
   const s = StyleSheet.create({
-    page: { padding: dense ? 28 : 36, fontSize: dense ? 9 : 10, fontFamily: "Helvetica" },
+    page: { padding: dense ? 28 : 36, fontSize: dense ? 9 : 10, fontFamily: f.body },
     headerRow: { flexDirection: "row", alignItems: "center", gap: 12 },
     photo: { width: 56, height: 56, borderRadius: 28 },
-    name: { fontSize: 20, fontWeight: 700, marginBottom: 2, color: INK },
+    name: { fontFamily: f.display, fontSize: 20, fontWeight: 700, marginBottom: 2, color: INK },
     contactLine: { fontSize: 9, color: MUTED, marginBottom: 12 },
     sectionTitle: {
       fontSize: 11, fontWeight: 700, marginTop: 12, marginBottom: 4,
@@ -105,6 +108,7 @@ function ClassicPdf({ resume, seal, dense }: { resume: ResumeData; seal: string;
           </>
         )}
         {resume.skills.length > 0 && (<><Text style={s.sectionTitle}>Skills</Text><Text>{resume.skills.join(" • ")}</Text></>)}
+        <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} />
       </Page>
     </Document>
   );
@@ -113,12 +117,13 @@ function ClassicPdf({ resume, seal, dense }: { resume: ResumeData; seal: string;
 // ---------- Modern ----------
 
 function ModernPdf({ resume, seal, sealSoft }: { resume: ResumeData; seal: string; sealSoft: string }) {
+  const f = pdfFonts(resume);
   const { showDividers, indent, photo } = layoutFlags(resume);
   const s = StyleSheet.create({
-    page: { fontSize: 10, fontFamily: "Helvetica" },
+    page: { fontSize: 10, fontFamily: f.body },
     header: { backgroundColor: INK, color: PAPER, padding: 24, flexDirection: "row", alignItems: "center", gap: 14 },
     photo: { width: 56, height: 56, borderRadius: 28 },
-    name: { fontSize: 20, fontWeight: 700 },
+    name: { fontFamily: f.display, fontSize: 20, fontWeight: 700 },
     contactLine: { fontSize: 9, marginTop: 4, opacity: 0.85 },
     body: { padding: 24 },
     sectionTitle: {
@@ -177,6 +182,7 @@ function ModernPdf({ resume, seal, sealSoft }: { resume: ResumeData; seal: strin
               <View style={s.chipsRow}>{resume.skills.map((skill) => <Text key={skill} style={s.chip}>{skill}</Text>)}</View>
             </>
           )}
+          <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} />
         </View>
       </Page>
     </Document>
@@ -186,12 +192,13 @@ function ModernPdf({ resume, seal, sealSoft }: { resume: ResumeData; seal: strin
 // ---------- Bold ----------
 
 function BoldPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
+  const f = pdfFonts(resume);
   const { showDividers, indent, photo } = layoutFlags(resume);
   const s = StyleSheet.create({
-    page: { padding: 36, fontSize: 10, fontFamily: "Helvetica" },
+    page: { padding: 36, fontSize: 10, fontFamily: f.body },
     headerRow: { flexDirection: "row", alignItems: "center", gap: 14 },
     photo: { width: 64, height: 64, borderRadius: 32 },
-    name: { fontSize: 26, fontWeight: 700, textTransform: "uppercase", color: INK },
+    name: { fontFamily: f.display, fontSize: 26, fontWeight: 700, textTransform: "uppercase", color: INK },
     rule: { height: 3, backgroundColor: seal, width: 60, marginTop: 6, marginBottom: 6 },
     contactLine: { fontSize: 9, color: MUTED, marginBottom: 8 },
     sectionTitle: showDividers
@@ -243,6 +250,7 @@ function BoldPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
           </>
         )}
         {resume.skills.length > 0 && (<><Text style={s.sectionTitle}>Skills</Text><Text style={{ fontWeight: 700 }}>{resume.skills.join("  /  ")}</Text></>)}
+        <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} />
       </Page>
     </Document>
   );
@@ -251,13 +259,14 @@ function BoldPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
 // ---------- Sidebar ----------
 
 function SidebarPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
+  const f = pdfFonts(resume);
   const { showDividers, indent, photo } = layoutFlags(resume);
   const s = StyleSheet.create({
-    page: { fontSize: 10, fontFamily: "Helvetica", flexDirection: "row" },
+    page: { fontSize: 10, fontFamily: f.body, flexDirection: "row" },
     sidebar: { width: "34%", backgroundColor: seal, color: "#ffffff", padding: 18 },
     main: { width: "66%", padding: 20 },
     photo: { width: 64, height: 64, borderRadius: 32, marginBottom: 10 },
-    name: { fontSize: 16, fontWeight: 700, marginBottom: 8 },
+    name: { fontFamily: f.display, fontSize: 16, fontWeight: 700, marginBottom: 8 },
     contactLine: { fontSize: 8.5, marginBottom: 3, opacity: 0.95 },
     sideSection: showDividers ? { marginTop: 14, borderTop: "1 solid rgba(255,255,255,0.3)", paddingTop: 10 } : { marginTop: 14 },
     sideHeading: { fontSize: 8, fontWeight: 700, textTransform: "uppercase", marginBottom: 5, opacity: 0.85 },
@@ -315,6 +324,7 @@ function SidebarPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
               ))}
             </>
           )}
+          <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} />
         </View>
       </Page>
     </Document>
@@ -324,12 +334,13 @@ function SidebarPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
 // ---------- Minimal ----------
 
 function MinimalPdf({ resume }: { resume: ResumeData }) {
+  const f = pdfFonts(resume);
   const { showDividers, indent, photo } = layoutFlags(resume);
   const s = StyleSheet.create({
-    page: { padding: 36, fontSize: 10, fontFamily: "Helvetica", color: "#000000" },
+    page: { padding: 36, fontSize: 10, fontFamily: f.body, color: "#000000" },
     headerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
     photo: { width: 44, height: 44, borderRadius: 22 },
-    name: { fontSize: 18, fontWeight: 700 },
+    name: { fontFamily: f.display, fontSize: 18, fontWeight: 700 },
     contactLine: { fontSize: 9, marginBottom: 10 },
     sectionTitle: {
       fontSize: 9, fontWeight: 700, textTransform: "uppercase", marginTop: 12, marginBottom: 3,
@@ -371,6 +382,7 @@ function MinimalPdf({ resume }: { resume: ResumeData }) {
           </>
         )}
         {resume.skills.length > 0 && (<><Text style={s.sectionTitle}>Skills</Text><Text style={{ fontSize: 9.5 }}>{resume.skills.join(", ")}</Text></>)}
+        <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} />
       </Page>
     </Document>
   );
@@ -379,11 +391,12 @@ function MinimalPdf({ resume }: { resume: ResumeData }) {
 // ---------- Executive ----------
 
 function ExecutivePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
+  const f = pdfFonts(resume);
   const { showDividers, indent, photo } = layoutFlags(resume);
   const s = StyleSheet.create({
-    page: { padding: 44, fontSize: 10, fontFamily: "Helvetica", textAlign: "center" },
+    page: { padding: 44, fontSize: 10, fontFamily: f.body, textAlign: "center" },
     photo: { width: 60, height: 60, borderRadius: 30, marginHorizontal: "auto", marginBottom: 10 },
-    name: { fontSize: 22, marginBottom: 4 },
+    name: { fontFamily: f.display, fontSize: 22, marginBottom: 4 },
     rule: { height: 1, backgroundColor: seal, width: 80, marginHorizontal: "auto", marginVertical: 8 },
     contactLine: { fontSize: 9, color: MUTED, marginBottom: 16 },
     summary: { fontSize: 9.5, lineHeight: 1.5, marginBottom: 16, marginHorizontal: 40 },
@@ -419,6 +432,7 @@ function ExecutivePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
           </>
         )}
         {resume.skills.length > 0 && <Text style={{ fontSize: 9.5, color: MUTED, marginTop: 12 }}>{resume.skills.join(" · ")}</Text>}
+        <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} align="center" />
       </Page>
     </Document>
   );
@@ -427,12 +441,13 @@ function ExecutivePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
 // ---------- Technical ----------
 
 function TechnicalPdf({ resume, seal, sealSoft, sealDeep }: { resume: ResumeData; seal: string; sealSoft: string; sealDeep: string }) {
+  const f = pdfFonts(resume);
   const { showDividers, indent, photo } = layoutFlags(resume);
   const s = StyleSheet.create({
     page: { padding: 32, fontSize: 10, fontFamily: "Courier" },
     headerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
     photo: { width: 48, height: 48, borderRadius: 4 },
-    name: { fontSize: 16, fontWeight: 700 },
+    name: { fontFamily: f.display, fontSize: 16, fontWeight: 700 },
     contactLine: { fontSize: 8.5, color: seal, marginBottom: 10 },
     sectionTitle: { fontSize: 9, color: MUTED, marginTop: 10, marginBottom: 4 },
     entryTitle: { fontSize: 9.5, fontWeight: 700 },
@@ -454,7 +469,7 @@ function TechnicalPdf({ resume, seal, sealSoft, sealDeep }: { resume: ResumeData
             <Text style={s.contactLine}>{contactLine(resume)}</Text>
           </View>
         </View>
-        {resume.summary ? (<><Text style={s.sectionTitle}>// summary</Text><Text style={{ fontSize: 9.5, fontFamily: "Helvetica", lineHeight: 1.35 }}>{resume.summary}</Text></>) : null}
+        {resume.summary ? (<><Text style={s.sectionTitle}>// summary</Text><Text style={{ fontSize: 9.5, fontFamily: f.body, lineHeight: 1.35 }}>{resume.summary}</Text></>) : null}
         {resume.experience.length > 0 && (
           <>
             <Text style={s.sectionTitle}>// experience</Text>
@@ -462,7 +477,7 @@ function TechnicalPdf({ resume, seal, sealSoft, sealDeep }: { resume: ResumeData
               <View key={exp.id} wrap={false} style={entryStyle}>
                 <Text style={s.entryTitle}>{exp.role}() @ {exp.company}</Text>
                 <Text style={s.entryMeta}>{exp.startDate} – {exp.endDate}</Text>
-                {exp.bullets.map((b, i) => <Text key={i} style={{ ...s.bullet, fontFamily: "Helvetica" }}>&gt; {b}</Text>)}
+                {exp.bullets.map((b, i) => <Text key={i} style={{ ...s.bullet, fontFamily: f.body }}>&gt; {b}</Text>)}
               </View>
             ))}
           </>
@@ -470,7 +485,7 @@ function TechnicalPdf({ resume, seal, sealSoft, sealDeep }: { resume: ResumeData
         {resume.education.length > 0 && (
           <>
             <Text style={s.sectionTitle}>// education</Text>
-            {resume.education.map((edu) => <Text key={edu.id} style={{ fontSize: 9.5, fontFamily: "Helvetica" }}>{edu.degree} — {edu.school}</Text>)}
+            {resume.education.map((edu) => <Text key={edu.id} style={{ fontSize: 9.5, fontFamily: f.body }}>{edu.degree} — {edu.school}</Text>)}
           </>
         )}
         {resume.skills.length > 0 && (
@@ -479,6 +494,7 @@ function TechnicalPdf({ resume, seal, sealSoft, sealDeep }: { resume: ResumeData
             <View style={s.chipsRow}>{resume.skills.map((skill) => <Text key={skill} style={s.chip}>{skill}</Text>)}</View>
           </>
         )}
+        <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} code />
       </Page>
     </Document>
   );
@@ -487,12 +503,13 @@ function TechnicalPdf({ resume, seal, sealSoft, sealDeep }: { resume: ResumeData
 // ---------- Timeline ----------
 
 function TimelinePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
+  const f = pdfFonts(resume);
   const { showDividers, indent, photo } = layoutFlags(resume);
   const s = StyleSheet.create({
-    page: { padding: 36, fontSize: 10, fontFamily: "Helvetica" },
+    page: { padding: 36, fontSize: 10, fontFamily: f.body },
     headerRow: { flexDirection: "row", alignItems: "center", gap: 12 },
     photo: { width: 56, height: 56, borderRadius: 28 },
-    name: { fontSize: 18, fontWeight: 700 },
+    name: { fontFamily: f.display, fontSize: 18, fontWeight: 700 },
     contactLine: { fontSize: 9, color: MUTED, marginBottom: 10 },
     sectionTitle: { fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: seal, marginTop: 10, marginBottom: 6 },
     entryWrap: { flexDirection: "row", marginBottom: 8 },
@@ -544,6 +561,7 @@ function TimelinePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
           </>
         )}
         {resume.skills.length > 0 && <Text style={{ fontSize: 9.5, color: MUTED, marginTop: 8 }}>{resume.skills.join(" • ")}</Text>}
+        <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} />
       </Page>
     </Document>
   );
@@ -552,12 +570,13 @@ function TimelinePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
 // ---------- Elegant ----------
 
 function ElegantPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
+  const f = pdfFonts(resume);
   const { showDividers, indent, photo } = layoutFlags(resume);
   const s = StyleSheet.create({
-    page: { padding: 40, fontSize: 10, fontFamily: "Helvetica" },
+    page: { padding: 40, fontSize: 10, fontFamily: f.body },
     headerRow: { flexDirection: "row", alignItems: "center", gap: 12 },
     photo: { width: 52, height: 52, borderRadius: 26 },
-    name: { fontSize: 18 },
+    name: { fontFamily: f.display, fontSize: 18 },
     contactLine: {
       fontSize: 9, color: MUTED, marginBottom: 8, paddingBottom: 8,
       ...(showDividers ? { borderBottom: "1 solid #dcd5c4" } : {}),
@@ -601,7 +620,69 @@ function ElegantPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
           </>
         )}
         {resume.skills.length > 0 && <Text style={{ fontSize: 9.5, color: MUTED, marginTop: 10 }}>{resume.skills.join("  ·  ")}</Text>}
+        <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} />
       </Page>
     </Document>
+  );
+}
+
+// ---------- Optional sections, shared by every template ----------
+
+function ExtraSectionsPdf({
+  resume,
+  titleStyle,
+  code = false,
+  align,
+}: {
+  resume: ResumeData;
+  titleStyle: Style;
+  code?: boolean;
+  align?: "center";
+}) {
+  const { projects, certifications, languages, achievements } = extraSections(resume);
+  const title = (t: string) => (code ? `// ${t.toLowerCase()}` : t);
+  const text = { fontSize: 9.5, textAlign: align ?? "left", lineHeight: 1.35 } as const;
+  return (
+    <>
+      {projects.length > 0 && (
+        <View wrap={false}>
+          <Text style={titleStyle}>{title("Projects")}</Text>
+          {projects.map((p) => (
+            <View key={p.id} style={{ marginBottom: 4 }}>
+              <Text style={{ ...text, fontWeight: 700 }}>
+                {p.name}
+                {p.link ? <Text style={{ fontWeight: 400, color: MUTED }}>{`  ·  ${p.link}`}</Text> : null}
+              </Text>
+              {p.description ? <Text style={{ ...text, color: MUTED }}>{p.description}</Text> : null}
+            </View>
+          ))}
+        </View>
+      )}
+      {certifications.length > 0 && (
+        <View wrap={false}>
+          <Text style={titleStyle}>{title("Certifications")}</Text>
+          {certifications.map((c) => (
+            <Text key={c.id} style={{ ...text, marginBottom: 2 }}>
+              <Text style={{ fontWeight: 700 }}>{c.name}</Text>
+              {[c.issuer, c.date].filter(Boolean).length > 0 ? ` — ${[c.issuer, c.date].filter(Boolean).join(", ")}` : ""}
+            </Text>
+          ))}
+        </View>
+      )}
+      {achievements.length > 0 && (
+        <View wrap={false}>
+          <Text style={titleStyle}>{title("Achievements")}</Text>
+          {achievements.map((a, i) => (
+            <Text key={i} style={{ ...text, marginBottom: 2 }}>• {a}</Text>
+          ))}
+        </View>
+      )}
+      {languages.length > 0 && (
+        <View wrap={false}>
+          <Text style={titleStyle}>{title("Languages")}</Text>
+          <Text style={text}>{languages.join("  •  ")}</Text>
+        </View>
+      )}
+    </>
   );
 }
