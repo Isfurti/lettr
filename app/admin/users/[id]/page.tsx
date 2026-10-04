@@ -34,9 +34,9 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   });
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row admin-shell">
+    <div className="flex-1 flex flex-col lg:flex-row admin-shell">
       <AdminSidebar />
-      <main className="flex-1 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-4xl">
+      <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-4xl">
         <Link href="/admin/users" className="text-sm text-ink-soft hover:text-ink mb-4 inline-block">
           ← Back to Users
         </Link>

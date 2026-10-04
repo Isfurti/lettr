@@ -33,9 +33,9 @@ export default async function AdminReviewsPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row admin-shell">
+    <div className="flex-1 flex flex-col lg:flex-row admin-shell">
       <AdminSidebar />
-      <main className="flex-1 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-4xl">
+      <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-4xl">
         <h1 className="font-display font-semibold text-3xl mb-1">Reviews</h1>
         <p className="text-ink-soft mb-8">Real feedback, analyzed for what people actually like and don't.</p>
 

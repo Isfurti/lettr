@@ -11,25 +11,25 @@ export function Footer() {
         </div>
         <div>
           <p className="text-xs uppercase tracking-wide text-ink-soft mb-3">Product</p>
-          <div className="space-y-2 text-sm">
-            <Link href="/builder/new" className="block hover:text-seal">Resume builder</Link>
-            <Link href="/templates" className="block hover:text-seal">Templates</Link>
-            <Link href="/pricing" className="block hover:text-seal">Pricing</Link>
+          <div className="space-y-1 text-sm">
+            <Link href="/builder/new" className="block py-1 hover:text-seal">Resume builder</Link>
+            <Link href="/templates" className="block py-1 hover:text-seal">Templates</Link>
+            <Link href="/pricing" className="block py-1 hover:text-seal">Pricing</Link>
           </div>
         </div>
         <div>
           <p className="text-xs uppercase tracking-wide text-ink-soft mb-3">Help</p>
-          <div className="space-y-2 text-sm">
-            <Link href="/support" className="block hover:text-seal">Support</Link>
-            <Link href="/privacy" className="block hover:text-seal">Privacy Policy</Link>
-            <Link href="/terms" className="block hover:text-seal">Terms of Service</Link>
+          <div className="space-y-1 text-sm">
+            <Link href="/support" className="block py-1 hover:text-seal">Support</Link>
+            <Link href="/privacy" className="block py-1 hover:text-seal">Privacy Policy</Link>
+            <Link href="/terms" className="block py-1 hover:text-seal">Terms of Service</Link>
           </div>
         </div>
         <div>
           <p className="text-xs uppercase tracking-wide text-ink-soft mb-3">Account</p>
-          <div className="space-y-2 text-sm">
-            <Link href="/login" className="block hover:text-seal">Sign in</Link>
-            <Link href="/signup" className="block hover:text-seal">Create account</Link>
+          <div className="space-y-1 text-sm">
+            <Link href="/login" className="block py-1 hover:text-seal">Sign in</Link>
+            <Link href="/signup" className="block py-1 hover:text-seal">Create account</Link>
           </div>
         </div>
       </div>

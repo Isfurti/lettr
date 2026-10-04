@@ -41,7 +41,7 @@ export function AdminSidebar() {
   return (
     <>
     {/* Phones: compact top bar with scrollable section links instead of the 256px sidebar. */}
-    <div className="md:hidden bg-admin-sidebar text-white/90">
+    <div className="lg:hidden bg-admin-sidebar text-white/90">
       <div className="admin-stripe h-1 w-full" />
       <div className="px-4 py-3 flex items-center justify-between">
         <span className="font-display font-semibold text-base text-white flex items-center gap-2">
@@ -64,7 +64,7 @@ export function AdminSidebar() {
         ))}
       </nav>
     </div>
-    <aside className="hidden md:flex w-64 shrink-0 bg-admin-sidebar text-white/90 flex-col min-h-screen">
+    <aside className="hidden lg:flex w-64 shrink-0 bg-admin-sidebar text-white/90 flex-col min-h-screen">
       <div className="admin-stripe h-1.5 w-full shrink-0" />
 
       <div className="px-6 py-5 flex items-center gap-2.5 border-b border-white/10">

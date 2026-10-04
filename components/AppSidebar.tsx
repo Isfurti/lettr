@@ -46,7 +46,7 @@ export function AppSidebar({
   return (
     <>
     {/* Phones: a compact top bar instead of a 256px sidebar that would eat the whole screen. */}
-    <div className="md:hidden bg-navy-deep text-white/90">
+    <div className="lg:hidden bg-navy-deep text-white/90">
       <div className="px-4 py-3 flex items-center justify-between">
         <Link href="/" className="font-display font-semibold text-base text-white">{title}</Link>
         <button onClick={() => signOut({ callbackUrl: "/" })} className="text-xs text-white/60 hover:text-white">
@@ -76,7 +76,7 @@ export function AppSidebar({
         )}
       </nav>
     </div>
-    <aside className="hidden md:flex w-64 shrink-0 bg-navy-deep text-white/90 flex-col min-h-screen">
+    <aside className="hidden lg:flex w-64 shrink-0 bg-navy-deep text-white/90 flex-col min-h-screen">
       <Link href="/" className="px-6 py-6 flex items-center gap-2.5 hover:opacity-90">
         <div className="w-8 h-8 rounded-sm bg-seal flex items-center justify-center shrink-0">
           <Sparkles className="w-4 h-4 text-white" strokeWidth={2.5} />

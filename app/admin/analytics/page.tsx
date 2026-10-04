@@ -23,9 +23,9 @@ export default async function AdminAnalyticsPage() {
   const maxTemplateCount = Math.max(1, ...templatePopularity.map((p) => p.count));
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row admin-shell">
+    <div className="flex-1 flex flex-col lg:flex-row admin-shell">
       <AdminSidebar />
-      <main className="flex-1 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-6xl">
+      <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-6xl">
         <h1 className="font-display font-semibold text-3xl mb-1">Analytics</h1>
         <p className="text-ink-soft text-sm mb-8">How people use Lettr. Your own admin account is left out.</p>
 

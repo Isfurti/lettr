@@ -40,10 +40,10 @@ export default async function AdminOverviewPage() {
   let offset = 0;
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row admin-shell">
+    <div className="flex-1 flex flex-col lg:flex-row admin-shell">
       <AdminSidebar />
 
-      <main className="flex-1 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-6xl">
+      <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-6xl">
         <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
           <div>
             <h1 className="font-display font-semibold text-3xl mb-1">Overview</h1>

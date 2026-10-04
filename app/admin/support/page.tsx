@@ -36,7 +36,7 @@ export default async function AdminSupportPage() {
   if (!isAdminEmail(yourEmailRaw)) {
     const adminEmailRaw = process.env.ADMIN_EMAIL;
     return (
-      <main className="flex-1 max-w-lg mx-auto w-full px-8 py-12">
+      <main className="flex-1 min-w-0 max-w-lg mx-auto w-full px-8 py-12">
         <h1 className="font-display font-semibold text-xl mb-4">Admin check failed</h1>
         <p className="text-sm text-ink-soft mb-6">
           You&apos;re logged in, but your email doesn&apos;t match <code>ADMIN_EMAIL</code>. Compare
@@ -64,9 +64,9 @@ export default async function AdminSupportPage() {
   const resolved = messages.filter((m) => m.status === "resolved");
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row admin-shell">
+    <div className="flex-1 flex flex-col lg:flex-row admin-shell">
       <AdminSidebar />
-      <main className="flex-1 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-4xl">
+      <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-4xl">
         <h1 className="font-display font-semibold text-3xl mb-1">Support inbox</h1>
         <p className="text-ink-soft text-sm mb-8">
           Messages from the Contact page.{" "}

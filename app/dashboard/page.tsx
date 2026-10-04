@@ -61,10 +61,10 @@ export default async function DashboardPage({
   const initial = displayName[0]?.toUpperCase() ?? "?";
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row app-shell">
+    <div className="flex-1 flex flex-col lg:flex-row app-shell">
       <AppSidebar eyebrow="Resume workspace" isAdmin={isAdmin} plan={plan} isPaidPro={isPaidPro} />
 
-      <main className="flex-1 px-4 sm:px-10 py-6 sm:py-10 max-w-6xl w-full">
+      <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 max-w-6xl w-full">
         {user && !user.email_verified && <VerifyEmailBanner />}
         <GuestDraftRescue />
         {drive_connected && (
