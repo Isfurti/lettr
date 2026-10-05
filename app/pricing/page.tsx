@@ -90,6 +90,7 @@ export default async function PricingPage() {
       price: prices.quarter,
       period: "/ 3 months",
       blurb: "Made for one focused job search.",
+      badge: "Most popular",
     },
     {
       id: "yearly",
@@ -144,7 +145,7 @@ export default async function PricingPage() {
           </Reveal>
 
           {PRO_PLANS.map((plan, i) => {
-            const best = plan.id === "yearly";
+            const best = plan.id === "quarter";
             const save = savingsPercent(prices, plan.id);
             return (
               <Reveal
