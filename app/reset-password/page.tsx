@@ -3,8 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { PublicNav } from "@/components/PublicNav";
-import { Footer } from "@/components/Footer";
+import { CardPage } from "@/components/AuthShell";
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -37,9 +36,9 @@ function ResetPasswordForm() {
   if (!token) {
     return (
       <div className="text-center">
-        <h1 className="font-display font-semibold text-xl mb-2">Invalid link</h1>
-        <p className="text-sm text-ink-soft mb-6">This password reset link is missing its token.</p>
-        <Link href="/forgot-password" className="text-seal font-medium hover:underline">
+        <h1 className="font-brand font-extrabold text-3xl tracking-tight mb-2">Invalid link</h1>
+        <p className="text-slate mb-6">This password reset link is missing its token.</p>
+        <Link href="/forgot-password" className="font-bold text-brand-blue hover:underline">
           Request a new one →
         </Link>
       </div>
@@ -49,34 +48,36 @@ function ResetPasswordForm() {
   if (done) {
     return (
       <div className="text-center">
-        <p className="text-3xl mb-3">✓</p>
-        <h1 className="font-display font-semibold text-xl mb-2">Password updated</h1>
-        <p className="text-sm text-ink-soft">Redirecting you to log in…</p>
+        <p className="mx-auto mb-4 w-14 h-14 rounded-full bg-gold text-ink text-2xl font-extrabold flex items-center justify-center shadow-[0_4px_0_var(--gold-deep)]">
+          ✓
+        </p>
+        <h1 className="font-brand font-extrabold text-3xl tracking-tight mb-2">Password updated</h1>
+        <p className="text-slate">Redirecting you to log in…</p>
       </div>
     );
   }
 
   return (
     <>
-      <h1 className="font-display font-semibold text-xl mb-2 text-center">Set a new password</h1>
+      <h1 className="font-brand font-extrabold text-3xl tracking-tight mb-2 text-center">Set a new password</h1>
       <form onSubmit={submit} className="space-y-6 mt-6">
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-ink-soft">New password</span>
+          <span className="text-sm font-bold text-slate">New password</span>
           <input
             type="password"
             required
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="editorial-input w-full mt-1 text-sm"
+            className="field-input mt-1.5"
           />
-          <span className="text-xs text-ink-soft">At least 8 characters</span>
+          <span className="block mt-1 text-sm text-slate">At least 8 characters</span>
         </label>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm font-bold text-red-600">{error}</p>}
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-ink text-white py-3.5 rounded-sm font-medium hover:opacity-95 disabled:opacity-60 transition-opacity"
+          className="btn-press inline-flex items-center justify-center w-full min-h-12 rounded-full bg-brand-blue text-white font-bold shadow-[0_5px_0_var(--brand-blue-deep)] disabled:opacity-60"
         >
           {loading ? "Updating…" : "Update password"}
         </button>
@@ -87,16 +88,10 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <>
-      <PublicNav />
-      <main className="flex-1 flex items-center justify-center px-6 py-20">
-        <div className="w-full max-w-[400px] paper-sheet rounded-sm p-10">
-          <Suspense fallback={<p className="text-center text-sm text-ink-soft">Loading…</p>}>
-            <ResetPasswordForm />
-          </Suspense>
-        </div>
-      </main>
-      <Footer />
-    </>
+    <CardPage>
+      <Suspense fallback={<p className="text-center text-slate">Loading…</p>}>
+        <ResetPasswordForm />
+      </Suspense>
+    </CardPage>
   );
 }

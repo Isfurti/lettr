@@ -29,7 +29,7 @@ export function UpgradeButton() {
       <button
         onClick={upgrade}
         disabled={loading}
-        className="w-full py-3.5 bg-seal rounded-sm font-medium hover:opacity-90 disabled:opacity-60 transition-opacity"
+        className="btn-press w-full min-h-12 rounded-full bg-gold text-ink font-extrabold shadow-[0_5px_0_var(--gold-deep)] disabled:opacity-60"
       >
         {loading ? "Redirecting…" : "Upgrade to Pro"}
       </button>

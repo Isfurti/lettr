@@ -4,7 +4,7 @@ import { useState } from "react";
 
 export function BillingPortalButton({
   label = "Manage subscription →",
-  className = "text-sm py-1 hover:text-seal",
+  className = "inline-flex items-center min-h-11 font-bold text-brand-blue hover:underline",
 }: {
   label?: string;
   className?: string;

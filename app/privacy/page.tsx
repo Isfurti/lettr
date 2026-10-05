@@ -12,17 +12,17 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <main className="flex-1 flex flex-col">
+    <main className="flex-1 flex flex-col bg-cream text-ink">
       <PublicNav />
-      <div className="max-w-2xl mx-auto w-full px-8 py-16 flex-1">
-        <p className="text-xs uppercase tracking-wide text-seal font-semibold mb-2">Legal</p>
-        <h1 className="font-display font-bold text-3xl mb-2">Privacy Policy</h1>
-        <p className="text-ink-soft text-sm mb-10">Last updated: July 2026</p>
+      <div className="max-w-3xl mx-auto w-full px-4 sm:px-8 py-12 sm:py-16 flex-1">
+        <p className="text-sm font-extrabold uppercase tracking-[0.12em] text-brand-blue mb-3">Legal</p>
+        <h1 className="font-brand font-extrabold text-[40px] sm:text-[52px] leading-[1.02] tracking-tight mb-3">Privacy Policy</h1>
+        <p className="inline-block bg-gold-soft text-sm font-bold px-3 py-1 rounded-full mb-10">Last updated: July 2026</p>
 
-        <div className="prose-content space-y-8 text-sm leading-relaxed">
+        <div className="prose-content bg-white border border-rule rounded-[28px] p-6 sm:p-10 space-y-8 text-[16px] leading-relaxed">
           <section>
-            <h2 className="font-display font-semibold text-lg mb-2">What we collect</h2>
-            <p className="text-ink-soft">
+            <h2 className="font-brand font-extrabold text-xl tracking-tight mb-2">What we collect</h2>
+            <p className="text-slate">
               When you create an account, we store your name, email address, and a hashed
               (never plain-text) password. When you build a resume, we store the resume content
               you enter — contact details, work experience, education, and skills — tied to your
@@ -31,8 +31,8 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display font-semibold text-lg mb-2">How AI features work</h2>
-            <p className="text-ink-soft">
+            <h2 className="font-brand font-extrabold text-xl tracking-tight mb-2">How AI features work</h2>
+            <p className="text-slate">
               Features like bullet rewriting, the AI Resume Agent, cover letters, and resignation
               letters send the relevant resume text to Anthropic&apos;s API to generate results. This
               content is used to generate your response and is subject to Anthropic&apos;s own data
@@ -42,8 +42,8 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display font-semibold text-lg mb-2">Third-party services we use</h2>
-            <ul className="list-disc pl-5 text-ink-soft space-y-1">
+            <h2 className="font-brand font-extrabold text-xl tracking-tight mb-2">Third-party services we use</h2>
+            <ul className="list-disc pl-5 text-slate space-y-1.5">
               <li><strong>Anthropic</strong> — powers AI writing features</li>
               <li><strong>Stripe</strong> — processes payments for Pro subscriptions; we never see or store your full card details</li>
               <li><strong>Google Drive</strong> — only if you explicitly connect it, to save a resume PDF to your own Drive. We request the minimum scope needed (access only to files we create) and never read your existing Drive contents</li>
@@ -53,8 +53,8 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display font-semibold text-lg mb-2">What we don&apos;t do</h2>
-            <p className="text-ink-soft">
+            <h2 className="font-brand font-extrabold text-xl tracking-tight mb-2">What we don&apos;t do</h2>
+            <p className="text-slate">
               We don&apos;t sell your data. We don&apos;t share your resume content with employers,
               recruiters, or any third party except the processors listed above, and only as
               needed to operate the service.
@@ -62,27 +62,27 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display font-semibold text-lg mb-2">Your data, your control</h2>
-            <p className="text-ink-soft">
+            <h2 className="font-brand font-extrabold text-xl tracking-tight mb-2">Your data, your control</h2>
+            <p className="text-slate">
               You can delete any resume at any time from your dashboard, and delete your whole account
               yourself from the Account section at the bottom of your dashboard. If you need help, contact
               us via{" "}
-              <Link href="/support" className="text-seal hover:underline">the support page</Link>.
+              <Link href="/support" className="font-bold text-brand-blue hover:underline">the support page</Link>.
             </p>
           </section>
 
           <section>
-            <h2 className="font-display font-semibold text-lg mb-2">Cookies</h2>
-            <p className="text-ink-soft">
+            <h2 className="font-brand font-extrabold text-xl tracking-tight mb-2">Cookies</h2>
+            <p className="text-slate">
               We use a single session cookie to keep you logged in. We don&apos;t use advertising
               or tracking cookies.
             </p>
           </section>
 
           <section>
-            <h2 className="font-display font-semibold text-lg mb-2">Questions</h2>
-            <p className="text-ink-soft">
-              Reach out any time via <Link href="/support" className="text-seal hover:underline">our support page</Link>.
+            <h2 className="font-brand font-extrabold text-xl tracking-tight mb-2">Questions</h2>
+            <p className="text-slate">
+              Reach out any time via <Link href="/support" className="font-bold text-brand-blue hover:underline">our support page</Link>.
             </p>
           </section>
         </div>

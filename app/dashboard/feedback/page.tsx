@@ -36,9 +36,9 @@ export default async function FeedbackPage() {
             <h2 className="font-display font-semibold text-lg mb-3">Your past feedback</h2>
             <div className="space-y-3">
               {pastReviews.map((r) => (
-                <div key={r.id} className="paper-sheet rounded-sm p-4">
+                <div key={r.id} className="bg-white border border-rule rounded-2xl p-5">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-seal text-sm" aria-label={`${r.rating} out of 5`}>
+                    <span className="text-gold-deep" aria-label={`${r.rating} out of 5`}>
                       {"★".repeat(r.rating)}
                       <span className="text-rule">{"★".repeat(5 - r.rating)}</span>
                     </span>

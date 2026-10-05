@@ -77,66 +77,72 @@ export default async function PricingPage() {
   // Show Free in the same currency as Pro, so the page never mixes "$0" with "₹399".
   const currencySymbol = regionalPrice.display.match(/^[^\d]+/)?.[0] ?? "$";
 
+  const H2 = "font-brand font-extrabold text-[32px] sm:text-[44px] leading-[1.05] tracking-tight";
+
   return (
-    <main className="flex-1">
+    <main className="flex-1 bg-cream text-ink">
       <PublicNav />
-      <section className="max-w-3xl mx-auto w-full px-4 sm:px-8 pt-12 sm:pt-20 pb-12 sm:pb-16 text-center">
-        <h1 className="font-display text-4xl sm:text-5xl font-bold leading-tight mb-6">
-          Invest in your career&apos;s first impression.
+      <section className="max-w-3xl mx-auto w-full px-4 sm:px-8 pt-12 sm:pt-20 pb-12 sm:pb-16 text-center rise">
+        <p className="inline-flex items-center gap-2 bg-gold-soft text-sm font-bold px-3.5 py-1.5 rounded-full mb-6">
+          <span className="w-2 h-2 rounded-full bg-gold-deep" aria-hidden="true" />
+          Priced for your country
+        </p>
+        <h1 className="font-brand font-extrabold text-[40px] sm:text-[60px] leading-[1.02] tracking-tight">
+          Start free. Upgrade when it&apos;s worth it.
         </h1>
-        <p className="text-ink-soft text-lg max-w-xl mx-auto">
-          Start free. Upgrade when the AI writing tools and unlimited exports are worth it to you.
+        <p className="mt-5 text-slate text-lg max-w-xl mx-auto">
+          Everything you need for one strong resume is free. Pro unlocks the AI writing tools and unlimited downloads.
         </p>
       </section>
 
-      <section className="max-w-5xl mx-auto w-full px-4 sm:px-8 pb-24">
+      <section className="max-w-5xl mx-auto w-full px-4 sm:px-8 pb-20 sm:pb-24">
         <div className="grid md:grid-cols-2 gap-6 items-stretch">
-          <Reveal className="paper-sheet rounded-sm p-6 sm:p-10 flex flex-col">
-            <p className="text-xs uppercase tracking-wide text-ink-soft mb-2">Entry level</p>
-            <h2 className="font-display font-semibold text-2xl mb-6">Free</h2>
-            <div className="mb-8">
-              <span className="font-display text-4xl font-bold">{currencySymbol}0</span>
-              <span className="text-ink-soft"> / forever</span>
+          <Reveal className="bg-white border-2 border-rule rounded-[32px] p-7 sm:p-10 flex flex-col">
+            <h2 className="font-brand font-extrabold text-3xl">Free</h2>
+            <p className="mt-1 text-slate">For one strong resume.</p>
+            <div className="mt-6 mb-8">
+              <span className="font-brand font-extrabold text-5xl">{currencySymbol}0</span>
+              <span className="text-slate font-bold"> / forever</span>
             </div>
-            <ul className="space-y-3 mb-10 flex-1 text-sm">
+            <ul className="space-y-3.5 mb-10 flex-1">
               <FeatureLine included>1 resume</FeatureLine>
               <FeatureLine included>2 templates (Classic, Modern)</FeatureLine>
               <FeatureLine included>3 PDF downloads</FeatureLine>
               <FeatureLine included>AI bullet &amp; summary writing (5 free)</FeatureLine>
+              <FeatureLine included>Job match and resume score</FeatureLine>
               <FeatureLine>AI Resume Agent</FeatureLine>
               <FeatureLine>Cover &amp; resignation letters</FeatureLine>
               <FeatureLine>DOCX / Google Drive export</FeatureLine>
             </ul>
             <Link
               href="/signup"
-              className="w-full text-center py-3.5 border border-ink rounded-sm font-medium hover:bg-ink/5 transition-colors"
+              className="btn-press flex items-center justify-center w-full min-h-12 rounded-full border-2 border-ink font-bold"
             >
-              Get started
+              Start free
             </Link>
           </Reveal>
 
-          <Reveal delay={100} className="bg-ink text-white rounded-sm p-6 sm:p-10 flex flex-col relative overflow-hidden md:-mt-4 md:mb-4">
-            <div className="absolute top-4 right-[-38px] bg-seal text-white text-[10px] font-semibold tracking-wide px-10 py-1 rotate-45">
-              RECOMMENDED
-            </div>
-            <p className="text-xs uppercase tracking-wide text-white/60 mb-2">Full access</p>
-            <h2 className="font-display font-semibold text-2xl mb-6">Pro</h2>
-            <div className="mb-8">
-              <span className="font-display text-4xl font-bold">{regionalPrice.display}</span>
-              <span className="text-white/60"> / month</span>
+          <Reveal delay={100} className="relative bg-ink text-white rounded-[32px] p-7 sm:p-10 flex flex-col shadow-[8px_8px_0_var(--gold)]">
+            <span className="absolute -top-3.5 right-6 bg-gold text-ink text-xs font-extrabold px-3 py-1.5 rounded-full rotate-[4deg]">
+              Recommended
+            </span>
+            <h2 className="font-brand font-extrabold text-3xl">Pro</h2>
+            <p className="mt-1 text-white/70">For when you&apos;re applying seriously.</p>
+            <div className="mt-6 mb-8">
+              <span className="font-brand font-extrabold text-5xl">{regionalPrice.display}</span>
+              <span className="text-white/70 font-bold"> / month</span>
               {regionalPrice.tier !== "full" && (
-                <p className="text-xs text-white/50 mt-1">Regional pricing — same features, adjusted for your country</p>
+                <p className="text-sm text-white/60 mt-2">Priced for your country. Same features everywhere.</p>
               )}
             </div>
-            <ul className="space-y-3 mb-10 flex-1 text-sm">
+            <ul className="space-y-3.5 mb-10 flex-1">
+              <FeatureLine included dark>Everything in Free</FeatureLine>
               <FeatureLine included dark>Unlimited resumes</FeatureLine>
               <FeatureLine included dark>All 10 templates</FeatureLine>
               <FeatureLine included dark>Unlimited PDF downloads</FeatureLine>
-              <FeatureLine included dark>Everything in Free</FeatureLine>
               <FeatureLine included dark>Unlimited AI bullet &amp; summary writing</FeatureLine>
               <FeatureLine included dark>AI Resume Agent</FeatureLine>
-              <FeatureLine included dark>AI cover letter builder</FeatureLine>
-              <FeatureLine included dark>AI resignation letter builder</FeatureLine>
+              <FeatureLine included dark>AI cover &amp; resignation letters</FeatureLine>
               <FeatureLine included dark>DOCX &amp; Google Drive export</FeatureLine>
             </ul>
             <UpgradeButton />
@@ -144,30 +150,30 @@ export default async function PricingPage() {
         </div>
       </section>
 
-      <section className="bg-white border-y border-rule">
+      <section className="bg-sand border-y border-rule">
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-8 py-16 sm:py-20">
-          <Reveal className="text-center mb-14">
-            <h2 className="font-display font-semibold text-3xl mb-2">Compare plans</h2>
-            <p className="text-ink-soft">Every feature, side by side.</p>
+          <Reveal className="text-center mb-10">
+            <h2 className={H2}>Compare plans</h2>
+            <p className="mt-3 text-slate text-lg">Every feature, side by side.</p>
           </Reveal>
-          <Reveal>
-            <table className="w-full text-left border-collapse text-sm">
+          <Reveal className="bg-white rounded-[28px] border border-rule overflow-hidden">
+            <table className="w-full text-left border-collapse text-[15px]">
               <thead>
-                <tr className="border-b border-rule text-xs uppercase tracking-wide text-ink-soft">
-                  <th className="py-4 px-4 w-1/2">Feature</th>
-                  <th className="py-4 px-4 text-center">Free</th>
-                  <th className="py-4 px-4 text-center bg-seal-soft">Pro</th>
+                <tr className="border-b border-rule">
+                  <th className="py-4 px-4 sm:px-6 w-1/2 font-extrabold">Feature</th>
+                  <th className="py-4 px-3 text-center font-extrabold">Free</th>
+                  <th className="py-4 px-3 text-center font-extrabold bg-gold-soft">Pro</th>
                 </tr>
               </thead>
               <tbody>
                 {COMPARISON.map((row) => (
-                  <tr key={row.feature} className="border-b border-rule/60">
-                    <td className="py-4 px-4 font-medium">{row.feature}</td>
-                    <td className="py-4 px-4 text-center text-ink-soft">
-                      {typeof row.free === "boolean" ? (row.free ? "✓" : "—") : row.free}
+                  <tr key={row.feature} className="border-b border-rule/60 last:border-0">
+                    <td className="py-4 px-4 sm:px-6 font-bold">{row.feature}</td>
+                    <td className="py-4 px-3 text-center text-slate">
+                      {typeof row.free === "boolean" ? (row.free ? <Check /> : <Dash />) : row.free}
                     </td>
-                    <td className="py-4 px-4 text-center font-semibold bg-seal-soft/50">
-                      {typeof row.pro === "boolean" ? (row.pro ? "✓" : "—") : row.pro}
+                    <td className="py-4 px-3 text-center font-bold bg-gold-soft/60">
+                      {typeof row.pro === "boolean" ? (row.pro ? <Check /> : <Dash />) : row.pro}
                     </td>
                   </tr>
                 ))}
@@ -177,44 +183,45 @@ export default async function PricingPage() {
         </div>
       </section>
 
-      <section className="max-w-4xl mx-auto w-full px-4 sm:px-8 py-16 sm:py-20">
-        <div className="grid md:grid-cols-12 gap-10">
-          <Reveal className="md:col-span-4">
-            <h2 className="font-display font-semibold text-2xl mb-3">Frequently asked questions</h2>
-            <p className="text-ink-soft text-sm">
+      <section className="max-w-5xl mx-auto w-full px-4 sm:px-8 py-16 sm:py-20">
+        <div className="grid lg:grid-cols-[1fr_1.6fr] gap-10">
+          <Reveal>
+            <h2 className={H2}>Questions</h2>
+            <p className="mt-3 text-slate">
               Can&apos;t find what you&apos;re looking for?{" "}
-              <Link href="/support" className="text-ink underline">
-                Contact support.
+              <Link href="/support" className="font-bold text-brand-blue hover:underline">
+                Ask us
               </Link>
+              .
             </p>
           </Reveal>
-          <div className="md:col-span-8 space-y-8">
-            {FAQS.map((f, i) => (
-              <Reveal key={f.q} delay={i * 80}>
-                <h3 className="font-display font-semibold text-lg mb-2">{f.q}</h3>
-                <p className="text-ink-soft text-sm leading-relaxed">{f.a}</p>
-              </Reveal>
+          <div className="flex flex-col gap-3">
+            {FAQS.map((f) => (
+              <details key={f.q} className="group bg-white rounded-2xl border border-rule open:border-ink transition-colors">
+                <summary className="cursor-pointer list-none flex items-center justify-between gap-4 min-h-14 px-5 py-4 font-bold text-lg [&::-webkit-details-marker]:hidden">
+                  {f.q}
+                  <span aria-hidden="true" className="shrink-0 w-8 h-8 rounded-full bg-brand-blue-soft text-brand-blue flex items-center justify-center text-xl font-extrabold transition-transform group-open:rotate-45">+</span>
+                </summary>
+                <p className="px-5 pb-5 -mt-1 text-slate leading-relaxed">{f.a}</p>
+              </details>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="bg-ink text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 grid grid-cols-12">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="border-r border-white/20" />
-          ))}
-        </div>
-        <div className="max-w-3xl mx-auto w-full px-4 sm:px-8 py-20 sm:py-24 text-center relative z-10">
-          <Reveal>
-            <h2 className="font-display text-4xl font-bold mb-8">Ready to write your next chapter?</h2>
-            <Link
-              href="/signup"
-              className="inline-block bg-seal text-white px-8 py-4 rounded-sm font-medium hover:opacity-90 transition-opacity"
-            >
-              Create your free resume
-            </Link>
-          </Reveal>
+      <section className="max-w-[1280px] mx-auto w-full px-4 sm:px-8 lg:px-14 pb-16 sm:pb-24">
+        <div className="relative overflow-hidden bg-brand-blue text-white rounded-[36px] px-6 sm:px-14 py-14 sm:py-20 text-center">
+          <span aria-hidden="true" className="absolute -left-10 -top-10 w-40 h-40 rounded-full bg-white/10" />
+          <span aria-hidden="true" className="absolute -right-12 -bottom-16 w-56 h-56 rounded-full bg-gold/25" />
+          <h2 className="relative font-brand font-extrabold text-[34px] sm:text-[52px] leading-[1.02] tracking-tight">
+            Ready to write your next chapter?
+          </h2>
+          <Link
+            href="/signup"
+            className="relative btn-press mt-8 inline-flex items-center min-h-12 px-8 rounded-full bg-gold text-ink font-extrabold shadow-[0_5px_0_var(--gold-deep)]"
+          >
+            Create your free resume
+          </Link>
         </div>
       </section>
 
@@ -223,12 +230,28 @@ export default async function PricingPage() {
   );
 }
 
+function Check() {
+  return (
+    <svg className="inline-block" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-label="Included">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
+function Dash() {
+  return <span aria-label="Not included" className="text-slate/50">—</span>;
+}
+
 function FeatureLine({ children, included, dark }: { children: React.ReactNode; included?: boolean; dark?: boolean }) {
   return (
-    <li className={`flex items-center gap-2 ${included ? "" : dark ? "text-white/40" : "text-ink-soft/60"}`}>
-      <span className={included ? "text-seal" : dark ? "text-white/30" : "text-ink-soft/40"}>
-        {included ? "✓" : "–"}
-      </span>
+    <li className={`flex items-start gap-3 ${included ? "" : dark ? "text-white/40" : "text-slate/60"}`}>
+      {included ? (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={dark ? "var(--gold)" : "var(--brand-blue)"} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0 mt-[3px]">
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+      ) : (
+        <span aria-hidden="true" className="w-[18px] shrink-0 text-center">–</span>
+      )}
       {children}
     </li>
   );

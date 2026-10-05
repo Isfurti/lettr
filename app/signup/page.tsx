@@ -4,8 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { Footer } from "@/components/Footer";
-import { PublicNav } from "@/components/PublicNav";
+import { AuthShell } from "@/components/AuthShell";
 import { OAuthButtons } from "@/components/OAuthButtons";
 import { completeGuestExport } from "@/lib/guest-draft";
 
@@ -59,11 +58,8 @@ function SignupForm() {
   }
 
   return (
-    <div className="w-full max-w-sm">
-      <h1 className="font-display font-bold text-2xl mb-1">Create your account</h1>
-      <p className="text-ink-soft text-sm mb-8">Free to start. No credit card.</p>
-
-      <form onSubmit={onSubmit} className="space-y-4">
+    <>
+      <form onSubmit={onSubmit} className="space-y-5">
         <Field label="Name" value={name} onChange={setName} required />
         <Field label="Email" type="email" value={email} onChange={setEmail} required />
         <Field
@@ -76,12 +72,12 @@ function SignupForm() {
           hint="At least 8 characters"
         />
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm font-bold text-red-600">{error}</p>}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-ink text-paper py-2.5 rounded-sm font-medium hover:bg-ink/90 disabled:opacity-60 transition-colors"
+          className="btn-press w-full min-h-12 rounded-full bg-brand-blue text-white font-bold shadow-[0_5px_0_var(--brand-blue-deep)] disabled:opacity-60"
         >
           {loading ? "Creating account…" : "Create account"}
         </button>
@@ -89,27 +85,23 @@ function SignupForm() {
 
       <OAuthButtons callbackUrl={searchParams.get("continue") === "import" ? "/dashboard?import=1" : "/dashboard"} />
 
-      <p className="text-sm text-ink-soft mt-6">
+      <p className="text-slate mt-8 text-center">
         Already have an account?{" "}
-        <Link href="/login" className="text-ink underline underline-offset-2">
-          Log in
+        <Link href="/login" className="font-bold text-brand-blue hover:underline">
+          Sign in
         </Link>
       </p>
-    </div>
+    </>
   );
 }
 
 export default function SignupPage() {
   return (
-    <>
-    <PublicNav />
-    <main className="flex-1 flex items-center justify-center px-6 py-16">
-      <Suspense fallback={<p className="text-sm text-ink-soft">Loading…</p>}>
+    <AuthShell eyebrow="Free to start" title="Create your account" subtitle="No credit card. Takes a few seconds.">
+      <Suspense fallback={<p className="text-slate">Loading…</p>}>
         <SignupForm />
       </Suspense>
-    </main>
-    <Footer />
-    </>
+    </AuthShell>
   );
 }
 
@@ -132,16 +124,16 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-sm font-medium text-ink">{label}</span>
+      <span className="text-sm font-bold text-slate">{label}</span>
       <input
         type={type}
         required={required}
         minLength={minLength}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1.5 w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+        className="field-input mt-1.5"
       />
-      {hint && <span className="text-xs text-ink-soft">{hint}</span>}
+      {hint && <span className="block mt-1 text-sm text-slate">{hint}</span>}
     </label>
   );
 }

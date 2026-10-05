@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
-import { TopNav } from "@/components/TopNav";
 import { PublicNav } from "@/components/PublicNav";
 import { Footer } from "@/components/Footer";
 import { UseTemplateButton } from "@/components/UseTemplateButton";
@@ -43,7 +42,6 @@ const TEMPLATES = TEMPLATE_IDS.map((id) => ({ id, ...TEMPLATE_META[id] }));
 
 export default async function TemplatesPage() {
   const session = await auth();
-  const initial = session?.user ? (session.user.name || session.user.email || "?")[0]?.toUpperCase() : undefined;
 
   let plan: Plan = "free";
   if (session?.user) {
@@ -51,49 +49,57 @@ export default async function TemplatesPage() {
     plan = (user?.plan ?? "free") as Plan;
   }
 
+  const freeCount = TEMPLATES.filter((t) => isTemplateFree(t.id)).length;
+
   return (
-    <div className="flex-1 flex flex-col bg-paper">
-      {session?.user ? <TopNav active="templates" userInitial={initial} /> : <PublicNav />}
+    <div className="flex-1 flex flex-col bg-cream text-ink">
+      <PublicNav />
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-8 py-10 sm:py-12">
-        <p className="text-xs uppercase tracking-wide text-seal font-medium mb-2">Curated collection</p>
-        <h1 className="font-display font-semibold text-4xl mb-3">Resume Templates</h1>
-        <p className="text-ink-soft max-w-xl mb-10">
-          10 layouts, all built around the same ATS-safe structure. <strong>Classic and Modern are
-          free</strong> — the other 8 are part of Pro. You can preview any of them with your own content
-          before deciding.
-        </p>
+      <main className="flex-1 max-w-[1280px] mx-auto w-full px-4 sm:px-8 lg:px-14 py-10 sm:py-16">
+        <div className="max-w-2xl mb-12 rise">
+          <p className="text-sm font-extrabold uppercase tracking-[0.12em] text-brand-blue mb-3">Templates</p>
+          <h1 className="font-brand font-extrabold text-[40px] sm:text-[56px] leading-[1.02] tracking-tight">
+            Look the part. Pick a template.
+          </h1>
+          <p className="mt-5 text-lg text-slate leading-relaxed">
+            {TEMPLATES.length} layouts, all built on the same structure hiring software can read.{" "}
+            <strong className="text-ink">Classic and Modern are free</strong>; the other {TEMPLATES.length - freeCount} come
+            with Pro. Try any of them with your own details before you decide.
+          </p>
+        </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
           {TEMPLATES.map((t) => {
             const free = isTemplateFree(t.id);
             return (
-              <div key={t.id} className="paper-sheet rounded-sm overflow-hidden flex flex-col relative">
-                {!free && (
-                  <span className="absolute top-2 right-2 z-10 text-[10px] font-mono uppercase bg-ink text-white px-1.5 py-0.5 rounded-sm">
-                    Pro
+              <div key={t.id} className="flex flex-col">
+                <div className="lift relative bg-white rounded-2xl border border-rule p-3 shadow-[0_10px_24px_rgba(4,22,50,0.08)]">
+                  <span
+                    className={`absolute -top-3 left-3 z-10 text-xs font-extrabold px-2.5 py-1 rounded-full ${
+                      free ? "bg-gold text-ink" : "bg-ink text-gold"
+                    }`}
+                  >
+                    {free ? "Free" : "Pro"}
                   </span>
-                )}
-                <div className="aspect-[3/4] bg-app-bg p-3 border-b border-rule">
-                  <TemplateThumbnail id={t.id} />
-                </div>
-                <div className="p-4 flex-1 flex flex-col">
-                  <p className="font-display font-semibold mb-1">{t.name}</p>
-                  <p className="text-xs text-ink-soft mb-3 flex-1">{t.description}</p>
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {t.tags.map((tag) => (
-                      <span key={tag} className="text-[10px] uppercase tracking-wide bg-seal-soft text-seal-deep px-1.5 py-0.5 rounded-sm">
-                        {tag}
-                      </span>
-                    ))}
+                  <div className="aspect-[1/1.25] rounded-md overflow-hidden">
+                    <TemplateThumbnail id={t.id} renderWidth={560} />
                   </div>
-                  <UseTemplateButton
-                    template={t.id}
-                    label={free || plan === "pro" ? "Use this template" : "Try this template"}
-                    isLoggedIn={Boolean(session?.user)}
-                    locked={Boolean(session?.user) && plan === "free" && !free}
-                  />
                 </div>
+                <p className="mt-4 font-brand font-extrabold text-xl">{t.name}</p>
+                <p className="mt-1 text-slate leading-relaxed flex-1">{t.description}</p>
+                <div className="flex flex-wrap gap-1.5 mt-3 mb-4">
+                  {t.tags.map((tag) => (
+                    <span key={tag} className="text-xs font-bold bg-brand-blue-soft text-brand-blue-deep px-2.5 py-1 rounded-full">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                <UseTemplateButton
+                  template={t.id}
+                  label={free || plan === "pro" ? "Use this template" : "Try this template"}
+                  isLoggedIn={Boolean(session?.user)}
+                  locked={Boolean(session?.user) && plan === "free" && !free}
+                />
               </div>
             );
           })}

@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { PublicNav } from "@/components/PublicNav";
-import { Footer } from "@/components/Footer";
+import { CardPage } from "@/components/AuthShell";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -23,52 +22,42 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <>
-      <PublicNav />
-      <main className="flex-1 flex items-center justify-center px-6 py-20">
-        <div className="w-full max-w-[400px] paper-sheet rounded-sm p-10">
-          {status === "sent" ? (
-            <div className="text-center">
-              <h1 className="font-display font-semibold text-xl mb-2">Check your email</h1>
-              <p className="text-sm text-ink-soft">
-                If an account exists for {email}, a password reset link is on its way.
-              </p>
-            </div>
-          ) : (
-            <>
-              <h1 className="font-display font-semibold text-xl mb-2 text-center">Reset your password</h1>
-              <p className="text-sm text-ink-soft mb-6 text-center">
-                Enter your email and we&apos;ll send you a reset link.
-              </p>
-              <form onSubmit={submit} className="space-y-6">
-                <label className="block">
-                  <span className="text-xs uppercase tracking-wide text-ink-soft">Email address</span>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="editorial-input w-full mt-1 text-sm"
-                  />
-                </label>
-                <button
-                  type="submit"
-                  disabled={status === "sending"}
-                  className="w-full bg-ink text-white py-3.5 rounded-sm font-medium hover:opacity-95 disabled:opacity-60 transition-opacity"
-                >
-                  {status === "sending" ? "Sending…" : "Send reset link"}
-                </button>
-              </form>
-            </>
-          )}
-          <p className="text-sm text-ink-soft mt-8 text-center">
-            <Link href="/login" className="text-ink font-semibold hover:underline">
-              Back to login
-            </Link>
-          </p>
+    <CardPage>
+      {status === "sent" ? (
+        <div className="text-center">
+          <h1 className="font-brand font-extrabold text-3xl tracking-tight mb-2">Check your email</h1>
+          <p className="text-slate">If an account exists for {email}, a password reset link is on its way.</p>
         </div>
-      </main>
-      <Footer />
-    </>
+      ) : (
+        <>
+          <h1 className="font-brand font-extrabold text-3xl tracking-tight mb-2 text-center">Reset your password</h1>
+          <p className="text-slate mb-6 text-center">Enter your email and we&apos;ll send you a reset link.</p>
+          <form onSubmit={submit} className="space-y-6">
+            <label className="block">
+              <span className="text-sm font-bold text-slate">Email address</span>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="field-input mt-1.5"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={status === "sending"}
+              className="btn-press inline-flex items-center justify-center w-full min-h-12 rounded-full bg-brand-blue text-white font-bold shadow-[0_5px_0_var(--brand-blue-deep)] disabled:opacity-60"
+            >
+              {status === "sending" ? "Sending…" : "Send reset link"}
+            </button>
+          </form>
+        </>
+      )}
+      <p className="text-slate mt-8 text-center">
+        <Link href="/login" className="font-bold text-brand-blue hover:underline">
+          Back to login
+        </Link>
+      </p>
+    </CardPage>
   );
 }

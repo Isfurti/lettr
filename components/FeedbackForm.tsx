@@ -39,17 +39,17 @@ export function FeedbackForm() {
 
   if (status === "done") {
     return (
-      <div className="paper-sheet rounded-sm p-6">
-        <p className="text-xs uppercase tracking-wide text-seal font-medium mb-2">Thanks for the feedback</p>
+      <div className="bg-white border-2 border-rule rounded-[28px] p-6 sm:p-8">
+        <p className="font-extrabold text-brand-blue mb-2">Thanks for the feedback</p>
         <p className="text-sm leading-relaxed">{reply}</p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={submit} className="paper-sheet rounded-sm p-6 space-y-5">
+    <form onSubmit={submit} className="bg-white border-2 border-rule rounded-[28px] p-6 sm:p-8 space-y-5">
       <div>
-        <p className="text-sm font-medium mb-2">Your rating</p>
+        <p className="text-sm font-bold text-slate mb-2">Your rating</p>
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
@@ -60,14 +60,14 @@ export function FeedbackForm() {
               onMouseLeave={() => setHoverRating(0)}
               className="text-3xl leading-none"
             >
-              <span className={(hoverRating || rating) >= star ? "text-seal" : "text-rule"}>★</span>
+              <span className={(hoverRating || rating) >= star ? "text-gold-deep" : "text-rule"}>★</span>
             </button>
           ))}
         </div>
       </div>
 
       <label className="block">
-        <span className="text-sm font-medium">What's working, what isn't?</span>
+        <span className="text-sm font-bold text-slate">What's working, what isn't?</span>
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -75,7 +75,7 @@ export function FeedbackForm() {
           minLength={10}
           required
           placeholder="e.g. The AI bullet rewriting saved me so much time, but I wish there were more template colors…"
-          className="mt-1.5 w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+          className="field-input mt-1.5"
         />
       </label>
 
@@ -86,7 +86,7 @@ export function FeedbackForm() {
           onChange={(e) => setConsentToFeature(e.target.checked)}
           className="mt-0.5"
         />
-        <span className="text-xs text-ink-soft">
+        <span className="text-sm text-slate">
           It&apos;s okay to feature this review publicly on our website (we&apos;ll only show your
           first name, and only if our team selects it — not automatic).
         </span>
@@ -97,7 +97,7 @@ export function FeedbackForm() {
       <button
         type="submit"
         disabled={status === "sending"}
-        className="bg-seal text-white px-5 py-2.5 rounded-sm text-sm font-medium hover:opacity-90 disabled:opacity-60"
+        className="btn-press inline-flex items-center min-h-12 px-6 rounded-full bg-brand-blue text-white font-bold shadow-[0_5px_0_var(--brand-blue-deep)] disabled:opacity-60"
       >
         {status === "sending" ? "Sending…" : "Submit feedback"}
       </button>

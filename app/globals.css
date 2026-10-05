@@ -144,6 +144,26 @@ body {
   box-shadow: none;
 }
 
+/* New-look form field (auth, support and other public forms). */
+.field-input {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  font-size: 16px;
+  background: #fff;
+  border: 2px solid var(--rule);
+  border-radius: 14px;
+  transition: border-color 0.15s ease;
+}
+.field-input:focus {
+  outline: none;
+  border-color: var(--brand-blue);
+}
+textarea.field-input {
+  min-height: 120px;
+}
+
 /* Scroll-reveal utility - see components/Reveal.tsx */
 .reveal-init {
   opacity: 0;

@@ -57,8 +57,10 @@ export function UseTemplateButton({
     <button
       onClick={use}
       disabled={loading}
-      className={`w-full text-sm font-medium py-2 rounded-sm hover:opacity-90 disabled:opacity-60 transition-opacity ${
-        locked ? "border border-seal text-seal" : "bg-ink text-white"
+      className={`btn-press w-full min-h-11 rounded-full text-[15px] font-bold disabled:opacity-60 ${
+        locked
+          ? "bg-gold text-ink shadow-[0_4px_0_var(--gold-deep)]"
+          : "bg-brand-blue text-white shadow-[0_4px_0_var(--brand-blue-deep)]"
       }`}
     >
       {loading ? "Creating…" : locked ? "Upgrade to use" : label}
