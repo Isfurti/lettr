@@ -114,7 +114,7 @@ export function ResumeSearch({
               </Link>
               <div className="mt-4 flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <Link href={`/builder/${r.id}`} className="block font-extrabold truncate hover:text-brand-blue">
+                  <Link href={`/builder/${r.id}`} className="block py-1.5 font-extrabold truncate hover:text-brand-blue">
                     {displayTitle(r)}
                   </Link>
                   <p className="text-sm text-slate truncate">

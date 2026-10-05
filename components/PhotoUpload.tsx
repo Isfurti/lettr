@@ -96,12 +96,12 @@ export function PhotoUpload({
 
   return (
     <div className="flex items-center gap-4">
-      <div className="w-16 h-16 rounded-full bg-app-bg border border-rule overflow-hidden shrink-0 flex items-center justify-center">
+      <div className="w-16 h-16 rounded-full bg-sand border border-rule overflow-hidden shrink-0 flex items-center justify-center">
         {state.photoDataUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={state.photoDataUrl} alt="Profile" className="w-full h-full object-cover" />
         ) : (
-          <span className="text-ink-soft text-xs">No photo</span>
+          <span className="text-slate text-xs">No photo</span>
         )}
       </div>
       <div>
@@ -120,7 +120,7 @@ export function PhotoUpload({
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={loading}
-            className="text-xs border border-rule rounded-sm px-3 py-1.5 hover:bg-app-bg disabled:opacity-60"
+            className="inline-flex items-center min-h-10 text-sm font-bold border-2 border-rule rounded-full px-4 hover:border-ink disabled:opacity-60"
           >
             {loading ? "Processing…" : state.photoDataUrl ? "Replace photo" : "Upload photo"}
           </button>
@@ -128,7 +128,7 @@ export function PhotoUpload({
             <button
               type="button"
               onClick={() => setAdjusting(true)}
-              className="text-xs border border-rule rounded-sm px-3 py-1.5 hover:bg-app-bg"
+              className="inline-flex items-center min-h-10 text-sm font-bold border-2 border-rule rounded-full px-4 hover:border-ink"
             >
               Adjust
             </button>
@@ -137,14 +137,14 @@ export function PhotoUpload({
             <button
               type="button"
               onClick={() => onChange({ photoDataUrl: undefined, photoOriginalDataUrl: undefined, showPhoto: false })}
-              className="text-xs text-red-600 hover:underline"
+              className="inline-flex items-center min-h-10 text-sm font-bold text-red-600 hover:underline"
             >
               Remove
             </button>
           )}
         </div>
         {state.photoDataUrl && (
-          <label className="flex items-center gap-2 text-xs text-ink-soft">
+          <label className="flex items-center gap-2 text-sm text-slate">
             <input
               type="checkbox"
               checked={state.showPhoto ?? true}

@@ -58,7 +58,7 @@ export function FeedbackForm() {
               onClick={() => setRating(star)}
               onMouseEnter={() => setHoverRating(star)}
               onMouseLeave={() => setHoverRating(0)}
-              className="text-3xl leading-none"
+              className="w-11 h-11 flex items-center justify-center text-3xl leading-none"
             >
               <span className={(hoverRating || rating) >= star ? "text-gold-deep" : "text-rule"}>★</span>
             </button>

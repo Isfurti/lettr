@@ -127,7 +127,7 @@ export default async function AdminOverviewPage() {
         <div className="bg-white border border-rule rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-rule flex items-center justify-between">
             <p className="font-brand font-extrabold">Recent signups</p>
-            <Link href="/admin/users" className="text-xs text-admin-accent hover:underline">All users →</Link>
+            <Link href="/admin/users" className="inline-flex items-center min-h-10 text-sm font-bold text-admin-accent hover:underline">All users →</Link>
           </div>
           {recentUsers.length === 0 ? (
             <p className="text-sm text-ink-soft px-6 py-6">No users yet.</p>

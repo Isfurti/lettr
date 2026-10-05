@@ -68,7 +68,7 @@ export default async function AdminUsersPage({
           </form>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-4 text-xs">
+        <div className="flex flex-wrap items-center gap-x-1 gap-y-1 mb-4 text-sm">
           <span className="text-ink-soft">Show:</span>
           {[
             { key: undefined, label: "All" },
@@ -79,7 +79,7 @@ export default async function AdminUsersPage({
             <Link
               key={f.label}
               href={qs({ plan: f.key })}
-              className={plan === f.key ? "font-semibold text-ink underline" : "text-ink-soft hover:text-ink"}
+              className={`inline-flex items-center min-h-10 px-3 rounded-full ${plan === f.key ? "font-bold bg-ink text-white" : "text-slate hover:bg-sand"}`}
             >
               {f.label}
             </Link>
@@ -89,7 +89,7 @@ export default async function AdminUsersPage({
             <Link
               key={k}
               href={qs({ sort: k })}
-              className={sortKey === k ? "font-semibold text-ink underline" : "text-ink-soft hover:text-ink"}
+              className={`inline-flex items-center min-h-10 px-3 rounded-full ${sortKey === k ? "font-bold bg-ink text-white" : "text-slate hover:bg-sand"}`}
             >
               {SORTS[k].label}
             </Link>

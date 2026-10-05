@@ -185,7 +185,7 @@ export function ResumeEditor({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               aria-label="Resume title"
-              className="font-brand font-extrabold text-xl sm:text-2xl tracking-tight bg-transparent focus:outline-none border-b-2 border-transparent focus:border-brand-blue min-w-0 w-full"
+              className="font-brand font-extrabold text-xl sm:text-2xl tracking-tight bg-transparent focus:outline-none border-b-2 border-transparent focus:border-brand-blue min-w-0 w-full py-1"
             />
             <p className="text-xs font-bold text-slate h-4" aria-live="polite">
               {saveStatus === "saving"
@@ -500,7 +500,9 @@ export function EditForm({
                 key={c.id}
                 onClick={() => updateCustomization("accentColor", c.hex)}
                 title={c.label}
-                className={`w-7 h-7 rounded-full border-2 transition-transform ${active ? "border-ink scale-110" : "border-transparent hover:scale-105"}`}
+                aria-label={`Accent colour: ${c.label}`}
+                aria-pressed={active}
+                className={`w-10 h-10 rounded-full border-[3px] transition-transform ${active ? "border-ink scale-110" : "border-white hover:scale-105"} shadow-[0_0_0_1px_var(--rule)]`}
                 style={{ backgroundColor: c.hex }}
               />
             );
@@ -514,7 +516,8 @@ export function EditForm({
               <button
                 key={f.id}
                 onClick={() => updateCustomization("fontChoice", f.id)}
-                className={`text-xs px-3 py-1.5 rounded-xl border ${active ? "border-ink bg-ink text-white" : "border-rule hover:bg-sand"}`}
+                aria-pressed={active}
+                className={`inline-flex items-center min-h-10 text-sm font-bold px-4 rounded-full border-2 ${active ? "border-ink bg-ink text-white" : "border-rule hover:border-ink"}`}
               >
                 {f.label}
               </button>
@@ -948,7 +951,7 @@ function ExperienceCard({
                 >
                   {loadingBullet === i ? "…" : "✦ AI"}
                 </button>
-                <button onClick={() => removeBullet(i)} className="text-xs text-red-600" aria-label="Remove bullet" title="Remove bullet">
+                <button onClick={() => removeBullet(i)} className="inline-flex items-center justify-center min-h-10 min-w-10 px-2 text-sm font-bold text-red-600 rounded-full hover:bg-red-50" aria-label="Remove bullet" title="Remove bullet">
                   ✕
                 </button>
               </div>

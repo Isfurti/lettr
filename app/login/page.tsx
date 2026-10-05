@@ -55,7 +55,7 @@ function LoginForm() {
         <label className="block">
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold text-slate">Password</span>
-            <Link href="/forgot-password" className="text-sm font-bold text-brand-blue hover:underline">
+            <Link href="/forgot-password" className="inline-flex items-center min-h-11 text-sm font-bold text-brand-blue hover:underline">
               Forgot password?
             </Link>
           </div>

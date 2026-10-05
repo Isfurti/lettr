@@ -162,9 +162,9 @@ export default async function DashboardPage({
                   </p>
                   <Link
                     href={`/builder/${mostRecent.id}?tab=score`}
-                    className="btn-press mt-3 inline-flex items-center min-h-11 px-5 rounded-full bg-brand-blue text-white font-bold shadow-[0_4px_0_var(--brand-blue-deep)]"
+                    className="btn-press mt-3 inline-flex items-center whitespace-nowrap min-h-11 px-5 rounded-full bg-brand-blue text-white font-bold shadow-[0_4px_0_var(--brand-blue-deep)]"
                   >
-                    {plan === "pro" ? "See full breakdown" : "Fix next tip"}
+                    {plan === "pro" ? "Full breakdown" : "Fix next tip"}
                   </Link>
                 </div>
               </div>
@@ -243,7 +243,7 @@ export default async function DashboardPage({
             <section className="bg-white rounded-[28px] border border-rule p-6">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
                 <h2 className="font-brand font-extrabold text-2xl">Your free plan</h2>
-                <Link href="/pricing" className="font-bold text-brand-blue hover:underline">
+                <Link href="/pricing" className="inline-flex items-center min-h-11 font-bold text-brand-blue hover:underline">
                   Get unlimited with Pro
                 </Link>
               </div>

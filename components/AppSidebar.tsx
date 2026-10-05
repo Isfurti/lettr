@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { BillingPortalButton } from "@/components/BillingPortalButton";
 import { Logo } from "@/components/Logo";
 import { signOut } from "next-auth/react";
-import { Home, LayoutTemplate, MessageSquare, LifeBuoy, Crown, CreditCard, LogOut, ShieldAlert } from "lucide-react";
+import { Home, LayoutTemplate, MessageSquare, LifeBuoy, Crown, CreditCard, LogOut, ShieldAlert, Globe } from "lucide-react";
 
 const BASE_NAV_ITEMS = [
-  { href: "/dashboard", label: "Home", icon: Home },
+  { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/templates", label: "Templates", icon: LayoutTemplate },
   { href: "/dashboard/feedback", label: "Feedback", icon: MessageSquare },
   { href: "/support", label: "Help", icon: LifeBuoy },
@@ -51,7 +51,7 @@ export function AppSidebar({
       {/* Phones: a compact top bar instead of a sidebar that would eat the whole screen. */}
       <div className="lg:hidden bg-ink text-white">
         <div className="px-4 py-3 flex items-center justify-between">
-          <Logo dark href="/dashboard" />
+          <Logo dark href="/" />
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
             className="min-h-11 px-2 text-sm text-white/70 hover:text-white"
@@ -87,13 +87,19 @@ export function AppSidebar({
               Admin
             </Link>
           )}
+          <Link
+            href="/"
+            className="inline-flex items-center min-h-10 px-3.5 rounded-full text-sm shrink-0 text-white/75 bg-white/5"
+          >
+            Lettr homepage
+          </Link>
         </nav>
       </div>
 
       <aside className="hidden lg:block w-64 shrink-0 bg-ink text-white">
         <div className="sticky top-0 h-screen flex flex-col">
           <div className="px-6 pt-6 pb-4">
-            <Logo dark href="/dashboard" />
+            <Logo dark href="/" />
           </div>
 
           <nav className="flex-1 px-3 mt-2 space-y-1 overflow-y-auto">
@@ -150,7 +156,11 @@ export function AppSidebar({
                 Admin Portal
               </Link>
             )}
-            <button onClick={() => signOut({ callbackUrl: "/" })} className={`w-full ${itemClass(false)}`}>
+            <Link href="/" className={itemClass(false)}>
+            <Globe className="w-[18px] h-[18px]" strokeWidth={2} />
+            Lettr homepage
+          </Link>
+          <button onClick={() => signOut({ callbackUrl: "/" })} className={`w-full ${itemClass(false)}`}>
               <LogOut className="w-[18px] h-[18px]" strokeWidth={2} />
               Sign out
             </button>
