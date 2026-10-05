@@ -28,7 +28,7 @@ export function NewResumeButton({ label = "New resume" }: { label?: string }) {
 
   if (upgradeRequired) {
     return (
-      <Link href="/pricing" className="text-sm text-seal hover:underline">
+      <Link href="/pricing" className="text-sm font-bold text-brand-blue hover:underline">
         Upgrade to create another resume →
       </Link>
     );
@@ -38,7 +38,7 @@ export function NewResumeButton({ label = "New resume" }: { label?: string }) {
     <button
       onClick={createResume}
       disabled={loading}
-      className="bg-seal text-white px-4 py-2 rounded-sm text-sm font-medium hover:opacity-90 disabled:opacity-60 transition-opacity"
+      className="btn-press inline-flex items-center justify-center min-h-11 px-5 rounded-full bg-brand-blue text-white text-[15px] font-bold shadow-[0_4px_0_var(--brand-blue-deep)] disabled:opacity-60"
     >
       {loading ? "Creating…" : label}
     </button>

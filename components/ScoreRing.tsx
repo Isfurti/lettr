@@ -63,7 +63,7 @@ export function ScoreRing({
         />
       </svg>
       <span className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-mono font-semibold" style={{ fontSize: size * 0.28 }}>
+        <span className="font-brand font-extrabold" style={{ fontSize: size * 0.3 }}>
           {displayValue}
         </span>
         {label && <span className="text-[9px] uppercase text-ink-soft">{label}</span>}

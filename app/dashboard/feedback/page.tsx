@@ -16,7 +16,7 @@ export default async function FeedbackPage() {
   const [user, pastReviews] = await Promise.all([getUserById(userId), listReviewsForUser(userId)]);
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row app-shell">
+    <div className="flex-1 flex flex-col lg:flex-row bg-cream text-ink">
       <AppSidebar
         eyebrow="Resume workspace"
         isAdmin={isAdminEmail(session.user.email)}
@@ -24,7 +24,7 @@ export default async function FeedbackPage() {
         isPaidPro={user?.plan === "pro" && Boolean(user?.stripe_subscription_id)}
       />
       <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 max-w-xl w-full">
-        <h1 className="font-display font-semibold text-2xl sm:text-3xl mb-1">How&apos;s Lettr working for you?</h1>
+        <h1 className="font-brand font-extrabold text-[32px] sm:text-[40px] leading-tight tracking-tight mb-2">How&apos;s Lettr working for you?</h1>
         <p className="text-ink-soft mb-8">
           Tell us what&apos;s working and what isn&apos;t — a real person reads every one, and our team follows
           up on real feedback.

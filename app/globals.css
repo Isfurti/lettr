@@ -121,11 +121,11 @@ body {
 }
 
 .score-ring-track {
-  stroke: var(--seal-soft);
+  stroke: var(--brand-blue-soft);
 }
 
 .score-ring-fill {
-  stroke: var(--seal);
+  stroke: var(--brand-blue);
   transition: stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

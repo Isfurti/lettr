@@ -46,7 +46,7 @@ export function ImportResumeButton() {
       <button
         onClick={() => inputRef.current?.click()}
         disabled={loading}
-        className="border border-rule text-sm px-4 py-2.5 rounded-sm font-medium hover:bg-app-bg disabled:opacity-60 transition-colors"
+        className="btn-press inline-flex items-center justify-center gap-2 min-h-11 px-5 rounded-full bg-white border-2 border-ink text-ink text-[15px] font-bold disabled:opacity-60"
       >
         {loading ? "Reading your resume…" : "Import existing resume"}
       </button>
