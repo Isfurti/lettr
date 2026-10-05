@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
+import "@fontsource/source-serif-4/400.css";
 import "@fontsource/source-serif-4/600.css";
 import "@fontsource/source-serif-4/700.css";
 import "@fontsource/manrope/400.css";
 import "@fontsource/manrope/500.css";
 import "@fontsource/manrope/600.css";
 import "@fontsource/manrope/700.css";
+import "@fontsource/manrope/800.css";
+import "@fontsource/bricolage-grotesque/700.css";
+import "@fontsource/bricolage-grotesque/800.css";
 import "@fontsource/playfair-display/600.css";
 import "@fontsource/playfair-display/700.css";
 import "@fontsource/inter/400.css";
