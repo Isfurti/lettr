@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Logo } from "@/components/Logo";
 import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import {
@@ -44,42 +45,38 @@ export function AdminSidebar() {
     <div className="lg:hidden bg-admin-sidebar text-white/90">
       <div className="admin-stripe h-1 w-full" />
       <div className="px-4 py-3 flex items-center justify-between">
-        <span className="font-display font-semibold text-base text-white flex items-center gap-2">
+        <span className="font-brand font-extrabold text-base text-white flex items-center gap-2">
           <ShieldAlert className="w-4 h-4" strokeWidth={2.5} /> Admin
           {healthy !== null && (
             <span className={`w-1.5 h-1.5 rounded-full ${healthy ? "bg-green-400" : "bg-red-300"}`} />
           )}
         </span>
-        <Link href="/dashboard" className="text-xs text-white/60 hover:text-white">← Dashboard</Link>
+        <Link href="/dashboard" className="min-h-11 inline-flex items-center text-sm text-white/70 hover:text-white">← Dashboard</Link>
       </div>
       <nav className="flex gap-1 px-2 pb-2 overflow-x-auto whitespace-nowrap">
         {NAV_ITEMS.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className={`px-3 py-1.5 rounded-sm text-xs shrink-0 ${pathname === item.href ? "bg-white/10 text-white font-medium" : "text-white/60"}`}
+            className={`inline-flex items-center min-h-10 px-3.5 rounded-full text-sm shrink-0 ${pathname === item.href ? "bg-white text-admin-sidebar font-bold" : "text-white/75 bg-white/5"}`}
           >
             {item.label}
           </Link>
         ))}
       </nav>
     </div>
-    <aside className="hidden lg:flex w-64 shrink-0 bg-admin-sidebar text-white/90 flex-col min-h-screen">
+    <aside className="hidden lg:flex w-64 shrink-0 bg-admin-sidebar text-white/90 flex-col min-h-screen sticky top-0 h-screen overflow-y-auto">
       <div className="admin-stripe h-1.5 w-full shrink-0" />
 
-      <div className="px-6 py-5 flex items-center gap-2.5 border-b border-white/10">
-        <div className="w-9 h-9 rounded-sm bg-admin-accent flex items-center justify-center shrink-0">
-          <ShieldAlert className="w-5 h-5 text-white" strokeWidth={2.5} />
-        </div>
-        <div>
-          <p className="font-display font-semibold text-base leading-none text-white">Admin Portal</p>
-          <p className="text-[10px] uppercase tracking-widest text-admin-accent-soft mt-1 font-medium">
-            ⚠ Real user data — act carefully
-          </p>
-        </div>
+      <div className="px-6 pt-6 pb-5 border-b border-white/10">
+        <Logo dark href="/admin" />
+        <p className="mt-3 flex w-fit items-center gap-1.5 bg-admin-accent text-white text-xs font-extrabold px-2.5 py-1 rounded-full">
+          <ShieldAlert className="w-3.5 h-3.5" strokeWidth={2.5} /> Admin
+        </p>
+        <p className="text-xs text-admin-accent-soft mt-2 font-bold">Real user data. Act carefully.</p>
       </div>
 
-      <nav className="flex-1 px-3 mt-2 space-y-0.5">
+      <nav className="flex-1 px-3 mt-3 space-y-1">
         {NAV_ITEMS.map((item) => {
           const active = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
           const Icon = item.icon;
@@ -87,11 +84,11 @@ export function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm transition-colors ${
-                active ? "admin-nav-item-active font-medium" : "text-white/60 hover:text-white hover:bg-white/5"
+              className={`flex items-center gap-3 px-3.5 min-h-11 rounded-xl text-[15px] transition-colors ${
+                active ? "admin-nav-item-active font-bold" : "text-white/70 hover:text-white hover:bg-white/5"
               }`}
             >
-              <Icon className="w-4 h-4" strokeWidth={2} />
+              <Icon className="w-[18px] h-[18px]" strokeWidth={2} />
               {item.label}
             </Link>
           );
@@ -101,7 +98,7 @@ export function AdminSidebar() {
       <div className="px-3 pb-6 space-y-2">
         <Link
           href="/admin/system"
-          className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-sm text-sm font-medium bg-admin-accent-deep hover:bg-admin-accent transition-colors"
+          className="flex items-center justify-center gap-2 px-3 min-h-11 rounded-full text-sm font-bold bg-admin-accent-deep hover:bg-admin-accent transition-colors"
         >
           <ShieldAlert className="w-4 h-4" strokeWidth={2} />
           System Health
@@ -111,13 +108,13 @@ export function AdminSidebar() {
         </Link>
         <Link
           href="/dashboard"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+          className="flex items-center gap-3 px-3.5 min-h-11 rounded-xl text-[15px] text-white/70 hover:text-white hover:bg-white/5 transition-colors"
         >
           ← Back to your dashboard
         </Link>
         <button
           onClick={() => signOut({ callbackUrl: "/" })}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+          className="w-full flex items-center gap-3 px-3.5 min-h-11 rounded-xl text-[15px] text-white/70 hover:text-white hover:bg-white/5 transition-colors"
         >
           <LogOut className="w-4 h-4" strokeWidth={2} />
           Sign out

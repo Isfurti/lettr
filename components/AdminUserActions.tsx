@@ -67,7 +67,7 @@ export function AdminUserActions({
     if (await call(`/api/admin/users/${userId}/delete`)) router.push("/admin/users");
   }
 
-  const btn = "text-sm border border-rule rounded-sm px-3 py-1.5 hover:bg-app-bg disabled:opacity-50";
+  const btn = "text-sm border border-rule rounded-xl px-3 py-1.5 hover:bg-sand disabled:opacity-50";
 
   return (
     <div className="flex flex-col items-start sm:items-end gap-2">
@@ -101,7 +101,7 @@ export function AdminUserActions({
               ? "Cancel their Stripe subscription first, so they aren't charged after deletion"
               : undefined
           }
-          className="text-sm text-red-600 border border-red-200 rounded-sm px-3 py-1.5 hover:bg-red-50 disabled:opacity-40 disabled:hover:bg-transparent"
+          className="text-sm text-red-600 border border-red-200 rounded-xl px-3 py-1.5 hover:bg-red-50 disabled:opacity-40 disabled:hover:bg-transparent"
         >
           Delete account
         </button>

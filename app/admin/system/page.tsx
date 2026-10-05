@@ -26,20 +26,20 @@ export default async function AdminSystemPage() {
     <div className="flex-1 flex flex-col lg:flex-row admin-shell">
       <AdminSidebar />
       <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-3xl">
-        <h1 className="font-display font-semibold text-3xl mb-1">System</h1>
+        <h1 className="font-brand font-extrabold text-[36px] tracking-tight mb-1">System</h1>
         <p className="text-ink-soft mb-8">Live configuration status — nothing here is cached or estimated.</p>
 
-        <div className="paper-sheet rounded-sm p-6 mb-6 flex items-center justify-between">
+        <div className="bg-white border border-rule rounded-xl p-6 mb-6 flex items-center justify-between">
           <div>
             <p className="font-medium">Database</p>
             <p className="text-xs text-ink-soft">{db.ok ? "Connected" : db.error}</p>
           </div>
-          <span className={`text-xs font-mono uppercase px-2.5 py-1 rounded-sm ${db.ok ? "bg-green-50 text-green-800" : "bg-red-50 text-red-700"}`}>
+          <span className={`text-xs font-mono uppercase px-2.5 py-1 rounded-xl ${db.ok ? "bg-green-50 text-green-800" : "bg-red-50 text-red-700"}`}>
             {db.ok ? "Operational" : "Error"}
           </span>
         </div>
 
-        <div className="paper-sheet rounded-sm overflow-hidden">
+        <div className="bg-white border border-rule rounded-xl overflow-hidden">
           <div className="px-6 py-3 border-b border-rule">
             <p className="text-xs uppercase tracking-wide text-ink-soft font-medium">Integrations</p>
           </div>
@@ -50,7 +50,7 @@ export default async function AdminSystemPage() {
                 {"note" in i && i.note && <p className="text-xs text-red-700 mt-0.5 break-words">{i.note}</p>}
               </div>
               <span
-                className={`text-xs font-mono uppercase px-2 py-0.5 rounded-sm shrink-0 ${
+                className={`text-xs font-mono uppercase px-2 py-0.5 rounded-xl shrink-0 ${
                   i.configured
                     ? "bg-green-50 text-green-800"
                     : i.critical
@@ -73,7 +73,7 @@ export default async function AdminSystemPage() {
           directly for the raw JSON, or an uptime monitor for continuous checks.
         </p>
 
-        <div className="paper-sheet rounded-sm overflow-hidden">
+        <div className="bg-white border border-rule rounded-xl overflow-hidden">
           <div className="px-6 py-3 border-b border-rule">
             <p className="text-xs uppercase tracking-wide text-ink-soft font-medium">Admin audit log</p>
             <p className="text-xs text-ink-soft mt-0.5">Every admin action that touched a user's data.</p>

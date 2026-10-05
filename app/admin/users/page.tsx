@@ -49,7 +49,7 @@ export default async function AdminUsersPage({
       <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-6xl">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="font-display font-semibold text-3xl mb-1">Users</h1>
+            <h1 className="font-brand font-extrabold text-[36px] tracking-tight mb-1">Users</h1>
             <p className="text-ink-soft text-sm">{users.length} shown</p>
           </div>
           <form method="GET" className="flex gap-2 w-full sm:w-auto">
@@ -58,11 +58,11 @@ export default async function AdminUsersPage({
               defaultValue={q}
               placeholder="Search by name or email…"
               aria-label="Search users"
-              className="border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised flex-1 sm:w-64 focus:outline-none focus:ring-2 focus:ring-seal/40"
+              className="border border-rule rounded-xl px-3 py-2 text-sm bg-white flex-1 sm:w-64 focus:outline-none focus:ring-2 focus:ring-brand-blue/30"
             />
             <input type="hidden" name="sort" value={sortKey} />
             {plan && <input type="hidden" name="plan" value={plan} />}
-            <button type="submit" className="bg-ink text-white px-4 py-2 rounded-sm text-sm font-medium hover:opacity-90">
+            <button type="submit" className="bg-ink text-white px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90">
               Search
             </button>
           </form>
@@ -96,10 +96,10 @@ export default async function AdminUsersPage({
           ))}
         </div>
 
-        <div className="paper-sheet rounded-sm overflow-x-auto">
+        <div className="bg-white border border-rule rounded-xl overflow-x-auto">
           <table className="w-full text-sm min-w-[860px]">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-ink-soft bg-app-bg">
+              <tr className="text-left text-xs uppercase tracking-wide text-ink-soft bg-sand">
                 <th className="px-5 py-3 font-medium">User</th>
                 <th className="px-5 py-3 font-medium">Plan</th>
                 <th className="px-5 py-3 font-medium">Region · price</th>
@@ -119,7 +119,7 @@ export default async function AdminUsersPage({
                 </tr>
               )}
               {users.map((u) => (
-                <tr key={u.id} className="border-t border-rule hover:bg-app-bg/50">
+                <tr key={u.id} className="border-t border-rule hover:bg-sand/60">
                   <td className="px-5 py-3">
                     <Link href={`/admin/users/${u.id}`} className="flex items-center gap-3">
                       <div className="w-7 h-7 rounded-full bg-ink text-white text-xs flex items-center justify-center shrink-0">

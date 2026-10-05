@@ -26,7 +26,7 @@ export default async function AdminAnalyticsPage() {
     <div className="flex-1 flex flex-col lg:flex-row admin-shell">
       <AdminSidebar />
       <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-6xl">
-        <h1 className="font-display font-semibold text-3xl mb-1">Analytics</h1>
+        <h1 className="font-brand font-extrabold text-[36px] tracking-tight mb-1">Analytics</h1>
         <p className="text-ink-soft text-sm mb-8">How people use Lettr. Your own admin account is left out.</p>
 
         <h2 className="text-xs uppercase tracking-wide text-ink-soft font-medium mb-3">Growth &amp; revenue</h2>
@@ -52,8 +52,8 @@ export default async function AdminAnalyticsPage() {
         <div className="grid lg:grid-cols-2 gap-5">
           <SignupsChart weeks={overview.signupsByWeek} />
 
-          <div className="paper-sheet rounded-sm p-6">
-            <p className="font-display font-semibold mb-4">Template popularity</p>
+          <div className="bg-white border border-rule rounded-xl p-6">
+            <p className="font-brand font-extrabold mb-4">Template popularity</p>
             {totalTemplateUsage === 0 ? (
               <p className="text-sm text-ink-soft">No resumes created yet.</p>
             ) : (
@@ -66,7 +66,7 @@ export default async function AdminAnalyticsPage() {
                         {t.count} · {Math.round((t.count / totalTemplateUsage) * 100)}%
                       </span>
                     </div>
-                    <div className="h-1.5 bg-app-bg rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-sand rounded-full overflow-hidden">
                       <div className="h-full bg-admin-accent rounded-full" style={{ width: `${(t.count / maxTemplateCount) * 100}%` }} />
                     </div>
                   </div>

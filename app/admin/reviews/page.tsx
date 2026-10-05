@@ -29,26 +29,26 @@ export default async function AdminReviewsPage() {
     positive: "bg-admin-accent-soft text-admin-accent-deep",
     negative: "bg-red-100 text-red-700",
     mixed: "bg-yellow-100 text-yellow-800",
-    neutral: "bg-rule/40 text-ink-soft",
+    neutral: "bg-sand text-ink-soft",
   };
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row admin-shell">
       <AdminSidebar />
       <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-4xl">
-        <h1 className="font-display font-semibold text-3xl mb-1">Reviews</h1>
+        <h1 className="font-brand font-extrabold text-[36px] tracking-tight mb-1">Reviews</h1>
         <p className="text-ink-soft mb-8">Real feedback, analyzed for what people actually like and don't.</p>
 
         <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="paper-sheet rounded-sm p-5 border-t-2 border-t-admin-accent">
+          <div className="bg-white border border-rule rounded-xl p-5 border-t-2 border-t-admin-accent">
             <p className="text-xs uppercase tracking-wide text-ink-soft mb-1">Total reviews</p>
-            <p className="font-display font-semibold text-2xl">{stats.total}</p>
+            <p className="font-brand font-extrabold text-3xl tracking-tight">{stats.total}</p>
           </div>
-          <div className="paper-sheet rounded-sm p-5 border-t-2 border-t-admin-accent">
+          <div className="bg-white border border-rule rounded-xl p-5 border-t-2 border-t-admin-accent">
             <p className="text-xs uppercase tracking-wide text-ink-soft mb-1">Average rating</p>
-            <p className="font-display font-semibold text-2xl">{stats.avgRating || "—"} <span className="text-sm text-ink-soft">/ 5</span></p>
+            <p className="font-brand font-extrabold text-3xl tracking-tight">{stats.avgRating || "—"} <span className="text-sm text-ink-soft">/ 5</span></p>
           </div>
-          <div className="paper-sheet rounded-sm p-5 border-t-2 border-t-admin-accent">
+          <div className="bg-white border border-rule rounded-xl p-5 border-t-2 border-t-admin-accent">
             <p className="text-xs uppercase tracking-wide text-ink-soft mb-1">Distribution</p>
             <div className="flex items-end gap-1 h-8 mt-1">
               {[1, 2, 3, 4, 5].map((star) => {
@@ -65,8 +65,8 @@ export default async function AdminReviewsPage() {
           </div>
         </div>
 
-        <h2 className="font-display font-semibold text-lg mb-3">What users don&apos;t like ({painPoints.length})</h2>
-        <div className="paper-sheet rounded-sm overflow-hidden mb-10">
+        <h2 className="font-brand font-extrabold text-lg mb-3">What users don&apos;t like ({painPoints.length})</h2>
+        <div className="bg-white border border-rule rounded-xl overflow-hidden mb-10">
           {painPoints.length === 0 ? (
             <p className="text-sm text-ink-soft px-6 py-6">No dislikes recorded yet — nothing negative has come up in reviews so far.</p>
           ) : (
@@ -82,16 +82,16 @@ export default async function AdminReviewsPage() {
           )}
         </div>
 
-        <h2 className="font-display font-semibold text-lg mb-3">All reviews</h2>
+        <h2 className="font-brand font-extrabold text-lg mb-3">All reviews</h2>
         <div className="space-y-3">
           {reviews.length === 0 && <p className="text-sm text-ink-soft">No reviews submitted yet.</p>}
           {reviews.map((r) => (
-            <div key={r.id} className="paper-sheet rounded-sm p-4">
+            <div key={r.id} className="bg-white border border-rule rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-admin-accent">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
                   {r.sentiment && (
-                    <span className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded-sm ${sentimentColor[r.sentiment] ?? ""}`}>
+                    <span className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded-xl ${sentimentColor[r.sentiment] ?? ""}`}>
                       {r.sentiment}
                     </span>
                   )}

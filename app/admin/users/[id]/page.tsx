@@ -43,7 +43,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
 
         <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
           <div className="min-w-0">
-            <h1 className="font-display font-semibold text-3xl mb-1">{user.name || "—"}</h1>
+            <h1 className="font-brand font-extrabold text-[36px] tracking-tight mb-1">{user.name || "—"}</h1>
             <p className="text-ink-soft break-all">{user.email}</p>
             <p className="text-xs text-ink-soft mt-2 flex flex-wrap items-center gap-2">
               <PlanBadge plan={user.plan} paid={Boolean(user.stripe_subscription_id)} />
@@ -72,14 +72,14 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             { label: "AI rewrites (free)", value: user.plan === "pro" ? "—" : `${user.ai_writing_assist_count ?? 0} of 5` },
             { label: "Last active", value: activity[0] ? formatDate(activity[0].created_at) : "—" },
           ].map((stat) => (
-            <div key={stat.label} className="paper-sheet rounded-sm p-3">
+            <div key={stat.label} className="bg-white border border-rule rounded-xl p-3">
               <p className="text-[10px] uppercase tracking-wide text-ink-soft">{stat.label}</p>
               <p className="text-sm font-medium mt-0.5">{stat.value}</p>
             </div>
           ))}
         </div>
 
-        <h2 className="font-display font-semibold text-lg mb-3">Resumes ({resumeRows.length})</h2>
+        <h2 className="font-brand font-extrabold text-lg mb-3">Resumes ({resumeRows.length})</h2>
         <div className="space-y-2 mb-10">
           {resumeRows.length === 0 && <p className="text-sm text-ink-soft">No resumes yet.</p>}
           {resumeRows.map((r) => {
@@ -89,20 +89,20 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
               <Link
                 key={r.id}
                 href={`/admin/users/${id}/resumes/${r.id}`}
-                className="paper-sheet rounded-sm p-4 flex items-center justify-between hover:-translate-y-0.5 transition-transform"
+                className="bg-white border border-rule rounded-xl p-4 flex items-center justify-between hover:-translate-y-0.5 transition-transform"
               >
                 <div>
                   <p className="font-medium text-sm">{displayTitle({ title: r.title, data })}</p>
                   <p className="text-xs text-ink-soft capitalize">{r.template} · updated {formatDate(r.updated_at)}</p>
                 </div>
-                <span className="text-xs font-mono bg-admin-accent-soft text-admin-accent-deep px-2 py-0.5 rounded-sm">{score.overall}</span>
+                <span className="text-xs font-mono bg-admin-accent-soft text-admin-accent-deep px-2 py-0.5 rounded-xl">{score.overall}</span>
               </Link>
             );
           })}
         </div>
 
-        <h2 className="font-display font-semibold text-lg mb-3">Recent activity</h2>
-        <div className="paper-sheet rounded-sm p-4">
+        <h2 className="font-brand font-extrabold text-lg mb-3">Recent activity</h2>
+        <div className="bg-white border border-rule rounded-xl p-4">
           {activity.length === 0 ? (
             <p className="text-sm text-ink-soft">No recorded activity.</p>
           ) : (

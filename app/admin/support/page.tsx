@@ -37,13 +37,13 @@ export default async function AdminSupportPage() {
     const adminEmailRaw = process.env.ADMIN_EMAIL;
     return (
       <main className="flex-1 min-w-0 max-w-lg mx-auto w-full px-8 py-12">
-        <h1 className="font-display font-semibold text-xl mb-4">Admin check failed</h1>
+        <h1 className="font-brand font-extrabold text-xl mb-4">Admin check failed</h1>
         <p className="text-sm text-ink-soft mb-6">
           You&apos;re logged in, but your email doesn&apos;t match <code>ADMIN_EMAIL</code>. Compare
           these fingerprints against what you typed into Vercel — a mismatched length usually means
           stray whitespace or a hidden character got copied in.
         </p>
-        <div className="paper-sheet rounded-sm p-4 space-y-3 font-mono text-xs">
+        <div className="bg-white border border-rule rounded-xl p-4 space-y-3 font-mono text-xs">
           <div>
             <p className="text-ink-soft mb-1">Your logged-in session email:</p>
             <pre>{JSON.stringify(fingerprint(yourEmailRaw), null, 2)}</pre>
@@ -67,19 +67,19 @@ export default async function AdminSupportPage() {
     <div className="flex-1 flex flex-col lg:flex-row admin-shell">
       <AdminSidebar />
       <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-4xl">
-        <h1 className="font-display font-semibold text-3xl mb-1">Support inbox</h1>
+        <h1 className="font-brand font-extrabold text-[36px] tracking-tight mb-1">Support inbox</h1>
         <p className="text-ink-soft text-sm mb-8">
           Messages from the Contact page.{" "}
           {!process.env.RESEND_API_KEY && "Email alerts aren't set up (Resend), so check here regularly."}
         </p>
 
-        <h2 className="font-display font-semibold text-sm uppercase tracking-wide text-ink-soft mb-3">
+        <h2 className="font-brand font-extrabold text-sm uppercase tracking-wide text-ink-soft mb-3">
           Open ({open.length})
         </h2>
         <div className="space-y-3 mb-10">
           {open.length === 0 && <p className="text-sm text-ink-soft">Nothing open. 🎉</p>}
           {open.map((m) => (
-            <div key={m.id} className="paper-sheet rounded-sm p-4">
+            <div key={m.id} className="bg-white border border-rule rounded-xl p-4">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
                 <p className="font-medium text-sm">{m.subject}</p>
                 <span className="text-xs text-ink-soft font-mono">{formatDateTime(m.created_at)}</span>
@@ -87,7 +87,7 @@ export default async function AdminSupportPage() {
               <p className="text-xs text-ink-soft mb-2 break-all">{m.email}</p>
               <p className="text-sm whitespace-pre-wrap mb-3">{m.message}</p>
               <div className="flex items-center gap-4">
-                <a href={replyHref(m)} className="text-xs bg-ink text-white px-3 py-1.5 rounded-sm hover:opacity-90">
+                <a href={replyHref(m)} className="text-xs bg-ink text-white px-3 py-1.5 rounded-xl hover:opacity-90">
                   Reply by email
                 </a>
                 <ResolveButton id={m.id} />
@@ -98,19 +98,19 @@ export default async function AdminSupportPage() {
 
         {resolved.length > 0 && (
           <>
-            <h2 className="font-display font-semibold text-sm uppercase tracking-wide text-ink-soft mb-3">
+            <h2 className="font-brand font-extrabold text-sm uppercase tracking-wide text-ink-soft mb-3">
               Resolved ({resolved.length})
             </h2>
             <div className="space-y-2">
               {resolved.map((m) => (
-                <details key={m.id} className="paper-sheet rounded-sm p-3 group">
+                <details key={m.id} className="bg-white border border-rule rounded-xl p-3 group">
                   <summary className="cursor-pointer list-none flex flex-wrap items-center justify-between gap-2 text-sm text-ink-soft">
                     <span className="min-w-0 break-words">{m.subject} — {m.email}</span>
                     <span className="text-xs font-mono">{formatDateTime(m.created_at)}</span>
                   </summary>
                   <p className="text-sm whitespace-pre-wrap mt-3 mb-3">{m.message}</p>
                   <div className="flex items-center gap-4">
-                    <a href={replyHref(m)} className="text-xs text-seal hover:underline">Reply by email</a>
+                    <a href={replyHref(m)} className="text-xs text-brand-blue hover:underline">Reply by email</a>
                     <ResolveButton id={m.id} reopen />
                   </div>
                 </details>

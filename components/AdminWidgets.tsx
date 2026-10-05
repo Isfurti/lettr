@@ -3,10 +3,10 @@ import { formatDate } from "@/lib/format-date";
 
 export function AdminStatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="paper-sheet rounded-sm p-5 border-t-2 border-t-admin-accent">
-      <p className="text-xs uppercase tracking-wide text-ink-soft mb-1">{label}</p>
-      <p className="font-display font-semibold text-2xl">{value}</p>
-      {sub && <p className="text-xs text-ink-soft mt-1">{sub}</p>}
+    <div className="bg-white border border-rule rounded-[24px] p-5">
+      <p className="text-sm font-bold text-slate mb-1">{label}</p>
+      <p className="font-brand font-extrabold text-[32px] leading-tight tracking-tight">{value}</p>
+      {sub && <p className="text-sm text-slate mt-1">{sub}</p>}
     </div>
   );
 }
@@ -31,9 +31,9 @@ export function SignupsChart({ weeks, totalWeeks = 12 }: { weeks: { week: string
   const total = series.reduce((s, w) => s + w.count, 0);
 
   return (
-    <div className="paper-sheet rounded-sm p-6">
+    <div className="bg-white border border-rule rounded-[24px] p-6">
       <div className="flex items-baseline justify-between mb-4">
-        <p className="font-display font-semibold">Signups per week</p>
+        <p className="font-brand font-extrabold text-xl">Sign-ups per week</p>
         <p className="text-xs text-ink-soft">{total} in the last {totalWeeks} weeks</p>
       </div>
       <div className="flex items-end gap-1.5 h-40">
@@ -41,7 +41,7 @@ export function SignupsChart({ weeks, totalWeeks = 12 }: { weeks: { week: string
           <div key={w.week} className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
             <span className="text-[10px] text-ink-soft font-mono">{w.count > 0 ? w.count : ""}</span>
             <div
-              className={`w-full rounded-t-sm ${w.count > 0 ? "bg-admin-accent" : "bg-rule/50"}`}
+              className={`w-full rounded-t-md ${w.count > 0 ? "bg-brand-blue" : "bg-sand"}`}
               style={{ height: `${w.count > 0 ? Math.max(6, (w.count / max) * 110) : 2}px` }}
               title={`Week of ${formatDate(w.week)}: ${w.count} signup${w.count === 1 ? "" : "s"}`}
             />
@@ -59,7 +59,7 @@ export function SignupsChart({ weeks, totalWeeks = 12 }: { weeks: { week: string
 /** Red banner shown across the admin portal while payments can't be taken. */
 export function PaymentsWarning({ missing }: { missing: string[] }) {
   return (
-    <div className="mb-6 rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+    <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
       <p className="font-medium">Payments are not set up — nobody can upgrade to Pro right now.</p>
       <p className="text-xs mt-1">
         Add these in Vercel → Project → Settings → Environment Variables, then redeploy:{" "}
@@ -71,13 +71,13 @@ export function PaymentsWarning({ missing }: { missing: string[] }) {
 }
 
 export function PlanBadge({ plan, paid }: { plan: string; paid: boolean }) {
-  if (plan !== "pro") return <span className="whitespace-nowrap text-xs font-mono uppercase px-2 py-0.5 rounded-sm bg-rule/40">Free</span>;
+  if (plan !== "pro") return <span className="whitespace-nowrap text-xs font-mono uppercase px-2 py-0.5 rounded-xl bg-sand">Free</span>;
   return paid ? (
-    <span className="whitespace-nowrap text-xs font-mono uppercase px-2 py-0.5 rounded-sm bg-green-50 text-green-800">Pro · paid</span>
+    <span className="whitespace-nowrap text-xs font-mono uppercase px-2 py-0.5 rounded-xl bg-green-50 text-green-800">Pro · paid</span>
   ) : (
     <span
       title="Pro given by an admin - no Stripe subscription, no revenue"
-      className="whitespace-nowrap text-xs font-mono uppercase px-2 py-0.5 rounded-sm bg-amber-50 text-amber-800"
+      className="whitespace-nowrap text-xs font-mono uppercase px-2 py-0.5 rounded-xl bg-amber-50 text-amber-800"
     >
       Pro · comp
     </span>

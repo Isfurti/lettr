@@ -29,7 +29,7 @@ export default async function AdminSubscriptionsPage() {
     <div className="flex-1 flex flex-col lg:flex-row admin-shell">
       <AdminSidebar />
       <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-6xl">
-        <h1 className="font-display font-semibold text-3xl mb-1">Subscriptions</h1>
+        <h1 className="font-brand font-extrabold text-[36px] tracking-tight mb-1">Subscriptions</h1>
         <p className="text-ink-soft text-sm mb-6">
           {paid.length} paying subscriber{paid.length === 1 ? "" : "s"} · {comped.length} comped Pro account
           {comped.length === 1 ? "" : "s"}
@@ -83,11 +83,11 @@ function SubscriberTable({
   note?: (u: AdminUserRow) => string | undefined;
 }) {
   return (
-    <div className="paper-sheet rounded-sm overflow-x-auto">
-      <p className="px-6 py-3 border-b border-rule font-display font-semibold">{title}</p>
+    <div className="bg-white border border-rule rounded-xl overflow-x-auto">
+      <p className="px-6 py-3 border-b border-rule font-brand font-extrabold">{title}</p>
       <table className="w-full text-sm min-w-[560px]">
         <thead>
-          <tr className="text-left text-xs uppercase tracking-wide text-ink-soft bg-app-bg">
+          <tr className="text-left text-xs uppercase tracking-wide text-ink-soft bg-sand">
             <th className="px-6 py-3 font-medium">User</th>
             <th className="px-6 py-3 font-medium">Region · price</th>
             <th className="px-6 py-3 font-medium">Joined</th>

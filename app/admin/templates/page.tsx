@@ -17,10 +17,10 @@ export default async function AdminTemplatesPage() {
     <div className="flex-1 flex flex-col lg:flex-row admin-shell">
       <AdminSidebar />
       <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-6xl">
-        <h1 className="font-display font-semibold text-3xl mb-1">Templates</h1>
+        <h1 className="font-brand font-extrabold text-[36px] tracking-tight mb-1">Templates</h1>
         <p className="text-ink-soft mb-8">Real usage across {total} resume{total === 1 ? "" : "s"}.</p>
 
-        <div className="paper-sheet rounded-sm p-6">
+        <div className="bg-white border border-rule rounded-xl p-6">
           {total === 0 ? (
             <p className="text-sm text-ink-soft">No resumes created yet.</p>
           ) : (
@@ -34,7 +34,7 @@ export default async function AdminTemplatesPage() {
                       <span className="font-medium text-sm capitalize">{t}</span>
                       <span className="text-xs text-ink-soft font-mono">{count} resumes · {pct}%</span>
                     </div>
-                    <div className="h-2 bg-app-bg rounded-full overflow-hidden">
+                    <div className="h-2 bg-sand rounded-full overflow-hidden">
                       <div
                         className="h-full bg-admin-accent rounded-full transition-all"
                         style={{ width: `${(count / maxCount) * 100}%` }}

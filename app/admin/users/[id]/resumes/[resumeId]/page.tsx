@@ -37,10 +37,10 @@ export default async function AdminResumeViewPage({
           ← Back to {user.name || user.email}
         </Link>
         <p className="text-xs uppercase tracking-wide text-admin-accent font-medium mb-1">Read-only admin view</p>
-        <h1 className="font-display font-semibold text-2xl mb-6">{row.title}</h1>
+        <h1 className="font-brand font-extrabold text-3xl tracking-tight mb-6">{row.title}</h1>
 
-        <div className="paper-sheet rounded-sm p-8">
-          <h2 className="font-display font-bold text-xl">{data.contact.fullName || "—"}</h2>
+        <div className="bg-white border border-rule rounded-xl p-8">
+          <h2 className="font-brand font-extrabold text-xl">{data.contact.fullName || "—"}</h2>
           <p className="text-xs text-ink-soft mt-1 mb-4">
             {[data.contact.email, data.contact.phone, data.contact.location, data.contact.linkedin, data.contact.website]
               .filter(Boolean)
