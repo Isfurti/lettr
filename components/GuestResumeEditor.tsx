@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { EditForm, ScorePanel, JobMatchPanel, ResumePreview, MobileViewToggle } from "@/components/ResumeEditor";
+import { EditForm, ScorePanel, JobMatchPanel, ResumePreview } from "@/components/ResumeEditor";
+import { BuilderTabs, MobileViewToggle, LettrNotes, ScoreStamp, getLettrNotes, goToSection } from "@/components/builder/BuilderChrome";
+import { Logo } from "@/components/Logo";
 import { emptyResume, type ResumeData } from "@/lib/types";
 import { saveGuestDraft, loadGuestDraft } from "@/lib/guest-draft";
 
@@ -63,22 +65,27 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
   const isBlank =
     !data.contact.fullName && !data.summary && data.experience.length === 0 && data.education.length === 0;
 
+  function goFix(sectionKey: string) {
+    setTab("edit");
+    setMobileView("form");
+    goToSection(sectionKey);
+  }
+  const liveScore = getLettrNotes(data).overall;
+
   return (
-    <div className="flex-1 flex flex-col bg-paper">
+    <div className="flex-1 flex flex-col bg-cream text-ink">
       {/* Slim builder header - the full marketing nav just competes with the work here. */}
-      <header className="border-b border-rule bg-paper px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+      <header className="border-b border-rule bg-cream px-3 sm:px-6 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <Link href="/" className="font-display font-semibold text-xl hover:opacity-80 shrink-0">
-            Lettr
-          </Link>
-          <span className="hidden sm:inline text-xs text-ink-soft truncate">✓ Draft auto-saved on this device</span>
+          <Logo />
+          <span className="hidden md:inline text-sm font-bold text-slate truncate">✓ Draft saved on this device</span>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2">
           <select
             value={template}
             onChange={(e) => setTemplate(e.target.value)}
             aria-label="Template"
-            className="text-sm border border-rule rounded-sm px-2 py-1.5 bg-paper-raised max-w-[9.5rem]"
+            className="min-h-11 text-sm font-bold border-2 border-rule rounded-full px-3 bg-white max-w-[9.5rem] focus:outline-none focus:border-brand-blue"
           >
             {TEMPLATES.map((t) => (
               <option key={t} value={t}>{t[0].toUpperCase() + t.slice(1)}{!isTemplateFree(t) ? " (Pro)" : ""}</option>
@@ -86,62 +93,60 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
           </select>
           <button
             onClick={() => requestExport("pdf")}
-            className="text-sm bg-seal text-white rounded-sm px-3 py-1.5 hover:opacity-90 whitespace-nowrap"
+            className="btn-press inline-flex items-center min-h-11 px-4 sm:px-5 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_4px_0_var(--brand-blue-deep)] whitespace-nowrap"
           >
             Download PDF
           </button>
-          <Link href="/login?continue=builder" className="hidden md:inline text-sm text-ink-soft hover:text-ink whitespace-nowrap">
+          <Link href="/login?continue=builder" className="hidden md:inline-flex items-center min-h-11 px-3 text-sm font-bold text-slate hover:text-ink whitespace-nowrap">
             Sign in
           </Link>
         </div>
       </header>
 
-      <div className="border-b border-rule px-2 sm:px-6 flex items-center gap-1 overflow-x-auto whitespace-nowrap">
-        {[
+      <BuilderTabs
+        tabs={[
           { id: "edit", label: "Edit" },
           { id: "score", label: "Score" },
-          { id: "match", label: "Job Match" },
-        ].map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id as typeof tab)}
-            className={`px-3 sm:px-4 py-2.5 text-sm border-b-2 -mb-px shrink-0 ${
-              tab === t.id ? "border-seal text-ink font-medium" : "border-transparent text-ink-soft"
-            }`}
+          { id: "match", label: "Job match" },
+        ]}
+        active={tab}
+        onChange={(id) => setTab(id as typeof tab)}
+        showPro={false}
+        trailing={
+          <Link
+            href="/signup?continue=builder"
+            className="inline-flex items-center min-h-10 px-4 rounded-full bg-gold-soft text-ink text-sm font-bold hover:bg-gold transition-colors"
           >
-            {t.label}
-          </button>
-        ))}
-        <Link
-          href="/signup?continue=builder"
-          className="ml-auto px-3 py-2.5 text-xs sm:text-sm text-seal hover:underline shrink-0"
-        >
-          ✦ Unlock AI<span className="hidden sm:inline"> writing — free account</span> →
-        </Link>
-      </div>
+            ✦ Unlock AI<span className="hidden sm:inline">&nbsp;writing: free account</span>
+          </Link>
+        }
+      />
 
       <MobileViewToggle view={mobileView} setView={setMobileView} />
 
-      <div className="flex-1 grid lg:grid-cols-2 min-h-0">
-        <div className={`overflow-y-auto p-4 sm:p-6 lg:border-r border-rule ${mobileView === "preview" ? "hidden lg:block" : ""}`}>
+      <div className="flex-1 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] min-h-0">
+        <div className={`overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 ${mobileView === "preview" ? "hidden lg:block" : ""}`}>
           {tab === "edit" && hasPendingJd && (
-            <div className="max-w-xl mb-4 bg-seal-soft text-seal-deep text-sm rounded-sm px-4 py-3">
+            <div className="max-w-xl mb-6 bg-brand-blue-soft text-brand-blue-deep rounded-2xl px-5 py-4">
               Your job description is saved. Fill in your details, then open{" "}
-              <button onClick={() => setTab("match")} className="font-medium underline">Job Match</button> to see your score.
+              <button onClick={() => setTab("match")} className="font-bold underline">Job match</button> to see your score.
             </div>
           )}
           {tab === "edit" && isBlank && !hideImportTip && (
-            <div className="max-w-xl mb-6 paper-sheet rounded-sm p-4 flex items-start justify-between gap-3">
+            <div className="max-w-xl mb-8 bg-white border-2 border-ink rounded-[24px] shadow-[5px_5px_0_var(--ink)] p-5 flex items-start justify-between gap-3">
               <div>
-                <p className="text-sm font-medium mb-0.5">Already have a resume?</p>
-                <p className="text-xs text-ink-soft">
-                  Import your PDF or Word file and Lettr fills everything in for you — needs a free account.{" "}
-                  <Link href="/signup?continue=import" className="text-seal font-medium hover:underline">
-                    Import my resume →
-                  </Link>
+                <p className="font-extrabold text-lg mb-1">Already have a resume?</p>
+                <p className="text-slate">
+                  Import your PDF or Word file and Lettr fills everything in for you. Needs a free account.
                 </p>
+                <Link
+                  href="/signup?continue=import"
+                  className="btn-press mt-3 inline-flex items-center min-h-11 px-5 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_4px_0_var(--brand-blue-deep)]"
+                >
+                  Import my resume
+                </Link>
               </div>
-              <button onClick={() => setHideImportTip(true)} aria-label="Dismiss" className="text-ink-soft hover:text-ink text-sm">
+              <button onClick={() => setHideImportTip(true)} aria-label="Dismiss" className="w-10 h-10 shrink-0 rounded-full hover:bg-sand text-slate">
                 ✕
               </button>
             </div>
@@ -150,22 +155,34 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
           {tab === "score" && <ScorePanel data={data} plan="free" />}
           {tab === "match" && <JobMatchPanel data={data} />}
         </div>
-        <div className={`overflow-y-auto p-4 sm:p-6 bg-rule/10 relative lg:sticky lg:top-0 lg:self-start lg:max-h-screen ${mobileView === "form" ? "hidden lg:block" : ""}`}>
-          <div className="relative max-w-2xl mx-auto">
-            {/* Light, out-of-the-way watermark: marks this as a preview without covering the content. */}
-            <span className="pointer-events-none select-none absolute bottom-3 right-4 z-10 text-[11px] font-mono uppercase tracking-widest text-ink/25">
-              Preview · Lettr
-            </span>
-            <ResumePreview data={data} template={template} />
-          </div>
-          {!isTemplateFree(template) && (
-            <p className="max-w-2xl mx-auto mt-3 text-xs text-ink-soft text-center">
-              {template[0].toUpperCase() + template.slice(1)} is a Pro template — preview it freely, download it with Pro.
+        <div
+          className={`bg-sand border-l border-rule px-4 sm:px-8 py-6 sm:py-8 lg:sticky lg:top-0 lg:self-start lg:h-screen lg:overflow-y-auto ${
+            mobileView === "form" ? "hidden lg:block" : ""
+          }`}
+        >
+          <div className="max-w-2xl mx-auto flex flex-col gap-6">
+            {!isBlank && <LettrNotes data={data} fullAccess={false} onGo={goFix} />}
+            <div className="relative">
+              {!isBlank && (
+                <div className="absolute -top-4 -right-2 sm:-right-4 z-10">
+                  <ScoreStamp score={liveScore} />
+                </div>
+              )}
+              {/* Light, out-of-the-way watermark: marks this as a preview without covering the content. */}
+              <span className="pointer-events-none select-none absolute bottom-3 right-4 z-10 text-[11px] font-bold uppercase tracking-widest text-ink/25">
+                Preview · Lettr
+              </span>
+              <ResumePreview data={data} template={template} />
+            </div>
+            {!isTemplateFree(template) && (
+              <p className="text-sm text-slate text-center">
+                {template[0].toUpperCase() + template.slice(1)} is a Pro template. Preview it freely, download it with Pro.
+              </p>
+            )}
+            <p className="text-sm text-slate text-center">
+              Preview only. Sign in (free) to download without the watermark.
             </p>
-          )}
-          <p className="max-w-2xl mx-auto mt-3 text-xs text-ink-soft text-center">
-            Preview only — sign in (free) to download without the watermark.
-          </p>
+          </div>
         </div>
       </div>
 
@@ -177,16 +194,16 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
           aria-modal="true"
           aria-labelledby="export-gate-title"
         >
-          <div className="paper-sheet rounded-sm p-8 max-w-sm w-full text-center relative" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white border-2 border-ink rounded-[28px] shadow-[6px_6px_0_var(--ink)] p-8 max-w-sm w-full text-center relative" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setShowExportGate(null)}
               aria-label="Close"
-              className="absolute top-3 right-3 text-ink-soft hover:text-ink"
+              className="absolute top-3 right-3 w-10 h-10 rounded-full hover:bg-sand text-slate"
             >
               ✕
             </button>
-            <h2 id="export-gate-title" className="font-display font-semibold text-xl mb-2">One more step</h2>
-            <p className="text-sm text-ink-soft mb-6">
+            <h2 id="export-gate-title" className="font-brand font-extrabold text-2xl mb-2">One more step</h2>
+            <p className="text-slate mb-6">
               Create a free account to download your resume as a PDF — takes 10 seconds. Your work is already
               saved and comes with you.
               {!isTemplateFree(template) && " (You're using a Pro template, so the download will use Classic unless you upgrade.)"}
@@ -194,19 +211,19 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
             <div className="space-y-2">
               <Link
                 href="/signup?continue=export"
-                className="block w-full bg-ink text-white py-2.5 rounded-sm font-medium hover:opacity-90"
+                className="btn-press flex items-center justify-center w-full min-h-12 rounded-full bg-brand-blue text-white font-bold shadow-[0_4px_0_var(--brand-blue-deep)]"
               >
                 Create free account
               </Link>
               <Link
                 href="/login?continue=export"
-                className="block w-full border border-rule py-2.5 rounded-sm font-medium hover:bg-app-bg"
+                className="btn-press flex items-center justify-center w-full min-h-12 rounded-full border-2 border-ink font-bold"
               >
                 I already have an account
               </Link>
               <button
                 onClick={() => setShowExportGate(null)}
-                className="text-sm text-ink-soft hover:text-ink mt-2"
+                className="min-h-11 text-sm font-bold text-slate hover:text-ink mt-2"
               >
                 Keep editing
               </button>

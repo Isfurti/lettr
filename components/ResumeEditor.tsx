@@ -7,7 +7,7 @@ import { extraSections, type ResumeData, type ExperienceEntry, type EducationEnt
 import { scoreResumeAgainstJob, type AtsResult } from "@/lib/ats-score";
 import { scoreResumeQuality } from "@/lib/resume-score";
 import type { Plan } from "@/lib/limits";
-import { TopNav } from "@/components/TopNav";
+import { BuilderTabs, MobileViewToggle, LettrNotes, ScoreStamp, goToSection } from "@/components/builder/BuilderChrome";
 import { ScoreRing } from "@/components/ScoreRing";
 import { DEFAULT_ACCENT_COLOR, getFontPair, darkenHex, softenHex, ACCENT_COLORS, FONT_PAIRS } from "@/lib/customization";
 import { PhotoUpload } from "@/components/PhotoUpload";
@@ -159,33 +159,51 @@ export function ResumeEditor({
   const liveScore = scoreResumeQuality(data);
   const upgradeMessage = pdfUpgradeRequired || docxUpgradeRequired;
 
-  return (
-    <main className="flex-1 flex flex-col bg-paper">
-      <TopNav userInitial={userInitial} />
+  function goFix(sectionKey: string) {
+    setTab("edit");
+    setMobileView("form");
+    goToSection(sectionKey);
+  }
 
-      <div className="border-b border-rule px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-          <Link href="/dashboard" className="text-sm text-ink-soft hover:text-ink shrink-0" aria-label="Back to dashboard">
-            ←<span className="hidden sm:inline"> Dashboard</span>
+  const pillOutline =
+    "btn-press inline-flex items-center justify-center min-h-11 px-4 rounded-full bg-white border-2 border-ink text-ink text-sm font-bold";
+
+  return (
+    <main className="flex-1 flex flex-col bg-cream text-ink">
+      <header className="border-b border-rule bg-cream px-3 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-[16rem] flex-1">
+          <Link
+            href="/dashboard"
+            aria-label="Back to dashboard"
+            title="Back to dashboard"
+            className="w-11 h-11 shrink-0 rounded-full bg-ink text-gold font-brand font-extrabold text-xl flex items-center justify-center -rotate-6 hover:rotate-0 transition-transform"
+          >
+            L
           </Link>
           <div className="min-w-0 flex-1">
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               aria-label="Resume title"
-              className="font-display font-semibold text-lg sm:text-xl bg-transparent focus:outline-none border-b border-transparent focus:border-rule min-w-0 w-full"
+              className="font-brand font-extrabold text-xl sm:text-2xl tracking-tight bg-transparent focus:outline-none border-b-2 border-transparent focus:border-brand-blue min-w-0 w-full"
             />
+            <p className="text-xs font-bold text-slate h-4" aria-live="polite">
+              {saveStatus === "saving"
+                ? "Saving…"
+                : saveStatus === "saved"
+                ? "✓ Saved"
+                : saveStatus === "error"
+                ? "Not saved"
+                : ""}
+            </p>
           </div>
-          <span className="text-xs text-ink-soft shrink-0" aria-live="polite">
-            {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "Saved ✓" : saveStatus === "error" ? "Not saved" : ""}
-          </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <select
             value={template}
             onChange={(e) => setTemplate(e.target.value)}
             aria-label="Template"
-            className="text-sm border border-rule rounded-sm px-2 py-1.5 bg-paper-raised"
+            className="min-h-11 max-w-[8rem] sm:max-w-none text-sm font-bold border-2 border-rule rounded-full px-3 bg-white focus:outline-none focus:border-brand-blue"
           >
             {TEMPLATES.map((t) => (
               <option key={t} value={t}>
@@ -194,59 +212,58 @@ export function ResumeEditor({
               </option>
             ))}
           </select>
-          <button
-            onClick={save}
-            className="text-sm border border-rule rounded-sm px-3 py-1.5 hover:bg-paper-raised"
-          >
+          <button onClick={save} className={pillOutline}>
             Save
           </button>
           <button
             onClick={exportPdf}
-            className="text-sm bg-seal text-white rounded-sm px-3 py-1.5 hover:opacity-90"
+            className="btn-press inline-flex items-center justify-center min-h-11 px-5 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_4px_0_var(--brand-blue-deep)]"
           >
-            Download PDF
+            <span className="sm:hidden">PDF</span>
+            <span className="hidden sm:inline">Download PDF</span>
           </button>
           <details className="relative">
-            <summary className="list-none cursor-pointer text-sm border border-rule rounded-sm px-3 py-1.5 hover:bg-paper-raised select-none">
-              More ▾
+            <summary className={`${pillOutline} list-none cursor-pointer select-none [&::-webkit-details-marker]:hidden`}>
+              More
             </summary>
-            <div className="absolute right-0 mt-1 z-30 paper-sheet rounded-sm py-1 w-52 text-sm shadow-lg">
-              <button onClick={exportDocx} className="block w-full text-left px-3 py-2 hover:bg-app-bg">
-                Download Word (.docx){plan === "free" && <span className="text-[10px] font-mono text-seal ml-1.5">PRO</span>}
+            <div className="absolute right-0 mt-2 z-30 bg-white border-2 border-ink rounded-2xl py-2 w-60 max-w-[calc(100vw-2rem)] text-[15px] shadow-[5px_5px_0_var(--ink)]">
+              <button onClick={exportDocx} className="flex items-center gap-2 w-full text-left px-4 min-h-11 hover:bg-sand">
+                Download Word (.docx)
+                {plan === "free" && <span className="text-[10px] font-extrabold bg-ink text-gold px-1.5 py-0.5 rounded-full">Pro</span>}
               </button>
               {driveStatus === "connect" ? (
-                <a href="/api/google/connect" className="block px-3 py-2 text-seal hover:bg-app-bg">
+                <a href="/api/google/connect" className="flex items-center px-4 min-h-11 font-bold text-brand-blue hover:bg-sand">
                   Connect Google Drive →
                 </a>
               ) : driveLink ? (
-                <a href={driveLink} target="_blank" rel="noreferrer" className="block px-3 py-2 text-seal hover:bg-app-bg">
+                <a href={driveLink} target="_blank" rel="noreferrer" className="flex items-center px-4 min-h-11 font-bold text-brand-blue hover:bg-sand">
                   Open in Drive ✓
                 </a>
               ) : (
                 <button
                   onClick={exportToDrive}
                   disabled={driveStatus === "loading"}
-                  className="block w-full text-left px-3 py-2 hover:bg-app-bg disabled:opacity-60"
+                  className="flex items-center gap-2 w-full text-left px-4 min-h-11 hover:bg-sand disabled:opacity-60"
                 >
                   {driveStatus === "loading" ? "Uploading…" : "Save to Google Drive"}
-                  {plan === "free" && <span className="text-[10px] font-mono text-seal ml-1.5">PRO</span>}
+                  {plan === "free" && <span className="text-[10px] font-extrabold bg-ink text-gold px-1.5 py-0.5 rounded-full">Pro</span>}
                 </button>
               )}
               <div className="border-t border-rule my-1" />
-              <button onClick={deleteThisResume} className="block w-full text-left px-3 py-2 text-red-600 hover:bg-red-50">
+              <button onClick={deleteThisResume} className="flex items-center w-full text-left px-4 min-h-11 text-red-600 hover:bg-red-50">
                 Delete resume
               </button>
             </div>
           </details>
         </div>
-      </div>
+      </header>
 
       {(saveError || upgradeMessage || driveStatus === "upgrade") && (
-        <div className="bg-red-50 text-red-700 text-sm px-4 sm:px-6 py-2 flex items-center justify-between gap-3">
+        <div className="bg-red-50 text-red-700 px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <span>{saveError || upgradeMessage || "Google Drive export is a Pro feature."}</span>
           <div className="flex items-center gap-3 shrink-0">
             {(upgradeMessage || driveStatus === "upgrade" || saveError?.toLowerCase().includes("pro")) && (
-              <Link href="/pricing" className="underline font-medium">Upgrade →</Link>
+              <Link href="/pricing" className="underline font-bold">Upgrade →</Link>
             )}
             <button
               onClick={() => {
@@ -256,7 +273,7 @@ export function ResumeEditor({
                 if (driveStatus === "upgrade") setDriveStatus("idle");
               }}
               aria-label="Dismiss"
-              className="text-red-700/70 hover:text-red-700"
+              className="w-10 h-10 rounded-full hover:bg-red-100 text-red-700"
             >
               ✕
             </button>
@@ -264,32 +281,24 @@ export function ResumeEditor({
         </div>
       )}
 
-      <div className="border-b border-rule px-2 sm:px-6 flex gap-1 overflow-x-auto whitespace-nowrap">
-        {[
+      <BuilderTabs
+        tabs={[
           { id: "edit", label: "Edit" },
           { id: "agent", label: "AI Agent", pro: true },
           { id: "score", label: "Score" },
-          { id: "match", label: "Job Match" },
-          { id: "cover-letter", label: "Cover Letter", pro: true },
-          { id: "resignation-letter", label: "Resignation Letter", pro: true },
-        ].map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id as typeof tab)}
-            className={`px-3 sm:px-4 py-2.5 text-sm border-b-2 -mb-px flex items-center gap-1.5 shrink-0 ${
-              tab === t.id ? "border-seal text-ink font-medium" : "border-transparent text-ink-soft"
-            }`}
-          >
-            {t.label}
-            {t.pro && plan === "free" && <span className="text-[10px] font-mono text-seal">PRO</span>}
-          </button>
-        ))}
-      </div>
+          { id: "match", label: "Job match" },
+          { id: "cover-letter", label: "Cover letter", pro: true },
+          { id: "resignation-letter", label: "Resignation letter", pro: true },
+        ]}
+        active={tab}
+        onChange={(id) => setTab(id as typeof tab)}
+        showPro={plan === "free"}
+      />
 
       <MobileViewToggle view={mobileView} setView={setMobileView} />
 
-      <div className="flex-1 grid lg:grid-cols-2 min-h-0">
-        <div className={`overflow-y-auto p-4 sm:p-6 lg:border-r border-rule ${mobileView === "preview" ? "hidden lg:block" : ""}`}>
+      <div className="flex-1 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] min-h-0">
+        <div className={`overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 ${mobileView === "preview" ? "hidden lg:block" : ""}`}>
           {tab === "edit" && <EditForm data={data} setData={setData} plan={plan} aiWritingAssistsUsed={aiWritingAssistsUsed} />}
           {tab === "agent" && (
             <UpgradeGate locked={plan === "free"} feature="The AI Resume Agent">
@@ -309,47 +318,27 @@ export function ResumeEditor({
             </UpgradeGate>
           )}
         </div>
-        <div className={`overflow-y-auto p-4 sm:p-6 bg-rule/10 relative lg:sticky lg:top-0 lg:self-start lg:max-h-screen ${mobileView === "form" ? "hidden lg:block" : ""}`}>
-          <div className="hidden xl:block absolute top-8 right-8 z-10 paper-sheet rounded-sm px-4 py-3 w-40">
-            <div className="mx-auto mb-1 flex justify-center">
-              <ScoreRing value={liveScore.overall} size={56} strokeWidth={8} />
+        <div
+          className={`bg-sand border-l border-rule px-4 sm:px-8 py-6 sm:py-8 lg:sticky lg:top-0 lg:self-start lg:h-screen lg:overflow-y-auto ${
+            mobileView === "form" ? "hidden lg:block" : ""
+          }`}
+        >
+          <div className="max-w-2xl mx-auto flex flex-col gap-6">
+            <LettrNotes data={data} fullAccess={plan === "pro"} onGo={goFix} />
+            <div className="relative">
+              <div className="absolute -top-4 -right-2 sm:-right-4 z-10">
+                <ScoreStamp score={liveScore.overall} />
+              </div>
+              <ResumePreview data={data} template={template} />
             </div>
-            <p className="text-center text-xs font-medium">
-              {liveScore.overall >= 70 ? "ATS Ready" : "Needs work"}
-            </p>
-            <p className="text-center text-[10px] text-ink-soft uppercase tracking-wide mt-0.5">
-              Live score
-            </p>
           </div>
-          <ResumePreview data={data} template={template} />
         </div>
       </div>
     </main>
   );
 }
 
-/** Phones can't fit the form and the preview side by side - let them flip between the two. */
-export function MobileViewToggle({
-  view,
-  setView,
-}: {
-  view: "form" | "preview";
-  setView: (v: "form" | "preview") => void;
-}) {
-  return (
-    <div className="lg:hidden flex border-b border-rule bg-paper-raised text-sm">
-      {(["form", "preview"] as const).map((v) => (
-        <button
-          key={v}
-          onClick={() => setView(v)}
-          className={`flex-1 py-2 ${view === v ? "font-medium text-ink bg-paper" : "text-ink-soft"}`}
-        >
-          {v === "form" ? "✎ Write" : "👁 Preview"}
-        </button>
-      ))}
-    </div>
-  );
-}
+export { MobileViewToggle };
 
 // ---------- Upgrade gate ----------
 
@@ -364,14 +353,14 @@ function UpgradeGate({
 }) {
   if (!locked) return <>{children}</>;
   return (
-    <div className="max-w-xl paper-sheet rounded-sm p-8 text-center">
-      <p className="text-xs uppercase tracking-wide text-seal font-mono mb-2">Pro feature</p>
-      <p className="text-ink-soft mb-5">{feature} is available on the Pro plan.</p>
+    <div className="max-w-xl bg-white border-2 border-ink rounded-[28px] shadow-[6px_6px_0_var(--ink)] p-8 text-center">
+      <span className="inline-block bg-ink text-gold text-xs font-extrabold px-3 py-1 rounded-full mb-3">Pro feature</span>
+      <p className="text-lg text-slate mb-6">{feature} is available on the Pro plan.</p>
       <Link
         href="/pricing"
-        className="inline-block bg-seal text-white px-5 py-2.5 rounded-sm text-sm font-medium hover:opacity-90"
+        className="btn-press inline-flex items-center min-h-12 px-6 rounded-full bg-gold text-ink font-extrabold shadow-[0_4px_0_var(--gold-deep)]"
       >
-        Upgrade to Pro
+        See Pro
       </Link>
     </div>
   );
@@ -479,14 +468,14 @@ export function EditForm({
   }
 
   return (
-    <div className="space-y-8 max-w-xl">
+    <div className="space-y-10 max-w-xl mx-auto lg:mx-0">
       {plan === "free" && aiWritingAssistsUsed !== undefined && (
-        <div className="paper-sheet rounded-sm p-3 flex items-center justify-between text-xs">
+        <div className="bg-white border border-rule rounded-xl p-3 flex items-center justify-between text-xs">
           <span className="text-ink-soft">
             AI bullet/summary rewrites: <strong className="text-ink">{Math.min(aiWritingAssistsUsed, 5)} of 5</strong> free uses
           </span>
           {aiWritingAssistsUsed >= 5 ? (
-            <Link href="/pricing" className="text-seal font-medium hover:underline">Upgrade for unlimited →</Link>
+            <Link href="/pricing" className="text-brand-blue font-medium hover:underline">Upgrade for unlimited →</Link>
           ) : (
             <span className="text-ink-soft">{5 - aiWritingAssistsUsed} left</span>
           )}
@@ -494,11 +483,11 @@ export function EditForm({
       )}
       <ProgressChecklist data={data} />
 
-      <details className="group paper-sheet rounded-sm p-4">
-        <summary className="cursor-pointer list-none flex items-center justify-between font-display font-bold text-sm uppercase tracking-wide text-ink-soft">
-          Design &amp; layout — colors, fonts, photo
-          <span className="text-xs normal-case tracking-normal font-sans font-normal group-open:hidden">Show ▾</span>
-          <span className="text-xs normal-case tracking-normal font-sans font-normal hidden group-open:inline">Hide ▴</span>
+      <details className="group bg-white border-2 border-rule rounded-2xl px-5 py-2 open:pb-5">
+        <summary className="cursor-pointer list-none flex items-center justify-between min-h-11 font-extrabold [&::-webkit-details-marker]:hidden">
+          Design: colours, fonts, photo
+          <span className="text-sm font-bold text-brand-blue group-open:hidden">Show</span>
+          <span className="text-sm font-bold text-brand-blue hidden group-open:inline">Hide</span>
         </summary>
         <div className="space-y-8 mt-5">
       <Section title="Design">
@@ -525,7 +514,7 @@ export function EditForm({
               <button
                 key={f.id}
                 onClick={() => updateCustomization("fontChoice", f.id)}
-                className={`text-xs px-3 py-1.5 rounded-sm border ${active ? "border-ink bg-ink text-white" : "border-rule hover:bg-app-bg"}`}
+                className={`text-xs px-3 py-1.5 rounded-xl border ${active ? "border-ink bg-ink text-white" : "border-rule hover:bg-sand"}`}
               >
                 {f.label}
               </button>
@@ -611,14 +600,14 @@ export function EditForm({
         )}
         <div className="space-y-3">
           {data.education.map((edu) => (
-            <div key={edu.id} className="paper-sheet rounded-sm p-3 space-y-2">
+            <div key={edu.id} className="bg-white border border-rule rounded-xl p-3 space-y-2">
               <div className="grid sm:grid-cols-2 gap-2">
                 <Input label="School / college" value={edu.school} onChange={(v) => updateEducation(edu.id, { school: v })} />
                 <Input label="Degree" placeholder="B.Tech, Computer Science" value={edu.degree} onChange={(v) => updateEducation(edu.id, { degree: v })} />
                 <MonthYearInput label="Start" value={edu.startDate} onChange={(v) => updateEducation(edu.id, { startDate: v })} />
                 <MonthYearInput label="End (or expected)" value={edu.endDate} onChange={(v) => updateEducation(edu.id, { endDate: v })} />
               </div>
-              <button onClick={() => removeEducation(edu.id)} className="text-xs text-red-600 hover:underline">
+              <button onClick={() => removeEducation(edu.id)} className="min-h-10 text-sm font-bold text-red-600 hover:underline">
                 Remove
               </button>
             </div>
@@ -642,21 +631,21 @@ export function EditForm({
           <Section title="Projects" action={<AddButton onClick={addProject} label="Add project" />}>
             <div className="space-y-3">
               {(data.projects ?? []).map((p) => (
-                <div key={p.id} className="paper-sheet rounded-sm p-3 space-y-2">
+                <div key={p.id} className="bg-white border border-rule rounded-xl p-3 space-y-2">
                   <div className="grid sm:grid-cols-2 gap-2">
                     <Input label="Project name" value={p.name} onChange={(v) => updateProject(p.id, { name: v })} />
                     <Input label="Link (optional)" type="url" placeholder="github.com/you/project" value={p.link ?? ""} onChange={(v) => updateProject(p.id, { link: v })} />
                   </div>
                   <label className="block">
-                    <span className="text-xs text-ink-soft">What you did and the result</span>
+                    <span className="text-sm font-bold text-slate">What you did and the result</span>
                     <textarea
                       value={p.description}
                       onChange={(e) => updateProject(p.id, { description: e.target.value })}
                       rows={2}
-                      className="mt-0.5 w-full border border-rule rounded-sm px-2 py-1.5 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+                      className="mt-1 w-full border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
                     />
                   </label>
-                  <button onClick={() => removeProject(p.id)} className="text-xs text-red-600 hover:underline">Remove</button>
+                  <button onClick={() => removeProject(p.id)} className="min-h-10 text-sm font-bold text-red-600 hover:underline">Remove</button>
                 </div>
               ))}
             </div>
@@ -665,13 +654,13 @@ export function EditForm({
           <Section title="Certifications" action={<AddButton onClick={addCertification} label="Add certification" />}>
             <div className="space-y-3">
               {(data.certifications ?? []).map((c) => (
-                <div key={c.id} className="paper-sheet rounded-sm p-3 space-y-2">
+                <div key={c.id} className="bg-white border border-rule rounded-xl p-3 space-y-2">
                   <div className="grid sm:grid-cols-3 gap-2">
                     <Input label="Certification" placeholder="AWS Solutions Architect" value={c.name} onChange={(v) => updateCertification(c.id, { name: v })} />
                     <Input label="Issued by" placeholder="Amazon Web Services" value={c.issuer ?? ""} onChange={(v) => updateCertification(c.id, { issuer: v })} />
                     <MonthYearInput label="Date" value={c.date ?? ""} onChange={(v) => updateCertification(c.id, { date: v })} />
                   </div>
-                  <button onClick={() => removeCertification(c.id)} className="text-xs text-red-600 hover:underline">Remove</button>
+                  <button onClick={() => removeCertification(c.id)} className="min-h-10 text-sm font-bold text-red-600 hover:underline">Remove</button>
                 </div>
               ))}
             </div>
@@ -723,27 +712,27 @@ function ProgressChecklist({ data }: { data: ResumeData }) {
   }
 
   return (
-    <div className="paper-sheet rounded-sm p-4">
+    <div className="bg-white border border-rule rounded-xl p-4">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-sm font-medium">
+        <p className="font-extrabold">
           {doneCount === steps.length ? "All core sections done ✓" : `Step ${doneCount + 1} of ${steps.length}`}
         </p>
         {next && (
-          <button onClick={() => jump(next.id)} className="text-xs text-seal font-medium hover:underline">
+          <button onClick={() => jump(next.id)} className="min-h-10 text-sm text-brand-blue font-bold hover:underline">
             Next: {next.label} →
           </button>
         )}
       </div>
-      <div className="h-1.5 bg-rule/40 rounded-full overflow-hidden mb-3">
-        <div className="h-full bg-seal transition-all" style={{ width: `${(doneCount / steps.length) * 100}%` }} />
+      <div className="h-2.5 bg-sand rounded-full overflow-hidden mb-3">
+        <div className="h-full bg-brand-blue rounded-full transition-all" style={{ width: `${(doneCount / steps.length) * 100}%` }} />
       </div>
       <div className="flex flex-wrap gap-1.5">
         {steps.map((s) => (
           <button
             key={s.id}
             onClick={() => jump(s.id)}
-            className={`text-xs px-2 py-1 rounded-full border ${
-              s.done ? "bg-seal-soft border-transparent text-seal-deep" : "border-rule text-ink-soft hover:border-ink-soft"
+            className={`inline-flex items-center min-h-9 text-sm font-bold px-3 rounded-full border-2 ${
+              s.done ? "bg-brand-blue-soft border-transparent text-brand-blue-deep" : "border-rule text-slate hover:border-ink"
             }`}
           >
             {s.done ? "✓ " : ""}
@@ -759,7 +748,7 @@ function EmptyHint({ text, onClick }: { text: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="w-full text-left text-sm text-ink-soft border border-dashed border-rule rounded-sm px-4 py-3 hover:border-seal hover:text-ink"
+      className="w-full text-left text-[15px] text-slate border-2 border-dashed border-[#C9D1E3] rounded-2xl px-4 py-4 hover:border-brand-blue hover:text-ink bg-white/60"
     >
       + {text}
     </button>
@@ -769,9 +758,9 @@ function EmptyHint({ text, onClick }: { text: string; onClick: () => void }) {
 /** Shown in place of a real AI call when nobody is signed in - an explanation, not an error. */
 function AiSignInHint() {
   return (
-    <p className="text-xs text-ink-soft mt-1.5 bg-seal-soft/60 rounded-sm px-2 py-1.5">
+    <p className="text-xs text-ink-soft mt-1.5 bg-brand-blue-soft rounded-xl px-2 py-1.5">
       ✦ AI writing is free with an account (5 rewrites included).{" "}
-      <Link href="/signup?continue=builder" className="text-seal font-medium hover:underline">
+      <Link href="/signup?continue=builder" className="text-brand-blue font-medium hover:underline">
         Create a free account
       </Link>{" "}
       — your draft comes with you.
@@ -824,13 +813,13 @@ function SummaryField({
           onChange={(e) => setData((d) => ({ ...d, summary: e.target.value }))}
           rows={3}
           placeholder="2-3 sentence pitch: your role, years of experience, and what you're great at."
-          className="flex-1 w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+          className="flex-1 w-full border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
         />
         <button
           onClick={generate}
           disabled={loading}
           title="Generate with AI"
-          className="text-xs bg-seal-soft text-seal px-2 py-1 rounded-sm hover:opacity-80 disabled:opacity-50 shrink-0"
+          className="btn-press inline-flex items-center min-h-10 px-3.5 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_3px_0_var(--brand-blue-deep)] disabled:opacity-50 shrink-0"
         >
           {loading ? "…" : "✦ AI"}
         </button>
@@ -853,7 +842,7 @@ function SummaryField({
                 setData((d) => ({ ...d, summary: opt }));
                 setOptions([]);
               }}
-              className="block w-full text-left text-xs bg-paper border border-rule rounded-sm px-2 py-1.5 hover:border-seal"
+              className="block w-full text-left text-sm bg-gold-soft border-2 border-transparent rounded-xl px-3 py-2.5 hover:border-gold-deep"
             >
               {opt}
             </button>
@@ -927,7 +916,7 @@ function ExperienceCard({
   }
 
   return (
-    <div className="paper-sheet rounded-sm p-4 space-y-3">
+    <div className="bg-white border-2 border-rule rounded-2xl p-4 sm:p-5 space-y-3">
       <div className="grid sm:grid-cols-2 gap-2">
         <Input label="Job title" placeholder="Marketing Manager" value={exp.role} onChange={(v) => onChange({ role: v })} />
         <Input label="Company" value={exp.company} onChange={(v) => onChange({ company: v })} />
@@ -948,14 +937,14 @@ function ExperienceCard({
                 rows={2}
                 aria-label={`Bullet ${i + 1}`}
                 placeholder={i === 0 ? "e.g. Launched referral program that brought in 1,200 new users in 3 months" : ""}
-                className="flex-1 border border-rule rounded-sm px-2 py-1.5 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+                className="flex-1 border-2 border-rule rounded-xl px-3 py-2 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
               />
               <div className="flex flex-col gap-1">
                 <button
                   onClick={() => polish(i)}
                   disabled={loadingBullet === i}
                   title="Rewrite with AI"
-                  className="text-xs bg-seal-soft text-seal px-2 py-1 rounded-sm hover:opacity-80 disabled:opacity-50"
+                  className="btn-press inline-flex items-center min-h-10 px-3.5 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_3px_0_var(--brand-blue-deep)] disabled:opacity-50"
                 >
                   {loadingBullet === i ? "…" : "✦ AI"}
                 </button>
@@ -982,7 +971,7 @@ function ExperienceCard({
                       updateBullet(i, opt);
                       setAiOptions((o) => ({ ...o, [i]: [] }));
                     }}
-                    className="block w-full text-left text-xs bg-paper border border-rule rounded-sm px-2 py-1.5 hover:border-seal"
+                    className="block w-full text-left text-sm bg-gold-soft border-2 border-transparent rounded-xl px-3 py-2.5 hover:border-gold-deep"
                   >
                     {opt}
                   </button>
@@ -991,12 +980,12 @@ function ExperienceCard({
             )}
           </div>
         ))}
-        <button onClick={addBullet} className="text-xs text-ink-soft hover:text-ink">
+        <button onClick={addBullet} className="min-h-10 text-sm font-bold text-brand-blue hover:underline">
           + Add bullet
         </button>
       </div>
 
-      <button onClick={onRemove} className="text-xs text-red-600 hover:underline">
+      <button onClick={onRemove} className="min-h-10 text-sm font-bold text-red-600 hover:underline">
         Remove role
       </button>
     </div>
@@ -1050,8 +1039,8 @@ function AgentPanel({
 
   return (
     <div className="max-w-xl flex flex-col h-full">
-      <div className="paper-sheet rounded-sm p-4 mb-3">
-        <p className="text-xs uppercase tracking-wide text-seal font-mono mb-1">AI Resume Agent</p>
+      <div className="bg-white border border-rule rounded-xl p-4 mb-3">
+        <p className="text-xs uppercase tracking-wide text-brand-blue font-bold mb-1">AI Resume Agent</p>
         <p className="text-sm text-ink-soft">
           Tell it what to change — &quot;tighten my summary&quot;, &quot;add a bullet about the Q3 migration
           project&quot;, &quot;remove my second job&quot; — and it edits the resume directly.
@@ -1062,15 +1051,15 @@ function AgentPanel({
         {messages.map((m, i) => (
           <div key={i} className={m.role === "user" ? "text-right" : ""}>
             <div
-              className={`inline-block max-w-[85%] text-left rounded-sm px-3 py-2 text-sm ${
-                m.role === "user" ? "bg-ink text-paper" : "paper-sheet"
+              className={`inline-block max-w-[85%] text-left rounded-xl px-3 py-2 text-sm ${
+                m.role === "user" ? "bg-ink text-paper" : "bg-white border border-rule"
               }`}
             >
               <p className="whitespace-pre-wrap">{m.content}</p>
               {m.actions && m.actions.length > 0 && (
                 <ul className="mt-2 pt-2 border-t border-rule/40 space-y-0.5">
                   {m.actions.map((a, ai) => (
-                    <li key={ai} className="text-xs text-seal flex items-center gap-1">
+                    <li key={ai} className="text-xs text-brand-blue flex items-center gap-1">
                       <span>✓</span> {a}
                     </li>
                   ))}
@@ -1088,12 +1077,12 @@ function AgentPanel({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send()}
           placeholder="e.g. Add a bullet about leading the migration"
-          className="flex-1 border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+          className="flex-1 border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
         />
         <button
           onClick={send}
           disabled={loading}
-          className="bg-seal text-white text-sm px-4 py-2 rounded-sm hover:opacity-90 disabled:opacity-60"
+          className="bg-brand-blue text-white text-sm px-4 py-2 rounded-xl hover:opacity-90 disabled:opacity-60"
         >
           Send
         </button>
@@ -1110,11 +1099,11 @@ export function ScorePanel({ data, plan }: { data: ResumeData; plan: Plan }) {
 
   return (
     <div className="max-w-xl space-y-4">
-      <div className="paper-sheet rounded-sm p-6">
+      <div className="bg-white border border-rule rounded-xl p-6">
         <div className="flex items-center gap-4">
           <ScoreRing value={result.overall} size={80} strokeWidth={8} />
           <div>
-            <p className="font-display font-bold text-lg">Resume Score</p>
+            <p className="font-brand font-bold text-lg">Resume Score</p>
             <p className="text-sm text-ink-soft">
               {result.overall >= 80
                 ? "Strong resume — minor polish left."
@@ -1134,16 +1123,16 @@ export function ScorePanel({ data, plan }: { data: ResumeData; plan: Plan }) {
         return (
           <>
             {topTip && (
-              <div className="paper-sheet rounded-sm p-4">
-                <p className="text-xs uppercase tracking-wide text-seal font-medium mb-1">Your next best fix</p>
+              <div className="bg-white border border-rule rounded-xl p-4">
+                <p className="text-xs uppercase tracking-wide text-brand-blue font-medium mb-1">Your next best fix</p>
                 <p className="text-sm">
                   <span className="font-medium">{topTip.label}:</span> {topTip.tips[0]}
                 </p>
               </div>
             )}
-            <div className="paper-sheet rounded-sm p-4 text-sm text-ink-soft flex items-center justify-between gap-3">
+            <div className="bg-white border border-rule rounded-xl p-4 text-sm text-ink-soft flex items-center justify-between gap-3">
               <span>Pro shows a section-by-section breakdown with every tip.</span>
-              <Link href="/pricing" className="text-seal font-medium hover:underline shrink-0">
+              <Link href="/pricing" className="text-brand-blue font-medium hover:underline shrink-0">
                 See Pro →
               </Link>
             </div>
@@ -1154,13 +1143,13 @@ export function ScorePanel({ data, plan }: { data: ResumeData; plan: Plan }) {
       {isPro && (
         <div className="space-y-3">
           {result.sections.map((s) => (
-            <div key={s.key} className="paper-sheet rounded-sm p-4">
+            <div key={s.key} className="bg-white border border-rule rounded-xl p-4">
               <div className="flex items-center justify-between mb-1">
                 <span className="font-medium text-sm">{s.label}</span>
-                <span className="font-mono text-sm text-seal">{s.score}</span>
+                <span className="font-bold text-sm text-brand-blue">{s.score}</span>
               </div>
-              <div className="h-1.5 bg-rule/40 rounded-full overflow-hidden mb-2">
-                <div className="h-full bg-seal" style={{ width: `${s.score}%` }} />
+              <div className="h-1.5 bg-sand rounded-full overflow-hidden mb-2">
+                <div className="h-full bg-brand-blue" style={{ width: `${s.score}%` }} />
               </div>
               {s.tips.length > 0 && (
                 <ul className="space-y-1 mt-2">
@@ -1218,11 +1207,11 @@ export function JobMatchPanel({ data }: { data: ResumeData }) {
           onChange={(e) => setJd(e.target.value)}
           rows={10}
           placeholder="Paste the full job posting here…"
-          className="w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+          className="w-full border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
         />
         <button
           onClick={check}
-          className="mt-2 bg-seal text-white text-sm px-4 py-2 rounded-sm hover:opacity-90 disabled:opacity-60"
+          className="mt-2 bg-brand-blue text-white text-sm px-4 py-2 rounded-xl hover:opacity-90 disabled:opacity-60"
         >
           Check match score
         </button>
@@ -1230,7 +1219,7 @@ export function JobMatchPanel({ data }: { data: ResumeData }) {
       </Section>
 
       {result && (
-        <div className="paper-sheet rounded-sm p-5">
+        <div className="bg-white border border-rule rounded-xl p-5">
           <div className="flex items-center gap-4 mb-4">
             <ScoreRing value={result.score} size={64} strokeWidth={8} />
             <p className="text-sm text-ink-soft">
@@ -1249,7 +1238,7 @@ export function JobMatchPanel({ data }: { data: ResumeData }) {
               <span className="text-sm text-ink-soft">None — great coverage.</span>
             ) : (
               result.missingKeywords.map((k) => (
-                <span key={k} className="text-xs font-mono bg-red-50 text-red-700 px-2 py-1 rounded-sm">
+                <span key={k} className="text-xs font-bold bg-red-50 text-red-700 px-2 py-1 rounded-xl">
                   {k}
                 </span>
               ))
@@ -1259,7 +1248,7 @@ export function JobMatchPanel({ data }: { data: ResumeData }) {
           <p className="text-xs uppercase tracking-wide text-ink-soft mb-1.5">Matched keywords</p>
           <div className="flex flex-wrap gap-2">
             {result.matchedKeywords.map((k) => (
-              <span key={k} className="text-xs font-mono bg-seal-soft text-seal px-2 py-1 rounded-sm">
+              <span key={k} className="text-xs font-bold bg-brand-blue-soft text-brand-blue px-2 py-1 rounded-xl">
                 {k}
               </span>
             ))}
@@ -1306,12 +1295,12 @@ function CoverLetterPanel({ data }: { data: ResumeData }) {
           onChange={(e) => setJd(e.target.value)}
           rows={8}
           placeholder="Paste the job description…"
-          className="w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40 mt-2"
+          className="w-full border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white focus:outline-none focus:border-brand-blue mt-2"
         />
         <button
           onClick={generate}
           disabled={loading}
-          className="mt-2 bg-seal text-white text-sm px-4 py-2 rounded-sm hover:opacity-90 disabled:opacity-60"
+          className="mt-2 bg-brand-blue text-white text-sm px-4 py-2 rounded-xl hover:opacity-90 disabled:opacity-60"
         >
           {loading ? "Writing…" : "Generate cover letter"}
         </button>
@@ -1319,7 +1308,7 @@ function CoverLetterPanel({ data }: { data: ResumeData }) {
       </Section>
 
       {letter && (
-        <div className="paper-sheet rounded-sm p-5">
+        <div className="bg-white border border-rule rounded-xl p-5">
           <div className="flex justify-end mb-2">
             <button
               onClick={() => navigator.clipboard.writeText(letter)}
@@ -1379,7 +1368,7 @@ function ResignationLetterPanel({ initialName }: { initialName: string }) {
           <select
             value={tone}
             onChange={(e) => setTone(e.target.value as typeof tone)}
-            className="mt-0.5 w-full border border-rule rounded-sm px-2 py-1.5 text-sm bg-paper-raised"
+            className="mt-0.5 w-full border border-rule rounded-xl px-2 py-1.5 text-sm bg-white"
           >
             <option value="neutral">Neutral</option>
             <option value="warm">Warm &amp; appreciative</option>
@@ -1389,7 +1378,7 @@ function ResignationLetterPanel({ initialName }: { initialName: string }) {
         <button
           onClick={generate}
           disabled={loading}
-          className="mt-3 bg-seal text-white text-sm px-4 py-2 rounded-sm hover:opacity-90 disabled:opacity-60"
+          className="mt-3 bg-brand-blue text-white text-sm px-4 py-2 rounded-xl hover:opacity-90 disabled:opacity-60"
         >
           {loading ? "Writing…" : "Generate resignation letter"}
         </button>
@@ -1397,7 +1386,7 @@ function ResignationLetterPanel({ initialName }: { initialName: string }) {
       </Section>
 
       {letter && (
-        <div className="paper-sheet rounded-sm p-5">
+        <div className="bg-white border border-rule rounded-xl p-5">
           <div className="flex justify-end mb-2">
             <button
               onClick={() => navigator.clipboard.writeText(letter)}
@@ -2175,8 +2164,8 @@ function Section({
 }) {
   return (
     <div id={id} className="scroll-mt-4">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-display font-bold text-sm uppercase tracking-wide text-ink-soft">{title}</h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-brand font-extrabold text-xl tracking-tight text-ink">{title}</h3>
         {action}
       </div>
       {children}
@@ -2186,7 +2175,7 @@ function Section({
 
 function AddButton({ onClick, label }: { onClick: () => void; label: string }) {
   return (
-    <button onClick={onClick} className="text-xs text-seal hover:underline">
+    <button onClick={onClick} className="inline-flex items-center min-h-10 px-3.5 rounded-full bg-brand-blue-soft text-brand-blue-deep text-sm font-bold hover:bg-brand-blue hover:text-white transition-colors">
       + {label}
     </button>
   );
@@ -2212,7 +2201,7 @@ function Input({
   const inputMode = type === "url" ? "url" : type === "tel" ? "tel" : type === "email" ? "email" : undefined;
   return (
     <label className="block">
-      <span className="text-xs text-ink-soft">{label}</span>
+      <span className="text-sm font-bold text-slate">{label}</span>
       <input
         type={type === "url" ? "text" : type}
         inputMode={inputMode}
@@ -2220,7 +2209,7 @@ function Input({
         placeholder={placeholder}
         autoComplete={autoComplete}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-0.5 w-full border border-rule rounded-sm px-2 py-1.5 text-sm bg-paper-raised placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-seal/40 invalid:border-red-400"
+        className="mt-1 w-full border-2 border-rule rounded-xl px-3 min-h-11 text-[15px] bg-white placeholder:text-ink-soft/50 focus:outline-none focus:border-brand-blue invalid:border-red-400"
       />
     </label>
   );
@@ -2269,18 +2258,18 @@ function MonthYearInput({
   const thisYear = new Date().getFullYear();
   const years = Array.from({ length: 60 }, (_, i) => String(thisYear + 5 - i));
   const selectCls =
-    "border border-rule rounded-sm px-1.5 py-1.5 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40 disabled:opacity-50";
+    "border-2 border-rule rounded-xl px-2 min-h-11 text-[15px] bg-white focus:outline-none focus:border-brand-blue disabled:opacity-50";
 
   if (freeText) {
     return (
       <label className="block">
-        <span className="text-xs text-ink-soft">{label}</span>
+        <span className="text-sm font-bold text-slate">{label}</span>
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="mt-0.5 w-full border border-rule rounded-sm px-2 py-1.5 text-sm bg-paper-raised focus:outline-none focus:ring-2 focus:ring-seal/40"
+          className="mt-1 w-full border-2 border-rule rounded-xl px-3 min-h-11 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
         />
-        <button type="button" onClick={() => { setFreeText(false); onChange(""); }} className="text-[11px] text-seal hover:underline mt-0.5">
+        <button type="button" onClick={() => { setFreeText(false); onChange(""); }} className="text-[11px] text-brand-blue hover:underline mt-0.5">
           Use month/year picker
         </button>
       </label>
@@ -2293,7 +2282,7 @@ function MonthYearInput({
 
   return (
     <div>
-      <span className="text-xs text-ink-soft">{label}</span>
+      <span className="text-sm font-bold text-slate">{label}</span>
       <div className="mt-0.5 flex gap-1.5">
         <select
           aria-label={`${label} month`}
@@ -2361,7 +2350,7 @@ function CommaListInput({
       }}
       onBlur={() => setFocused(false)}
       placeholder={placeholder}
-      className="w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-seal/40"
+      className="w-full border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white placeholder:text-ink-soft/50 focus:outline-none focus:border-brand-blue"
     />
   );
 }
@@ -2392,7 +2381,7 @@ function LineListInput({
         onChange(e.target.value.split("\n").map((x) => x.trim()).filter(Boolean));
       }}
       placeholder={placeholder}
-      className="w-full border border-rule rounded-sm px-3 py-2 text-sm bg-paper-raised placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-seal/40"
+      className="w-full border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white placeholder:text-ink-soft/50 focus:outline-none focus:border-brand-blue"
     />
   );
 }
