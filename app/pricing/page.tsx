@@ -4,10 +4,10 @@ import { headers } from "next/headers";
 import { Reveal } from "@/components/Reveal";
 import { Footer } from "@/components/Footer";
 import { PublicNav } from "@/components/PublicNav";
-import { UpgradeButton } from "@/components/UpgradeButton";
 import { auth } from "@/lib/auth";
 import { getUserById } from "@/lib/db";
-import { getCountryFromHeaders, getDisplayPriceForCountry, getDisplayPriceForUser } from "@/lib/pricing-region";
+import { getCountryFromHeaders } from "@/lib/pricing-region";
+import { getRegionPrices, savingsPercent, perMonth, type PlanId } from "@/lib/plans";
 import { ensureUserRegion } from "@/lib/user-region";
 
 export const metadata: Metadata = {
@@ -38,7 +38,7 @@ const COMPARISON: { feature: string; free: string | boolean; pro: string | boole
 const FAQS = [
   {
     q: "Can I cancel anytime?",
-    a: "Yes. Pro is billed monthly and can be cancelled anytime from your dashboard's billing portal. You keep Pro access until the end of the billing period you already paid for.",
+    a: "Yes. You can cancel from your dashboard at any time and keep Pro until the end of the period you already paid for.",
   },
   {
     q: "How does the resume score work?",
@@ -47,6 +47,14 @@ const FAQS = [
   {
     q: "What does the AI actually rewrite?",
     a: "Bullet points, your summary, cover letters, and resignation letters, generated fresh each time from your real experience — not filled-in templates.",
+  },
+  {
+    q: "What's the difference between the Pro plans?",
+    a: "Nothing in what you get: Monthly, the 3-month pass and Yearly all unlock every Pro feature. The longer plans just cost less per month.",
+  },
+  {
+    q: "When can I buy Pro?",
+    a: "Pro opens at launch. Until then, the free plan is fully usable, and your resumes will carry over when you upgrade.",
   },
   {
     q: "Is there a free plan?",
@@ -61,7 +69,7 @@ export default async function PricingPage() {
   // now. Logged-out visitors see a live preview for where they're browsing from.
   const session = await auth();
   const headersList = await headers();
-  let regionalPrice = getDisplayPriceForCountry(getCountryFromHeaders(headersList));
+  let prices = getRegionPrices(getCountryFromHeaders(headersList));
 
   if (session?.user) {
     const userId = (session.user as { id: string }).id;
@@ -69,13 +77,29 @@ export default async function PricingPage() {
     if (user) {
       const withRegion = await ensureUserRegion(user, headersList);
       if (withRegion.country_code || withRegion.pricing_tier) {
-        regionalPrice = getDisplayPriceForUser(withRegion);
+        prices = getRegionPrices(withRegion.country_code, withRegion.pricing_tier);
       }
     }
   }
 
-  // Show Free in the same currency as Pro, so the page never mixes "$0" with "₹399".
-  const currencySymbol = regionalPrice.display.match(/^[^\d]+/)?.[0] ?? "$";
+  const PRO_PLANS: { id: PlanId; name: string; price: number; period: string; blurb: string; badge?: string }[] = [
+    { id: "monthly", name: "Monthly", price: prices.monthly, period: "/ month", blurb: "Flexible. Cancel any time." },
+    {
+      id: "quarter",
+      name: "3-month pass",
+      price: prices.quarter,
+      period: "/ 3 months",
+      blurb: "Made for one focused job search.",
+    },
+    {
+      id: "yearly",
+      name: "Yearly",
+      price: prices.yearly,
+      period: "/ year",
+      blurb: "For your whole career year.",
+      badge: "Best value",
+    },
+  ];
 
   const H2 = "font-brand font-extrabold text-[32px] sm:text-[44px] leading-[1.05] tracking-tight";
 
@@ -95,24 +119,21 @@ export default async function PricingPage() {
         </p>
       </section>
 
-      <section className="max-w-5xl mx-auto w-full px-4 sm:px-8 pb-20 sm:pb-24">
-        <div className="grid md:grid-cols-2 gap-6 items-stretch">
-          <Reveal className="bg-white border-2 border-rule rounded-[32px] p-7 sm:p-10 flex flex-col">
-            <h2 className="font-brand font-extrabold text-3xl">Free</h2>
-            <p className="mt-1 text-slate">For one strong resume.</p>
-            <div className="mt-6 mb-8">
-              <span className="font-brand font-extrabold text-5xl">{currencySymbol}0</span>
-              <span className="text-slate font-bold"> / forever</span>
+      <section className="max-w-[1280px] mx-auto w-full px-4 sm:px-8 lg:px-14 pb-20 sm:pb-24">
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
+          <Reveal className="bg-white border-2 border-rule rounded-[32px] p-7 flex flex-col">
+            <h2 className="font-brand font-extrabold text-2xl">Free</h2>
+            <p className="mt-1 min-h-[3rem] text-slate">For one strong resume.</p>
+            <div className="mt-3 mb-[3.25rem]">
+              <span className="font-brand font-extrabold text-[40px] leading-none">{prices.format(0)}</span>
+              <span className="text-sm text-slate font-bold"> / forever</span>
             </div>
-            <ul className="space-y-3.5 mb-10 flex-1">
+            <ul className="space-y-3 mb-8 flex-1">
               <FeatureLine included>1 resume</FeatureLine>
-              <FeatureLine included>2 templates (Classic, Modern)</FeatureLine>
+              <FeatureLine included>Classic and Modern templates</FeatureLine>
               <FeatureLine included>3 PDF downloads</FeatureLine>
-              <FeatureLine included>AI bullet &amp; summary writing (5 free)</FeatureLine>
+              <FeatureLine included>5 AI rewrites</FeatureLine>
               <FeatureLine included>Job match and resume score</FeatureLine>
-              <FeatureLine>AI Resume Agent</FeatureLine>
-              <FeatureLine>Cover &amp; resignation letters</FeatureLine>
-              <FeatureLine>DOCX / Google Drive export</FeatureLine>
             </ul>
             <Link
               href="/signup"
@@ -122,32 +143,61 @@ export default async function PricingPage() {
             </Link>
           </Reveal>
 
-          <Reveal delay={100} className="relative bg-ink text-white rounded-[32px] p-7 sm:p-10 flex flex-col shadow-[8px_8px_0_var(--gold)]">
-            <span className="absolute -top-3.5 right-6 bg-gold text-ink text-xs font-extrabold px-3 py-1.5 rounded-full rotate-[4deg]">
-              Recommended
-            </span>
-            <h2 className="font-brand font-extrabold text-3xl">Pro</h2>
-            <p className="mt-1 text-white/70">For when you&apos;re applying seriously.</p>
-            <div className="mt-6 mb-8">
-              <span className="font-brand font-extrabold text-5xl">{regionalPrice.display}</span>
-              <span className="text-white/70 font-bold"> / month</span>
-              {regionalPrice.tier !== "full" && (
-                <p className="text-sm text-white/60 mt-2">Priced for your country. Same features everywhere.</p>
-              )}
-            </div>
-            <ul className="space-y-3.5 mb-10 flex-1">
-              <FeatureLine included dark>Everything in Free</FeatureLine>
-              <FeatureLine included dark>Unlimited resumes</FeatureLine>
-              <FeatureLine included dark>All 10 templates</FeatureLine>
-              <FeatureLine included dark>Unlimited PDF downloads</FeatureLine>
-              <FeatureLine included dark>Unlimited AI bullet &amp; summary writing</FeatureLine>
-              <FeatureLine included dark>AI Resume Agent</FeatureLine>
-              <FeatureLine included dark>AI cover &amp; resignation letters</FeatureLine>
-              <FeatureLine included dark>DOCX &amp; Google Drive export</FeatureLine>
-            </ul>
-            <UpgradeButton />
-          </Reveal>
+          {PRO_PLANS.map((plan, i) => {
+            const best = plan.id === "yearly";
+            const save = savingsPercent(prices, plan.id);
+            return (
+              <Reveal
+                key={plan.id}
+                delay={(i + 1) * 80}
+                className={`relative rounded-[32px] p-7 flex flex-col ${
+                  best ? "bg-ink text-white shadow-[8px_8px_0_var(--gold)]" : "bg-white border-2 border-ink shadow-[6px_6px_0_var(--ink)]"
+                }`}
+              >
+                {plan.badge && (
+                  <span className="absolute -top-3.5 right-6 bg-gold text-ink text-xs font-extrabold px-3 py-1.5 rounded-full rotate-[4deg]">
+                    {plan.badge}
+                  </span>
+                )}
+                <h2 className="font-brand font-extrabold text-2xl flex items-center gap-2">
+                  Pro <span className={best ? "text-gold" : "text-brand-blue"}>{plan.name}</span>
+                </h2>
+                <p className={`mt-1 min-h-[3rem] ${best ? "text-white/70" : "text-slate"}`}>{plan.blurb}</p>
+                <div className="mt-3 flex flex-wrap items-baseline gap-x-1.5">
+                  <span className="font-brand font-extrabold text-[40px] leading-none">{prices.format(plan.price)}</span>
+                  <span className={`text-sm font-bold whitespace-nowrap ${best ? "text-white/70" : "text-slate"}`}>{plan.period}</span>
+                </div>
+                <p className={`mt-2 mb-6 text-sm font-bold h-5 ${best ? "text-gold" : "text-brand-blue"}`}>
+                  {plan.id === "monthly"
+                    ? ""
+                    : `${prices.format(perMonth(prices, plan.id))} a month${save > 0 ? ` · save ${save}%` : ""}`}
+                </p>
+                <ul className="space-y-3 mb-8 flex-1">
+                  <FeatureLine included dark={best}>Everything in Free</FeatureLine>
+                  <FeatureLine included dark={best}>Unlimited resumes and PDFs</FeatureLine>
+                  <FeatureLine included dark={best}>All 10 templates</FeatureLine>
+                  <FeatureLine included dark={best}>Unlimited AI writing</FeatureLine>
+                  <FeatureLine included dark={best}>AI Resume Agent</FeatureLine>
+                  <FeatureLine included dark={best}>Cover &amp; resignation letters</FeatureLine>
+                  <FeatureLine included dark={best}>Word &amp; Google Drive export</FeatureLine>
+                </ul>
+                <button
+                  type="button"
+                  disabled
+                  className={`w-full min-h-12 rounded-full font-extrabold cursor-not-allowed ${
+                    best ? "bg-gold/90 text-ink" : "bg-sand text-slate border-2 border-rule"
+                  }`}
+                >
+                  Opens at launch
+                </button>
+              </Reveal>
+            );
+          })}
         </div>
+        <p className="mt-8 text-center text-slate">
+          Pro opens soon. Until then, everything on the free plan is yours to use.
+          {prices.taxNote ? ` ${prices.taxNote}` : ""}
+        </p>
       </section>
 
       <section className="bg-sand border-y border-rule">
