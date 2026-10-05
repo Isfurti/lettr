@@ -8,8 +8,9 @@ import { Logo } from "@/components/Logo";
 
 const LINKS = [
   { href: "/#how", label: "How it works" },
-  { href: "/#for-you", label: "Who it's for" },
+  { href: "/resume-checker", label: "Free checker" },
   { href: "/templates", label: "Templates" },
+  { href: "/examples", label: "Examples" },
   { href: "/pricing", label: "Pricing" },
   { href: "/support", label: "Help" },
 ];

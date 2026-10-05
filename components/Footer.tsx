@@ -6,7 +6,9 @@ const COLUMNS = [
     title: "Product",
     links: [
       { href: "/builder/new", label: "Resume builder" },
+      { href: "/resume-checker", label: "Free resume checker" },
       { href: "/templates", label: "Templates" },
+      { href: "/examples", label: "Resume examples" },
       { href: "/pricing", label: "Pricing" },
     ],
   },

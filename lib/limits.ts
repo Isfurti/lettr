@@ -65,7 +65,7 @@ export function canUseTemplate(plan: Plan, templateId: string): LimitCheck {
   if (isTemplateFree(templateId)) return { allowed: true };
   return {
     allowed: false,
-    reason: "This template is a Pro feature. Upgrade to unlock all 10 templates, or switch to Classic or Modern.",
+    reason: "This template is a Pro feature. Upgrade to unlock every template, or switch to Classic or Modern.",
   };
 }
 

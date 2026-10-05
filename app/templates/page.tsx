@@ -9,13 +9,13 @@ import { getUserById } from "@/lib/db";
 import type { Plan } from "@/lib/limits";
 
 export const metadata: Metadata = {
-  title: "Resume Templates | Lettr — 2 Free, 8 Pro",
+  title: "Resume Templates | Lettr — 16 Templates, 2 Free",
   description:
-    "10 ATS-friendly resume templates — 2 free (Classic, Modern), 8 more with Pro. Customize colors and fonts, then export to PDF or Word.",
+    "16 ATS-friendly resume templates — 2 free (Classic, Modern), 14 more with Pro. Customize colors and fonts, then export to PDF or Word.",
   alternates: { canonical: "/templates" },
   openGraph: {
     title: "Resume Templates | Lettr",
-    description: "10 ATS-friendly resume templates. 2 free to start, the rest with Pro.",
+    description: "16 ATS-friendly resume templates. 2 free to start, the rest with Pro.",
     url: "/templates",
   },
 };
@@ -36,6 +36,12 @@ const TEMPLATE_META: Record<TemplateId, { name: string; description: string; tag
   technical: { name: "The Technical", description: "Monospace accents and a code-inspired structure, built for engineers.", tags: ["Tech", "Engineering"] },
   timeline: { name: "The Timeline", description: "A connecting line down the left visually links each role in sequence.", tags: ["Visual", "Career growth"] },
   elegant: { name: "The Elegant", description: "Thin hairline dividers and italic role titles for an editorial feel.", tags: ["Editorial", "Understated"] },
+  ribbon: { name: "The Ribbon", description: "A bold accent ribbon beside your name and pill-shaped section labels.", tags: ["Visual", "Friendly"] },
+  split: { name: "The Split", description: "Your story on the left; contact, skills and education in a tinted column on the right.", tags: ["Two-column", "Tidy"] },
+  scholar: { name: "The Scholar", description: "Centred and calm, with education first. Made for academic and research roles.", tags: ["Academic", "Traditional"] },
+  fresher: { name: "The Fresher", description: "Education, projects and skills come first, so students and freshers lead with their strengths.", tags: ["Students", "Campus placements"] },
+  grid: { name: "The Grid", description: "Section names in a neat left column with your content beside them. Clean and structured.", tags: ["Structured", "Modern"] },
+  spotlight: { name: "The Spotlight", description: "A tinted header card with your initials and your summary called out up top.", tags: ["Visual", "Personal brand"] },
 };
 
 const TEMPLATES = TEMPLATE_IDS.map((id) => ({ id, ...TEMPLATE_META[id] }));

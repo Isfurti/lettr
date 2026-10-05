@@ -137,14 +137,23 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
               <div>
                 <p className="font-extrabold text-lg mb-1">Already have a resume?</p>
                 <p className="text-slate">
-                  Import your PDF or Word file and Lettr fills everything in for you. Needs a free account.
+                  Upload your PDF, Word file or LinkedIn profile. Lettr reads it, scores it and fills everything in here.
+                  No account needed.
                 </p>
-                <Link
-                  href="/signup?continue=import"
-                  className="btn-press mt-3 inline-flex items-center min-h-11 px-5 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_4px_0_var(--brand-blue-deep)]"
-                >
-                  Import my resume
-                </Link>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Link
+                    href="/resume-checker"
+                    className="btn-press inline-flex items-center min-h-11 px-5 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_4px_0_var(--brand-blue-deep)]"
+                  >
+                    Upload my resume
+                  </Link>
+                  <Link
+                    href="/resume-checker?from=linkedin"
+                    className="btn-press inline-flex items-center min-h-11 px-5 rounded-full bg-white border-2 border-ink text-sm font-bold"
+                  >
+                    From LinkedIn
+                  </Link>
+                </div>
               </div>
               <button onClick={() => setHideImportTip(true)} aria-label="Dismiss" className="w-10 h-10 shrink-0 rounded-full hover:bg-sand text-slate">
                 ✕

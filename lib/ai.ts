@@ -217,6 +217,9 @@ Rules:
 - Preserve the person's actual bullet point wording - do not rewrite or improve it, this is an
   import, not a rewrite.
 - Dates should stay in whatever format they appear in the original (don't reformat).
+- If this is a LinkedIn profile saved as PDF, ignore "Page X of Y" markers and the "Contact" and
+  "Top Skills" labels; use the headline or "Summary" section as the summary, and put "Top Skills"
+  and "Skills" entries into skills.
 
 Resume text:
 """

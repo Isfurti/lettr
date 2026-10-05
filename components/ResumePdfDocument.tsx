@@ -3,6 +3,7 @@ import type { Style } from "@react-pdf/types";
 import { extraSections, type ResumeData } from "@/lib/types";
 import { pdfFonts } from "@/lib/pdf-fonts";
 import { DEFAULT_ACCENT_COLOR, darkenHex, softenHex } from "@/lib/customization";
+import { RibbonPdf, SplitPdf, ScholarPdf, FresherPdf, GridPdf, SpotlightPdf } from "@/components/templates/NewPdfs";
 
 const INK = "#1b2a4a";
 const MUTED = "#5b6472";
@@ -44,6 +45,18 @@ export function ResumePdfDocument({ resume, template = "classic" }: { resume: Re
       return <TimelinePdf resume={resume} seal={seal} />;
     case "elegant":
       return <ElegantPdf resume={resume} seal={seal} />;
+    case "ribbon":
+      return <RibbonPdf resume={resume} seal={seal} sealSoft={sealSoft} />;
+    case "split":
+      return <SplitPdf resume={resume} seal={seal} sealSoft={sealSoft} />;
+    case "scholar":
+      return <ScholarPdf resume={resume} seal={seal} sealSoft={sealSoft} />;
+    case "fresher":
+      return <FresherPdf resume={resume} seal={seal} sealSoft={sealSoft} />;
+    case "grid":
+      return <GridPdf resume={resume} seal={seal} sealSoft={sealSoft} />;
+    case "spotlight":
+      return <SpotlightPdf resume={resume} seal={seal} sealSoft={sealSoft} />;
     default:
       return <ClassicPdf resume={resume} seal={seal} dense={template === "compact"} />;
   }
@@ -628,25 +641,36 @@ function ElegantPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
 
 // ---------- Optional sections, shared by every template ----------
 
-function ExtraSectionsPdf({
+export function ExtraSectionsPdf({
   resume,
   titleStyle,
   code = false,
   align,
+  only,
+  hideTitle = false,
 }: {
   resume: ResumeData;
   titleStyle: Style;
   code?: boolean;
   align?: "center";
+  only?: ("projects" | "certifications" | "achievements" | "languages")[];
+  /** Leave out the section headings (the template prints its own labels). */
+  hideTitle?: boolean;
 }) {
-  const { projects, certifications, languages, achievements } = extraSections(resume);
+  const all = extraSections(resume);
+  const pick = <K extends "projects" | "certifications" | "achievements" | "languages">(k: K) =>
+    !only || only.includes(k) ? all[k] : [];
+  const projects = pick("projects");
+  const certifications = pick("certifications");
+  const languages = pick("languages");
+  const achievements = pick("achievements");
   const title = (t: string) => (code ? `// ${t.toLowerCase()}` : t);
   const text = { fontSize: 9.5, textAlign: align ?? "left", lineHeight: 1.35 } as const;
   return (
     <>
       {projects.length > 0 && (
         <View wrap={false}>
-          <Text style={titleStyle}>{title("Projects")}</Text>
+          {!hideTitle && <Text style={titleStyle}>{title("Projects")}</Text>}
           {projects.map((p) => (
             <View key={p.id} style={{ marginBottom: 4 }}>
               <Text style={{ ...text, fontWeight: 700 }}>
@@ -660,7 +684,7 @@ function ExtraSectionsPdf({
       )}
       {certifications.length > 0 && (
         <View wrap={false}>
-          <Text style={titleStyle}>{title("Certifications")}</Text>
+          {!hideTitle && <Text style={titleStyle}>{title("Certifications")}</Text>}
           {certifications.map((c) => (
             <Text key={c.id} style={{ ...text, marginBottom: 2 }}>
               <Text style={{ fontWeight: 700 }}>{c.name}</Text>
@@ -671,7 +695,7 @@ function ExtraSectionsPdf({
       )}
       {achievements.length > 0 && (
         <View wrap={false}>
-          <Text style={titleStyle}>{title("Achievements")}</Text>
+          {!hideTitle && <Text style={titleStyle}>{title("Achievements")}</Text>}
           {achievements.map((a, i) => (
             <Text key={i} style={{ ...text, marginBottom: 2 }}>• {a}</Text>
           ))}
@@ -679,7 +703,7 @@ function ExtraSectionsPdf({
       )}
       {languages.length > 0 && (
         <View wrap={false}>
-          <Text style={titleStyle}>{title("Languages")}</Text>
+          {!hideTitle && <Text style={titleStyle}>{title("Languages")}</Text>}
           <Text style={text}>{languages.join("  •  ")}</Text>
         </View>
       )}

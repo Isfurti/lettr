@@ -135,11 +135,24 @@ export default async function DashboardPage({
                 {wantsImport ? "Upload your current resume" : "Start with the resume you already have"}
               </p>
               <p className="mt-1 text-slate">
-                Upload a PDF or Word file and Lettr fills in every section for you. Or start from a blank, guided form.
+                Upload a PDF or Word file, or your LinkedIn profile saved as a PDF, and Lettr fills in every section for you.
+                Or start from a blank, guided form.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3 shrink-0">
               <ImportResumeButton />
+              <Link
+                href="/resume-checker?from=linkedin"
+                className="btn-press inline-flex items-center justify-center min-h-11 px-5 rounded-full bg-white border-2 border-ink text-[15px] font-bold"
+              >
+                From LinkedIn
+              </Link>
+              <Link
+                href="/examples"
+                className="btn-press inline-flex items-center justify-center min-h-11 px-5 rounded-full bg-white border-2 border-ink text-[15px] font-bold"
+              >
+                Start from an example
+              </Link>
               <NewResumeButton label="Start from scratch" />
             </div>
           </div>

@@ -11,6 +11,7 @@ import { BuilderTabs, MobileViewToggle, LettrNotes, ScoreStamp, goToSection } fr
 import { ScoreRing } from "@/components/ScoreRing";
 import { DEFAULT_ACCENT_COLOR, getFontPair, darkenHex, softenHex, ACCENT_COLORS, FONT_PAIRS } from "@/lib/customization";
 import { PhotoUpload } from "@/components/PhotoUpload";
+import { RibbonPreview, SplitPreview, ScholarPreview, FresherPreview, GridPreview, SpotlightPreview } from "@/components/templates/NewPreviews";
 
 import { TEMPLATE_IDS, isTemplateFree } from "@/lib/templates";
 const TEMPLATES: readonly string[] = TEMPLATE_IDS;
@@ -48,6 +49,9 @@ export function ResumeEditor({
   const [driveStatus, setDriveStatus] = useState<"idle" | "loading" | "upgrade" | "connect">("idle");
   const [driveLink, setDriveLink] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"form" | "preview">("form");
+  const [sharing, setSharing] = useState(false);
+  const [shareNote, setShareNote] = useState<string | null>(null);
+  const [readyFile, setReadyFile] = useState<File | null>(null);
 
   async function save() {
     setSaveStatus("saving");
@@ -67,7 +71,8 @@ export function ResumeEditor({
     setTimeout(() => setSaveStatus("idle"), 1500);
   }
 
-  async function exportPdf() {
+  /** Builds the PDF on the server (counts as a download on the free plan). Returns null if blocked or failed. */
+  async function fetchPdf(): Promise<{ blob: Blob; name: string } | null> {
     setPdfUpgradeRequired(null);
     const res = await fetch("/api/resumes/pdf", {
       method: "POST",
@@ -77,20 +82,59 @@ export function ResumeEditor({
     if (res.status === 402) {
       const body = await res.json().catch(() => ({}));
       setPdfUpgradeRequired(body.error ?? "Upgrade to Pro to export this.");
-      return;
+      return null;
     }
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       setSaveError(body.error ?? "Couldn't create the PDF. Please try again.");
-      return;
+      return null;
     }
-    const blob = await res.blob();
+    return { blob: await res.blob(), name: `${(data.contact.fullName || "resume").replace(/\s+/g, "_")}.pdf` };
+  }
+
+  function saveBlob(blob: Blob, name: string) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${(data.contact.fullName || "resume").replace(/\s+/g, "_")}.pdf`;
+    a.download = name;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  async function exportPdf() {
+    const pdf = await fetchPdf();
+    if (pdf) saveBlob(pdf.blob, pdf.name);
+  }
+
+  /**
+   * Share the PDF straight to WhatsApp (or any app) using the phone's share
+   * sheet. Computers without file sharing get the PDF downloaded plus a
+   * pointer to WhatsApp Web, since a link can't carry the file itself.
+   */
+  async function shareWhatsApp() {
+    setShareNote(null);
+    setSharing(true);
+    const pdf = await fetchPdf();
+    setSharing(false);
+    if (!pdf) return;
+    const file = new File([pdf.blob], pdf.name, { type: "application/pdf" });
+    const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
+    if (nav.canShare?.({ files: [file] })) {
+      try {
+        await nav.share({ files: [file], title: "My resume", text: "Here's my resume." });
+        return;
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return; // they closed the share sheet
+        if (err instanceof DOMException && err.name === "NotAllowedError") {
+          // Building the PDF took too long for the browser to still treat this as a tap.
+          // Keep the file ready and ask for one more tap to open the share sheet.
+          setReadyFile(file);
+          return;
+        }
+      }
+    }
+    saveBlob(pdf.blob, pdf.name);
+    setShareNote("Your PDF is downloaded. Open WhatsApp and attach it to your chat.");
   }
 
   async function exportDocx() {
@@ -227,6 +271,14 @@ export function ResumeEditor({
               More
             </summary>
             <div className="absolute right-0 mt-2 z-30 bg-white border-2 border-ink rounded-2xl py-2 w-60 max-w-[calc(100vw-2rem)] text-[15px] shadow-[5px_5px_0_var(--ink)]">
+              <button
+                onClick={shareWhatsApp}
+                disabled={sharing}
+                className="flex items-center gap-2 w-full text-left px-4 min-h-11 font-bold hover:bg-sand disabled:opacity-60"
+              >
+                <WhatsAppIcon />
+                {sharing ? "Preparing PDF…" : "Share on WhatsApp"}
+              </button>
               <button onClick={exportDocx} className="flex items-center gap-2 w-full text-left px-4 min-h-11 hover:bg-sand">
                 Download Word (.docx)
                 {plan === "free" && <span className="text-[10px] font-extrabold bg-ink text-gold px-1.5 py-0.5 rounded-full">Pro</span>}
@@ -275,6 +327,45 @@ export function ResumeEditor({
               aria-label="Dismiss"
               className="w-10 h-10 rounded-full hover:bg-red-100 text-red-700"
             >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {readyFile && (
+        <div className="bg-[#E7F8EE] text-[#145C32] px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+          <span className="font-bold">Your PDF is ready to share.</span>
+          <button
+            onClick={async () => {
+              const f = readyFile;
+              setReadyFile(null);
+              try {
+                await navigator.share({ files: [f], title: "My resume", text: "Here's my resume." });
+              } catch {
+                // closed or not allowed - nothing else to do
+              }
+            }}
+            className="inline-flex items-center gap-2 min-h-10 px-4 rounded-full bg-[#1F9D55] text-white text-sm font-bold shrink-0"
+          >
+            Share now
+          </button>
+        </div>
+      )}
+
+      {shareNote && (
+        <div className="bg-[#E7F8EE] text-[#145C32] px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+          <span className="font-bold">{shareNote}</span>
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href="https://web.whatsapp.com/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center min-h-10 px-4 rounded-full bg-[#1F9D55] text-white text-sm font-bold"
+            >
+              Open WhatsApp
+            </a>
+            <button onClick={() => setShareNote(null)} aria-label="Dismiss" className="w-10 h-10 rounded-full hover:bg-[#cdeedb]">
               ✕
             </button>
           </div>
@@ -339,6 +430,14 @@ export function ResumeEditor({
 }
 
 export { MobileViewToggle };
+
+function WhatsAppIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="#1F9D55">
+      <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .2-1.2c-.1-.1-.3-.2-.5-.3Z" />
+    </svg>
+  );
+}
 
 // ---------- Upgrade gate ----------
 
@@ -1437,6 +1536,18 @@ export function ResumePreview({ data, template }: { data: ResumeData; template: 
         <TimelinePreview data={data} />
       ) : template === "elegant" ? (
         <ElegantPreview data={data} />
+      ) : template === "ribbon" ? (
+        <RibbonPreview data={data} />
+      ) : template === "split" ? (
+        <SplitPreview data={data} />
+      ) : template === "scholar" ? (
+        <ScholarPreview data={data} />
+      ) : template === "fresher" ? (
+        <FresherPreview data={data} />
+      ) : template === "grid" ? (
+        <GridPreview data={data} />
+      ) : template === "spotlight" ? (
+        <SpotlightPreview data={data} />
       ) : (
         <ClassicPreview data={data} dense={template === "compact"} />
       )}
@@ -2090,16 +2201,26 @@ function ElegantPreview({ data }: { data: ResumeData }) {
 // Shared by every template so a new optional section only has to be added
 // once. Each template passes its own heading style so it still looks native.
 
-function ExtraSectionsPreview({
+export type ExtraKey = "projects" | "certifications" | "achievements" | "languages";
+
+export function ExtraSectionsPreview({
   data,
   headingClassName,
   variant,
+  only,
 }: {
   data: ResumeData;
   headingClassName: string;
   variant?: "center" | "code";
+  /** Limit to some optional sections (templates that place them in different columns). */
+  only?: ExtraKey[];
 }) {
-  const { projects, certifications, languages, achievements } = extraSections(data);
+  const all = extraSections(data);
+  const pick = <K extends ExtraKey>(k: K) => (!only || only.includes(k) ? all[k] : []);
+  const projects = pick("projects");
+  const certifications = pick("certifications");
+  const languages = pick("languages");
+  const achievements = pick("achievements");
   const center = variant === "center";
   const title = (t: string) => (variant === "code" ? `// ${t.toLowerCase()}` : t);
   const align = center ? "text-center" : "";

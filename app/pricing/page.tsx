@@ -7,6 +7,7 @@ import { PublicNav } from "@/components/PublicNav";
 import { auth } from "@/lib/auth";
 import { getUserById } from "@/lib/db";
 import { getCountryFromHeaders } from "@/lib/pricing-region";
+import { TEMPLATE_IDS } from "@/lib/templates";
 import { getRegionPrices, savingsPercent, perMonth, type PlanId } from "@/lib/plans";
 import { ensureUserRegion } from "@/lib/user-region";
 
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
 
 const COMPARISON: { feature: string; free: string | boolean; pro: string | boolean }[] = [
   { feature: "Resumes", free: "1", pro: "Unlimited" },
-  { feature: "Templates", free: "2 (Classic, Modern)", pro: "All 10" },
+  { feature: "Templates", free: "2 (Classic, Modern)", pro: `All ${TEMPLATE_IDS.length}` },
   { feature: "PDF downloads", free: "3", pro: "Unlimited" },
   { feature: "AI bullet & summary rewriting", free: "5 total", pro: "Unlimited" },
   { feature: "AI Resume Agent (chat editing)", free: false, pro: true },
@@ -176,7 +177,7 @@ export default async function PricingPage() {
                 <ul className="space-y-3 mb-8 flex-1">
                   <FeatureLine included dark={best}>Everything in Free</FeatureLine>
                   <FeatureLine included dark={best}>Unlimited resumes and PDFs</FeatureLine>
-                  <FeatureLine included dark={best}>All 10 templates</FeatureLine>
+                  <FeatureLine included dark={best}>All {TEMPLATE_IDS.length} templates</FeatureLine>
                   <FeatureLine included dark={best}>Unlimited AI writing</FeatureLine>
                   <FeatureLine included dark={best}>AI Resume Agent</FeatureLine>
                   <FeatureLine included dark={best}>Cover &amp; resignation letters</FeatureLine>

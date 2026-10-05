@@ -9,6 +9,7 @@ import { ResumeShot, BeforeResume } from "@/components/home/ResumeShot";
 import { HERO_EXAMPLE, AFTER_EXAMPLE } from "@/lib/home-examples";
 import { SAMPLE_RESUME } from "@/lib/sample-resume";
 import { getFeaturedReviews } from "@/lib/db";
+import { TEMPLATE_IDS } from "@/lib/templates";
 
 // Revalidate hourly rather than fetching featured reviews on every single
 // page load - this is the highest-traffic page, no reason to hit the
@@ -75,7 +76,7 @@ const HOW_YOU_HUNT = [
   { t: "Works on your phone", b: "Build, edit and download from the browser on any phone. No app to install." },
   { t: "Priced for your country", b: "Pro costs what's fair where you live, shown in your currency." },
   { t: "Readable by hiring software", b: "Simple, single-column-friendly templates that applicant tracking systems can parse." },
-  { t: "Bring your old resume", b: "Upload a PDF or Word file and Lettr fills in the form for you (free account needed)." },
+  { t: "Bring your old resume", b: "Upload a PDF, Word file or LinkedIn profile for a free score, then fix it in the builder." },
 ];
 
 const GALLERY = [
@@ -163,7 +164,7 @@ export default async function Home() {
             </a>
           </div>
           <Link
-            href="/signup?continue=import"
+            href="/resume-checker"
             className="lift mt-8 flex items-center gap-4 max-w-md border-2 border-dashed border-[#C9D1E3] hover:border-brand-blue rounded-2xl p-4 bg-white/70 transition-colors"
           >
             <span aria-hidden="true" className="w-11 h-11 shrink-0 rounded-xl bg-brand-blue-soft flex items-center justify-center">
@@ -172,8 +173,8 @@ export default async function Home() {
               </svg>
             </span>
             <span>
-              <span className="block font-bold">Already have a resume?</span>
-              <span className="block text-sm text-slate">Upload a PDF or Word file and we&apos;ll fill it in for you.</span>
+              <span className="block font-bold">Already have a resume? Get a free score.</span>
+              <span className="block text-sm text-slate">Upload a PDF, Word file or LinkedIn profile. No account needed.</span>
             </span>
           </Link>
         </div>
@@ -349,9 +350,14 @@ export default async function Home() {
             <Eyebrow>Templates</Eyebrow>
             <h2 className={H2}>Look the part. Pick a template.</h2>
           </div>
-          <Link href="/templates" className={BTN_OUTLINE}>
-            See all 10 templates
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/examples" className={BTN_OUTLINE}>
+              Browse resume examples
+            </Link>
+            <Link href="/templates" className={BTN_OUTLINE}>
+              See all {TEMPLATE_IDS.length} templates
+            </Link>
+          </div>
         </Reveal>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-8">
           {GALLERY.map((t, i) => (
@@ -420,7 +426,7 @@ export default async function Home() {
             </div>
             <p className="mt-1 text-white/70">For when you&apos;re applying seriously.</p>
             <ul className="mt-6 flex flex-col gap-3 flex-1">
-              {["Unlimited resumes, downloads and AI rewrites", "All 10 templates", "Cover letters and resignation letters", "AI Resume Agent", "Word (DOCX) export"].map((x) => (
+              {["Unlimited resumes, downloads and AI rewrites", `All ${TEMPLATE_IDS.length} templates`, "Cover letters and resignation letters", "AI Resume Agent", "Word (DOCX) export"].map((x) => (
                 <li key={x} className="flex gap-3"><Tick color="var(--gold)" />{x}</li>
               ))}
             </ul>
