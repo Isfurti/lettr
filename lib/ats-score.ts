@@ -1,4 +1,5 @@
 import { extraSections, type ResumeData } from "./types";
+import { plainResume } from "./rich-text";
 
 const STOPWORDS = new Set([
   "the","and","a","an","to","of","in","for","on","with","is","are","as","at",
@@ -65,7 +66,8 @@ export type AtsResult = {
   totalKeywords: number;
 };
 
-export function scoreResumeAgainstJob(resume: ResumeData, jobDescription: string): AtsResult {
+export function scoreResumeAgainstJob(input: ResumeData, jobDescription: string): AtsResult {
+  const resume = plainResume(input);
   const keywords = extractKeywords(jobDescription);
   const resumeTokens = new Set(tokenize(resumeToText(resume)));
 

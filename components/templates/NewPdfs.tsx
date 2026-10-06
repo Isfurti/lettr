@@ -1,3 +1,4 @@
+import { Ordered, Sec } from "@/components/templates/Ordered";
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import type { ResumeData, ExperienceEntry } from "@/lib/types";
 import { extraSections } from "@/lib/types";
@@ -125,31 +126,36 @@ export function RibbonPdf({ resume, seal }: { resume: ResumeData } & Colors) {
             <Text style={{ fontSize: 8.5, color: MUTED, marginTop: 2 }}>{contactItems(resume).join("  ·  ")}</Text>
           </View>
         </View>
-        {resume.summary ? (
+        <Ordered c={resume.customization}>
+        <Sec k="summary">{resume.summary ? (
           <>
             <Text style={s.label}>Profile</Text>
             <Text style={{ lineHeight: 1.4 }}>{resume.summary}</Text>
           </>
-        ) : null}
-        {resume.experience.length > 0 && (
+        ) : null}</Sec>
+        <Sec k="experience">{resume.experience.length > 0 && (
           <>
             <Text style={s.label}>Experience</Text>
             <Jobs resume={resume} indent={indent} seal={seal} />
           </>
-        )}
-        {resume.education.length > 0 && (
+        )}</Sec>
+        <Sec k="education">{resume.education.length > 0 && (
           <>
             <Text style={s.label}>Education</Text>
             <EduRows resume={resume} />
           </>
-        )}
-        {resume.skills.length > 0 && (
+        )}</Sec>
+        <Sec k="skills">{resume.skills.length > 0 && (
           <>
             <Text style={s.label}>Skills</Text>
             <Text>{resume.skills.join("  ·  ")}</Text>
           </>
-        )}
-        <ExtraSectionsPdf resume={resume} titleStyle={s.label} />
+        )}</Sec>
+        <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.label} only={["projects"]} /></Sec>
+        <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.label} only={["certifications"]} /></Sec>
+        <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.label} only={["achievements"]} /></Sec>
+        <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.label} only={["languages"]} /></Sec>
+        </Ordered>
       </Page>
     </Document>
   );
@@ -184,34 +190,38 @@ export function SplitPdf({ resume, seal, sealSoft }: { resume: ResumeData } & Co
         </View>
         <View style={{ flexDirection: "row", flexGrow: 1 }}>
           <View style={{ width: "64%", paddingHorizontal: 28, paddingBottom: 24 }}>
-            {resume.summary ? (
+            <Ordered c={resume.customization}>
+            <Sec k="summary">{resume.summary ? (
               <>
                 <Text style={s.mainTitle}>Summary</Text>
                 <Text style={{ lineHeight: 1.4, fontSize: 9.5 }}>{resume.summary}</Text>
               </>
-            ) : null}
-            {resume.experience.length > 0 && (
+            ) : null}</Sec>
+            <Sec k="experience">{resume.experience.length > 0 && (
               <>
                 <Text style={s.mainTitle}>Experience</Text>
                 <Jobs resume={resume} indent={indent} stacked seal={seal} />
               </>
-            )}
-            <ExtraSectionsPdf resume={resume} titleStyle={s.mainTitle} only={["projects", "achievements"]} />
+            )}</Sec>
+            <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.mainTitle} only={["projects"]} /></Sec>
+            <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.mainTitle} only={["achievements"]} /></Sec>
+            </Ordered>
           </View>
           <View style={{ width: "36%", backgroundColor: sealSoft, paddingHorizontal: 16, paddingBottom: 24 }}>
             <Text style={s.sideTitle}>Contact</Text>
             {contactItems(resume).map((c) => (
               <Text key={c} style={s.small}>{c}</Text>
             ))}
-            {resume.skills.length > 0 && (
+            <Ordered c={resume.customization}>
+            <Sec k="skills">{resume.skills.length > 0 && (
               <>
                 <Text style={s.sideTitle}>Skills</Text>
                 {resume.skills.map((k) => (
                   <Text key={k} style={s.small}>{k}</Text>
                 ))}
               </>
-            )}
-            {resume.education.length > 0 && (
+            )}</Sec>
+            <Sec k="education">{resume.education.length > 0 && (
               <>
                 <Text style={s.sideTitle}>Education</Text>
                 {resume.education.map((e) => (
@@ -222,8 +232,10 @@ export function SplitPdf({ resume, seal, sealSoft }: { resume: ResumeData } & Co
                   </View>
                 ))}
               </>
-            )}
-            <ExtraSectionsPdf resume={resume} titleStyle={s.sideTitle} only={["certifications", "languages"]} />
+            )}</Sec>
+            <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sideTitle} only={["certifications"]} /></Sec>
+            <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sideTitle} only={["languages"]} /></Sec>
+            </Ordered>
           </View>
         </View>
       </Page>
@@ -258,32 +270,36 @@ export function ScholarPdf({ resume, seal }: { resume: ResumeData } & Colors) {
           {resume.contact.fullName || "Your Name"}
         </Text>
         <Text style={{ fontSize: 8.5, color: MUTED, textAlign: "center", marginTop: 4 }}>{contactItems(resume).join("  |  ")}</Text>
-        {resume.summary ? (
+        <Ordered c={resume.customization}>
+        <Sec k="summary">{resume.summary ? (
           <>
             <Text style={s.title}>Profile</Text>
             <Text style={{ lineHeight: 1.4, textAlign: "center" }}>{resume.summary}</Text>
           </>
-        ) : null}
-        {resume.education.length > 0 && (
+        ) : null}</Sec>
+        <Sec k="education">{resume.education.length > 0 && (
           <>
             <Text style={s.title}>Education</Text>
             <EduRows resume={resume} schoolFirst />
           </>
-        )}
-        {resume.experience.length > 0 && (
+        )}</Sec>
+        <Sec k="experience">{resume.experience.length > 0 && (
           <>
             <Text style={s.title}>Experience</Text>
             <Jobs resume={resume} indent={indent} seal={seal} />
           </>
-        )}
-        <ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["projects", "certifications", "achievements"]} />
-        {resume.skills.length > 0 && (
+        )}</Sec>
+        <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["projects"]} /></Sec>
+        <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["certifications"]} /></Sec>
+        <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["achievements"]} /></Sec>
+        <Sec k="skills">{resume.skills.length > 0 && (
           <>
             <Text style={s.title}>Skills</Text>
             <Text style={{ textAlign: "center" }}>{resume.skills.join("  ·  ")}</Text>
           </>
-        )}
-        <ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["languages"]} align="center" />
+        )}</Sec>
+        <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.title} align="center" only={["languages"]} /></Sec>
+        </Ordered>
       </Page>
     </Document>
   );
@@ -317,20 +333,21 @@ export function FresherPdf({ resume, seal, sealSoft }: { resume: ResumeData } & 
             <Text style={{ fontSize: 8.5, color: MUTED, marginTop: 2 }}>{contactItems(resume).join("  •  ")}</Text>
           </View>
         </View>
-        {resume.summary ? (
+        <Ordered c={resume.customization}>
+        <Sec k="summary">{resume.summary ? (
           <>
             <Text style={s.title}>Career objective</Text>
             <Text style={{ lineHeight: 1.4 }}>{resume.summary}</Text>
           </>
-        ) : null}
-        {resume.education.length > 0 && (
+        ) : null}</Sec>
+        <Sec k="education">{resume.education.length > 0 && (
           <>
             <Text style={s.title}>Education</Text>
             <EduRows resume={resume} />
           </>
-        )}
-        <ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["projects"]} />
-        {resume.skills.length > 0 && (
+        )}</Sec>
+        <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["projects"]} /></Sec>
+        <Sec k="skills">{resume.skills.length > 0 && (
           <>
             <Text style={s.title}>Skills</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
@@ -341,14 +358,17 @@ export function FresherPdf({ resume, seal, sealSoft }: { resume: ResumeData } & 
               ))}
             </View>
           </>
-        )}
-        {resume.experience.length > 0 && (
+        )}</Sec>
+        <Sec k="experience">{resume.experience.length > 0 && (
           <>
             <Text style={s.title}>Internships & experience</Text>
             <Jobs resume={resume} indent={indent} seal={seal} />
           </>
-        )}
-        <ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["certifications", "achievements", "languages"]} />
+        )}</Sec>
+        <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["certifications"]} /></Sec>
+        <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["achievements"]} /></Sec>
+        <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["languages"]} /></Sec>
+        </Ordered>
       </Page>
     </Document>
   );
@@ -384,19 +404,20 @@ export function GridPdf({ resume, seal }: { resume: ResumeData } & Colors) {
             <Text style={{ fontSize: 8.5, color: MUTED, marginTop: 2 }}>{contactItems(resume).join("    ")}</Text>
           </View>
         </View>
-        {resume.summary ? (
+        <Ordered c={resume.customization}>
+        <Sec k="summary">{resume.summary ? (
           <GridRow seal={seal} title="Profile">
             <Text style={{ lineHeight: 1.4 }}>{resume.summary}</Text>
           </GridRow>
-        ) : null}
-        {resume.experience.length > 0 && (
+        ) : null}</Sec>
+        <Sec k="experience">{resume.experience.length > 0 && (
           <GridRow seal={seal} title="Experience">
             <View style={{ marginTop: -6 }}>
               <Jobs resume={resume} indent={indent} stacked seal={seal} />
             </View>
           </GridRow>
-        )}
-        {resume.education.length > 0 && (
+        )}</Sec>
+        <Sec k="education">{resume.education.length > 0 && (
           <GridRow seal={seal} title="Education">
             {resume.education.map((e) => (
               <View key={e.id} style={{ marginBottom: 4 }}>
@@ -407,12 +428,13 @@ export function GridPdf({ resume, seal }: { resume: ResumeData } & Colors) {
               </View>
             ))}
           </GridRow>
-        )}
-        {resume.skills.length > 0 && (
+        )}</Sec>
+        <Sec k="skills">{resume.skills.length > 0 && (
           <GridRow seal={seal} title="Skills">
             <Text>{resume.skills.join(", ")}</Text>
           </GridRow>
-        )}
+        )}</Sec>
+        </Ordered>
         {(["projects", "certifications", "achievements", "languages"] as const).map((k) =>
           extras[k].length > 0 ? (
             <GridRow key={k} seal={seal} title={k[0].toUpperCase() + k.slice(1)}>
@@ -459,22 +481,23 @@ export function SpotlightPdf({ resume, seal, sealSoft }: { resume: ResumeData } 
             <Text style={{ fontSize: 8.5, color: MUTED, marginTop: 3 }}>{contactItems(resume).join("  ·  ")}</Text>
           </View>
         </View>
-        {resume.summary ? (
+        <Ordered c={resume.customization}>
+        <Sec k="summary">{resume.summary ? (
           <Text style={{ marginTop: 12, borderLeft: `3 solid ${seal}`, paddingLeft: 9, lineHeight: 1.45, fontSize: 10.5 }}>{resume.summary}</Text>
-        ) : null}
-        {resume.experience.length > 0 && (
+        ) : null}</Sec>
+        <Sec k="experience">{resume.experience.length > 0 && (
           <>
             <SpotTitle seal={seal}>Experience</SpotTitle>
             <Jobs resume={resume} indent={indent} seal={seal} />
           </>
-        )}
-        {resume.education.length > 0 && (
+        )}</Sec>
+        <Sec k="education">{resume.education.length > 0 && (
           <>
             <SpotTitle seal={seal}>Education</SpotTitle>
             <EduRows resume={resume} />
           </>
-        )}
-        {resume.skills.length > 0 && (
+        )}</Sec>
+        <Sec k="skills">{resume.skills.length > 0 && (
           <>
             <SpotTitle seal={seal}>Skills</SpotTitle>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
@@ -485,8 +508,12 @@ export function SpotlightPdf({ resume, seal, sealSoft }: { resume: ResumeData } 
               ))}
             </View>
           </>
-        )}
-        <ExtraSectionsPdf resume={resume} titleStyle={s.title} />
+        )}</Sec>
+        <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["projects"]} /></Sec>
+        <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["certifications"]} /></Sec>
+        <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["achievements"]} /></Sec>
+        <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["languages"]} /></Sec>
+        </Ordered>
       </Page>
     </Document>
   );

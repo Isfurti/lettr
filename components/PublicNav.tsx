@@ -25,7 +25,7 @@ export function PublicNav() {
   return (
     <header className="relative z-40 bg-cream">
       <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-8 lg:px-14 py-4 sm:py-5 flex items-center justify-between gap-3">
-        <Logo />
+        <Logo compact={pathname !== "/"} />
         <nav aria-label="Main" className="hidden lg:flex items-center gap-7 text-[15px] font-semibold">
           {LINKS.map((l) => (
             <Link

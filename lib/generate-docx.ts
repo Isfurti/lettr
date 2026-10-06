@@ -1,6 +1,15 @@
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, BorderStyle } from "docx";
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, BorderStyle, PageOrientation } from "docx";
 import { extraSections, type ResumeData } from "./types";
 import { DEFAULT_ACCENT_COLOR } from "./customization";
+import { applyLayout, layoutScale, pageSize, sectionOrder, type SectionKey } from "./layout";
+import { parseRich } from "./rich-text";
+
+/** Word runs for text that may contain <b>, <i> or <u>. */
+function richRuns(text: string, size: number): TextRun[] {
+  return parseRich(text).map(
+    (seg) => new TextRun({ text: seg.text, size, bold: seg.b || undefined, italics: seg.i || undefined, underline: seg.u ? {} : undefined })
+  );
+}
 
 const INK = "1B2A4A";
 const MUTED = "5B6472";
@@ -20,8 +29,13 @@ function sectionHeading(text: string, seal: string): Paragraph {
   });
 }
 
-export async function generateResumeDocx(resume: ResumeData): Promise<Buffer> {
+export async function generateResumeDocx(input: ResumeData): Promise<Buffer> {
+  const resume = applyLayout(input);
+  const c = input.customization;
   const seal = (resume.customization?.accentColor || DEFAULT_ACCENT_COLOR).replace("#", "");
+  // Word sizes are half-points; Spacing / "Fit to one page" scale them too.
+  const k = layoutScale(c);
+  const sz = (n: number) => Math.round(n * k);
 
   const children: Paragraph[] = [
     new Paragraph({
@@ -34,102 +48,128 @@ export async function generateResumeDocx(resume: ResumeData): Promise<Buffer> {
     }),
   ];
 
+  const blocks: Record<SectionKey, Paragraph[]> = {
+    summary: [], experience: [], education: [], skills: [], projects: [], certifications: [], achievements: [], languages: [],
+  };
+  let section: SectionKey = "summary";
+  const add = (p: Paragraph) => blocks[section].push(p);
+
   if (resume.summary) {
-    children.push(sectionHeading("Summary", seal));
-    children.push(new Paragraph({ spacing: { after: 100 }, children: [new TextRun({ text: resume.summary, size: 20 })] }));
+    add(sectionHeading("Summary", seal));
+    add(new Paragraph({ spacing: { after: 100 }, children: richRuns(resume.summary, sz(20)) }));
   }
 
+  section = "experience";
   if (resume.experience.length > 0) {
-    children.push(sectionHeading("Experience", seal));
+    add(sectionHeading("Experience", seal));
     for (const exp of resume.experience) {
-      children.push(
+      add(
         new Paragraph({
           spacing: { before: 120 },
           tabStops: [{ type: "right", position: 9000 }],
           children: [
-            new TextRun({ text: `${exp.role} — ${exp.company}`, bold: true, size: 20 }),
-            new TextRun({ text: `\t${exp.startDate} – ${exp.endDate}`, size: 18, color: MUTED }),
+            new TextRun({ text: `${exp.role} — ${exp.company}`, bold: true, size: sz(20) }),
+            new TextRun({ text: `\t${exp.startDate} – ${exp.endDate}`, size: sz(18), color: MUTED }),
           ],
         })
       );
       for (const bullet of exp.bullets.filter(Boolean)) {
-        children.push(
+        add(
           new Paragraph({
             bullet: { level: 0 },
             spacing: { after: 40 },
-            children: [new TextRun({ text: bullet, size: 20 })],
+            children: richRuns(bullet, sz(20)),
           })
         );
       }
     }
   }
 
+  section = "education";
   if (resume.education.length > 0) {
-    children.push(sectionHeading("Education", seal));
+    add(sectionHeading("Education", seal));
     for (const edu of resume.education) {
-      children.push(
+      add(
         new Paragraph({
           spacing: { after: 60 },
           tabStops: [{ type: "right", position: 9000 }],
           children: [
-            new TextRun({ text: `${edu.degree} — ${edu.school}`, bold: true, size: 20 }),
-            new TextRun({ text: `\t${edu.startDate} – ${edu.endDate}`, size: 18, color: MUTED }),
+            new TextRun({ text: `${edu.degree} — ${edu.school}`, bold: true, size: sz(20) }),
+            new TextRun({ text: `\t${edu.startDate} – ${edu.endDate}`, size: sz(18), color: MUTED }),
           ],
         })
       );
     }
   }
 
+  section = "skills";
   if (resume.skills.length > 0) {
-    children.push(sectionHeading("Skills", seal));
-    children.push(new Paragraph({ children: [new TextRun({ text: resume.skills.join("  •  "), size: 20 })] }));
+    add(sectionHeading("Skills", seal));
+    add(new Paragraph({ children: [new TextRun({ text: resume.skills.join("  •  "), size: sz(20) })] }));
   }
 
   const extra = extraSections(resume);
+  section = "projects";
   if (extra.projects.length > 0) {
-    children.push(sectionHeading("Projects", seal));
+    add(sectionHeading("Projects", seal));
     for (const p of extra.projects) {
-      children.push(
+      add(
         new Paragraph({
           spacing: { before: 100 },
           children: [
-            new TextRun({ text: p.name, bold: true, size: 20 }),
-            ...(p.link ? [new TextRun({ text: `  ·  ${p.link}`, size: 18, color: MUTED })] : []),
+            new TextRun({ text: p.name, bold: true, size: sz(20) }),
+            ...(p.link ? [new TextRun({ text: `  ·  ${p.link}`, size: sz(18), color: MUTED })] : []),
           ],
         })
       );
       if (p.description) {
-        children.push(new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: p.description, size: 20 })] }));
+        add(new Paragraph({ spacing: { after: 60 }, children: richRuns(p.description, sz(20)) }));
       }
     }
   }
+  section = "certifications";
   if (extra.certifications.length > 0) {
-    children.push(sectionHeading("Certifications", seal));
+    add(sectionHeading("Certifications", seal));
     for (const c of extra.certifications) {
-      children.push(
+      add(
         new Paragraph({
           spacing: { after: 40 },
           children: [
-            new TextRun({ text: c.name, bold: true, size: 20 }),
-            new TextRun({ text: [c.issuer, c.date].filter(Boolean).join(", ") ? ` — ${[c.issuer, c.date].filter(Boolean).join(", ")}` : "", size: 20, color: MUTED }),
+            new TextRun({ text: c.name, bold: true, size: sz(20) }),
+            new TextRun({ text: [c.issuer, c.date].filter(Boolean).join(", ") ? ` — ${[c.issuer, c.date].filter(Boolean).join(", ")}` : "", size: sz(20), color: MUTED }),
           ],
         })
       );
     }
   }
+  section = "achievements";
   if (extra.achievements.length > 0) {
-    children.push(sectionHeading("Achievements", seal));
+    add(sectionHeading("Achievements", seal));
     for (const a of extra.achievements) {
-      children.push(new Paragraph({ bullet: { level: 0 }, spacing: { after: 40 }, children: [new TextRun({ text: a, size: 20 })] }));
+      add(new Paragraph({ bullet: { level: 0 }, spacing: { after: 40 }, children: richRuns(a, sz(20)) }));
     }
   }
+  section = "languages";
   if (extra.languages.length > 0) {
-    children.push(sectionHeading("Languages", seal));
-    children.push(new Paragraph({ children: [new TextRun({ text: extra.languages.join("  •  "), size: 20 })] }));
+    add(sectionHeading("Languages", seal));
+    add(new Paragraph({ children: [new TextRun({ text: extra.languages.join("  •  "), size: sz(20) })] }));
   }
 
+  for (const key of sectionOrder(c)) children.push(...blocks[key]);
+
+  // A4: 11906 x 16838 twips; US Letter: 12240 x 15840.
+  const letter = pageSize(c) === "LETTER";
   const doc = new Document({
-    sections: [{ properties: {}, children }],
+    sections: [
+      {
+        properties: {
+          page: {
+            size: { width: letter ? 12240 : 11906, height: letter ? 15840 : 16838, orientation: PageOrientation.PORTRAIT },
+          },
+        },
+        children,
+      },
+    ],
     styles: {
       default: { document: { run: { font: "Calibri" } } },
     },

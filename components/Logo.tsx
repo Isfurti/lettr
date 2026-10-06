@@ -1,7 +1,11 @@
 import Link from "next/link";
 
-/** The Lettr mark: a tilted "L" stamp next to the lowercase wordmark. */
-export function Logo({ dark = false, href = "/" }: { dark?: boolean; href?: string }) {
+/**
+ * The Lettr mark: a tilted "L" stamp next to the lowercase wordmark.
+ * `compact` shows only the "L" on phones (the full logo from 640px up), for
+ * busy headers; the homepage keeps the full logo everywhere.
+ */
+export function Logo({ dark = false, href = "/", compact = false }: { dark?: boolean; href?: string; compact?: boolean }) {
   return (
     <Link
       href={href}
@@ -18,7 +22,7 @@ export function Logo({ dark = false, href = "/" }: { dark?: boolean; href?: stri
       >
         L
       </span>
-      lettr
+      <span className={compact ? "hidden sm:inline" : undefined}>lettr</span>
     </Link>
   );
 }

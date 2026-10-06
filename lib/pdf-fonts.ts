@@ -12,9 +12,11 @@ import type { ResumeData } from "./types";
  * PDF routes on Vercel.
  */
 
-const FAMILIES: { family: string; pkg: string; file: string; italic: boolean }[] = [
+// Manrope has no italic design, so its italic borrows Inter's (a close
+// match) - otherwise text set in italic with the I button would print upright.
+const FAMILIES: { family: string; pkg: string; file: string; italic: boolean; italicFrom?: { pkg: string; file: string } }[] = [
   { family: "SourceSerif", pkg: "source-serif-4", file: "source-serif-4", italic: true },
-  { family: "Manrope", pkg: "manrope", file: "manrope", italic: false },
+  { family: "Manrope", pkg: "manrope", file: "manrope", italic: false, italicFrom: { pkg: "inter", file: "inter" } },
   { family: "Playfair", pkg: "playfair-display", file: "playfair-display", italic: true },
   { family: "Inter", pkg: "inter", file: "inter", italic: true },
 ];
@@ -35,11 +37,15 @@ function registerOnce(): boolean {
   for (const f of FAMILIES) {
     const src = (weight: number, style: "normal" | "italic") =>
       path.join(base, f.pkg, "files", `${f.file}-latin-${weight}-${style}.woff`);
+    const italicSrc = (weight: number) =>
+      f.italicFrom
+        ? path.join(base, f.italicFrom.pkg, "files", `${f.italicFrom.file}-latin-${weight}-italic.woff`)
+        : src(weight, f.italic ? "italic" : "normal");
     const fonts = [400, 600, 700].flatMap((weight) => [
       { src: src(weight, "normal"), fontWeight: weight },
-      // Families without a true italic reuse the upright file, so a template
-      // that asks for italic still renders instead of throwing.
-      { src: src(weight, f.italic ? "italic" : "normal"), fontWeight: weight, fontStyle: "italic" as const },
+      // Families without a true italic reuse the upright file (or a close
+      // match's italic), so a template that asks for italic still renders.
+      { src: italicSrc(weight), fontWeight: weight, fontStyle: "italic" as const },
     ]);
     Font.register({ family: f.family, fonts });
     // latin-ext carries ₹ and accented names (é, ł, ş...) that the base latin

@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { ResumeData } from "./types";
 import { MODELS, usageFromApi, type ModelId, type TokenUsage } from "./ai-costs";
+import { plainResume, stripRich } from "./rich-text";
 
 function getClient() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -53,6 +54,7 @@ export async function polishBullet(params: {
   role: string;
   targetJobDescription?: string;
 }): Promise<AiResult<string[]>> {
+  params = { ...params, roughBullet: stripRich(params.roughBullet) };
   const prompt = `You are an expert resume writer. Rewrite the following rough work
 accomplishment into 3 distinct, polished resume bullet point options for a "${params.role}" role.
 
@@ -79,7 +81,8 @@ Respond ONLY with a JSON array of exactly 3 strings, no preamble, no markdown fe
  * job post are unchanged (same prompt = same letter) and reuse the saved one.
  */
 export function buildCoverLetterPrompt(params: { resume: ResumeData; jobDescription: string; companyName?: string }): string {
-  const { resume, jobDescription, companyName } = params;
+  const { jobDescription, companyName } = params;
+  const resume = plainResume(params.resume);
 
   const resumeSummary = `
 Name: ${resume.contact.fullName}
@@ -152,7 +155,8 @@ export async function generateSummary(params: {
   skills: string[];
   targetRole?: string;
 }): Promise<AiResult<string[]>> {
-  const { experience, skills, targetRole } = params;
+  const { skills, targetRole } = params;
+  const experience = params.experience.map((e) => ({ ...e, bullets: e.bullets.map(stripRich) }));
 
   const experienceText = experience
     .map((e) => `${e.role} at ${e.company} (${e.startDate}–${e.endDate}): ${e.bullets.join("; ")}`)

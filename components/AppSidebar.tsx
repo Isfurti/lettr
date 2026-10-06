@@ -51,7 +51,7 @@ export function AppSidebar({
       {/* Phones: a compact top bar instead of a sidebar that would eat the whole screen. */}
       <div className="lg:hidden bg-ink text-white">
         <div className="px-4 py-3 flex items-center justify-between">
-          <Logo dark href="/" />
+          <Logo dark href="/" compact />
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
             className="min-h-11 px-2 text-sm text-white/70 hover:text-white"

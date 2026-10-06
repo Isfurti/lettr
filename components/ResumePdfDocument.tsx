@@ -1,3 +1,8 @@
+import { Ordered, Sec } from "@/components/templates/Ordered";
+import { applyLayout, layoutScale, pageSize, photoShape } from "@/lib/layout";
+import { transformPdf } from "@/lib/render-transform";
+import type { ReactElement } from "react";
+import type { DocumentProps } from "@react-pdf/renderer";
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import type { Style } from "@react-pdf/types";
 import { extraSections, type ResumeData } from "@/lib/types";
@@ -23,7 +28,21 @@ function layoutFlags(resume: ResumeData) {
   };
 }
 
+/**
+ * The downloadable PDF. Builds the chosen template from the resume (with
+ * hidden sections and the date style applied), then applies the Design
+ * panel's page size, spacing, photo shape and bold / italic / underline.
+ */
 export function ResumePdfDocument({ resume, template = "classic" }: { resume: ResumeData; template?: string }) {
+  const c = resume.customization;
+  return transformPdf(<TemplatePdf resume={applyLayout(resume)} template={template} />, {
+    scale: layoutScale(c),
+    pageSize: pageSize(c),
+    photoShape: photoShape(c),
+  }) as ReactElement<DocumentProps>;
+}
+
+function TemplatePdf({ resume, template }: { resume: ResumeData; template: string }) {
   const seal = resume.customization?.accentColor || DEFAULT_ACCENT_COLOR;
   const sealSoft = softenHex(seal);
   const sealDeep = darkenHex(seal);
@@ -94,8 +113,9 @@ function ClassicPdf({ resume, seal, dense }: { resume: ResumeData; seal: string;
             <Text style={s.contactLine}>{contactLine(resume)}</Text>
           </View>
         </View>
-        {resume.summary ? (<><Text style={s.sectionTitle}>Summary</Text><Text style={s.summary}>{resume.summary}</Text></>) : null}
-        {resume.experience.length > 0 && (
+        <Ordered c={resume.customization}>
+        <Sec k="summary">{resume.summary ? (<><Text style={s.sectionTitle}>Summary</Text><Text style={s.summary}>{resume.summary}</Text></>) : null}</Sec>
+        <Sec k="experience">{resume.experience.length > 0 && (
           <>
             <Text style={s.sectionTitle}>Experience</Text>
             {resume.experience.map((exp) => (
@@ -108,8 +128,8 @@ function ClassicPdf({ resume, seal, dense }: { resume: ResumeData; seal: string;
               </View>
             ))}
           </>
-        )}
-        {resume.education.length > 0 && (
+        )}</Sec>
+        <Sec k="education">{resume.education.length > 0 && (
           <>
             <Text style={s.sectionTitle}>Education</Text>
             {resume.education.map((edu) => (
@@ -119,9 +139,13 @@ function ClassicPdf({ resume, seal, dense }: { resume: ResumeData; seal: string;
               </View>
             ))}
           </>
-        )}
-        {resume.skills.length > 0 && (<><Text style={s.sectionTitle}>Skills</Text><Text>{resume.skills.join(" • ")}</Text></>)}
-        <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} />
+        )}</Sec>
+        <Sec k="skills">{resume.skills.length > 0 && (<><Text style={s.sectionTitle}>Skills</Text><Text>{resume.skills.join(" • ")}</Text></>)}</Sec>
+        <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["projects"]} /></Sec>
+        <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
+        <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
+        <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["languages"]} /></Sec>
+        </Ordered>
       </Page>
     </Document>
   );
@@ -162,8 +186,9 @@ function ModernPdf({ resume, seal, sealSoft }: { resume: ResumeData; seal: strin
           </View>
         </View>
         <View style={s.body}>
-          {resume.summary ? (<><Text style={s.sectionTitle}>Summary</Text><Text>{resume.summary}</Text></>) : null}
-          {resume.experience.length > 0 && (
+          <Ordered c={resume.customization}>
+          <Sec k="summary">{resume.summary ? (<><Text style={s.sectionTitle}>Summary</Text><Text>{resume.summary}</Text></>) : null}</Sec>
+          <Sec k="experience">{resume.experience.length > 0 && (
             <>
               <Text style={s.sectionTitle}>Experience</Text>
               {resume.experience.map((exp) => (
@@ -177,8 +202,8 @@ function ModernPdf({ resume, seal, sealSoft }: { resume: ResumeData; seal: strin
                 </View>
               ))}
             </>
-          )}
-          {resume.education.length > 0 && (
+          )}</Sec>
+          <Sec k="education">{resume.education.length > 0 && (
             <>
               <Text style={s.sectionTitle}>Education</Text>
               {resume.education.map((edu) => (
@@ -188,14 +213,18 @@ function ModernPdf({ resume, seal, sealSoft }: { resume: ResumeData; seal: strin
                 </View>
               ))}
             </>
-          )}
-          {resume.skills.length > 0 && (
+          )}</Sec>
+          <Sec k="skills">{resume.skills.length > 0 && (
             <>
               <Text style={s.sectionTitle}>Skills</Text>
               <View style={s.chipsRow}>{resume.skills.map((skill) => <Text key={skill} style={s.chip}>{skill}</Text>)}</View>
             </>
-          )}
-          <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} />
+          )}</Sec>
+          <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["projects"]} /></Sec>
+          <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
+          <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
+          <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["languages"]} /></Sec>
+          </Ordered>
         </View>
       </Page>
     </Document>
@@ -236,8 +265,9 @@ function BoldPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
             <Text style={s.contactLine}>{contactLine(resume)}</Text>
           </View>
         </View>
-        {resume.summary ? (<><Text style={s.sectionTitle}>Summary</Text><Text>{resume.summary}</Text></>) : null}
-        {resume.experience.length > 0 && (
+        <Ordered c={resume.customization}>
+        <Sec k="summary">{resume.summary ? (<><Text style={s.sectionTitle}>Summary</Text><Text>{resume.summary}</Text></>) : null}</Sec>
+        <Sec k="experience">{resume.experience.length > 0 && (
           <>
             <Text style={s.sectionTitle}>Experience</Text>
             {resume.experience.map((exp) => (
@@ -250,8 +280,8 @@ function BoldPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
               </View>
             ))}
           </>
-        )}
-        {resume.education.length > 0 && (
+        )}</Sec>
+        <Sec k="education">{resume.education.length > 0 && (
           <>
             <Text style={s.sectionTitle}>Education</Text>
             {resume.education.map((edu) => (
@@ -261,9 +291,13 @@ function BoldPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
               </View>
             ))}
           </>
-        )}
-        {resume.skills.length > 0 && (<><Text style={s.sectionTitle}>Skills</Text><Text style={{ fontWeight: 700 }}>{resume.skills.join("  /  ")}</Text></>)}
-        <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} />
+        )}</Sec>
+        <Sec k="skills">{resume.skills.length > 0 && (<><Text style={s.sectionTitle}>Skills</Text><Text style={{ fontWeight: 700 }}>{resume.skills.join("  /  ")}</Text></>)}</Sec>
+        <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["projects"]} /></Sec>
+        <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
+        <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
+        <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["languages"]} /></Sec>
+        </Ordered>
       </Page>
     </Document>
   );
@@ -302,13 +336,14 @@ function SidebarPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
           {[resume.contact.email, resume.contact.phone, resume.contact.location, resume.contact.linkedin, resume.contact.website]
             .filter(Boolean)
             .map((line, i) => <Text key={i} style={s.contactLine}>{line}</Text>)}
-          {resume.skills.length > 0 && (
+          <Ordered c={resume.customization}>
+          <Sec k="skills">{resume.skills.length > 0 && (
             <View style={s.sideSection}>
               <Text style={s.sideHeading}>Skills</Text>
               {resume.skills.map((skill) => <Text key={skill} style={s.sideSkill}>{skill}</Text>)}
             </View>
-          )}
-          {resume.education.length > 0 && (
+          )}</Sec>
+          <Sec k="education">{resume.education.length > 0 && (
             <View style={s.sideSection}>
               <Text style={s.sideHeading}>Education</Text>
               {resume.education.map((edu) => (
@@ -318,11 +353,13 @@ function SidebarPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
                 </View>
               ))}
             </View>
-          )}
+          )}</Sec>
+          </Ordered>
         </View>
         <View style={s.main}>
-          {resume.summary ? (<><Text style={s.sectionTitle}>Summary</Text><Text style={{ fontSize: 9.5, lineHeight: 1.4 }}>{resume.summary}</Text></>) : null}
-          {resume.experience.length > 0 && (
+          <Ordered c={resume.customization}>
+          <Sec k="summary">{resume.summary ? (<><Text style={s.sectionTitle}>Summary</Text><Text style={{ fontSize: 9.5, lineHeight: 1.4 }}>{resume.summary}</Text></>) : null}</Sec>
+          <Sec k="experience">{resume.experience.length > 0 && (
             <>
               <Text style={s.sectionTitle}>Experience</Text>
               {resume.experience.map((exp) => (
@@ -336,8 +373,12 @@ function SidebarPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
                 </View>
               ))}
             </>
-          )}
-          <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} />
+          )}</Sec>
+          <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["projects"]} /></Sec>
+          <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
+          <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
+          <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["languages"]} /></Sec>
+          </Ordered>
         </View>
       </Page>
     </Document>
@@ -373,8 +414,9 @@ function MinimalPdf({ resume }: { resume: ResumeData }) {
             <Text style={s.contactLine}>{contactLine(resume)}</Text>
           </View>
         </View>
-        {resume.summary ? (<><Text style={s.sectionTitle}>Summary</Text><Text style={{ fontSize: 9.5, lineHeight: 1.35 }}>{resume.summary}</Text></>) : null}
-        {resume.experience.length > 0 && (
+        <Ordered c={resume.customization}>
+        <Sec k="summary">{resume.summary ? (<><Text style={s.sectionTitle}>Summary</Text><Text style={{ fontSize: 9.5, lineHeight: 1.35 }}>{resume.summary}</Text></>) : null}</Sec>
+        <Sec k="experience">{resume.experience.length > 0 && (
           <>
             <Text style={s.sectionTitle}>Experience</Text>
             {resume.experience.map((exp) => (
@@ -385,17 +427,21 @@ function MinimalPdf({ resume }: { resume: ResumeData }) {
               </View>
             ))}
           </>
-        )}
-        {resume.education.length > 0 && (
+        )}</Sec>
+        <Sec k="education">{resume.education.length > 0 && (
           <>
             <Text style={s.sectionTitle}>Education</Text>
             {resume.education.map((edu) => (
               <Text key={edu.id} style={{ fontSize: 9.5 }}>{edu.degree}, {edu.school} ({edu.startDate} - {edu.endDate})</Text>
             ))}
           </>
-        )}
-        {resume.skills.length > 0 && (<><Text style={s.sectionTitle}>Skills</Text><Text style={{ fontSize: 9.5 }}>{resume.skills.join(", ")}</Text></>)}
-        <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} />
+        )}</Sec>
+        <Sec k="skills">{resume.skills.length > 0 && (<><Text style={s.sectionTitle}>Skills</Text><Text style={{ fontSize: 9.5 }}>{resume.skills.join(", ")}</Text></>)}</Sec>
+        <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["projects"]} /></Sec>
+        <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
+        <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
+        <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["languages"]} /></Sec>
+        </Ordered>
       </Page>
     </Document>
   );
@@ -425,8 +471,9 @@ function ExecutivePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
         <Text style={s.name}>{resume.contact.fullName || "Your Name"}</Text>
         {showDividers && <View style={s.rule} />}
         <Text style={s.contactLine}>{contactLine(resume)}</Text>
-        {resume.summary ? <Text style={s.summary}>{resume.summary}</Text> : null}
-        {resume.experience.length > 0 && (
+        <Ordered c={resume.customization}>
+        <Sec k="summary">{resume.summary ? <Text style={s.summary}>{resume.summary}</Text> : null}</Sec>
+        <Sec k="experience">{resume.experience.length > 0 && (
           <>
             <Text style={s.sectionTitle}>Experience</Text>
             {resume.experience.map((exp) => (
@@ -437,15 +484,19 @@ function ExecutivePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
               </View>
             ))}
           </>
-        )}
-        {resume.education.length > 0 && (
+        )}</Sec>
+        <Sec k="education">{resume.education.length > 0 && (
           <>
             <Text style={s.sectionTitle}>Education</Text>
             {resume.education.map((edu) => <Text key={edu.id} style={{ fontSize: 9.5 }}>{edu.degree} — {edu.school}</Text>)}
           </>
-        )}
-        {resume.skills.length > 0 && <Text style={{ fontSize: 9.5, color: MUTED, marginTop: 12 }}>{resume.skills.join(" · ")}</Text>}
-        <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} align="center" />
+        )}</Sec>
+        <Sec k="skills">{resume.skills.length > 0 && <Text style={{ fontSize: 9.5, color: MUTED, marginTop: 12 }}>{resume.skills.join(" · ")}</Text>}</Sec>
+        <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} align="center" only={["projects"]} /></Sec>
+        <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} align="center" only={["certifications"]} /></Sec>
+        <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} align="center" only={["achievements"]} /></Sec>
+        <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} align="center" only={["languages"]} /></Sec>
+        </Ordered>
       </Page>
     </Document>
   );
@@ -482,8 +533,9 @@ function TechnicalPdf({ resume, seal, sealSoft, sealDeep }: { resume: ResumeData
             <Text style={s.contactLine}>{contactLine(resume)}</Text>
           </View>
         </View>
-        {resume.summary ? (<><Text style={s.sectionTitle}>// summary</Text><Text style={{ fontSize: 9.5, fontFamily: f.body, lineHeight: 1.35 }}>{resume.summary}</Text></>) : null}
-        {resume.experience.length > 0 && (
+        <Ordered c={resume.customization}>
+        <Sec k="summary">{resume.summary ? (<><Text style={s.sectionTitle}>// summary</Text><Text style={{ fontSize: 9.5, fontFamily: f.body, lineHeight: 1.35 }}>{resume.summary}</Text></>) : null}</Sec>
+        <Sec k="experience">{resume.experience.length > 0 && (
           <>
             <Text style={s.sectionTitle}>// experience</Text>
             {resume.experience.map((exp) => (
@@ -494,20 +546,24 @@ function TechnicalPdf({ resume, seal, sealSoft, sealDeep }: { resume: ResumeData
               </View>
             ))}
           </>
-        )}
-        {resume.education.length > 0 && (
+        )}</Sec>
+        <Sec k="education">{resume.education.length > 0 && (
           <>
             <Text style={s.sectionTitle}>// education</Text>
             {resume.education.map((edu) => <Text key={edu.id} style={{ fontSize: 9.5, fontFamily: f.body }}>{edu.degree} — {edu.school}</Text>)}
           </>
-        )}
-        {resume.skills.length > 0 && (
+        )}</Sec>
+        <Sec k="skills">{resume.skills.length > 0 && (
           <>
             <Text style={s.sectionTitle}>// stack</Text>
             <View style={s.chipsRow}>{resume.skills.map((skill) => <Text key={skill} style={s.chip}>{skill}</Text>)}</View>
           </>
-        )}
-        <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} code />
+        )}</Sec>
+        <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} code only={["projects"]} /></Sec>
+        <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} code only={["certifications"]} /></Sec>
+        <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} code only={["achievements"]} /></Sec>
+        <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} code only={["languages"]} /></Sec>
+        </Ordered>
       </Page>
     </Document>
   );
@@ -545,8 +601,9 @@ function TimelinePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
             <Text style={s.contactLine}>{contactLine(resume)}</Text>
           </View>
         </View>
-        {resume.summary ? <Text style={{ fontSize: 9.5, lineHeight: 1.4, marginBottom: 8 }}>{resume.summary}</Text> : null}
-        {resume.experience.length > 0 && (
+        <Ordered c={resume.customization}>
+        <Sec k="summary">{resume.summary ? <Text style={{ fontSize: 9.5, lineHeight: 1.4, marginBottom: 8 }}>{resume.summary}</Text> : null}</Sec>
+        <Sec k="experience">{resume.experience.length > 0 && (
           <>
             <Text style={s.sectionTitle}>Experience</Text>
             {resume.experience.map((exp, idx) => (
@@ -566,15 +623,19 @@ function TimelinePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
               </View>
             ))}
           </>
-        )}
-        {resume.education.length > 0 && (
+        )}</Sec>
+        <Sec k="education">{resume.education.length > 0 && (
           <>
             <Text style={s.sectionTitle}>Education</Text>
             {resume.education.map((edu) => <Text key={edu.id} style={{ fontSize: 9.5 }}>{edu.degree} — {edu.school}</Text>)}
           </>
-        )}
-        {resume.skills.length > 0 && <Text style={{ fontSize: 9.5, color: MUTED, marginTop: 8 }}>{resume.skills.join(" • ")}</Text>}
-        <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} />
+        )}</Sec>
+        <Sec k="skills">{resume.skills.length > 0 && <Text style={{ fontSize: 9.5, color: MUTED, marginTop: 8 }}>{resume.skills.join(" • ")}</Text>}</Sec>
+        <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["projects"]} /></Sec>
+        <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
+        <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
+        <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["languages"]} /></Sec>
+        </Ordered>
       </Page>
     </Document>
   );
@@ -611,8 +672,9 @@ function ElegantPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
           <Text style={s.name}>{resume.contact.fullName || "Your Name"}</Text>
         </View>
         <Text style={s.contactLine}>{contactLine(resume)}</Text>
-        {resume.summary ? <Text style={{ fontSize: 9.5, lineHeight: 1.4, marginBottom: 4 }}>{resume.summary}</Text> : null}
-        {resume.experience.length > 0 && (
+        <Ordered c={resume.customization}>
+        <Sec k="summary">{resume.summary ? <Text style={{ fontSize: 9.5, lineHeight: 1.4, marginBottom: 4 }}>{resume.summary}</Text> : null}</Sec>
+        <Sec k="experience">{resume.experience.length > 0 && (
           <>
             <Text style={s.sectionTitle}>Experience</Text>
             {resume.experience.map((exp) => (
@@ -625,15 +687,19 @@ function ElegantPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
               </View>
             ))}
           </>
-        )}
-        {resume.education.length > 0 && (
+        )}</Sec>
+        <Sec k="education">{resume.education.length > 0 && (
           <>
             <Text style={s.sectionTitle}>Education</Text>
             {resume.education.map((edu) => <Text key={edu.id} style={{ fontSize: 9.5, fontStyle: "italic" }}>{edu.degree}, {edu.school}</Text>)}
           </>
-        )}
-        {resume.skills.length > 0 && <Text style={{ fontSize: 9.5, color: MUTED, marginTop: 10 }}>{resume.skills.join("  ·  ")}</Text>}
-        <ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} />
+        )}</Sec>
+        <Sec k="skills">{resume.skills.length > 0 && <Text style={{ fontSize: 9.5, color: MUTED, marginTop: 10 }}>{resume.skills.join("  ·  ")}</Text>}</Sec>
+        <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["projects"]} /></Sec>
+        <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
+        <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
+        <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["languages"]} /></Sec>
+        </Ordered>
       </Page>
     </Document>
   );

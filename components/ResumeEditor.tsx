@@ -1,5 +1,10 @@
 "use client";
 
+import { Ordered, Sec } from "@/components/templates/Ordered";
+import { Rich } from "@/components/templates/Rich";
+import { applyLayout, layoutScale, photoShape } from "@/lib/layout";
+import { RichTextarea } from "@/components/builder/RichTextarea";
+import { DesignPanel } from "@/components/builder/DesignPanel";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -9,8 +14,7 @@ import { scoreResumeQuality } from "@/lib/resume-score";
 import type { Plan } from "@/lib/limits";
 import { BuilderTabs, MobileViewToggle, LettrNotes, ScoreStamp, goToSection } from "@/components/builder/BuilderChrome";
 import { ScoreRing } from "@/components/ScoreRing";
-import { DEFAULT_ACCENT_COLOR, getFontPair, darkenHex, softenHex, ACCENT_COLORS, FONT_PAIRS } from "@/lib/customization";
-import { PhotoUpload } from "@/components/PhotoUpload";
+import { DEFAULT_ACCENT_COLOR, getFontPair, darkenHex, softenHex } from "@/lib/customization";
 import { RibbonPreview, SplitPreview, ScholarPreview, FresherPreview, GridPreview, SpotlightPreview } from "@/components/templates/NewPreviews";
 
 import { TEMPLATE_IDS, isTemplateFree } from "@/lib/templates";
@@ -247,7 +251,8 @@ export function ResumeEditor({
             value={template}
             onChange={(e) => setTemplate(e.target.value)}
             aria-label="Template"
-            className="min-h-11 max-w-[8rem] sm:max-w-none text-sm font-bold border-2 border-rule rounded-full px-3 bg-white focus:outline-none focus:border-brand-blue"
+            title="Template (also in Design)"
+            className="hidden md:block min-h-11 max-w-[8rem] sm:max-w-none text-sm font-bold border-2 border-rule rounded-full px-3 bg-white focus:outline-none focus:border-brand-blue"
           >
             {TEMPLATES.map((t) => (
               <option key={t} value={t}>
@@ -390,7 +395,9 @@ export function ResumeEditor({
 
       <div className="flex-1 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] min-h-0">
         <div className={`overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 ${mobileView === "preview" ? "hidden lg:block" : ""}`}>
-          {tab === "edit" && <EditForm data={data} setData={setData} plan={plan} aiWritingAssistsUsed={aiWritingAssistsUsed} />}
+          {tab === "edit" && (
+            <EditForm data={data} setData={setData} plan={plan} aiWritingAssistsUsed={aiWritingAssistsUsed} template={template} setTemplate={setTemplate} />
+          )}
           {tab === "agent" && (
             <UpgradeGate locked={plan === "free"} feature="The AI Resume Agent">
               <AgentPanel data={data} setData={setData} />
@@ -469,11 +476,16 @@ export function EditForm({
   plan,
   aiWritingAssistsUsed,
   guest = false,
+  template,
+  setTemplate,
 }: {
   data: ResumeData;
   setData: React.Dispatch<React.SetStateAction<ResumeData>>;
   plan?: Plan;
   aiWritingAssistsUsed?: number;
+  /** For the template picker in the Design panel. */
+  template?: string;
+  setTemplate?: (t: string) => void;
   /** Not signed in - AI buttons explain how to unlock them instead of calling the API. */
   guest?: boolean;
 }) {
@@ -555,13 +567,6 @@ export function EditForm({
     setData((d) => ({ ...d, certifications: (d.certifications ?? []).filter((c) => c.id !== id) }));
   }
 
-  function updateCustomization<K extends keyof NonNullable<ResumeData["customization"]>>(
-    key: K,
-    value: NonNullable<ResumeData["customization"]>[K]
-  ) {
-    setData((d) => ({ ...d, customization: { ...d.customization, [key]: value } }));
-  }
-
   return (
     <div className="space-y-10 max-w-xl mx-auto lg:mx-0">
       {plan === "free" && aiWritingAssistsUsed !== undefined && (
@@ -578,86 +583,7 @@ export function EditForm({
       )}
       <ProgressChecklist data={data} />
 
-      <details className="group bg-white border-2 border-rule rounded-2xl px-5 py-2 open:pb-5">
-        <summary className="cursor-pointer list-none flex items-center justify-between min-h-11 font-extrabold [&::-webkit-details-marker]:hidden">
-          Design: colours, fonts, photo
-          <span className="text-sm font-bold text-brand-blue group-open:hidden">Show</span>
-          <span className="text-sm font-bold text-brand-blue hidden group-open:inline">Hide</span>
-        </summary>
-        <div className="space-y-8 mt-5">
-      <Section title="Design">
-        <p className="text-xs text-ink-soft mb-2">Accent color</p>
-        <div className="flex flex-wrap gap-2 mb-4">
-          {ACCENT_COLORS.map((c) => {
-            const active = (data.customization?.accentColor || DEFAULT_ACCENT_COLOR) === c.hex;
-            return (
-              <button
-                key={c.id}
-                onClick={() => updateCustomization("accentColor", c.hex)}
-                title={c.label}
-                aria-label={`Accent colour: ${c.label}`}
-                aria-pressed={active}
-                className={`w-10 h-10 rounded-full border-[3px] transition-transform ${active ? "border-ink scale-110" : "border-white hover:scale-105"} shadow-[0_0_0_1px_var(--rule)]`}
-                style={{ backgroundColor: c.hex }}
-              />
-            );
-          })}
-        </div>
-        <p className="text-xs text-ink-soft mb-2">Font pair</p>
-        <div className="flex flex-wrap gap-2">
-          {FONT_PAIRS.map((f) => {
-            const active = (data.customization?.fontChoice || "editorial") === f.id;
-            return (
-              <button
-                key={f.id}
-                onClick={() => updateCustomization("fontChoice", f.id)}
-                aria-pressed={active}
-                className={`inline-flex items-center min-h-10 text-sm font-bold px-4 rounded-full border-2 ${active ? "border-ink bg-ink text-white" : "border-rule hover:border-ink"}`}
-              >
-                {f.label}
-              </button>
-            );
-          })}
-        </div>
-      </Section>
-
-      <Section title="Layout">
-        <p className="text-xs text-ink-soft mb-2">Profile photo</p>
-        <PhotoUpload
-          state={{
-            photoDataUrl: data.customization?.photoDataUrl,
-            photoOriginalDataUrl: data.customization?.photoOriginalDataUrl,
-            photoZoom: data.customization?.photoZoom,
-            photoOffsetX: data.customization?.photoOffsetX,
-            photoOffsetY: data.customization?.photoOffsetY,
-            showPhoto: data.customization?.showPhoto,
-          }}
-          onChange={(next) => {
-            setData((d) => ({ ...d, customization: { ...d.customization, ...next } }));
-          }}
-        />
-
-        <div className="flex gap-6 mt-5">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={data.customization?.showDividers ?? true}
-              onChange={(e) => updateCustomization("showDividers", e.target.checked)}
-            />
-            Section dividers
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={data.customization?.indentBullets ?? true}
-              onChange={(e) => updateCustomization("indentBullets", e.target.checked)}
-            />
-            Indent bullets
-          </label>
-        </div>
-      </Section>
-        </div>
-      </details>
+      <DesignPanel data={data} setData={setData} template={template} setTemplate={setTemplate} plan={guest ? undefined : plan} />
 
       <Section title="Contact" id="section-contact">
         <div className="grid sm:grid-cols-2 gap-3">
@@ -736,9 +662,9 @@ export function EditForm({
                   </div>
                   <label className="block">
                     <span className="text-sm font-bold text-slate">What you did and the result</span>
-                    <textarea
+                    <RichTextarea
                       value={p.description}
-                      onChange={(e) => updateProject(p.id, { description: e.target.value })}
+                      onChange={(v) => updateProject(p.id, { description: v })}
                       rows={2}
                       className="mt-1 w-full border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
                     />
@@ -906,18 +832,19 @@ function SummaryField({
   return (
     <div>
       <div className="flex gap-2 items-start">
-        <textarea
+        <RichTextarea
           value={data.summary}
-          onChange={(e) => setData((d) => ({ ...d, summary: e.target.value }))}
+          onChange={(v) => setData((d) => ({ ...d, summary: v }))}
+          aria-label="Summary"
           rows={3}
           placeholder="2-3 sentence pitch: your role, years of experience, and what you're great at."
-          className="flex-1 w-full border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
+          className="w-full border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
         />
         <button
           onClick={generate}
           disabled={loading}
           title="Generate with AI"
-          className="btn-press inline-flex items-center min-h-10 px-3.5 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_3px_0_var(--brand-blue-deep)] disabled:opacity-50 shrink-0"
+          className="mt-9 btn-press inline-flex items-center min-h-10 px-3.5 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_3px_0_var(--brand-blue-deep)] disabled:opacity-50 shrink-0"
         >
           {loading ? "…" : "✦ AI"}
         </button>
@@ -1029,15 +956,15 @@ function ExperienceCard({
         {exp.bullets.map((b, i) => (
           <div key={i}>
             <div className="flex gap-2 items-start">
-              <textarea
+              <RichTextarea
                 value={b}
-                onChange={(e) => updateBullet(i, e.target.value)}
+                onChange={(v) => updateBullet(i, v)}
                 rows={2}
                 aria-label={`Bullet ${i + 1}`}
                 placeholder={i === 0 ? "e.g. Launched referral program that brought in 1,200 new users in 3 months" : ""}
-                className="flex-1 border-2 border-rule rounded-xl px-3 py-2 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
+                className="w-full border-2 border-rule rounded-xl px-3 py-2 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
               />
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 pt-9">
                 <button
                   onClick={() => polish(i)}
                   disabled={loadingBullet === i}
@@ -1563,9 +1490,13 @@ function ResignationLetterPanel({ initialName }: { initialName: string }) {
 
 // ---------- Live preview ----------
 
-export function ResumePreview({ data, template }: { data: ResumeData; template: string }) {
+export function ResumePreview({ data: raw, template }: { data: ResumeData; template: string }) {
+  // Hidden sections and date style apply to every template the same way.
+  const data = applyLayout(raw);
   const accentColor = data.customization?.accentColor || DEFAULT_ACCENT_COLOR;
   const fontPair = getFontPair(data.customization?.fontChoice);
+  const scale = layoutScale(data.customization);
+  const shape = photoShape(data.customization);
 
   const overrideStyle = {
     "--seal": accentColor,
@@ -1575,8 +1506,16 @@ export function ResumePreview({ data, template }: { data: ResumeData; template: 
     "--font-sans": fontPair.body,
   } as React.CSSProperties;
 
-  return (
-    <div style={overrideStyle}>
+  const sheet = (
+    <div
+      style={{
+        ...overrideStyle,
+        // Spacing / "Fit to one page": shrink or grow text and spacing together,
+        // keeping the sheet the same width on screen (like the PDF does).
+        ...(scale !== 1 ? { zoom: scale, "--sheet-max": `${42 / scale}rem` } : {}),
+      } as React.CSSProperties}
+      className={shape === "square" ? "[&_img]:!rounded-[3px]" : shape === "rounded" ? "[&_img]:!rounded-xl" : undefined}
+    >
       {template === "modern" ? (
         <ModernPreview data={data} />
       ) : template === "bold" ? (
@@ -1610,6 +1549,7 @@ export function ResumePreview({ data, template }: { data: ResumeData; template: 
       )}
     </div>
   );
+  return sheet;
 }
 
 const contactLine = (data: ResumeData) =>
@@ -1626,7 +1566,7 @@ function ClassicPreview({ data, dense }: { data: ResumeData; dense: boolean }) {
 
   return (
     <div
-      className={`paper-sheet rounded-sm mx-auto max-w-2xl ${dense ? "p-6 text-[13px]" : "p-10"}`}
+      className={`paper-sheet rounded-sm mx-auto max-w-[var(--sheet-max,42rem)] ${dense ? "p-6 text-[13px]" : "p-10"}`}
       style={{ fontFamily: "var(--font-sans)" }}
     >
       <div className="flex items-center gap-4">
@@ -1637,14 +1577,15 @@ function ClassicPreview({ data, dense }: { data: ResumeData; dense: boolean }) {
         </div>
       </div>
 
-      {data.summary && (
+      <Ordered c={data.customization}>
+      <Sec k="summary">{data.summary && (
         <>
           <h3 className={heading}>Summary</h3>
-          <p className="text-sm leading-relaxed">{data.summary}</p>
+          <p className="text-sm leading-relaxed"><Rich t={data.summary} /></p>
         </>
-      )}
+      )}</Sec>
 
-      {data.experience.length > 0 && (
+      <Sec k="experience">{data.experience.length > 0 && (
         <>
           <h3 className={heading}>Experience</h3>
           {data.experience.map((exp) => (
@@ -1664,16 +1605,16 @@ function ClassicPreview({ data, dense }: { data: ResumeData; dense: boolean }) {
                     className={indent ? "text-sm pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-seal" : "text-sm"}
                   >
                     {!indent && <span className="text-seal">• </span>}
-                    {b}
+                    <Rich t={b} />
                   </li>
                 ))}
               </ul>
             </div>
           ))}
         </>
-      )}
+      )}</Sec>
 
-      {data.education.length > 0 && (
+      <Sec k="education">{data.education.length > 0 && (
         <>
           <h3 className={heading}>Education</h3>
           {data.education.map((edu) => (
@@ -1687,15 +1628,19 @@ function ClassicPreview({ data, dense }: { data: ResumeData; dense: boolean }) {
             </div>
           ))}
         </>
-      )}
+      )}</Sec>
 
-      {data.skills.length > 0 && (
+      <Sec k="skills">{data.skills.length > 0 && (
         <>
           <h3 className={heading}>Skills</h3>
           <p className="text-sm">{data.skills.join(" • ")}</p>
         </>
-      )}
-      <ExtraSectionsPreview data={data} headingClassName={heading} />
+      )}</Sec>
+      <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName={heading} only={["projects"]} /></Sec>
+      <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName={heading} only={["certifications"]} /></Sec>
+      <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={heading} only={["achievements"]} /></Sec>
+      <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName={heading} only={["languages"]} /></Sec>
+      </Ordered>
     </div>
   );
 }
@@ -1707,7 +1652,7 @@ function ModernPreview({ data }: { data: ResumeData }) {
   const modernHeading = `text-xs uppercase tracking-wide font-semibold text-seal mt-4 mb-1.5 ${showDividers ? "pl-2 border-l-2 border-seal" : ""}`;
 
   return (
-    <div className="paper-sheet rounded-sm mx-auto max-w-2xl overflow-hidden" style={{ fontFamily: "var(--font-sans)" }}>
+    <div className="paper-sheet rounded-sm mx-auto max-w-[var(--sheet-max,42rem)] overflow-hidden" style={{ fontFamily: "var(--font-sans)" }}>
       <div className="bg-ink text-paper px-8 py-6 flex items-center gap-4">
         {(data.customization?.showPhoto && data.customization?.photoDataUrl) && (
           <img src={data.customization.photoDataUrl} alt="" className="w-16 h-16 rounded-full object-cover shrink-0 border-2 border-white/30" />
@@ -1718,14 +1663,15 @@ function ModernPreview({ data }: { data: ResumeData }) {
         </div>
       </div>
       <div className="p-8">
-        {data.summary && (
+        <Ordered c={data.customization}>
+        <Sec k="summary">{data.summary && (
           <>
             <h3 className={modernHeading}>Summary</h3>
-            <p className="text-sm leading-relaxed mb-4">{data.summary}</p>
+            <p className="text-sm leading-relaxed mb-4"><Rich t={data.summary} /></p>
           </>
-        )}
+        )}</Sec>
 
-        {data.experience.length > 0 && (
+        <Sec k="experience">{data.experience.length > 0 && (
           <>
             <h3 className={modernHeading}>Experience</h3>
             {data.experience.map((exp) => (
@@ -1744,16 +1690,16 @@ function ModernPreview({ data }: { data: ResumeData }) {
                       className={indent ? "text-sm pl-4 relative before:content-['—'] before:absolute before:left-0 before:text-seal" : "text-sm"}
                     >
                       {!indent && <span className="text-seal">— </span>}
-                      {b}
+                      <Rich t={b} />
                     </li>
                   ))}
                 </ul>
               </div>
             ))}
           </>
-        )}
+        )}</Sec>
 
-        {data.education.length > 0 && (
+        <Sec k="education">{data.education.length > 0 && (
           <>
             <h3 className={modernHeading}>Education</h3>
             {data.education.map((edu) => (
@@ -1767,9 +1713,9 @@ function ModernPreview({ data }: { data: ResumeData }) {
               </div>
             ))}
           </>
-        )}
+        )}</Sec>
 
-        {data.skills.length > 0 && (
+        <Sec k="skills">{data.skills.length > 0 && (
           <>
             <h3 className={modernHeading}>Skills</h3>
             <div className="flex flex-wrap gap-1.5">
@@ -1780,8 +1726,12 @@ function ModernPreview({ data }: { data: ResumeData }) {
               ))}
             </div>
           </>
-        )}
-        <ExtraSectionsPreview data={data} headingClassName={modernHeading} />
+        )}</Sec>
+        <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName={modernHeading} only={["projects"]} /></Sec>
+        <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName={modernHeading} only={["certifications"]} /></Sec>
+        <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={modernHeading} only={["achievements"]} /></Sec>
+        <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName={modernHeading} only={["languages"]} /></Sec>
+        </Ordered>
       </div>
     </div>
   );
@@ -1797,7 +1747,7 @@ function BoldPreview({ data }: { data: ResumeData }) {
     : "text-sm uppercase tracking-widest font-bold text-ink mt-6 mb-2";
 
   return (
-    <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-10" style={{ fontFamily: "var(--font-sans)" }}>
+    <div className="paper-sheet rounded-sm mx-auto max-w-[var(--sheet-max,42rem)] p-10" style={{ fontFamily: "var(--font-sans)" }}>
       <div className="flex items-center gap-4">
         {photo && <img src={photo} alt="" className="w-20 h-20 rounded-full object-cover shrink-0" />}
         <div>
@@ -1809,14 +1759,15 @@ function BoldPreview({ data }: { data: ResumeData }) {
         </div>
       </div>
 
-      {data.summary && (
+      <Ordered c={data.customization}>
+      <Sec k="summary">{data.summary && (
         <>
           <h3 className={boldHeading}>Summary</h3>
-          <p className="text-sm leading-relaxed">{data.summary}</p>
+          <p className="text-sm leading-relaxed"><Rich t={data.summary} /></p>
         </>
-      )}
+      )}</Sec>
 
-      {data.experience.length > 0 && (
+      <Sec k="experience">{data.experience.length > 0 && (
         <>
           <h3 className={boldHeading}>Experience</h3>
           {data.experience.map((exp) => (
@@ -1836,16 +1787,16 @@ function BoldPreview({ data }: { data: ResumeData }) {
                     className={indent ? "text-sm pl-4 relative before:content-['▸'] before:absolute before:left-0 before:text-seal before:font-bold" : "text-sm"}
                   >
                     {!indent && <span className="text-seal font-bold">▸ </span>}
-                    {b}
+                    <Rich t={b} />
                   </li>
                 ))}
               </ul>
             </div>
           ))}
         </>
-      )}
+      )}</Sec>
 
-      {data.education.length > 0 && (
+      <Sec k="education">{data.education.length > 0 && (
         <>
           <h3 className={boldHeading}>Education</h3>
           {data.education.map((edu) => (
@@ -1859,15 +1810,19 @@ function BoldPreview({ data }: { data: ResumeData }) {
             </div>
           ))}
         </>
-      )}
+      )}</Sec>
 
-      {data.skills.length > 0 && (
+      <Sec k="skills">{data.skills.length > 0 && (
         <>
           <h3 className={boldHeading}>Skills</h3>
           <p className="text-sm font-medium">{data.skills.join("  /  ")}</p>
         </>
-      )}
-      <ExtraSectionsPreview data={data} headingClassName={boldHeading} />
+      )}</Sec>
+      <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName={boldHeading} only={["projects"]} /></Sec>
+      <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName={boldHeading} only={["certifications"]} /></Sec>
+      <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={boldHeading} only={["achievements"]} /></Sec>
+      <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName={boldHeading} only={["languages"]} /></Sec>
+      </Ordered>
     </div>
   );
 }
@@ -1880,7 +1835,7 @@ function SidebarPreview({ data }: { data: ResumeData }) {
   const sideDivider = showDividers ? "border-t border-white/20 pt-4" : "";
 
   return (
-    <div className="paper-sheet rounded-sm mx-auto max-w-2xl overflow-hidden grid grid-cols-[1fr_2fr]" style={{ fontFamily: "var(--font-sans)" }}>
+    <div className="paper-sheet rounded-sm mx-auto max-w-[var(--sheet-max,42rem)] overflow-hidden grid grid-cols-[1fr_2fr]" style={{ fontFamily: "var(--font-sans)" }}>
       <div className="bg-seal text-white p-6">
         {photo && (
           <img src={photo} alt="" className="w-20 h-20 rounded-full object-cover mb-4 border-2 border-white/40" />
@@ -1893,7 +1848,8 @@ function SidebarPreview({ data }: { data: ResumeData }) {
               <p key={i} className="break-words">{line}</p>
             ))}
         </div>
-        {data.skills.length > 0 && (
+        <Ordered c={data.customization}>
+        <Sec k="skills">{data.skills.length > 0 && (
           <div className={`mt-6 ${sideDivider}`}>
             <h3 className="text-[10px] uppercase tracking-widest font-bold mb-2 opacity-80">Skills</h3>
             <div className="flex flex-wrap gap-1">
@@ -1902,8 +1858,8 @@ function SidebarPreview({ data }: { data: ResumeData }) {
               ))}
             </div>
           </div>
-        )}
-        {data.education.length > 0 && (
+        )}</Sec>
+        <Sec k="education">{data.education.length > 0 && (
           <div className={`mt-6 ${sideDivider}`}>
             <h3 className="text-[10px] uppercase tracking-widest font-bold mb-2 opacity-80">Education</h3>
             {data.education.map((edu) => (
@@ -1914,16 +1870,18 @@ function SidebarPreview({ data }: { data: ResumeData }) {
               </div>
             ))}
           </div>
-        )}
+        )}</Sec>
+        </Ordered>
       </div>
       <div className="p-6">
-        {data.summary && (
+        <Ordered c={data.customization}>
+        <Sec k="summary">{data.summary && (
           <>
             <h3 className="text-xs uppercase tracking-wide text-seal font-semibold mb-1.5">Summary</h3>
-            <p className="text-sm leading-relaxed mb-4">{data.summary}</p>
+            <p className="text-sm leading-relaxed mb-4"><Rich t={data.summary} /></p>
           </>
-        )}
-        {data.experience.length > 0 && (
+        )}</Sec>
+        <Sec k="experience">{data.experience.length > 0 && (
           <>
             <h3 className="text-xs uppercase tracking-wide text-seal font-semibold mb-1.5">Experience</h3>
             {data.experience.map((exp) => (
@@ -1940,15 +1898,19 @@ function SidebarPreview({ data }: { data: ResumeData }) {
                       className={indent ? "text-sm pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-seal" : "text-sm"}
                     >
                       {!indent && <span className="text-seal">• </span>}
-                      {b}
+                      <Rich t={b} />
                     </li>
                   ))}
                 </ul>
               </div>
             ))}
           </>
-        )}
-        <ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-4 mb-1.5" />
+        )}</Sec>
+        <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-4 mb-1.5" only={["projects"]} /></Sec>
+        <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-4 mb-1.5" only={["certifications"]} /></Sec>
+        <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-4 mb-1.5" only={["achievements"]} /></Sec>
+        <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-4 mb-1.5" only={["languages"]} /></Sec>
+        </Ordered>
       </div>
     </div>
   );
@@ -1961,7 +1923,7 @@ function MinimalPreview({ data }: { data: ResumeData }) {
   const minimalHeading = `text-xs font-bold uppercase mt-5 mb-1 ${showDividers ? "border-b border-black pb-0.5" : ""}`;
 
   return (
-    <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-10 text-black" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
+    <div className="paper-sheet rounded-sm mx-auto max-w-[var(--sheet-max,42rem)] p-10 text-black" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
       <div className="flex items-center gap-4 mb-1">
         {(data.customization?.showPhoto && data.customization?.photoDataUrl) && (
           <img src={data.customization.photoDataUrl} alt="" className="w-14 h-14 rounded-full object-cover shrink-0 grayscale" />
@@ -1972,13 +1934,14 @@ function MinimalPreview({ data }: { data: ResumeData }) {
         </div>
       </div>
 
-      {data.summary && (
+      <Ordered c={data.customization}>
+      <Sec k="summary">{data.summary && (
         <>
           <h3 className={minimalHeading}>Summary</h3>
-          <p className="text-sm leading-relaxed">{data.summary}</p>
+          <p className="text-sm leading-relaxed"><Rich t={data.summary} /></p>
         </>
-      )}
-      {data.experience.length > 0 && (
+      )}</Sec>
+      <Sec k="experience">{data.experience.length > 0 && (
         <>
           <h3 className={minimalHeading}>Experience</h3>
           {data.experience.map((exp) => (
@@ -1987,28 +1950,32 @@ function MinimalPreview({ data }: { data: ResumeData }) {
               <p className="text-xs">{exp.startDate} - {exp.endDate}</p>
               <ul className="mt-1">
                 {exp.bullets.filter(Boolean).map((b, i) => (
-                  <li key={i} className={indent ? "text-sm pl-3" : "text-sm"}>- {b}</li>
+                  <li key={i} className={indent ? "text-sm pl-3" : "text-sm"}>- <Rich t={b} /></li>
                 ))}
               </ul>
             </div>
           ))}
         </>
-      )}
-      {data.education.length > 0 && (
+      )}</Sec>
+      <Sec k="education">{data.education.length > 0 && (
         <>
           <h3 className={minimalHeading}>Education</h3>
           {data.education.map((edu) => (
             <p key={edu.id} className="text-sm">{edu.degree}, {edu.school} ({edu.startDate} - {edu.endDate})</p>
           ))}
         </>
-      )}
-      {data.skills.length > 0 && (
+      )}</Sec>
+      <Sec k="skills">{data.skills.length > 0 && (
         <>
           <h3 className={minimalHeading}>Skills</h3>
           <p className="text-sm">{data.skills.join(", ")}</p>
         </>
-      )}
-      <ExtraSectionsPreview data={data} headingClassName={minimalHeading} />
+      )}</Sec>
+      <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName={minimalHeading} only={["projects"]} /></Sec>
+      <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName={minimalHeading} only={["certifications"]} /></Sec>
+      <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={minimalHeading} only={["achievements"]} /></Sec>
+      <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName={minimalHeading} only={["languages"]} /></Sec>
+      </Ordered>
     </div>
   );
 }
@@ -2020,7 +1987,7 @@ function ExecutivePreview({ data }: { data: ResumeData }) {
   const photo = data.customization?.showPhoto ? data.customization?.photoDataUrl : undefined;
 
   return (
-    <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-12" style={{ fontFamily: "var(--font-sans)" }}>
+    <div className="paper-sheet rounded-sm mx-auto max-w-[var(--sheet-max,42rem)] p-12" style={{ fontFamily: "var(--font-sans)" }}>
       {photo && (
         <img src={photo} alt="" className="w-20 h-20 rounded-full object-cover mx-auto mb-3" />
       )}
@@ -2028,9 +1995,10 @@ function ExecutivePreview({ data }: { data: ResumeData }) {
       {showDividers && <div className="h-px bg-seal w-24 mx-auto my-3" />}
       <p className="text-xs text-ink-soft text-center mb-8">{contactLine(data)}</p>
 
-      {data.summary && <p className="text-sm text-center leading-relaxed mb-8 italic text-ink-soft">{data.summary}</p>}
+      <Ordered c={data.customization}>
+      <Sec k="summary">{data.summary && <p className="text-sm text-center leading-relaxed mb-8 italic text-ink-soft"><Rich t={data.summary} /></p>}</Sec>
 
-      {data.experience.length > 0 && (
+      <Sec k="experience">{data.experience.length > 0 && (
         <>
           <h3 className="text-xs uppercase tracking-[0.2em] text-seal text-center mb-4">Experience</h3>
           {data.experience.map((exp) => (
@@ -2044,26 +2012,30 @@ function ExecutivePreview({ data }: { data: ResumeData }) {
                     className={indent ? "pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-seal" : ""}
                   >
                     {!indent && <span className="text-seal">— </span>}
-                    {b}
+                    <Rich t={b} />
                   </li>
                 ))}
               </ul>
             </div>
           ))}
         </>
-      )}
-      {data.education.length > 0 && (
+      )}</Sec>
+      <Sec k="education">{data.education.length > 0 && (
         <>
           <h3 className="text-xs uppercase tracking-[0.2em] text-seal text-center mt-8 mb-3">Education</h3>
           {data.education.map((edu) => (
             <p key={edu.id} className="text-sm text-center">{edu.degree} — {edu.school}</p>
           ))}
         </>
-      )}
-      {data.skills.length > 0 && (
+      )}</Sec>
+      <Sec k="skills">{data.skills.length > 0 && (
         <p className="text-sm text-center mt-8 text-ink-soft">{data.skills.join(" · ")}</p>
-      )}
-      <ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-[0.2em] text-seal text-center mt-8 mb-3" variant="center" />
+      )}</Sec>
+      <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-[0.2em] text-seal text-center mt-8 mb-3" variant="center" only={["projects"]} /></Sec>
+      <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-[0.2em] text-seal text-center mt-8 mb-3" variant="center" only={["certifications"]} /></Sec>
+      <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-[0.2em] text-seal text-center mt-8 mb-3" variant="center" only={["achievements"]} /></Sec>
+      <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-[0.2em] text-seal text-center mt-8 mb-3" variant="center" only={["languages"]} /></Sec>
+      </Ordered>
     </div>
   );
 }
@@ -2075,7 +2047,7 @@ function TechnicalPreview({ data }: { data: ResumeData }) {
   const photo = data.customization?.showPhoto ? data.customization?.photoDataUrl : undefined;
 
   return (
-    <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-8" style={{ fontFamily: "var(--font-sans)" }}>
+    <div className="paper-sheet rounded-sm mx-auto max-w-[var(--sheet-max,42rem)] p-8" style={{ fontFamily: "var(--font-sans)" }}>
       <div className="flex items-center gap-4">
         {photo && <img src={photo} alt="" className="w-14 h-14 rounded-sm object-cover shrink-0" />}
         <div>
@@ -2084,13 +2056,14 @@ function TechnicalPreview({ data }: { data: ResumeData }) {
         </div>
       </div>
 
-      {data.summary && (
+      <Ordered c={data.customization}>
+      <Sec k="summary">{data.summary && (
         <>
           <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">// summary</h3>
-          <p className="text-sm leading-relaxed">{data.summary}</p>
+          <p className="text-sm leading-relaxed"><Rich t={data.summary} /></p>
         </>
-      )}
-      {data.experience.length > 0 && (
+      )}</Sec>
+      <Sec k="experience">{data.experience.length > 0 && (
         <>
           <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">// experience</h3>
           {data.experience.map((exp) => (
@@ -2104,23 +2077,23 @@ function TechnicalPreview({ data }: { data: ResumeData }) {
                     className={indent ? "text-sm pl-3 relative before:content-['>'] before:absolute before:left-0 before:text-seal before:font-mono" : "text-sm"}
                   >
                     {!indent && <span className="text-seal font-mono">&gt; </span>}
-                    {b}
+                    <Rich t={b} />
                   </li>
                 ))}
               </ul>
             </div>
           ))}
         </>
-      )}
-      {data.education.length > 0 && (
+      )}</Sec>
+      <Sec k="education">{data.education.length > 0 && (
         <>
           <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">// education</h3>
           {data.education.map((edu) => (
             <p key={edu.id} className="text-sm">{edu.degree} — {edu.school}</p>
           ))}
         </>
-      )}
-      {data.skills.length > 0 && (
+      )}</Sec>
+      <Sec k="skills">{data.skills.length > 0 && (
         <>
           <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">// stack</h3>
           <div className="flex flex-wrap gap-1.5">
@@ -2129,8 +2102,12 @@ function TechnicalPreview({ data }: { data: ResumeData }) {
             ))}
           </div>
         </>
-      )}
-      <ExtraSectionsPreview data={data} headingClassName="font-mono text-xs text-ink-soft mt-5 mb-1" variant="code" />
+      )}</Sec>
+      <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName="font-mono text-xs text-ink-soft mt-5 mb-1" variant="code" only={["projects"]} /></Sec>
+      <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName="font-mono text-xs text-ink-soft mt-5 mb-1" variant="code" only={["certifications"]} /></Sec>
+      <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName="font-mono text-xs text-ink-soft mt-5 mb-1" variant="code" only={["achievements"]} /></Sec>
+      <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName="font-mono text-xs text-ink-soft mt-5 mb-1" variant="code" only={["languages"]} /></Sec>
+      </Ordered>
     </div>
   );
 }
@@ -2142,7 +2119,7 @@ function TimelinePreview({ data }: { data: ResumeData }) {
   const photo = data.customization?.showPhoto ? data.customization?.photoDataUrl : undefined;
 
   return (
-    <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-10" style={{ fontFamily: "var(--font-sans)" }}>
+    <div className="paper-sheet rounded-sm mx-auto max-w-[var(--sheet-max,42rem)] p-10" style={{ fontFamily: "var(--font-sans)" }}>
       <div className="flex items-center gap-4">
         {photo && <img src={photo} alt="" className="w-16 h-16 rounded-full object-cover shrink-0" />}
         <div>
@@ -2152,9 +2129,10 @@ function TimelinePreview({ data }: { data: ResumeData }) {
       </div>
       <div className="mb-6" />
 
-      {data.summary && <p className="text-sm leading-relaxed mb-6">{data.summary}</p>}
+      <Ordered c={data.customization}>
+      <Sec k="summary">{data.summary && <p className="text-sm leading-relaxed mb-6"><Rich t={data.summary} /></p>}</Sec>
 
-      {data.experience.length > 0 && (
+      <Sec k="experience">{data.experience.length > 0 && (
         <>
           <h3 className="text-xs uppercase tracking-wide text-seal font-semibold mb-3">Experience</h3>
           <div className={`relative pl-5 space-y-5 ${showDividers ? "border-l-2 border-rule" : ""}`}>
@@ -2173,7 +2151,7 @@ function TimelinePreview({ data }: { data: ResumeData }) {
                       className={indent ? "text-sm pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-seal" : "text-sm"}
                     >
                       {!indent && <span className="text-seal">• </span>}
-                      {b}
+                      <Rich t={b} />
                     </li>
                   ))}
                 </ul>
@@ -2181,19 +2159,23 @@ function TimelinePreview({ data }: { data: ResumeData }) {
             ))}
           </div>
         </>
-      )}
-      {data.education.length > 0 && (
+      )}</Sec>
+      <Sec k="education">{data.education.length > 0 && (
         <>
           <h3 className="text-xs uppercase tracking-wide text-seal font-semibold mt-6 mb-2">Education</h3>
           {data.education.map((edu) => (
             <p key={edu.id} className="text-sm">{edu.degree} — {edu.school} <span className="text-ink-soft text-xs">({edu.startDate}–{edu.endDate})</span></p>
           ))}
         </>
-      )}
-      {data.skills.length > 0 && (
+      )}</Sec>
+      <Sec k="skills">{data.skills.length > 0 && (
         <p className="text-sm mt-6 text-ink-soft">{data.skills.join(" • ")}</p>
-      )}
-      <ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-6 mb-2" />
+      )}</Sec>
+      <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-6 mb-2" only={["projects"]} /></Sec>
+      <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-6 mb-2" only={["certifications"]} /></Sec>
+      <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-6 mb-2" only={["achievements"]} /></Sec>
+      <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-6 mb-2" only={["languages"]} /></Sec>
+      </Ordered>
     </div>
   );
 }
@@ -2205,16 +2187,17 @@ function ElegantPreview({ data }: { data: ResumeData }) {
   const photo = data.customization?.showPhoto ? data.customization?.photoDataUrl : undefined;
 
   return (
-    <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-10" style={{ fontFamily: "var(--font-sans)" }}>
+    <div className="paper-sheet rounded-sm mx-auto max-w-[var(--sheet-max,42rem)] p-10" style={{ fontFamily: "var(--font-sans)" }}>
       <div className="flex items-center gap-4">
         {photo && <img src={photo} alt="" className="w-16 h-16 rounded-full object-cover shrink-0" />}
         <h2 className="font-display text-2xl">{data.contact.fullName || "Your Name"}</h2>
       </div>
       <p className={`text-xs text-ink-soft mt-1 pb-4 ${showDividers ? "border-b border-rule" : ""}`}>{contactLine(data)}</p>
 
-      {data.summary && <p className="text-sm leading-relaxed mt-4 mb-2">{data.summary}</p>}
+      <Ordered c={data.customization}>
+      <Sec k="summary">{data.summary && <p className="text-sm leading-relaxed mt-4 mb-2"><Rich t={data.summary} /></p>}</Sec>
 
-      {data.experience.length > 0 && (
+      <Sec k="experience">{data.experience.length > 0 && (
         <>
           <h3 className="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2">Experience</h3>
           {data.experience.map((exp) => (
@@ -2230,26 +2213,30 @@ function ElegantPreview({ data }: { data: ResumeData }) {
                     className={indent ? "text-sm pl-3 relative before:content-['·'] before:absolute before:left-0 before:text-seal" : "text-sm"}
                   >
                     {!indent && <span className="text-seal">· </span>}
-                    {b}
+                    <Rich t={b} />
                   </li>
                 ))}
               </ul>
             </div>
           ))}
         </>
-      )}
-      {data.education.length > 0 && (
+      )}</Sec>
+      <Sec k="education">{data.education.length > 0 && (
         <>
           <h3 className="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2">Education</h3>
           {data.education.map((edu) => (
             <p key={edu.id} className="text-sm italic">{edu.degree}, {edu.school}</p>
           ))}
         </>
-      )}
-      {data.skills.length > 0 && (
+      )}</Sec>
+      <Sec k="skills">{data.skills.length > 0 && (
         <p className="text-sm mt-6 text-ink-soft">{data.skills.join("  ·  ")}</p>
-      )}
-      <ExtraSectionsPreview data={data} headingClassName="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2" />
+      )}</Sec>
+      <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2" only={["projects"]} /></Sec>
+      <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2" only={["certifications"]} /></Sec>
+      <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2" only={["achievements"]} /></Sec>
+      <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2" only={["languages"]} /></Sec>
+      </Ordered>
     </div>
   );
 }
@@ -2293,7 +2280,7 @@ export function ExtraSectionsPreview({
                 {p.name}
                 {p.link && <span className="text-xs text-ink-soft font-normal"> · {p.link}</span>}
               </p>
-              {p.description && <p className="text-sm text-ink-soft leading-relaxed">{p.description}</p>}
+              {p.description && <p className="text-sm text-ink-soft leading-relaxed"><Rich t={p.description} /></p>}
             </div>
           ))}
         </>
@@ -2315,7 +2302,7 @@ export function ExtraSectionsPreview({
           <h3 className={headingClassName}>{title("Achievements")}</h3>
           <ul className={`space-y-0.5 ${align}`}>
             {achievements.map((a, i) => (
-              <li key={i} className="text-sm">• {a}</li>
+              <li key={i} className="text-sm">• <Rich t={a} /></li>
             ))}
           </ul>
         </>

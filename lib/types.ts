@@ -41,6 +41,13 @@ export type ResumeCustomization = {
   showPhoto?: boolean; // whether to actually display the photo, even if uploaded
   showDividers?: boolean; // section rule lines - defaults to true (current look)
   indentBullets?: boolean; // indent bullet text under the role - defaults to true (current look)
+  // Layout controls (see lib/layout.ts)
+  pageSize?: "A4" | "LETTER"; // PDF and Word page size - defaults to A4
+  scale?: number; // text and spacing size, 0.75-1.1 - set by Spacing or "Fit to one page"
+  sectionOrder?: string[]; // section keys in display order
+  hiddenSections?: string[]; // section keys left off the resume
+  dateStyle?: "short" | "long" | "numeric" | "year"; // how dates print - defaults to "Jan 2024"
+  photoShape?: "circle" | "rounded" | "square";
 };
 
 export type ResumeData = {

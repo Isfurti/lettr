@@ -1,4 +1,5 @@
 import type { ResumeData } from "./types";
+import { plainResume } from "./rich-text";
 
 export type SectionScore = {
   key: string;
@@ -173,7 +174,8 @@ const WEIGHTS: Record<string, number> = {
   skills: 0.2,
 };
 
-export function scoreResumeQuality(resume: ResumeData): ResumeScoreResult {
+export function scoreResumeQuality(input: ResumeData): ResumeScoreResult {
+  const resume = plainResume(input);
   const sections = [
     scoreContact(resume),
     scoreSummary(resume),

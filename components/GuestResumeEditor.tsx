@@ -77,7 +77,7 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
       {/* Slim builder header - the full marketing nav just competes with the work here. */}
       <header className="border-b border-rule bg-cream px-3 sm:px-6 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <Logo />
+          <Logo compact />
           <span className="hidden md:inline text-sm font-bold text-slate truncate">✓ Draft saved on this device</span>
         </div>
         <div className="flex items-center gap-2">
@@ -85,7 +85,8 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
             value={template}
             onChange={(e) => setTemplate(e.target.value)}
             aria-label="Template"
-            className="min-h-11 text-sm font-bold border-2 border-rule rounded-full px-3 bg-white max-w-[9.5rem] focus:outline-none focus:border-brand-blue"
+            title="Template (also in Design)"
+            className="hidden md:block min-h-11 text-sm font-bold border-2 border-rule rounded-full px-3 bg-white max-w-[9.5rem] focus:outline-none focus:border-brand-blue"
           >
             {TEMPLATES.map((t) => (
               <option key={t} value={t}>{t[0].toUpperCase() + t.slice(1)}{!isTemplateFree(t) ? " (Pro)" : ""}</option>
@@ -95,7 +96,8 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
             onClick={() => requestExport("pdf")}
             className="btn-press inline-flex items-center min-h-11 px-4 sm:px-5 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_4px_0_var(--brand-blue-deep)] whitespace-nowrap"
           >
-            Download PDF
+            <span className="sm:hidden">Download</span>
+            <span className="hidden sm:inline">Download PDF</span>
           </button>
           <Link href="/login?continue=builder" className="hidden md:inline-flex items-center min-h-11 px-3 text-sm font-bold text-slate hover:text-ink whitespace-nowrap">
             Sign in
@@ -160,7 +162,7 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
               </button>
             </div>
           )}
-          {tab === "edit" && <EditForm data={data} setData={setData} guest />}
+          {tab === "edit" && <EditForm data={data} setData={setData} guest template={template} setTemplate={setTemplate} />}
           {tab === "score" && <ScorePanel data={data} plan="free" />}
           {tab === "match" && <JobMatchPanel data={data} />}
         </div>

@@ -1,4 +1,6 @@
 /* eslint-disable @next/next/no-img-element -- resume photos are user-uploaded data URLs, not optimisable assets */
+import { Ordered, Sec } from "@/components/templates/Ordered";
+import { Rich } from "@/components/templates/Rich";
 import type { ResumeData, ExperienceEntry } from "@/lib/types";
 import { ExtraSectionsPreview } from "@/components/ResumeEditor";
 
@@ -36,7 +38,7 @@ function Bullets({ items, indent, marker = "•" }: { items: string[]; indent: b
           <span aria-hidden="true" className={indent ? "absolute left-0 text-seal" : "text-seal"}>
             {indent ? marker : `${marker} `}
           </span>
-          {b}
+          <Rich t={b} />
         </li>
       ))}
     </ul>
@@ -67,7 +69,7 @@ export function RibbonPreview({ data }: { data: ResumeData }) {
   const { indent, photo } = flags(data);
   const label = "inline-block mt-6 mb-2 px-3 py-1 rounded-full bg-seal text-white text-[11px] font-bold uppercase tracking-wider";
   return (
-    <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-10" style={{ fontFamily: "var(--font-sans)" }}>
+    <div className="paper-sheet rounded-sm mx-auto max-w-[var(--sheet-max,42rem)] p-10" style={{ fontFamily: "var(--font-sans)" }}>
       <div className="flex items-center gap-4">
         <span aria-hidden="true" className="w-2 self-stretch rounded-full bg-seal" />
         {photo && <img src={photo} alt="" className="w-16 h-16 rounded-full object-cover shrink-0" />}
@@ -76,19 +78,20 @@ export function RibbonPreview({ data }: { data: ResumeData }) {
           <p className="text-xs text-ink-soft mt-1">{contactItems(data).join("  ·  ")}</p>
         </div>
       </div>
-      {data.summary && (
+      <Ordered c={data.customization}>
+      <Sec k="summary">{data.summary && (
         <>
           <h3 className={label}>Profile</h3>
-          <p className="text-sm leading-relaxed">{data.summary}</p>
+          <p className="text-sm leading-relaxed"><Rich t={data.summary} /></p>
         </>
-      )}
-      {data.experience.length > 0 && (
+      )}</Sec>
+      <Sec k="experience">{data.experience.length > 0 && (
         <>
           <h3 className={label}>Experience</h3>
           {data.experience.map((e) => <Job key={e.id} exp={e} indent={indent} />)}
         </>
-      )}
-      {data.education.length > 0 && (
+      )}</Sec>
+      <Sec k="education">{data.education.length > 0 && (
         <>
           <h3 className={label}>Education</h3>
           {data.education.map((e) => (
@@ -98,14 +101,18 @@ export function RibbonPreview({ data }: { data: ResumeData }) {
             </div>
           ))}
         </>
-      )}
-      {data.skills.length > 0 && (
+      )}</Sec>
+      <Sec k="skills">{data.skills.length > 0 && (
         <>
           <h3 className={label}>Skills</h3>
           <p className="text-sm">{data.skills.join("  ·  ")}</p>
         </>
-      )}
-      <ExtraSectionsPreview data={data} headingClassName={label + " block w-fit"} />
+      )}</Sec>
+      <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName={label + " block w-fit"} only={["projects"]} /></Sec>
+      <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName={label + " block w-fit"} only={["certifications"]} /></Sec>
+      <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={label + " block w-fit"} only={["achievements"]} /></Sec>
+      <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName={label + " block w-fit"} only={["languages"]} /></Sec>
+      </Ordered>
     </div>
   );
 }
@@ -117,41 +124,45 @@ export function SplitPreview({ data }: { data: ResumeData }) {
   const main = `text-xs uppercase tracking-widest font-bold text-seal mt-5 mb-1 ${showDividers ? "pb-1 border-b border-rule" : ""}`;
   const side = "text-[10px] uppercase tracking-widest font-bold text-seal mt-5 mb-1.5";
   return (
-    <div className="paper-sheet rounded-sm mx-auto max-w-2xl overflow-hidden" style={{ fontFamily: "var(--font-sans)" }}>
+    <div className="paper-sheet rounded-sm mx-auto max-w-[var(--sheet-max,42rem)] overflow-hidden" style={{ fontFamily: "var(--font-sans)" }}>
       <div className="px-8 pt-8 pb-5 flex items-center gap-4 border-b-4 border-seal">
         {photo && <img src={photo} alt="" className="w-16 h-16 rounded-full object-cover shrink-0" />}
         <h2 className="font-display font-bold text-3xl leading-tight">{data.contact.fullName || "Your Name"}</h2>
       </div>
       <div className="grid grid-cols-[1.75fr_1fr]">
         <div className="px-8 pb-8">
-          {data.summary && (
+          <Ordered c={data.customization}>
+          <Sec k="summary">{data.summary && (
             <>
               <h3 className={main}>Summary</h3>
-              <p className="text-sm leading-relaxed">{data.summary}</p>
+              <p className="text-sm leading-relaxed"><Rich t={data.summary} /></p>
             </>
-          )}
-          {data.experience.length > 0 && (
+          )}</Sec>
+          <Sec k="experience">{data.experience.length > 0 && (
             <>
               <h3 className={main}>Experience</h3>
               {data.experience.map((e) => <Job key={e.id} exp={e} indent={indent} stacked />)}
             </>
-          )}
-          <ExtraSectionsPreview data={data} headingClassName={main} only={["projects", "achievements"]} />
+          )}</Sec>
+          <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName={main} only={["projects"]} /></Sec>
+          <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={main} only={["achievements"]} /></Sec>
+          </Ordered>
         </div>
         <div className="bg-seal-soft px-6 pb-8">
           <h3 className={side}>Contact</h3>
           <div className="space-y-0.5 text-xs break-words">
             {contactItems(data).map((c) => <p key={c}>{c}</p>)}
           </div>
-          {data.skills.length > 0 && (
+          <Ordered c={data.customization}>
+          <Sec k="skills">{data.skills.length > 0 && (
             <>
               <h3 className={side}>Skills</h3>
               <ul className="space-y-0.5 text-xs">
                 {data.skills.map((s) => <li key={s}>{s}</li>)}
               </ul>
             </>
-          )}
-          {data.education.length > 0 && (
+          )}</Sec>
+          <Sec k="education">{data.education.length > 0 && (
             <>
               <h3 className={side}>Education</h3>
               {data.education.map((e) => (
@@ -162,9 +173,13 @@ export function SplitPreview({ data }: { data: ResumeData }) {
                 </div>
               ))}
             </>
-          )}
+          )}</Sec>
+          </Ordered>
           <div className="text-xs [&_p]:text-xs [&_li]:text-xs">
-            <ExtraSectionsPreview data={data} headingClassName={side} only={["certifications", "languages"]} />
+            <Ordered c={data.customization}>
+            <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName={side} only={["certifications"]} /></Sec>
+            <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName={side} only={["languages"]} /></Sec>
+            </Ordered>
           </div>
         </div>
       </div>
@@ -179,18 +194,19 @@ export function ScholarPreview({ data }: { data: ResumeData }) {
   const heading =
     "flex items-center gap-3 mt-6 mb-2 text-[11px] uppercase tracking-[0.2em] font-semibold text-seal before:flex-1 before:h-px before:bg-rule after:flex-1 after:h-px after:bg-rule";
   return (
-    <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-10" style={{ fontFamily: "var(--font-sans)" }}>
+    <div className="paper-sheet rounded-sm mx-auto max-w-[var(--sheet-max,42rem)] p-10" style={{ fontFamily: "var(--font-sans)" }}>
       <div className="text-center">
         <h2 className="font-display text-3xl tracking-wide">{data.contact.fullName || "Your Name"}</h2>
         <p className="text-xs text-ink-soft mt-2">{contactItems(data).join("  |  ")}</p>
       </div>
-      {data.summary && (
+      <Ordered c={data.customization}>
+      <Sec k="summary">{data.summary && (
         <>
           <h3 className={heading}>Profile</h3>
-          <p className="text-sm leading-relaxed text-center">{data.summary}</p>
+          <p className="text-sm leading-relaxed text-center"><Rich t={data.summary} /></p>
         </>
-      )}
-      {data.education.length > 0 && (
+      )}</Sec>
+      <Sec k="education">{data.education.length > 0 && (
         <>
           <h3 className={heading}>Education</h3>
           {data.education.map((e) => (
@@ -200,21 +216,24 @@ export function ScholarPreview({ data }: { data: ResumeData }) {
             </div>
           ))}
         </>
-      )}
-      {data.experience.length > 0 && (
+      )}</Sec>
+      <Sec k="experience">{data.experience.length > 0 && (
         <>
           <h3 className={heading}>Experience</h3>
           {data.experience.map((e) => <Job key={e.id} exp={e} indent={indent} />)}
         </>
-      )}
-      <ExtraSectionsPreview data={data} headingClassName={heading} only={["projects", "certifications", "achievements"]} />
-      {data.skills.length > 0 && (
+      )}</Sec>
+      <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName={heading} only={["projects"]} /></Sec>
+      <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName={heading} only={["certifications"]} /></Sec>
+      <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={heading} only={["achievements"]} /></Sec>
+      <Sec k="skills">{data.skills.length > 0 && (
         <>
           <h3 className={heading}>Skills</h3>
           <p className="text-sm text-center">{data.skills.join("  ·  ")}</p>
         </>
-      )}
-      <ExtraSectionsPreview data={data} headingClassName={heading} only={["languages"]} variant="center" />
+      )}</Sec>
+      <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName={heading} variant="center" only={["languages"]} /></Sec>
+      </Ordered>
     </div>
   );
 }
@@ -225,7 +244,7 @@ export function FresherPreview({ data }: { data: ResumeData }) {
   const { indent, photo, showDividers } = flags(data);
   const heading = `text-xs uppercase tracking-wide font-bold text-seal mt-5 mb-1.5 ${showDividers ? "pb-1 border-b-2 border-seal-soft" : ""}`;
   return (
-    <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-9" style={{ fontFamily: "var(--font-sans)" }}>
+    <div className="paper-sheet rounded-sm mx-auto max-w-[var(--sheet-max,42rem)] p-9" style={{ fontFamily: "var(--font-sans)" }}>
       <div className="flex items-center gap-4 pb-4 border-b-2 border-seal">
         {photo && <img src={photo} alt="" className="w-16 h-16 rounded-full object-cover shrink-0" />}
         <div className="min-w-0">
@@ -233,13 +252,14 @@ export function FresherPreview({ data }: { data: ResumeData }) {
           <p className="text-xs text-ink-soft mt-1">{contactItems(data).join("  •  ")}</p>
         </div>
       </div>
-      {data.summary && (
+      <Ordered c={data.customization}>
+      <Sec k="summary">{data.summary && (
         <>
           <h3 className={heading}>Career objective</h3>
-          <p className="text-sm leading-relaxed">{data.summary}</p>
+          <p className="text-sm leading-relaxed"><Rich t={data.summary} /></p>
         </>
-      )}
-      {data.education.length > 0 && (
+      )}</Sec>
+      <Sec k="education">{data.education.length > 0 && (
         <>
           <h3 className={heading}>Education</h3>
           {data.education.map((e) => (
@@ -249,9 +269,9 @@ export function FresherPreview({ data }: { data: ResumeData }) {
             </div>
           ))}
         </>
-      )}
-      <ExtraSectionsPreview data={data} headingClassName={heading} only={["projects"]} />
-      {data.skills.length > 0 && (
+      )}</Sec>
+      <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName={heading} only={["projects"]} /></Sec>
+      <Sec k="skills">{data.skills.length > 0 && (
         <>
           <h3 className={heading}>Skills</h3>
           <div className="flex flex-wrap gap-1.5">
@@ -260,14 +280,17 @@ export function FresherPreview({ data }: { data: ResumeData }) {
             ))}
           </div>
         </>
-      )}
-      {data.experience.length > 0 && (
+      )}</Sec>
+      <Sec k="experience">{data.experience.length > 0 && (
         <>
           <h3 className={heading}>Internships & experience</h3>
           {data.experience.map((e) => <Job key={e.id} exp={e} indent={indent} />)}
         </>
-      )}
-      <ExtraSectionsPreview data={data} headingClassName={heading} only={["certifications", "achievements", "languages"]} />
+      )}</Sec>
+      <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName={heading} only={["certifications"]} /></Sec>
+      <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={heading} only={["achievements"]} /></Sec>
+      <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName={heading} only={["languages"]} /></Sec>
+      </Ordered>
     </div>
   );
 }
@@ -286,7 +309,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export function GridPreview({ data }: { data: ResumeData }) {
   const { indent, photo } = flags(data);
   return (
-    <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-10" style={{ fontFamily: "var(--font-sans)" }}>
+    <div className="paper-sheet rounded-sm mx-auto max-w-[var(--sheet-max,42rem)] p-10" style={{ fontFamily: "var(--font-sans)" }}>
       <div className="grid grid-cols-[110px_1fr] gap-5 items-end">
         {photo ? <img src={photo} alt="" className="w-20 h-20 rounded-sm object-cover" /> : <span className="block w-10 h-1 bg-seal mb-3" />}
         <div>
@@ -294,13 +317,14 @@ export function GridPreview({ data }: { data: ResumeData }) {
           <p className="text-xs text-ink-soft mt-1">{contactItems(data).join("   ")}</p>
         </div>
       </div>
-      {data.summary && <Row label="Profile"><p className="text-sm leading-relaxed">{data.summary}</p></Row>}
-      {data.experience.length > 0 && (
+      <Ordered c={data.customization}>
+      <Sec k="summary">{data.summary && <Row label="Profile"><p className="text-sm leading-relaxed"><Rich t={data.summary} /></p></Row>}</Sec>
+      <Sec k="experience">{data.experience.length > 0 && (
         <Row label="Experience">
           <div className="-mt-3">{data.experience.map((e) => <Job key={e.id} exp={e} indent={indent} stacked />)}</div>
         </Row>
-      )}
-      {data.education.length > 0 && (
+      )}</Sec>
+      <Sec k="education">{data.education.length > 0 && (
         <Row label="Education">
           {data.education.map((e) => (
             <div key={e.id} className="text-sm mb-1.5">
@@ -309,8 +333,9 @@ export function GridPreview({ data }: { data: ResumeData }) {
             </div>
           ))}
         </Row>
-      )}
-      {data.skills.length > 0 && <Row label="Skills"><p className="text-sm">{data.skills.join(", ")}</p></Row>}
+      )}</Sec>
+      <Sec k="skills">{data.skills.length > 0 && <Row label="Skills"><p className="text-sm">{data.skills.join(", ")}</p></Row>}</Sec>
+      </Ordered>
       <div className="[&_h3]:hidden">
         {(["projects", "certifications", "achievements", "languages"] as const).map((k) => {
           const has =
@@ -338,7 +363,7 @@ export function SpotlightPreview({ data }: { data: ResumeData }) {
   const { indent, photo, showDividers } = flags(data);
   const heading = `flex items-center gap-2 text-sm font-bold text-ink mt-6 mb-1.5 before:w-2 before:h-2 before:rounded-full before:bg-seal ${showDividers ? "" : ""}`;
   return (
-    <div className="paper-sheet rounded-sm mx-auto max-w-2xl p-8" style={{ fontFamily: "var(--font-sans)" }}>
+    <div className="paper-sheet rounded-sm mx-auto max-w-[var(--sheet-max,42rem)] p-8" style={{ fontFamily: "var(--font-sans)" }}>
       <div className="bg-seal-soft rounded-2xl p-6 flex items-center gap-5">
         {photo ? (
           <img src={photo} alt="" className="w-20 h-20 rounded-full object-cover shrink-0" />
@@ -352,16 +377,17 @@ export function SpotlightPreview({ data }: { data: ResumeData }) {
           <p className="text-xs text-ink-soft mt-1.5 leading-relaxed">{contactItems(data).join("  ·  ")}</p>
         </div>
       </div>
-      {data.summary && (
-        <p className="mt-5 text-[15px] leading-relaxed border-l-4 border-seal pl-4 italic">{data.summary}</p>
-      )}
-      {data.experience.length > 0 && (
+      <Ordered c={data.customization}>
+      <Sec k="summary">{data.summary && (
+        <p className="mt-5 text-[15px] leading-relaxed border-l-4 border-seal pl-4 italic"><Rich t={data.summary} /></p>
+      )}</Sec>
+      <Sec k="experience">{data.experience.length > 0 && (
         <>
           <h3 className={heading}>Experience</h3>
           {data.experience.map((e) => <Job key={e.id} exp={e} indent={indent} />)}
         </>
-      )}
-      {data.education.length > 0 && (
+      )}</Sec>
+      <Sec k="education">{data.education.length > 0 && (
         <>
           <h3 className={heading}>Education</h3>
           {data.education.map((e) => (
@@ -371,8 +397,8 @@ export function SpotlightPreview({ data }: { data: ResumeData }) {
             </div>
           ))}
         </>
-      )}
-      {data.skills.length > 0 && (
+      )}</Sec>
+      <Sec k="skills">{data.skills.length > 0 && (
         <>
           <h3 className={heading}>Skills</h3>
           <div className="flex flex-wrap gap-1.5">
@@ -381,8 +407,12 @@ export function SpotlightPreview({ data }: { data: ResumeData }) {
             ))}
           </div>
         </>
-      )}
-      <ExtraSectionsPreview data={data} headingClassName={heading} />
+      )}</Sec>
+      <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName={heading} only={["projects"]} /></Sec>
+      <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName={heading} only={["certifications"]} /></Sec>
+      <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={heading} only={["achievements"]} /></Sec>
+      <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName={heading} only={["languages"]} /></Sec>
+      </Ordered>
     </div>
   );
 }
