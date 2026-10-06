@@ -19,6 +19,10 @@ const STOPWORDS = new Set([
   "within","all","any","more","most","other","such","what","when","where","how",
   "would","could","may","might","do","does","make","like","least","minimum",
   "senior","junior","level","mid","we're","you'll","you're","us","s",
+  // Hiring-post verbs that describe the job ad, not a skill.
+  "hiring","hire","seeking","seek","own","owning","run","running","partner","partners",
+  "want","wants","love","passionate","day","days","week","weeks","month","months",
+  "fast","paced","fast-paced","environment","culture","apply","applying","offer","offers",
 ]);
 
 function tokenize(text: string): string[] {

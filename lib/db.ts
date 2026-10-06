@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import { randomUUID } from "node:crypto";
+import type { ApplicationStatus } from "./application-status";
 
 // Every call site in the app only uses the exported functions below, so
 // swapping providers (e.g. a different Postgres host, or connection pooling
@@ -181,6 +182,38 @@ function ensureSchema(): Promise<void> {
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
       CREATE INDEX IF NOT EXISTS idx_ai_result_cache_created ON ai_result_cache(created_at);
+
+      -- Job applications tracker (dashboard -> Applications).
+      CREATE TABLE IF NOT EXISTS job_applications (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        company TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT '',
+        url TEXT,
+        location TEXT,
+        status TEXT NOT NULL DEFAULT 'saved',
+        applied_on DATE,
+        next_step TEXT,
+        next_step_on DATE,
+        notes TEXT,
+        job_post TEXT,
+        resume_id TEXT REFERENCES resumes(id) ON DELETE SET NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_job_applications_user ON job_applications(user_id, updated_at DESC);
+
+      -- Interview practice answers and the AI's feedback.
+      CREATE TABLE IF NOT EXISTS interview_sessions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        role TEXT NOT NULL,
+        company TEXT,
+        questions JSONB NOT NULL DEFAULT '[]',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_interview_sessions_user ON interview_sessions(user_id, updated_at DESC);
 
       -- Review analysis can run through the cheaper batch API.
       ALTER TABLE reviews ADD COLUMN IF NOT EXISTS analysis_status TEXT NOT NULL DEFAULT 'done';
@@ -1052,4 +1085,187 @@ export async function saveCachedAiResult(key: string, userId: string, feature: s
   if (Math.random() < 0.02) {
     await pool.query("DELETE FROM ai_result_cache WHERE created_at < now() - ($1 || ' days')::interval", [String(AI_RESULT_TTL_DAYS)]);
   }
+}
+
+// ---------- Job applications ----------
+
+export type { ApplicationStatus };
+
+export type ApplicationRow = {
+  id: string;
+  user_id: string;
+  company: string;
+  role: string;
+  url: string | null;
+  location: string | null;
+  status: ApplicationStatus;
+  applied_on: string | null;
+  next_step: string | null;
+  next_step_on: string | null;
+  notes: string | null;
+  job_post: string | null;
+  resume_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ApplicationInput = {
+  company: string;
+  role?: string;
+  url?: string | null;
+  location?: string | null;
+  status?: ApplicationStatus;
+  appliedOn?: string | null;
+  nextStep?: string | null;
+  nextStepOn?: string | null;
+  notes?: string | null;
+  jobPost?: string | null;
+  resumeId?: string | null;
+};
+
+// DATE columns come back as plain "YYYY-MM-DD" strings, not JS dates.
+const APP_COLUMNS = `id, user_id, company, role, url, location, status,
+  to_char(applied_on, 'YYYY-MM-DD') AS applied_on, next_step,
+  to_char(next_step_on, 'YYYY-MM-DD') AS next_step_on, notes, job_post, resume_id, created_at, updated_at`;
+
+export async function listApplications(userId: string): Promise<ApplicationRow[]> {
+  await ensureSchema();
+  const res = await pool.query(
+    `SELECT ${APP_COLUMNS} FROM job_applications WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 500`,
+    [userId]
+  );
+  return res.rows;
+}
+
+export async function countApplications(userId: string): Promise<number> {
+  await ensureSchema();
+  const res = await pool.query("SELECT COUNT(*)::int AS n FROM job_applications WHERE user_id = $1", [userId]);
+  return res.rows[0].n;
+}
+
+/** A resume id only counts if it belongs to the same user. */
+async function ownResumeId(userId: string, resumeId: string | null | undefined): Promise<string | null> {
+  if (!resumeId) return null;
+  const res = await pool.query("SELECT id FROM resumes WHERE id = $1 AND user_id = $2", [resumeId, userId]);
+  return res.rows[0]?.id ?? null;
+}
+
+export async function createApplication(userId: string, a: ApplicationInput): Promise<ApplicationRow> {
+  await ensureSchema();
+  const res = await pool.query(
+    `INSERT INTO job_applications (id, user_id, company, role, url, location, status, applied_on, next_step, next_step_on, notes, job_post, resume_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING ${APP_COLUMNS}`,
+    [
+      randomUUID(),
+      userId,
+      a.company,
+      a.role ?? "",
+      a.url ?? null,
+      a.location ?? null,
+      a.status ?? "saved",
+      a.appliedOn ?? null,
+      a.nextStep ?? null,
+      a.nextStepOn ?? null,
+      a.notes ?? null,
+      a.jobPost ?? null,
+      await ownResumeId(userId, a.resumeId),
+    ]
+  );
+  return res.rows[0];
+}
+
+export async function updateApplication(userId: string, id: string, a: Partial<ApplicationInput>): Promise<ApplicationRow | null> {
+  await ensureSchema();
+  const cols: Record<keyof ApplicationInput, string> = {
+    company: "company",
+    role: "role",
+    url: "url",
+    location: "location",
+    status: "status",
+    appliedOn: "applied_on",
+    nextStep: "next_step",
+    nextStepOn: "next_step_on",
+    notes: "notes",
+    jobPost: "job_post",
+    resumeId: "resume_id",
+  };
+  const sets: string[] = [];
+  const vals: unknown[] = [id, userId];
+  for (const [key, col] of Object.entries(cols) as [keyof ApplicationInput, string][]) {
+    if (!(key in a)) continue;
+    let v = a[key] ?? null;
+    if (key === "resumeId") v = await ownResumeId(userId, v as string | null);
+    vals.push(v);
+    sets.push(`${col} = $${vals.length}`);
+  }
+  if (sets.length === 0) {
+    const cur = await pool.query(`SELECT ${APP_COLUMNS} FROM job_applications WHERE id = $1 AND user_id = $2`, [id, userId]);
+    return cur.rows[0] ?? null;
+  }
+  const res = await pool.query(
+    `UPDATE job_applications SET ${sets.join(", ")}, updated_at = now() WHERE id = $1 AND user_id = $2 RETURNING ${APP_COLUMNS}`,
+    vals
+  );
+  return res.rows[0] ?? null;
+}
+
+export async function deleteApplication(userId: string, id: string): Promise<boolean> {
+  await ensureSchema();
+  const res = await pool.query("DELETE FROM job_applications WHERE id = $1 AND user_id = $2", [id, userId]);
+  return (res.rowCount ?? 0) > 0;
+}
+
+// ---------- Interview practice ----------
+
+export type InterviewQuestion = {
+  id: string;
+  question: string;
+  kind: string;
+  answer?: string;
+  feedback?: { score: number; strengths: string[]; improve: string[]; better: string } | null;
+};
+
+export type InterviewSessionRow = {
+  id: string;
+  user_id: string;
+  role: string;
+  company: string | null;
+  questions: InterviewQuestion[];
+  created_at: string;
+  updated_at: string;
+};
+
+export async function createInterviewSession(userId: string, role: string, company: string | null, questions: InterviewQuestion[]): Promise<InterviewSessionRow> {
+  await ensureSchema();
+  const res = await pool.query(
+    `INSERT INTO interview_sessions (id, user_id, role, company, questions) VALUES ($1, $2, $3, $4, $5::jsonb) RETURNING *`,
+    [randomUUID(), userId, role, company, JSON.stringify(questions)]
+  );
+  return res.rows[0];
+}
+
+export async function getInterviewSession(userId: string, id: string): Promise<InterviewSessionRow | null> {
+  await ensureSchema();
+  const res = await pool.query("SELECT * FROM interview_sessions WHERE id = $1 AND user_id = $2", [id, userId]);
+  return res.rows[0] ?? null;
+}
+
+export async function listInterviewSessions(userId: string, limit = 20): Promise<InterviewSessionRow[]> {
+  await ensureSchema();
+  const res = await pool.query("SELECT * FROM interview_sessions WHERE user_id = $1 ORDER BY updated_at DESC LIMIT $2", [userId, limit]);
+  return res.rows;
+}
+
+export async function saveInterviewQuestions(userId: string, id: string, questions: InterviewQuestion[]) {
+  await ensureSchema();
+  await pool.query("UPDATE interview_sessions SET questions = $3::jsonb, updated_at = now() WHERE id = $1 AND user_id = $2", [
+    id,
+    userId,
+    JSON.stringify(questions),
+  ]);
+}
+
+export async function deleteInterviewSession(userId: string, id: string) {
+  await ensureSchema();
+  await pool.query("DELETE FROM interview_sessions WHERE id = $1 AND user_id = $2", [id, userId]);
 }

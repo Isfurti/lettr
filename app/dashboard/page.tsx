@@ -5,7 +5,7 @@ import { ensureUserRegion } from "@/lib/user-region";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-auth";
-import { listResumesForUser, getUserById, listRecentActivity, listInvoicesForUser } from "@/lib/db";
+import { listResumesForUser, getUserById, listRecentActivity, listInvoicesForUser, listApplications } from "@/lib/db";
 import { formatMoney } from "@/lib/gst";
 import { PLAN_LIMITS, type Plan } from "@/lib/limits";
 import { scoreResumeQuality } from "@/lib/resume-score";
@@ -33,13 +33,18 @@ export default async function DashboardPage({
   if (!session?.user) redirect("/login");
 
   const userId = (session.user as { id: string }).id;
-  const [resumeRows, foundUser, recentActivity, headersList, invoices] = await Promise.all([
+  const [resumeRows, foundUser, recentActivity, headersList, invoices, applications] = await Promise.all([
     listResumesForUser(userId),
     getUserById(userId),
     listRecentActivity(userId, 5),
     headers(),
     listInvoicesForUser(userId),
+    listApplications(userId),
   ]);
+  const activeApps = applications.filter((a) => a.status !== "rejected");
+  const nextStep = activeApps
+    .filter((a) => a.next_step && a.next_step_on)
+    .sort((a, b) => (a.next_step_on! < b.next_step_on! ? -1 : 1))[0];
   // Fill in the user's region if it was never saved, so their pricing (and
   // the admin Users/Subscriptions pages) are right from their next visit.
   const user = foundUser ? await ensureUserRegion(foundUser, headersList) : foundUser;
@@ -188,20 +193,20 @@ export default async function DashboardPage({
             <div className={`${card} bg-brand-blue-soft`}>
               <p className="font-extrabold text-brand-blue-deep">Applying somewhere new?</p>
               <p className="mt-2 text-slate leading-relaxed flex-1">
-                Paste the job post and see your match score and the keywords you&apos;re missing.
+                See your ATS score: how job-site software will read your resume, the keywords you&apos;re missing, and what to fix.
               </p>
               <Link
                 href={`/builder/${mostRecent.id}?tab=match`}
                 className="btn-press mt-4 self-start inline-flex items-center min-h-11 px-5 rounded-full bg-brand-blue text-white font-bold shadow-[0_4px_0_var(--brand-blue-deep)]"
               >
-                Check my match
+                Check my ATS score
               </Link>
             </div>
 
             <div className={`${card} bg-gold-soft`}>
               <p className="font-extrabold flex items-center gap-2">
                 Need a cover letter?
-                {plan !== "pro" && <span className="bg-ink text-gold text-xs font-extrabold px-2 py-0.5 rounded-full">Pro</span>}
+                {plan !== "pro" && <span className="bg-ink text-gold text-xs font-extrabold px-2 py-0.5 rounded-full">3 free a month</span>}
               </p>
               <p className="mt-2 text-slate leading-relaxed flex-1">
                 Lettr writes one from your resume and the job post, in the tone you choose.
@@ -215,6 +220,25 @@ export default async function DashboardPage({
             </div>
           </div>
         )}
+
+        <div className="grid sm:grid-cols-2 gap-5 mb-12">
+          <Link href="/dashboard/applications" className="group bg-white border-2 border-rule hover:border-ink rounded-[28px] p-6 flex flex-col">
+            <p className="font-extrabold">Applications</p>
+            <p className="mt-2 text-slate flex-1">
+              {applications.length === 0
+                ? "Track every job you apply for, with reminders for each next step."
+                : nextStep
+                ? `${activeApps.length} active. Next: ${nextStep.next_step} (${nextStep.company}, ${new Date(`${nextStep.next_step_on}T00:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}).`
+                : `${activeApps.length} active application${activeApps.length === 1 ? "" : "s"}.`}
+            </p>
+            <span className="mt-3 font-bold text-brand-blue group-hover:underline">{applications.length === 0 ? "Start tracking →" : "Open tracker →"}</span>
+          </Link>
+          <Link href="/dashboard/interview" className="group bg-white border-2 border-rule hover:border-ink rounded-[28px] p-6 flex flex-col">
+            <p className="font-extrabold">Interview practice</p>
+            <p className="mt-2 text-slate flex-1">Answer real questions for your role, out loud or typed, and get honest feedback on each answer.</p>
+            <span className="mt-3 font-bold text-brand-blue group-hover:underline">Practise now →</span>
+          </Link>
+        </div>
 
         <ResumeSearch
           resumes={scored.map((r) => ({

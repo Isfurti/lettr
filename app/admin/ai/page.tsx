@@ -24,6 +24,9 @@ const FEATURE_LABELS: Record<string, string> = {
   import: "Resume imports",
   check: "Free resume checker",
   review: "Review analysis",
+  interview: "Interview questions",
+  interview_feedback: "Interview feedback",
+  ats_analyst: "ATS score analyst",
 };
 
 const usd = (n: number) => (n < 0.01 && n > 0 ? "< $0.01" : `$${n.toFixed(2)}`);

@@ -4,11 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BillingPortalButton } from "@/components/BillingPortalButton";
 import { Logo } from "@/components/Logo";
+import { InstallAppButton } from "@/components/AppInstall";
 import { signOut } from "next-auth/react";
-import { Home, LayoutTemplate, MessageSquare, LifeBuoy, Crown, CreditCard, LogOut, ShieldAlert, Globe } from "lucide-react";
+import { Home, LayoutTemplate, MessageSquare, LifeBuoy, Crown, CreditCard, LogOut, ShieldAlert, Globe, Briefcase, Mic } from "lucide-react";
 
 const BASE_NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
+  { href: "/dashboard/applications", label: "Applications", icon: Briefcase },
+  { href: "/dashboard/interview", label: "Interview practice", icon: Mic },
   { href: "/templates", label: "Templates", icon: LayoutTemplate },
   { href: "/dashboard/feedback", label: "Feedback", icon: MessageSquare },
   { href: "/support", label: "Help", icon: LifeBuoy },
@@ -52,6 +55,7 @@ export function AppSidebar({
       <div className="lg:hidden bg-ink text-white">
         <div className="px-4 py-3 flex items-center justify-between">
           <Logo dark href="/" compact />
+          <InstallAppButton className="ml-auto mr-2 min-h-10 px-3.5 rounded-full bg-gold text-ink text-sm font-extrabold" />
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
             className="min-h-11 px-2 text-sm text-white/70 hover:text-white"
@@ -156,6 +160,7 @@ export function AppSidebar({
                 Admin Portal
               </Link>
             )}
+            <InstallAppButton className={`w-full ${itemClass(false)} !text-gold font-bold`} />
             <Link href="/" className={itemClass(false)}>
             <Globe className="w-[18px] h-[18px]" strokeWidth={2} />
             Lettr homepage

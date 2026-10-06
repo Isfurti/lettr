@@ -16,7 +16,7 @@ export type ResumeScoreResult = {
 // Roughly the same category of "strong action verb" heuristics real resume
 // scorers use. Not exhaustive on purpose - this is a heuristic signal, not
 // a grammar engine.
-const ACTION_VERBS = [
+export const ACTION_VERBS = [
   "led", "built", "created", "developed", "designed", "launched", "managed",
   "drove", "improved", "increased", "decreased", "reduced", "delivered",
   "implemented", "engineered", "architected", "optimized", "streamlined",

@@ -378,3 +378,146 @@ function parseJsonArraySafely(text: string): string[] {  const cleaned = text.re
     .filter(Boolean)
     .slice(0, 3);
 }
+
+// ---------- Interview practice ----------
+
+export const INTERVIEW_MODEL = MODEL_FAST;
+
+export type GeneratedQuestion = { question: string; kind: "behavioural" | "role" | "resume" };
+
+/** Six practice questions for a role: two behavioural, three about the job itself, one about the candidate's own resume. */
+export async function generateInterviewQuestions(params: {
+  role: string;
+  company?: string;
+  jobPost?: string;
+  resume?: ResumeData | null;
+}): Promise<AiResult<GeneratedQuestion[]>> {
+  const r = params.resume ? plainResume(params.resume) : null;
+  const background = r
+    ? `Candidate background:
+Summary: ${r.summary}
+Experience: ${r.experience.map((e) => `${e.role} at ${e.company}: ${e.bullets.slice(0, 3).join("; ")}`).join("\n")}
+Skills: ${r.skills.join(", ")}`
+    : "No resume given.";
+  const prompt = `You are an experienced interviewer. Write 6 realistic interview questions for a "${params.role}" role${
+    params.company ? ` at ${params.company}` : ""
+  }.
+
+- 2 behavioural questions (teamwork, conflict, failure, ownership) - kind "behavioural"
+- 3 questions about the actual skills and situations of this role - kind "role"
+- 1 question that digs into something specific from the candidate's background - kind "resume" (if there is no background, make it a role question)
+
+Keep each question to one or two sentences, in plain English, the way a real interviewer in India or abroad would ask it.
+${params.jobPost ? `Job post:\n${params.jobPost.slice(0, 3000)}\n` : ""}
+${background.slice(0, 3000)}
+
+Respond ONLY with a JSON array like [{"question": "...", "kind": "behavioural"}], no preamble, no markdown fences.`;
+  const { text, usage } = await complete(MODEL_FAST, 900, prompt);
+  let list: GeneratedQuestion[] = [];
+  try {
+    const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+    if (Array.isArray(parsed)) {
+      list = parsed
+        .filter((q) => q && typeof q.question === "string" && q.question.trim())
+        .slice(0, 8)
+        .map((q) => ({
+          question: String(q.question).trim(),
+          kind: q.kind === "behavioural" || q.kind === "resume" ? q.kind : "role",
+        }));
+    }
+  } catch {
+    // fall through
+  }
+  if (list.length === 0) throw new Error("Couldn't write questions this time. Please try again.");
+  return { value: list, model: MODEL_FAST, usage };
+}
+
+export type AnswerFeedback = { score: number; strengths: string[]; improve: string[]; better: string };
+
+/** Honest, specific feedback on one practice answer, with a stronger version to learn from. */
+export async function interviewFeedback(params: { role: string; question: string; answer: string }): Promise<AiResult<AnswerFeedback>> {
+  const prompt = `You are a supportive but honest interview coach. A candidate for a "${params.role}" role answered this interview question.
+
+Question: ${params.question}
+
+Answer: """${params.answer.slice(0, 4000)}"""
+
+Give feedback as JSON only, no preamble, no markdown fences:
+{
+  "score": number from 1 to 10,
+  "strengths": up to 3 short, specific things they did well (empty array if none),
+  "improve": up to 3 short, specific, actionable fixes (e.g. "Say what the result was, with a number"),
+  "better": a stronger answer of 80-150 words in the first person, using the STAR shape (situation, task, action, result), built only from what they said - write [your number] or [your example] where they need to add a real detail; never invent facts
+}
+Judge like a real interviewer: a vague or very short answer scores 3-5, a clear STAR answer with a measurable result scores 8+.`;
+  const { text, usage } = await complete(MODEL_FAST, 900, prompt);
+  try {
+    const p = JSON.parse(text.replace(/```json|```/g, "").trim());
+    const list = (x: unknown) => (Array.isArray(x) ? x.map(String).slice(0, 3) : []);
+    return {
+      value: {
+        score: Math.min(10, Math.max(1, Math.round(Number(p.score) || 5))),
+        strengths: list(p.strengths),
+        improve: list(p.improve),
+        better: typeof p.better === "string" ? p.better : "",
+      },
+      model: MODEL_FAST,
+      usage,
+    };
+  } catch {
+    throw new Error("Couldn't read the feedback this time. Please try again.");
+  }
+}
+
+// ---------- ATS score analyst ----------
+
+export type AnalystAdvice = { summary: string; fixes: { title: string; why: string; example: string }[] };
+
+/**
+ * The "ask the analyst" step: a plain-English read of the ATS report with
+ * concrete rewrites, built only from what's in the resume.
+ */
+export async function atsAnalystAdvice(params: {
+  resume: ResumeData;
+  jobPost?: string;
+  score: number;
+  issues: string[];
+  missingKeywords: string[];
+}): Promise<AiResult<AnalystAdvice>> {
+  const r = plainResume(params.resume);
+  const resumeText = `Summary: ${r.summary}
+Experience:
+${r.experience.map((e) => `- ${e.role} at ${e.company} (${e.startDate}–${e.endDate})\n${e.bullets.map((b) => `  • ${b}`).join("\n")}`).join("\n")}
+Education: ${r.education.map((e) => `${e.degree}, ${e.school}`).join("; ")}
+Skills: ${r.skills.join(", ")}`;
+  const prompt = `You are an ATS (applicant tracking system) and recruiting expert reviewing a resume. Its automatic ATS score is ${params.score}/100.
+
+Problems the checker found:
+${params.issues.map((i) => `- ${i}`).join("\n") || "- none"}
+${params.missingKeywords.length ? `Job keywords missing from the resume: ${params.missingKeywords.slice(0, 15).join(", ")}` : ""}
+
+RESUME:
+${resumeText.slice(0, 6000)}
+${params.jobPost ? `\nJOB POST:\n${params.jobPost.slice(0, 3500)}` : ""}
+
+Write JSON only, no preamble, no markdown fences:
+{
+  "summary": "2-3 plain sentences: how this resume will fare with ATS and recruiters for ${params.jobPost ? "this job" : "the roles it targets"}, and the single biggest lever",
+  "fixes": [ up to 4 items, most valuable first, each { "title": "short action", "why": "one sentence", "example": "a concrete rewrite of one of THEIR bullets or their summary, or the exact line to add" } ]
+}
+Rules: never invent employers, numbers or skills - where a number is needed write [your number]. Only suggest keywords the resume suggests they genuinely have, or tell them to add it only if true. Plain English, no jargon.`;
+  const { text, usage } = await complete(MODEL_FAST, 1200, prompt);
+  try {
+    const p = JSON.parse(text.replace(/```json|```/g, "").trim());
+    const fixes = Array.isArray(p.fixes)
+      ? p.fixes.slice(0, 4).map((f: Record<string, unknown>) => ({
+          title: String(f.title ?? ""),
+          why: String(f.why ?? ""),
+          example: String(f.example ?? ""),
+        }))
+      : [];
+    return { value: { summary: String(p.summary ?? ""), fixes }, model: MODEL_FAST, usage };
+  } catch {
+    throw new Error("The analyst couldn't finish this time. Please try again.");
+  }
+}

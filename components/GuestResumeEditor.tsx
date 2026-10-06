@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { EditForm, ScorePanel, JobMatchPanel, ResumePreview } from "@/components/ResumeEditor";
+import { EditForm, ScorePanel, ResumePreview } from "@/components/ResumeEditor";
+import { AtsPanel } from "@/components/builder/AtsPanel";
 import { BuilderTabs, MobileViewToggle, LettrNotes, ScoreStamp, getLettrNotes, goToSection } from "@/components/builder/BuilderChrome";
 import { Logo } from "@/components/Logo";
 import { emptyResume, type ResumeData } from "@/lib/types";
@@ -20,12 +21,14 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
   const [mobileView, setMobileView] = useState<"form" | "preview">("form");
   const [hideImportTip, setHideImportTip] = useState(false);
   const [hasPendingJd, setHasPendingJd] = useState(false);
+  const [showSaveNudge, setShowSaveNudge] = useState(false);
 
   // Restore any in-progress draft (e.g. they left, came back, or bounced off
   // the login page and returned) rather than silently losing their work.
   useEffect(() => {
     const draft = loadGuestDraft();
     if (draft) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- the draft lives in browser storage, readable only after mount
       setData(draft.data);
       setTemplate(draft.template);
     }
@@ -46,6 +49,29 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
     if (!hydrated) return;
     saveGuestDraft({ data, template });
   }, [data, template, hydrated]);
+
+  // After a few minutes of real work, remind them the draft only lives in
+  // this browser. Shown once per visit, never before they've written anything.
+  const hasContent = Boolean(data.contact.fullName || data.summary || data.experience.length);
+  useEffect(() => {
+    if (!hasContent) return;
+    try {
+      if (window.sessionStorage.getItem("lettr_save_nudge")) return;
+    } catch {
+      // storage blocked - just show it
+    }
+    const t = window.setTimeout(() => setShowSaveNudge(true), 3 * 60 * 1000);
+    return () => window.clearTimeout(t);
+  }, [hasContent]);
+
+  function dismissSaveNudge() {
+    setShowSaveNudge(false);
+    try {
+      window.sessionStorage.setItem("lettr_save_nudge", "1");
+    } catch {
+      // storage blocked
+    }
+  }
 
   // Escape closes the sign-in dialog, like every other dialog on the web.
   useEffect(() => {
@@ -109,7 +135,7 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
         tabs={[
           { id: "edit", label: "Edit" },
           { id: "score", label: "Score" },
-          { id: "match", label: "Job match" },
+          { id: "match", label: "ATS score" },
         ]}
         active={tab}
         onChange={(id) => setTab(id as typeof tab)}
@@ -128,10 +154,29 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
 
       <div className="flex-1 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] min-h-0">
         <div className={`overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 ${mobileView === "preview" ? "hidden lg:block" : ""}`}>
+          {showSaveNudge && (
+            <div role="status" className="max-w-xl mb-6 bg-gold-soft rounded-2xl px-5 py-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="font-extrabold">Keep your work safe</p>
+                <p className="text-slate text-sm mt-1">
+                  Your draft is only saved in this browser. Create a free account to keep it, open it on any device and download it.
+                </p>
+                <Link
+                  href="/signup?continue=builder"
+                  className="btn-press mt-3 inline-flex items-center min-h-11 px-5 rounded-full bg-ink text-white text-sm font-bold"
+                >
+                  Save my resume, free
+                </Link>
+              </div>
+              <button onClick={dismissSaveNudge} aria-label="Dismiss" className="w-10 h-10 shrink-0 rounded-full hover:bg-gold text-slate">
+                ✕
+              </button>
+            </div>
+          )}
           {tab === "edit" && hasPendingJd && (
             <div className="max-w-xl mb-6 bg-brand-blue-soft text-brand-blue-deep rounded-2xl px-5 py-4">
               Your job description is saved. Fill in your details, then open{" "}
-              <button onClick={() => setTab("match")} className="font-bold underline">Job match</button> to see your score.
+              <button onClick={() => setTab("match")} className="font-bold underline">ATS score</button> to see your match.
             </div>
           )}
           {tab === "edit" && isBlank && !hideImportTip && (
@@ -164,7 +209,7 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
           )}
           {tab === "edit" && <EditForm data={data} setData={setData} guest template={template} setTemplate={setTemplate} />}
           {tab === "score" && <ScorePanel data={data} plan="free" />}
-          {tab === "match" && <JobMatchPanel data={data} />}
+          {tab === "match" && <AtsPanel data={data} template={template} guest onFix={goFix} />}
         </div>
         <div
           className={`bg-sand border-l border-rule px-4 sm:px-8 py-6 sm:py-8 lg:sticky lg:top-0 lg:self-start lg:h-screen lg:overflow-y-auto ${

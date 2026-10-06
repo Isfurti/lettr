@@ -5,11 +5,11 @@ import { Rich } from "@/components/templates/Rich";
 import { applyLayout, layoutScale, photoShape } from "@/lib/layout";
 import { RichTextarea } from "@/components/builder/RichTextarea";
 import { DesignPanel } from "@/components/builder/DesignPanel";
+import { AtsPanel } from "@/components/builder/AtsPanel";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { extraSections, type ResumeData, type ExperienceEntry, type EducationEntry, type ProjectEntry, type CertificationEntry } from "@/lib/types";
-import { scoreResumeAgainstJob, type AtsResult } from "@/lib/ats-score";
 import { scoreResumeQuality } from "@/lib/resume-score";
 import type { Plan } from "@/lib/limits";
 import { BuilderTabs, MobileViewToggle, LettrNotes, ScoreStamp, goToSection } from "@/components/builder/BuilderChrome";
@@ -382,7 +382,7 @@ export function ResumeEditor({
           { id: "edit", label: "Edit" },
           { id: "agent", label: "AI Agent", pro: true },
           { id: "score", label: "Score" },
-          { id: "match", label: "Job match" },
+          { id: "match", label: "ATS score" },
           { id: "cover-letter", label: "Cover letter" },
           { id: "resignation-letter", label: "Resignation letter", pro: true },
         ]}
@@ -404,7 +404,7 @@ export function ResumeEditor({
             </UpgradeGate>
           )}
           {tab === "score" && <ScorePanel data={data} plan={plan} />}
-          {tab === "match" && <JobMatchPanel data={data} />}
+          {tab === "match" && <AtsPanel data={data} template={template} onFix={goFix} />}
           {tab === "cover-letter" && <CoverLetterPanel data={data} plan={plan} />}
           {tab === "resignation-letter" && (
             <UpgradeGate locked={plan === "free"} feature="The resignation letter builder">
@@ -780,10 +780,43 @@ function EmptyHint({ text, onClick }: { text: string; onClick: () => void }) {
 }
 
 /** Shown in place of a real AI call when nobody is signed in - an explanation, not an error. */
-function AiSignInHint() {
+const GUEST_AI_KEY = "lettr_guest_ai_used";
+
+function guestAiUsed(): boolean {
+  try {
+    return window.localStorage.getItem(GUEST_AI_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** A visitor's one free AI rewrite (before signing up). Returns options, or null with the hint to show. */
+async function guestRewrite(body: unknown): Promise<{ options: string[] } | { error: string }> {
+  try {
+    const res = await fetch("/api/ai/guest-rewrite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const out = await res.json().catch(() => ({}));
+    if (res.ok || res.status === 429) {
+      try {
+        window.localStorage.setItem(GUEST_AI_KEY, "1");
+      } catch {
+        // storage blocked
+      }
+    }
+    if (!res.ok) return { error: out.error ?? "Couldn't rewrite that right now." };
+    return { options: out.options as string[] };
+  } catch {
+    return { error: "Couldn't reach the server. Try again." };
+  }
+}
+
+function AiSignInHint({ used = true }: { used?: boolean }) {
   return (
     <p className="text-xs text-ink-soft mt-1.5 bg-brand-blue-soft rounded-xl px-2 py-1.5">
-      ✦ AI writing is free with an account (5 rewrites included).{" "}
+      ✦ {used ? "That was your free AI rewrite. " : ""}AI writing is free with an account (5 rewrites included).{" "}
       <Link href="/signup?continue=builder" className="text-brand-blue font-medium hover:underline">
         Create a free account
       </Link>{" "}
@@ -808,7 +841,20 @@ function SummaryField({
 
   async function generate() {
     if (guest) {
-      setShowSignInHint(true);
+      if (guestAiUsed()) {
+        setShowSignInHint(true);
+        return;
+      }
+      setLoading(true);
+      const out = await guestRewrite({
+        kind: "summary",
+        role: data.experience[0]?.role,
+        experience: data.experience.map((e) => ({ role: e.role, company: e.company, startDate: e.startDate, endDate: e.endDate, bullets: e.bullets })),
+        skills: data.skills,
+      });
+      setLoading(false);
+      if ("options" in out) setOptions(out.options);
+      else setShowSignInHint(true);
       return;
     }
     setError(null);
@@ -919,7 +965,15 @@ function ExperienceCard({
       return;
     }
     if (guest) {
-      setSignInHintFor(index);
+      if (guestAiUsed()) {
+        setSignInHintFor(index);
+        return;
+      }
+      setLoadingBullet(index);
+      const out = await guestRewrite({ kind: "bullet", text: bullet, role: role || undefined });
+      setLoadingBullet(null);
+      if ("options" in out) setAiOptions((o) => ({ ...o, [index]: out.options }));
+      else setSignInHintFor(index);
       return;
     }
     setBulletError((e) => ({ ...e, [index]: "" }));
@@ -1203,95 +1257,6 @@ export function ScorePanel({ data, plan }: { data: ResumeData; plan: Plan }) {
 
 // ---------- Job match panel ----------
 
-export function JobMatchPanel({ data }: { data: ResumeData }) {
-  const [jd, setJd] = useState("");
-  const [result, setResult] = useState<AtsResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  // Carry over a job description pasted into the homepage demo.
-  useEffect(() => {
-    try {
-      const pending = window.localStorage.getItem("lettr_pending_jd");
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only storage, must run after mount
-      if (pending) setJd((current) => current || pending);
-    } catch {
-      // storage unavailable - nothing to restore
-    }
-  }, []);
-
-  // Keyword matching is pure text analysis - it runs right here in the
-  // browser, so it works for guests too and never fails silently on a
-  // network/auth error.
-  function check() {
-    if (jd.trim().length < 30) {
-      setError("Paste the full job description (at least a few sentences) to get a useful match.");
-      setResult(null);
-      return;
-    }
-    setError(null);
-    setResult(scoreResumeAgainstJob(data, jd));
-  }
-
-  return (
-    <div className="max-w-xl space-y-4">
-      <Section title="Paste the job description">
-        <textarea
-          value={jd}
-          onChange={(e) => setJd(e.target.value)}
-          rows={10}
-          placeholder="Paste the full job posting here…"
-          className="w-full border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
-        />
-        <button
-          onClick={check}
-          className="mt-2 bg-brand-blue text-white text-sm px-4 py-2 rounded-xl hover:opacity-90 disabled:opacity-60"
-        >
-          Check match score
-        </button>
-        {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
-      </Section>
-
-      {result && (
-        <div className="bg-white border border-rule rounded-xl p-5">
-          <div className="flex items-center gap-4 mb-4">
-            <ScoreRing value={result.score} size={64} strokeWidth={8} />
-            <p className="text-sm text-ink-soft">
-              {result.matchedKeywords.length} of {result.totalKeywords} key terms found in your resume.
-            </p>
-          </div>
-
-          <p className="text-xs uppercase tracking-wide text-ink-soft mb-1.5">Missing keywords</p>
-          {result.missingKeywords.length > 0 && (
-            <p className="text-xs text-ink-soft mb-2">
-              Add the ones that are true for you to your skills, summary or bullets — then check again.
-            </p>
-          )}
-          <div className="flex flex-wrap gap-2 mb-4">
-            {result.missingKeywords.length === 0 ? (
-              <span className="text-sm text-ink-soft">None — great coverage.</span>
-            ) : (
-              result.missingKeywords.map((k) => (
-                <span key={k} className="text-xs font-bold bg-red-50 text-red-700 px-2 py-1 rounded-xl">
-                  {k}
-                </span>
-              ))
-            )}
-          </div>
-
-          <p className="text-xs uppercase tracking-wide text-ink-soft mb-1.5">Matched keywords</p>
-          <div className="flex flex-wrap gap-2">
-            {result.matchedKeywords.map((k) => (
-              <span key={k} className="text-xs font-bold bg-brand-blue-soft text-brand-blue px-2 py-1 rounded-xl">
-                {k}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ---------- Cover letter panel ----------
 
 function CoverLetterPanel({ data, plan }: { data: ResumeData; plan: Plan }) {
@@ -1304,6 +1269,22 @@ function CoverLetterPanel({ data, plan }: { data: ResumeData; plan: Plan }) {
   const [reused, setReused] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Opened from the Applications tracker: bring the job post and company along.
+  useEffect(() => {
+    try {
+      const pendingJd = window.localStorage.getItem("lettr_pending_jd");
+      const pendingCompany = window.localStorage.getItem("lettr_pending_company");
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only storage, must run after mount
+      if (pendingJd) setJd((cur) => cur || pendingJd);
+      if (pendingCompany) {
+        setCompany((cur) => cur || pendingCompany);
+        window.localStorage.removeItem("lettr_pending_company");
+      }
+    } catch {
+      // storage unavailable
+    }
+  }, []);
 
   async function generate(fresh = false) {
     if (!jd.trim() || jd.trim().length < 10) {

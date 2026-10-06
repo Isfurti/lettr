@@ -128,8 +128,8 @@ const HELP = [
     a: "Your contact details, summary, how your bullets are written (action verbs and numbers), education and skills. Lettr's notes tell you what to fix next.",
   },
   {
-    q: "How does job match work?",
-    a: "Paste a job post in the Job match tab. Lettr shows your match score, the keywords you already cover and the ones you're missing. Add only what's true for you.",
+    q: "How does the ATS score work?",
+    a: "Open the ATS score tab in the builder. Lettr checks what applicant tracking systems care about: a readable layout, contact details, clear dates, numbers in your bullets and more. Paste a job post to add keyword matching, and ask the analyst for rewrites. Add only what's true for you.",
   },
   {
     q: "How do I cancel Pro?",

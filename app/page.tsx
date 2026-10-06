@@ -61,7 +61,7 @@ function Tick({ color = "var(--brand-blue)" }: { color?: string }) {
 const BEFORE_AFTER_POINTS = [
   { t: "Results, not duties", b: "\"Responsible for sales\" becomes what actually changed because of you." },
   { t: "A summary that says something", b: "No more \"reputed organisation\". One line on what you're great at." },
-  { t: "Skills the job asks for", b: "Job match shows the keywords in the post that your resume is missing." },
+  { t: "Skills the job asks for", b: "The ATS score shows how job-site software will read and rank you, and the keywords your resume is missing." },
   { t: "A clean, readable layout", b: "Templates built to be read by people and parsed by hiring software." },
 ];
 
@@ -97,7 +97,7 @@ const FAQ = [
   },
   {
     q: "Will my resume get past applicant tracking systems?",
-    a: "Lettr's templates use real text and simple structure so hiring software can read them. Job match also shows the keywords a job post asks for, so you can add the ones you genuinely have.",
+    a: "Lettr's templates use real text and simple structure so hiring software can read them. The ATS score analyst checks your layout, contact details, dates and the keywords a job post asks for, so you can fix what matters.",
   },
   {
     q: "Does the AI make things up?",
@@ -246,27 +246,28 @@ export default async function Home() {
         <p className="mt-6 text-sm text-ink-soft">Illustrative example. Your results depend on your own experience and the jobs you apply for.</p>
       </section>
 
-      {/* Job match */}
+      {/* ATS score analyst */}
       <section className="bg-sand border-y border-rule">
         <div className={`${WRAP} py-16 sm:py-24 grid lg:grid-cols-2 gap-12 items-center`}>
           <Reveal>
-            <Eyebrow>Job match</Eyebrow>
-            <h2 className={H2}>See what the job post is looking for.</h2>
+            <Eyebrow>ATS score analyst</Eyebrow>
+            <h2 className={H2}>Get past the software, then impress the person.</h2>
             <p className="mt-5 text-lg text-slate leading-relaxed">
-              Many companies use software to sort applications by keywords. Paste any job post and Lettr shows your
-              match score, the keywords you already cover, and the ones you&apos;re missing.
+              Most companies use applicant tracking systems to read and rank resumes. Lettr checks what they care about:
+              a readable layout, clean contact details, clear dates, numbers in your bullets and the keywords the job post
+              asks for. Then the analyst tells you exactly what to change.
             </p>
             <ul className="mt-6 flex flex-col gap-3 text-base">
-              <li className="flex gap-3"><Tick /> Free on every plan</li>
-              <li className="flex gap-3"><Tick /> Add only the skills you really have</li>
-              <li className="flex gap-3"><Tick /> Re-check as you edit</li>
+              <li className="flex gap-3"><Tick /> Live ATS score, free on every plan</li>
+              <li className="flex gap-3"><Tick /> Keyword match for any job post</li>
+              <li className="flex gap-3"><Tick /> AI analyst rewrites your own bullets, never invents facts</li>
             </ul>
           </Reveal>
           <Reveal delay={120} className="bg-white border-2 border-ink rounded-[28px] shadow-[8px_8px_0_var(--ink)] p-6 sm:p-8">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-bold text-slate">Product Marketing Manager · Brightline</p>
-                <p className="font-brand font-extrabold text-2xl mt-1">Job match</p>
+                <p className="font-brand font-extrabold text-2xl mt-1">ATS score</p>
               </div>
               <div className="w-20 h-20 shrink-0 rounded-full border-[6px] border-brand-blue flex items-center justify-center font-brand font-extrabold text-2xl">
                 78%
@@ -413,7 +414,7 @@ export default async function Home() {
             <p className="font-brand font-extrabold text-3xl">Free</p>
             <p className="mt-1 text-slate">Everything you need for one strong resume.</p>
             <ul className="mt-6 flex flex-col gap-3 flex-1">
-              {["1 resume", "Classic and Modern templates", "3 PDF downloads", "5 AI rewrites", "Job match and resume score"].map((x) => (
+              {["1 resume", "Classic and Modern templates", "3 PDF downloads", "5 AI rewrites", "ATS score and resume score"].map((x) => (
                 <li key={x} className="flex gap-3"><Tick />{x}</li>
               ))}
             </ul>

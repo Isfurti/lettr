@@ -116,6 +116,7 @@ export function DesignPanel({
 
   return (
     <details
+      id="section-design"
       className="group bg-white border-2 border-rule rounded-2xl px-5 py-2 open:pb-5"
       onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}
     >

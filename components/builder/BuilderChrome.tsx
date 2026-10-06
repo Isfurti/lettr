@@ -182,6 +182,8 @@ export function LettrNotes({
 /** Scrolls the form to a section after switching to it (ids are set on each form Section). */
 export function goToSection(key: string) {
   window.setTimeout(() => {
-    document.getElementById(`section-${key}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const el = document.getElementById(`section-${key}`);
+    if (el instanceof HTMLDetailsElement) el.open = true; // e.g. the Design panel
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, 60);
 }

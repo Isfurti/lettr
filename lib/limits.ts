@@ -12,6 +12,9 @@ export const PLAN_LIMITS = {
     aiAgent: false, // moved to Pro-only - the Agent can make up to 5 Anthropic calls per message
     coverLetterBuilder: true, // a few a month, written by the cheaper model (see ai-costs.ts)
     coverLettersPerMonth: FREE_COVER_LETTERS_PER_MONTH,
+    interviewSetsPerMonth: 2,
+    interviewFeedbackPerMonth: 15,
+    atsAnalystPerMonth: 3,
     resignationLetterBuilder: false,
     docxExport: false,
     googleDriveExport: false,
@@ -23,6 +26,10 @@ export const PLAN_LIMITS = {
     aiAgent: true,
     coverLetterBuilder: true,
     coverLettersPerMonth: Infinity,
+    // Fair use: generous, but bounded (each is a small, cheap AI call).
+    interviewSetsPerMonth: 40,
+    interviewFeedbackPerMonth: 300,
+    atsAnalystPerMonth: 100,
     resignationLetterBuilder: true,
     docxExport: true,
     googleDriveExport: true,
@@ -113,4 +120,38 @@ export function canExportDocx(plan: Plan): LimitCheck {
 export function canExportToGoogleDrive(plan: Plan): LimitCheck {
   if (PLAN_LIMITS[plan].googleDriveExport) return { allowed: true };
   return { allowed: false, reason: "Google Drive export is a Pro feature. Upgrade to unlock it." };
+}
+
+/** Interview practice: new question sets and answer feedback per calendar month. */
+export function canUseInterviewPractice(
+  plan: Plan,
+  kind: "set" | "feedback",
+  usedThisMonth: number,
+  now = new Date()
+): LimitCheck & { limit: number } {
+  const limit = kind === "set" ? PLAN_LIMITS[plan].interviewSetsPerMonth : PLAN_LIMITS[plan].interviewFeedbackPerMonth;
+  if (usedThisMonth < limit) return { allowed: true, limit };
+  const what = kind === "set" ? `${limit} practice interviews` : `${limit} answer reviews`;
+  return {
+    allowed: false,
+    limit,
+    reason:
+      plan === "free"
+        ? `You've used this month's ${what} on the free plan. More on ${nextResetLabel(now)}, or go Pro for many more.`
+        : `You've used this month's ${what} (our fair-use limit). They reset on ${nextResetLabel(now)}.`,
+  };
+}
+
+/** The AI part of the ATS score analyst (the instant score itself is free and unlimited). */
+export function canUseAtsAnalyst(plan: Plan, usedThisMonth: number, now = new Date()): LimitCheck & { limit: number } {
+  const limit = PLAN_LIMITS[plan].atsAnalystPerMonth;
+  if (usedThisMonth < limit) return { allowed: true, limit };
+  return {
+    allowed: false,
+    limit,
+    reason:
+      plan === "free"
+        ? `You've used this month's ${limit} free analyst reviews. More on ${nextResetLabel(now)}, or go Pro for many more.`
+        : `You've used this month's ${limit} analyst reviews (our fair-use limit). They reset on ${nextResetLabel(now)}.`,
+  };
 }

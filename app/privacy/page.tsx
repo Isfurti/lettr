@@ -52,6 +52,10 @@ const SECTIONS: LegalSection[] = [
           support you.
         </li>
         <li>
+          <strong>Applications and interview practice:</strong> the jobs you track (company, role, dates, notes, job posts)
+          and your practice interview questions, answers and feedback. Only you can see them.
+        </li>
+        <li>
           <strong>Saved AI results:</strong> a copy of a cover letter or resume import, so if you ask again with the same
           resume and job post you get it instantly. Kept for up to 30 days and deleted with your account.
         </li>
@@ -107,7 +111,8 @@ const SECTIONS: LegalSection[] = [
       <>
         <p>
           When you use an AI feature (rewrites, summaries, the AI Resume Agent, cover and resignation letters, imports, the
-          resume checker and replies to your reviews), we send only the text that job needs to our AI provider, Anthropic. It sends back a
+          resume checker, the ATS score analyst, interview practice and replies to your reviews), we send only the text that job
+          needs to our AI provider, Anthropic. It sends back a
           suggestion. Anthropic doesn&apos;t use this content to train its models.
         </p>
         <p>
@@ -190,6 +195,7 @@ const SECTIONS: LegalSection[] = [
       <ul>
         <li>Account and resumes: until you delete them or your account.</li>
         <li>Saved AI results (cover letters and imports): up to 30 days, or until you delete your account.</li>
+        <li>Tracked applications and practice interviews: until you delete them or your account.</li>
         <li>
           When you delete your account, we delete your account, resumes and usage records straight away. Copies in backups
           are removed as those backups expire.
