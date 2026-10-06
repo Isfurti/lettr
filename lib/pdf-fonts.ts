@@ -80,3 +80,8 @@ export function pdfFonts(resume: ResumeData): { display: PdfFontFamily; body: Pd
   if (!registerOnce()) return BUILT_IN_ONLY;
   return PAIRS[pair.id] ?? PAIRS.classic;
 }
+
+/** Fonts for GST invoices: Manrope with its extended set (for ₹), or Helvetica if the files aren't bundled. */
+export function invoicePdfFont(): PdfFontFamily {
+  return registerOnce() ? ["Manrope", "ManropeExt"] : "Helvetica";
+}

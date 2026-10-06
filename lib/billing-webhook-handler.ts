@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import * as Sentry from "@sentry/nextjs";
 import { getUserByStripeCustomerId, setStripeCustomerId, updateUserPlan } from "./db";
+import { issueGstInvoice } from "./invoices";
 
 /**
  * Applies the effect of a Stripe event to our database. Kept separate from
@@ -47,6 +48,32 @@ export async function applyStripeEvent(event: Stripe.Event): Promise<void> {
       if (!user) break;
 
       await updateUserPlan({ userId: user.id, plan: "free", stripeSubscriptionId: null });
+      break;
+    }
+
+    case "invoice.paid": {
+      // Every successful charge gets a GST invoice in Noonscope's name.
+      // Failures here are reported but never fail the webhook - the payment
+      // itself already succeeded and Stripe would otherwise retry forever.
+      const invoice = event.data.object as Stripe.Invoice;
+      if (!invoice.amount_paid || invoice.amount_paid <= 0) break;
+      const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+      const user = customerId ? await getUserByStripeCustomerId(customerId) : undefined;
+      try {
+        await issueGstInvoice({
+          userId: user?.id ?? null,
+          buyerName: invoice.customer_name ?? user?.name ?? null,
+          buyerEmail: invoice.customer_email ?? user?.email ?? "unknown",
+          buyerCountry: invoice.customer_address?.country ?? user?.country_code ?? "IN",
+          description: `${invoice.lines?.data?.[0]?.description || "Lettr Pro"}`,
+          currency: invoice.currency,
+          total: invoice.amount_paid,
+          paymentRef: `stripe:${invoice.id}`,
+          issuedAt: new Date((invoice.status_transitions?.paid_at ?? invoice.created) * 1000),
+        });
+      } catch (err) {
+        Sentry.captureException(err, { extra: { stripeInvoiceId: invoice.id } });
+      }
       break;
     }
 

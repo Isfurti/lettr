@@ -5,7 +5,8 @@ import { ensureUserRegion } from "@/lib/user-region";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-auth";
-import { listResumesForUser, getUserById, listRecentActivity } from "@/lib/db";
+import { listResumesForUser, getUserById, listRecentActivity, listInvoicesForUser } from "@/lib/db";
+import { formatMoney } from "@/lib/gst";
 import { PLAN_LIMITS, type Plan } from "@/lib/limits";
 import { scoreResumeQuality } from "@/lib/resume-score";
 import { formatActivityLabel, timeAgo } from "@/lib/activity-format";
@@ -32,11 +33,12 @@ export default async function DashboardPage({
   if (!session?.user) redirect("/login");
 
   const userId = (session.user as { id: string }).id;
-  const [resumeRows, foundUser, recentActivity, headersList] = await Promise.all([
+  const [resumeRows, foundUser, recentActivity, headersList, invoices] = await Promise.all([
     listResumesForUser(userId),
     getUserById(userId),
     listRecentActivity(userId, 5),
     headers(),
+    listInvoicesForUser(userId),
   ]);
   // Fill in the user's region if it was never saved, so their pricing (and
   // the admin Users/Subscriptions pages) are right from their next visit.
@@ -297,6 +299,31 @@ export default async function DashboardPage({
             {isPaidPro && <BillingPortalButton />}
           </section>
         ) : null}
+
+        {invoices.length > 0 && (
+          <section className="mt-5 bg-white rounded-[28px] border border-rule p-6">
+            <h2 className="font-brand font-extrabold text-2xl mb-4">Invoices</h2>
+            <ul className="divide-y divide-rule">
+              {invoices.map((inv) => (
+                <li key={inv.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <p className="font-bold">{inv.number}</p>
+                    <p className="text-sm text-slate">
+                      {new Date(inv.issued_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} ·{" "}
+                      {inv.description}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="font-bold">{formatMoney(inv.total, inv.currency)}</span>
+                    <a href={`/api/invoices/${inv.id}/pdf`} className="inline-flex items-center min-h-11 font-bold text-brand-blue hover:underline">
+                      Download PDF
+                    </a>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section className="mt-12 pt-6 border-t border-rule">
           <p className="text-sm font-bold text-slate mb-3">Account</p>

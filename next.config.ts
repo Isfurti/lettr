@@ -13,11 +13,15 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/resumes/pdf": ["./node_modules/@fontsource/*/files/*-latin-{400,600,700}-{normal,italic}.woff", "./node_modules/@fontsource/*/files/*-latin-ext-{400,700}-{normal,italic}.woff"],
     "/api/resumes/drive-export": ["./node_modules/@fontsource/*/files/*-latin-{400,600,700}-{normal,italic}.woff", "./node_modules/@fontsource/*/files/*-latin-ext-{400,700}-{normal,italic}.woff"],
+    "/api/invoices/[id]/pdf": ["./node_modules/@fontsource/*/files/*-latin-{400,600,700}-{normal,italic}.woff", "./node_modules/@fontsource/*/files/*-latin-ext-{400,700}-{normal,italic}.woff", "./public/brand/noonscope-logo.png"],
+    "/api/admin/invoices/sample": ["./node_modules/@fontsource/*/files/*-latin-{400,600,700}-{normal,italic}.woff", "./node_modules/@fontsource/*/files/*-latin-ext-{400,700}-{normal,italic}.woff", "./public/brand/noonscope-logo.png"],
   },
   // ...and keep the rest of those font packages (browser-only .woff2/.css) out of the server bundle.
   outputFileTracingExcludes: {
     "/api/resumes/pdf": ["./node_modules/@fontsource/**/*.{woff2,css}"],
     "/api/resumes/drive-export": ["./node_modules/@fontsource/**/*.{woff2,css}"],
+    "/api/invoices/[id]/pdf": ["./node_modules/@fontsource/**/*.{woff2,css}"],
+    "/api/admin/invoices/sample": ["./node_modules/@fontsource/**/*.{woff2,css}"],
   },
 };
 

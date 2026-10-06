@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Footer } from "@/components/Footer";
 import { PublicNav } from "@/components/PublicNav";
+import { COMPANY } from "@/lib/company";
 
 export default function SupportPage() {
   const [email, setEmail] = useState("");
@@ -46,6 +47,19 @@ export default function SupportPage() {
                   <p className="px-5 pb-5 -mt-1 text-slate leading-relaxed">{f.a}</p>
                 </details>
               ))}
+            </div>
+            <div className="mt-8 bg-white rounded-2xl border border-rule p-5 text-slate leading-relaxed">
+              <p className="font-extrabold text-ink">Contact and grievances</p>
+              <p className="mt-1">
+                Lettr is run by {COMPANY.legalName}, {COMPANY.addressLines.join(", ")}.
+              </p>
+              <p className="mt-1">
+                Email{" "}
+                <a href={`mailto:${COMPANY.contactEmail}`} className="font-bold text-brand-blue hover:underline">
+                  {COMPANY.contactEmail}
+                </a>
+                . Grievance officer: {COMPANY.grievanceOfficer.name}.
+              </p>
             </div>
           </div>
 

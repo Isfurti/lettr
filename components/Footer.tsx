@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
+import { COMPANY } from "@/lib/company";
 
 const COLUMNS = [
   {
@@ -37,7 +38,6 @@ export function Footer() {
         <div className="col-span-2 sm:col-span-1 flex flex-col gap-3">
           <Logo />
           <p className="text-sm text-slate">Made in India for job seekers everywhere.</p>
-          <p className="text-xs text-ink-soft">© {new Date().getFullYear()} Lettr</p>
         </div>
         {COLUMNS.map((col) => (
           <div key={col.title}>
@@ -51,6 +51,17 @@ export function Footer() {
             </div>
           </div>
         ))}
+      </div>
+      <div className="border-t border-rule">
+        <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-8 lg:px-14 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate">
+          <p>
+            © {new Date().getFullYear()} Lettr is a product of <span className="font-bold text-ink">{COMPANY.legalName}</span>,{" "}
+            {COMPANY.addressLines.join(", ")}. GSTIN {COMPANY.gstin}.
+          </p>
+          <a href={`mailto:${COMPANY.contactEmail}`} className="inline-flex items-center min-h-10 font-bold hover:text-brand-blue">
+            {COMPANY.contactEmail}
+          </a>
+        </div>
       </div>
     </footer>
   );

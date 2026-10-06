@@ -117,6 +117,39 @@ function ensureSchema(): Promise<void> {
       );
 
       CREATE INDEX IF NOT EXISTS idx_resumes_user ON resumes(user_id);
+
+      -- GST invoices. Kept after an account is deleted (tax records), so the
+      -- buyer details are copied onto the invoice instead of joined.
+      CREATE TABLE IF NOT EXISTS invoice_counters (
+        financial_year TEXT PRIMARY KEY,
+        last_serial INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE TABLE IF NOT EXISTS invoices (
+        id TEXT PRIMARY KEY,
+        number TEXT NOT NULL UNIQUE,
+        financial_year TEXT NOT NULL,
+        serial INTEGER NOT NULL,
+        user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        issued_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        buyer_name TEXT,
+        buyer_email TEXT NOT NULL,
+        buyer_gstin TEXT,
+        buyer_state_code TEXT,
+        buyer_country TEXT NOT NULL DEFAULT 'IN',
+        description TEXT NOT NULL,
+        sac TEXT NOT NULL,
+        seller_gstin TEXT NOT NULL,
+        currency TEXT NOT NULL,
+        total INTEGER NOT NULL,
+        taxable INTEGER NOT NULL,
+        cgst INTEGER NOT NULL DEFAULT 0,
+        sgst INTEGER NOT NULL DEFAULT 0,
+        igst INTEGER NOT NULL DEFAULT 0,
+        tax_type TEXT NOT NULL,
+        payment_ref TEXT UNIQUE
+      );
+      CREATE INDEX IF NOT EXISTS idx_invoices_user ON invoices(user_id);
+      CREATE INDEX IF NOT EXISTS idx_invoices_issued ON invoices(issued_at);
     `).then(() => undefined);
   }
   return schemaReady;
@@ -524,6 +557,12 @@ export async function recordRateLimitEvent(userId: string, endpoint: string) {
     "INSERT INTO rate_limit_events (id, user_id, endpoint) VALUES ($1, $2, $3)",
     [randomUUID(), userId, endpoint]
   );
+  // The longest rate-limit window is one day, so older rows serve no purpose.
+  // Prune now and then (about 1 call in 50) - the privacy policy promises
+  // hashed visitor keys are only kept for a few days.
+  if (Math.random() < 0.02) {
+    await pool.query("DELETE FROM rate_limit_events WHERE created_at < now() - interval '3 days'");
+  }
 }
 
 export async function setEmailVerificationToken(userId: string, token: string, expiry: Date) {
@@ -725,3 +764,111 @@ export async function markEmailVerified(userId: string) {
 }
 
 export default pool;
+
+
+// ---------- GST invoices ----------
+
+export type InvoiceRow = {
+  id: string;
+  number: string;
+  financial_year: string;
+  serial: number;
+  user_id: string | null;
+  issued_at: string;
+  buyer_name: string | null;
+  buyer_email: string;
+  buyer_gstin: string | null;
+  buyer_state_code: string | null;
+  buyer_country: string;
+  description: string;
+  sac: string;
+  seller_gstin: string;
+  currency: string;
+  total: number;
+  taxable: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  tax_type: string;
+  payment_ref: string | null;
+};
+
+export type NewInvoice = Omit<InvoiceRow, "id" | "number" | "serial" | "issued_at"> & { issuedAt?: Date };
+
+/**
+ * Saves an invoice with the next serial number for its financial year.
+ * The counter row is locked inside a transaction so two payments at the same
+ * moment can never get the same number. If an invoice already exists for the
+ * same payment reference, that one is returned instead (webhooks can repeat).
+ */
+export async function createInvoiceRecord(
+  inv: NewInvoice,
+  formatNumber: (fy: string, serial: number) => string
+): Promise<InvoiceRow> {
+  await ensureSchema();
+  if (inv.payment_ref) {
+    const existing = await pool.query("SELECT * FROM invoices WHERE payment_ref = $1", [inv.payment_ref]);
+    if (existing.rows[0]) return existing.rows[0];
+  }
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      "INSERT INTO invoice_counters (financial_year, last_serial) VALUES ($1, 0) ON CONFLICT (financial_year) DO NOTHING",
+      [inv.financial_year]
+    );
+    const counter = await client.query(
+      "UPDATE invoice_counters SET last_serial = last_serial + 1 WHERE financial_year = $1 RETURNING last_serial",
+      [inv.financial_year]
+    );
+    const serial: number = counter.rows[0].last_serial;
+    const res = await client.query(
+      `INSERT INTO invoices (id, number, financial_year, serial, user_id, issued_at, buyer_name, buyer_email, buyer_gstin,
+         buyer_state_code, buyer_country, description, sac, seller_gstin, currency, total, taxable, cgst, sgst, igst,
+         tax_type, payment_ref)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
+       RETURNING *`,
+      [
+        randomUUID(), formatNumber(inv.financial_year, serial), inv.financial_year, serial, inv.user_id,
+        inv.issuedAt ?? new Date(), inv.buyer_name, inv.buyer_email, inv.buyer_gstin, inv.buyer_state_code,
+        inv.buyer_country, inv.description, inv.sac, inv.seller_gstin, inv.currency, inv.total, inv.taxable,
+        inv.cgst, inv.sgst, inv.igst, inv.tax_type, inv.payment_ref,
+      ]
+    );
+    await client.query("COMMIT");
+    return res.rows[0];
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+export async function listInvoicesForUser(userId: string): Promise<InvoiceRow[]> {
+  await ensureSchema();
+  const res = await pool.query("SELECT * FROM invoices WHERE user_id = $1 ORDER BY issued_at DESC", [userId]);
+  return res.rows;
+}
+
+export async function getInvoiceById(id: string): Promise<InvoiceRow | undefined> {
+  await ensureSchema();
+  const res = await pool.query("SELECT * FROM invoices WHERE id = $1", [id]);
+  return res.rows[0];
+}
+
+/** All invoices, newest first; optionally only those issued in a calendar month ("2026-10"), in India time. */
+export async function listInvoices(month?: string): Promise<InvoiceRow[]> {
+  await ensureSchema();
+  if (month && /^\d{4}-\d{2}$/.test(month)) {
+    const res = await pool.query(
+      `SELECT * FROM invoices
+       WHERE to_char(issued_at AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM') = $1
+       ORDER BY issued_at ASC`,
+      [month]
+    );
+    return res.rows;
+  }
+  const res = await pool.query("SELECT * FROM invoices ORDER BY issued_at DESC LIMIT 500");
+  return res.rows;
+}
