@@ -150,6 +150,43 @@ function ensureSchema(): Promise<void> {
       );
       CREATE INDEX IF NOT EXISTS idx_invoices_user ON invoices(user_id);
       CREATE INDEX IF NOT EXISTS idx_invoices_issued ON invoices(issued_at);
+
+      -- One row per AI request: which feature, which model, how many tokens,
+      -- and whether it was answered from the reuse cache or the batch API.
+      -- Runs the monthly fair-use caps and the admin AI cost view. Rows stay
+      -- (without the user) after an account is deleted, as anonymous totals.
+      CREATE TABLE IF NOT EXISTS ai_usage_events (
+        id BIGSERIAL PRIMARY KEY,
+        user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        feature TEXT NOT NULL,
+        model TEXT NOT NULL,
+        input_tokens INTEGER NOT NULL DEFAULT 0,
+        output_tokens INTEGER NOT NULL DEFAULT 0,
+        cache_read_tokens INTEGER NOT NULL DEFAULT 0,
+        cache_write_tokens INTEGER NOT NULL DEFAULT 0,
+        reused BOOLEAN NOT NULL DEFAULT false,
+        batch BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_ai_usage_user_feature ON ai_usage_events(user_id, feature, created_at);
+      CREATE INDEX IF NOT EXISTS idx_ai_usage_created ON ai_usage_events(created_at);
+
+      -- Saved AI results, so asking again with the same resume and job post
+      -- is instant and free. Per user, deleted with the account, 30 days max.
+      CREATE TABLE IF NOT EXISTS ai_result_cache (
+        key TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        feature TEXT NOT NULL,
+        result JSONB NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_ai_result_cache_created ON ai_result_cache(created_at);
+
+      -- Review analysis can run through the cheaper batch API.
+      ALTER TABLE reviews ADD COLUMN IF NOT EXISTS analysis_status TEXT NOT NULL DEFAULT 'done';
+      ALTER TABLE reviews ADD COLUMN IF NOT EXISTS analysis_batch_id TEXT;
+      ALTER TABLE reviews ADD COLUMN IF NOT EXISTS reply_emailed BOOLEAN NOT NULL DEFAULT false;
+      CREATE INDEX IF NOT EXISTS idx_reviews_analysis ON reviews(analysis_status) WHERE analysis_status <> 'done';
     `).then(() => undefined);
   }
   return schemaReady;
@@ -657,6 +694,9 @@ export type ReviewRow = {
   ai_reply: string | null;
   consent_to_feature: boolean;
   featured: boolean;
+  analysis_status: "pending" | "submitted" | "done" | "failed";
+  analysis_batch_id: string | null;
+  reply_emailed: boolean;
   created_at: string;
 };
 
@@ -665,28 +705,68 @@ export async function createReview(params: {
   userId: string;
   rating: number;
   content: string;
-  sentiment: string;
-  likes: string[];
-  dislikes: string[];
-  aiReply: string;
   consentToFeature: boolean;
+  /** Leave the analysis out to queue the review for the batch job. */
+  sentiment?: string;
+  likes?: string[];
+  dislikes?: string[];
+  aiReply?: string;
+  replyEmailed?: boolean;
 }) {
   await ensureSchema();
+  const analysed = typeof params.aiReply === "string";
   await pool.query(
-    `INSERT INTO reviews (id, user_id, rating, content, sentiment, likes, dislikes, ai_reply, consent_to_feature)
-     VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9)`,
+    `INSERT INTO reviews (id, user_id, rating, content, sentiment, likes, dislikes, ai_reply, consent_to_feature, analysis_status, reply_emailed)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9, $10, $11)`,
     [
       params.id,
       params.userId,
       params.rating,
       params.content,
-      params.sentiment,
-      JSON.stringify(params.likes),
-      JSON.stringify(params.dislikes),
-      params.aiReply,
+      params.sentiment ?? null,
+      JSON.stringify(params.likes ?? []),
+      JSON.stringify(params.dislikes ?? []),
+      params.aiReply ?? null,
       params.consentToFeature,
+      analysed ? "done" : "pending",
+      params.replyEmailed ?? false,
     ]
   );
+}
+
+/** Reviews waiting for the batch job: not yet sent, or sent and waiting for results. */
+export async function listReviewsAwaitingAnalysis(limit = 200): Promise<(ReviewRow & { user_email: string | null })[]> {
+  await ensureSchema();
+  const res = await pool.query(
+    `SELECT r.*, u.email AS user_email FROM reviews r LEFT JOIN users u ON u.id = r.user_id
+     WHERE r.analysis_status IN ('pending', 'submitted') ORDER BY r.created_at LIMIT $1`,
+    [limit]
+  );
+  return res.rows;
+}
+
+export async function markReviewsSubmitted(ids: string[], batchId: string) {
+  if (ids.length === 0) return;
+  await ensureSchema();
+  await pool.query("UPDATE reviews SET analysis_status = 'submitted', analysis_batch_id = $1 WHERE id = ANY($2)", [batchId, ids]);
+}
+
+export async function saveReviewAnalysis(
+  id: string,
+  a: { sentiment: string; likes: string[]; dislikes: string[]; aiReply: string; replyEmailed: boolean }
+) {
+  await ensureSchema();
+  await pool.query(
+    `UPDATE reviews SET sentiment = $2, likes = $3::jsonb, dislikes = $4::jsonb, ai_reply = $5,
+       reply_emailed = $6, analysis_status = 'done' WHERE id = $1`,
+    [id, a.sentiment, JSON.stringify(a.likes), JSON.stringify(a.dislikes), a.aiReply, a.replyEmailed]
+  );
+}
+
+/** A failed or expired batch request goes back in the queue (up to the caller to give up). */
+export async function setReviewAnalysisStatus(id: string, status: "pending" | "failed") {
+  await ensureSchema();
+  await pool.query("UPDATE reviews SET analysis_status = $2, analysis_batch_id = NULL WHERE id = $1", [id, status]);
 }
 
 /**
@@ -871,4 +951,105 @@ export async function listInvoices(month?: string): Promise<InvoiceRow[]> {
   }
   const res = await pool.query("SELECT * FROM invoices ORDER BY issued_at DESC LIMIT 500");
   return res.rows;
+}
+
+// ---------- AI usage, fair use and reuse ----------
+
+export type AiUsageEvent = {
+  userId: string | null;
+  feature: string;
+  model: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  cacheReadTokens?: number;
+  cacheWriteTokens?: number;
+  reused?: boolean;
+  batch?: boolean;
+};
+
+export async function recordAiUsage(e: AiUsageEvent) {
+  await ensureSchema();
+  await pool.query(
+    `INSERT INTO ai_usage_events (user_id, feature, model, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, reused, batch)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+    [
+      e.userId,
+      e.feature,
+      e.model,
+      e.inputTokens ?? 0,
+      e.outputTokens ?? 0,
+      e.cacheReadTokens ?? 0,
+      e.cacheWriteTokens ?? 0,
+      e.reused ?? false,
+      e.batch ?? false,
+    ]
+  );
+  // Totals older than 13 months aren't needed for anything.
+  if (Math.random() < 0.01) {
+    await pool.query("DELETE FROM ai_usage_events WHERE created_at < now() - interval '13 months'");
+  }
+}
+
+/** How many times a user used a feature since `since`, not counting answers reused from the cache. */
+export async function countAiUses(userId: string, feature: string, since: Date): Promise<number> {
+  await ensureSchema();
+  const res = await pool.query(
+    "SELECT COUNT(*)::int AS n FROM ai_usage_events WHERE user_id = $1 AND feature = $2 AND created_at >= $3 AND reused = false",
+    [userId, feature, since.toISOString()]
+  );
+  return res.rows[0].n;
+}
+
+export type AiUsageSummaryRow = {
+  feature: string;
+  model: string;
+  calls: number;
+  reused: number;
+  batched: number;
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_tokens: number;
+  cache_write_tokens: number;
+};
+
+/** Totals per feature and model since a date, for the admin cost view. */
+export async function getAiUsageSummary(since: Date): Promise<AiUsageSummaryRow[]> {
+  await ensureSchema();
+  const res = await pool.query(
+    `SELECT feature, model, COUNT(*)::int AS calls,
+       COUNT(*) FILTER (WHERE reused)::int AS reused,
+       COUNT(*) FILTER (WHERE batch)::int AS batched,
+       COALESCE(SUM(input_tokens), 0)::int AS input_tokens,
+       COALESCE(SUM(output_tokens), 0)::int AS output_tokens,
+       COALESCE(SUM(cache_read_tokens), 0)::int AS cache_read_tokens,
+       COALESCE(SUM(cache_write_tokens), 0)::int AS cache_write_tokens
+     FROM ai_usage_events WHERE created_at >= $1
+     GROUP BY feature, model ORDER BY feature, model`,
+    [since.toISOString()]
+  );
+  return res.rows;
+}
+
+const AI_RESULT_TTL_DAYS = 30;
+
+export async function getCachedAiResult<T>(key: string, userId: string): Promise<T | null> {
+  await ensureSchema();
+  const res = await pool.query(
+    `SELECT result FROM ai_result_cache WHERE key = $1 AND user_id = $2
+       AND created_at > now() - ($3 || ' days')::interval`,
+    [key, userId, String(AI_RESULT_TTL_DAYS)]
+  );
+  return res.rows[0] ? (res.rows[0].result as T) : null;
+}
+
+export async function saveCachedAiResult(key: string, userId: string, feature: string, result: unknown) {
+  await ensureSchema();
+  await pool.query(
+    `INSERT INTO ai_result_cache (key, user_id, feature, result) VALUES ($1, $2, $3, $4::jsonb)
+     ON CONFLICT (key) DO UPDATE SET result = EXCLUDED.result, created_at = now()`,
+    [key, userId, feature, JSON.stringify(result)]
+  );
+  if (Math.random() < 0.02) {
+    await pool.query("DELETE FROM ai_result_cache WHERE created_at < now() - ($1 || ' days')::interval", [String(AI_RESULT_TTL_DAYS)]);
+  }
 }

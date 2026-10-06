@@ -42,11 +42,15 @@ describe("canDownloadPdf", () => {
 });
 
 describe("pro-only feature gates", () => {
-  it("blocks cover letter builder on free", () => {
-    expect(canUseCoverLetterBuilder("free").allowed).toBe(false);
+  it("gives free users 3 cover letters a month", () => {
+    expect(canUseCoverLetterBuilder("free", 0).allowed).toBe(true);
+    expect(canUseCoverLetterBuilder("free", 2).allowed).toBe(true);
+    const blocked = canUseCoverLetterBuilder("free", 3, new Date("2026-10-20T10:00:00Z"));
+    expect(blocked.allowed).toBe(false);
+    if (!blocked.allowed) expect(blocked.reason).toContain("1 November");
   });
-  it("allows cover letter builder on pro", () => {
-    expect(canUseCoverLetterBuilder("pro").allowed).toBe(true);
+  it("allows cover letter builder on pro without a monthly limit", () => {
+    expect(canUseCoverLetterBuilder("pro", 5000).allowed).toBe(true);
   });
 
   it("blocks resignation letter builder on free", () => {

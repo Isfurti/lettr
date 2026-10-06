@@ -4,11 +4,19 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { listAllReviews, getReviewStats } from "@/lib/db";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { FeatureReviewButton } from "@/components/FeatureReviewButton";
+import { runReviewBatchJob } from "@/lib/review-batch";
 
 export const metadata: Metadata = { title: "Reviews | Lettr Admin" };
 
 export default async function AdminReviewsPage() {
   await requireAdmin();
+  // Opening this page also collects finished review analyses (half-price
+  // batch) and sends off any waiting ones, so nobody waits for the daily job.
+  try {
+    await runReviewBatchJob();
+  } catch {
+    // No API key locally, or Anthropic unavailable: the page still works.
+  }
   const [reviews, stats] = await Promise.all([listAllReviews(200), getReviewStats()]);
 
   // Flatten every dislike across every review into one list, most recent
@@ -90,6 +98,11 @@ export default async function AdminReviewsPage() {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-admin-accent">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
+                  {r.analysis_status !== "done" && (
+                    <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded-xl bg-sand text-ink-soft">
+                      {r.analysis_status === "failed" ? "analysis failed" : "analysing"}
+                    </span>
+                  )}
                   {r.sentiment && (
                     <span className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded-xl ${sentimentColor[r.sentiment] ?? ""}`}>
                       {r.sentiment}
@@ -101,7 +114,7 @@ export default async function AdminReviewsPage() {
               <p className="text-sm mb-2">{r.content}</p>
               {r.ai_reply && (
                 <p className="text-xs text-ink-soft border-l-2 border-admin-accent-soft pl-2 mb-3">
-                  <span className="font-medium">Auto-reply sent:</span> {r.ai_reply}
+                  <span className="font-medium">{r.reply_emailed ? "Auto-reply emailed:" : "Auto-reply (not emailed):"}</span> {r.ai_reply}
                 </p>
               )}
               <FeatureReviewButton reviewId={r.id} consentGiven={r.consent_to_feature} isFeatured={r.featured} />

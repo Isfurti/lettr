@@ -1,4 +1,5 @@
 import { isTemplateFree } from "./templates";
+import { FREE_COVER_LETTERS_PER_MONTH, agentMonthlyCap, nextResetLabel } from "./ai-costs";
 
 export type Plan = "free" | "pro";
 
@@ -9,7 +10,8 @@ export const PLAN_LIMITS = {
     maxPdfDownloads: 3,
     maxAiWritingAssists: 5, // lifetime, not per-window - see incrementAiWritingAssistCount in lib/db.ts
     aiAgent: false, // moved to Pro-only - the Agent can make up to 5 Anthropic calls per message
-    coverLetterBuilder: false,
+    coverLetterBuilder: true, // a few a month, written by the cheaper model (see ai-costs.ts)
+    coverLettersPerMonth: FREE_COVER_LETTERS_PER_MONTH,
     resignationLetterBuilder: false,
     docxExport: false,
     googleDriveExport: false,
@@ -20,6 +22,7 @@ export const PLAN_LIMITS = {
     maxAiWritingAssists: Infinity,
     aiAgent: true,
     coverLetterBuilder: true,
+    coverLettersPerMonth: Infinity,
     resignationLetterBuilder: true,
     docxExport: true,
     googleDriveExport: true,
@@ -69,9 +72,32 @@ export function canUseTemplate(plan: Plan, templateId: string): LimitCheck {
   };
 }
 
-export function canUseCoverLetterBuilder(plan: Plan): LimitCheck {
-  if (PLAN_LIMITS[plan].coverLetterBuilder) return { allowed: true };
-  return { allowed: false, reason: "The cover letter builder is a Pro feature. Upgrade to unlock it." };
+/** Free plan: a few cover letters per calendar month. Reused letters don't count. */
+export function canUseCoverLetterBuilder(plan: Plan, usedThisMonth = 0, now = new Date()): LimitCheck {
+  if (!PLAN_LIMITS[plan].coverLetterBuilder) {
+    return { allowed: false, reason: "The cover letter builder is a Pro feature. Upgrade to unlock it." };
+  }
+  const limit = PLAN_LIMITS[plan].coverLettersPerMonth;
+  if (usedThisMonth < limit) return { allowed: true };
+  return {
+    allowed: false,
+    reason: `You've written your ${limit} free cover letters this month. More on ${nextResetLabel(now)}, or upgrade to Pro for unlimited letters from our best writing model.`,
+  };
+}
+
+/** Fair-use cap on AI Agent messages per month, by price region. */
+export function canSendAgentMessage(
+  tier: string | null | undefined,
+  usedThisMonth: number,
+  now = new Date()
+): LimitCheck & { limit: number } {
+  const limit = agentMonthlyCap(tier);
+  if (usedThisMonth < limit) return { allowed: true, limit };
+  return {
+    allowed: false,
+    limit,
+    reason: `You've used this month's ${limit} AI Agent messages (our fair-use limit). They reset on ${nextResetLabel(now)}. You can still edit, rewrite bullets and use every other Pro feature.`,
+  };
 }
 
 export function canUseResignationLetterBuilder(plan: Plan): LimitCheck {

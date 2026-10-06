@@ -145,7 +145,10 @@ const SECTIONS: LegalSection[] = [
     title: "Fair use",
     body: (
       <>
-        <p>&quot;Unlimited&quot; Pro features are for one person&apos;s normal job search. Please don&apos;t:</p>
+        <p>
+          &quot;Unlimited&quot; Pro features are for one person&apos;s normal job search. Some AI features have a monthly
+          fair-use limit (for example, AI Resume Agent messages), shown on the pricing page and in the app. Please don&apos;t:
+        </p>
         <ul>
           <li>share your account, or resell or automate Lettr;</li>
           <li>use the AI features for things unrelated to careers and job applications;</li>

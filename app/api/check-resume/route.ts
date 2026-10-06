@@ -6,6 +6,7 @@ import { extractResumeFromText } from "@/lib/ai";
 import { analyzeResumeText } from "@/lib/ats-read";
 import { scoreResumeQuality } from "@/lib/resume-score";
 import { anonymousClientKey } from "@/lib/client-key";
+import { trackAiUsage } from "@/lib/ai-usage";
 
 export const runtime = "nodejs";
 
@@ -74,7 +75,9 @@ export async function POST(req: Request) {
   let data = null;
   let score = null;
   try {
-    data = await extractResumeFromText(trimmed);
+    const result = await extractResumeFromText(trimmed);
+    data = result.value;
+    await trackAiUsage({ userId: userId ?? null, feature: "check", model: result.model, usage: result.usage });
     const q = scoreResumeQuality(data);
     score = {
       overall: q.overall,

@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { getUserById } from "@/lib/db";
 import { canUseResignationLetterBuilder, type Plan } from "@/lib/limits";
 import { generateResignationLetter } from "@/lib/ai";
+import { trackAiUsage } from "@/lib/ai-usage";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 
 const Schema = z.object({
@@ -42,7 +43,8 @@ export async function POST(req: Request) {
   }
 
   try {
-    const letter = await generateResignationLetter(parsed.data);
+    const { value: letter, model, usage } = await generateResignationLetter(parsed.data);
+    await trackAiUsage({ userId, feature: "resignation_letter", model, usage });
     return NextResponse.json({ letter });
   } catch (err) {
     const message = err instanceof Error ? err.message : "AI generation failed";

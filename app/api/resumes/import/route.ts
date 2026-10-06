@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getUserById, countResumesForUser, upsertResume, logActivity } from "@/lib/db";
+import { getUserById, countResumesForUser, upsertResume, logActivity, getCachedAiResult, saveCachedAiResult } from "@/lib/db";
 import { canCreateResume, type Plan } from "@/lib/limits";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import { extractTextFromFile } from "@/lib/extract-text";
-import { extractResumeFromText } from "@/lib/ai";
+import { extractResumeFromText, normalizeExtractedResume, IMPORT_MODEL } from "@/lib/ai";
+import { aiCacheKey } from "@/lib/ai-costs";
+import { trackAiUsage } from "@/lib/ai-usage";
+import type { ResumeData } from "@/lib/types";
 import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -61,9 +64,21 @@ export async function POST(req: Request) {
     );
   }
 
-  let resumeData;
+  // Importing the same file again reuses the saved result instead of paying
+  // for the AI step twice (entries get fresh ids either way).
+  const cacheKey = aiCacheKey("import", [IMPORT_MODEL, userId, text]);
+  let resumeData: ResumeData;
   try {
-    resumeData = await extractResumeFromText(text);
+    const saved = await getCachedAiResult<ResumeData>(cacheKey, userId);
+    if (saved) {
+      resumeData = normalizeExtractedResume(saved);
+      await trackAiUsage({ userId, feature: "import", model: IMPORT_MODEL, reused: true });
+    } else {
+      const result = await extractResumeFromText(text);
+      resumeData = result.value;
+      await trackAiUsage({ userId, feature: "import", model: result.model, usage: result.usage });
+      await saveCachedAiResult(cacheKey, userId, "import", resumeData);
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : "AI extraction failed";
     return NextResponse.json({ error: message }, { status: 502 });

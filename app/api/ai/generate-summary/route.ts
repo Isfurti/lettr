@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { generateSummary } from "@/lib/ai";
+import { trackAiUsage } from "@/lib/ai-usage";
 import { getUserById, incrementAiWritingAssistCount } from "@/lib/db";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import { canUseAiWritingAssist, type Plan } from "@/lib/limits";
@@ -43,7 +44,8 @@ export async function POST(req: Request) {
   }
 
   try {
-    const options = await generateSummary(parsed.data);
+    const { value: options, model, usage } = await generateSummary(parsed.data);
+    await trackAiUsage({ userId, feature: "summary", model, usage });
     if (plan === "free") await incrementAiWritingAssistCount(userId);
     return NextResponse.json({ options });
   } catch (err) {

@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { ResumeData, ExperienceEntry, EducationEntry } from "./types";
+import { MODELS, NO_USAGE, addUsage, usageFromApi, withCacheBreakpoint, type TokenUsage } from "./ai-costs";
 
 function getClient() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -9,8 +10,11 @@ function getClient() {
   return new Anthropic({ apiKey });
 }
 
-const MODEL = "claude-sonnet-4-6";
+export const AGENT_MODEL = MODELS.sonnet;
+const MODEL = AGENT_MODEL;
 const MAX_TOOL_ITERATIONS = 5;
+/** Older chat messages are dropped from what we send: they rarely matter and cost tokens every turn. */
+const MAX_HISTORY_MESSAGES = 16;
 
 // ---------- Tool schema ----------
 
@@ -124,6 +128,12 @@ const TOOLS: Anthropic.Tool[] = [
   },
 ];
 
+// The tools and instructions are identical on every request, so they're
+// marked for prompt caching: after the first call they cost about a tenth.
+const CACHED_TOOLS: Anthropic.Tool[] = TOOLS.map((t, i) =>
+  i === TOOLS.length - 1 ? { ...t, cache_control: { type: "ephemeral" } } : t
+);
+
 // ---------- Tool execution (pure, operates on a working copy) ----------
 
 export function executeTool(
@@ -224,7 +234,11 @@ export type AgentTurnResult = {
   reply: string;
   resumeData: ResumeData;
   actionsTaken: string[];
+  /** Tokens across every request in this turn (for cost tracking, not sent to the browser). */
+  usage: TokenUsage;
 };
+
+type MessagesClient = { messages: { create: (p: Anthropic.MessageCreateParamsNonStreaming) => Promise<Anthropic.Message> } };
 
 const SYSTEM_PROMPT = `You are an AI resume-editing assistant embedded in a resume builder called Lettr.
 You have tools to directly edit the user's resume - use them whenever the user asks for a change,
@@ -234,17 +248,28 @@ When rewriting bullets, follow strong resume-writing practice: action verbs, qua
 plausible, no first-person pronouns. Keep replies brief and conversational - the resume UI shows the
 result, so you don't need to repeat the full text of what you wrote back to the user.`;
 
-export async function runAgentTurn(params: {
-  resumeData: ResumeData;
-  history: AgentMessage[];
-  userMessage: string;
-}): Promise<AgentTurnResult> {
-  const client = getClient();
+export async function runAgentTurn(
+  params: {
+    resumeData: ResumeData;
+    history: AgentMessage[];
+    userMessage: string;
+  },
+  client: MessagesClient = getClient()
+): Promise<AgentTurnResult> {
   let workingResume = params.resumeData;
   const actionsTaken: string[] = [];
+  let usage = NO_USAGE;
+
+  // The browser sends the new message inside `history` too; drop that copy
+  // so it isn't paid for twice, and keep only the recent part of the chat.
+  let history = params.history;
+  const last = history[history.length - 1];
+  if (last && last.role === "user" && last.content === params.userMessage) history = history.slice(0, -1);
+  history = history.slice(-MAX_HISTORY_MESSAGES);
+  while (history.length > 0 && history[0].role !== "user") history = history.slice(1);
 
   const messages: Anthropic.MessageParam[] = [
-    ...params.history.map((m) => ({ role: m.role, content: m.content }) as Anthropic.MessageParam),
+    ...history.map((m) => ({ role: m.role, content: m.content }) as Anthropic.MessageParam),
     {
       role: "user",
       content: `Current resume data (JSON): ${JSON.stringify(workingResume)}\n\nUser request: ${params.userMessage}`,
@@ -257,10 +282,13 @@ export async function runAgentTurn(params: {
     const response = await client.messages.create({
       model: MODEL,
       max_tokens: 1200,
-      system: SYSTEM_PROMPT,
-      tools: TOOLS,
-      messages,
+      system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+      tools: CACHED_TOOLS,
+      // One moving cache breakpoint at the end: the next loop step reads
+      // everything up to here (resume included) from the cache.
+      messages: withCacheBreakpoint(messages as Parameters<typeof withCacheBreakpoint>[0]) as Anthropic.MessageParam[],
     });
+    usage = addUsage(usage, usageFromApi(response.usage));
 
     const toolUseBlocks = response.content.filter(
       (b): b is Anthropic.ToolUseBlock => b.type === "tool_use"
@@ -299,5 +327,6 @@ export async function runAgentTurn(params: {
     reply: finalText || "Done.",
     resumeData: workingResume,
     actionsTaken,
+    usage,
   };
 }

@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { ResumeData } from "./types";
+import { MODELS, usageFromApi, type ModelId, type TokenUsage } from "./ai-costs";
 
 function getClient() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -21,8 +22,27 @@ function getClient() {
 // tasks (rewrite this, extract that, classify this) that don't need the
 // expensive model to do well, and are also the highest-volume calls -
 // exactly where routing saves the most in aggregate.
-const MODEL = "claude-sonnet-4-6";
-const MODEL_FAST = "claude-haiku-4-5-20251001";
+//
+// Cover letters are the exception that follows the plan: free-plan letters
+// use MODEL_FAST, Pro letters use MODEL (see coverLetterModel in ai-costs.ts).
+const MODEL = MODELS.sonnet;
+const MODEL_FAST = MODELS.haiku;
+
+/** Every AI call reports which model ran and the tokens it used, for cost tracking. */
+export type AiResult<T> = { value: T; model: ModelId; usage: TokenUsage };
+
+function textOf(response: Anthropic.Message): string {
+  return response.content.map((block) => (block.type === "text" ? block.text : "")).join("");
+}
+
+async function complete(model: ModelId, maxTokens: number, prompt: string): Promise<{ text: string; usage: TokenUsage }> {
+  const response = await getClient().messages.create({
+    model,
+    max_tokens: maxTokens,
+    messages: [{ role: "user", content: prompt }],
+  });
+  return { text: textOf(response), usage: usageFromApi(response.usage) };
+}
 
 /**
  * Turn a rough, unpolished bullet point into 3 achievement-focused,
@@ -32,9 +52,7 @@ export async function polishBullet(params: {
   roughBullet: string;
   role: string;
   targetJobDescription?: string;
-}): Promise<string[]> {
-  const client = getClient();
-
+}): Promise<AiResult<string[]>> {
   const prompt = `You are an expert resume writer. Rewrite the following rough work
 accomplishment into 3 distinct, polished resume bullet point options for a "${params.role}" role.
 
@@ -52,28 +70,15 @@ Rough accomplishment: "${params.roughBullet}"
 
 Respond ONLY with a JSON array of exactly 3 strings, no preamble, no markdown fences.`;
 
-  const response = await client.messages.create({
-    model: MODEL_FAST,
-    max_tokens: 500,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const text = response.content
-    .map((block) => (block.type === "text" ? block.text : ""))
-    .join("");
-
-  return parseJsonArraySafely(text);
+  const { text, usage } = await complete(MODEL_FAST, 500, prompt);
+  return { value: parseJsonArraySafely(text), model: MODEL_FAST, usage };
 }
 
 /**
- * Generate a tailored cover letter from resume data + a target job description.
+ * The cover letter prompt. Exported so the route can tell when the resume and
+ * job post are unchanged (same prompt = same letter) and reuse the saved one.
  */
-export async function generateCoverLetter(params: {
-  resume: ResumeData;
-  jobDescription: string;
-  companyName?: string;
-}): Promise<string> {
-  const client = getClient();
+export function buildCoverLetterPrompt(params: { resume: ResumeData; jobDescription: string; companyName?: string }): string {
   const { resume, jobDescription, companyName } = params;
 
   const resumeSummary = `
@@ -85,7 +90,7 @@ Experience: ${resume.experience
 Skills: ${resume.skills.join(", ")}
 `.trim();
 
-  const prompt = `Write a concise, compelling cover letter (3-4 short paragraphs, under 320 words)
+  return `Write a concise, compelling cover letter (3-4 short paragraphs, under 320 words)
 for the candidate below, tailored to the target job description.
 ${companyName ? `The target company is "${companyName}".` : ""}
 Do not invent specific achievements not present in the resume summary. Professional but warm tone.
@@ -96,17 +101,12 @@ ${resumeSummary}
 
 TARGET JOB DESCRIPTION:
 ${jobDescription.slice(0, 3000)}`;
+}
 
-  const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: 800,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  return response.content
-    .map((block) => (block.type === "text" ? block.text : ""))
-    .join("")
-    .trim();
+/** Writes a cover letter from a prompt made by buildCoverLetterPrompt. */
+export async function generateCoverLetter(prompt: string, model: ModelId = MODEL): Promise<AiResult<string>> {
+  const { text, usage } = await complete(model, 800, prompt);
+  return { value: text.trim(), model, usage };
 }
 
 /**
@@ -119,8 +119,7 @@ export async function generateResignationLetter(params: {
   lastDay: string;
   reason?: string;
   tone?: "warm" | "neutral" | "brief";
-}): Promise<string> {
-  const client = getClient();
+}): Promise<AiResult<string>> {
   const { employeeName, companyName, jobTitle, lastDay, reason, tone = "neutral" } = params;
 
   const prompt = `Write a professional resignation letter with these details:
@@ -141,16 +140,8 @@ Rules:
 
 Sign off with the employee's name.`;
 
-  const response = await client.messages.create({
-    model: MODEL_FAST,
-    max_tokens: 600,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  return response.content
-    .map((block) => (block.type === "text" ? block.text : ""))
-    .join("")
-    .trim();
+  const { text, usage } = await complete(MODEL_FAST, 600, prompt);
+  return { value: text.trim(), model: MODEL_FAST, usage };
 }
 
 /**
@@ -160,8 +151,7 @@ export async function generateSummary(params: {
   experience: ResumeData["experience"];
   skills: string[];
   targetRole?: string;
-}): Promise<string[]> {
-  const client = getClient();
+}): Promise<AiResult<string[]>> {
   const { experience, skills, targetRole } = params;
 
   const experienceText = experience
@@ -185,17 +175,8 @@ Rules:
 
 Respond ONLY with a JSON array of exactly 3 strings, no preamble, no markdown fences.`;
 
-  const response = await client.messages.create({
-    model: MODEL_FAST,
-    max_tokens: 600,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const text = response.content
-    .map((block) => (block.type === "text" ? block.text : ""))
-    .join("");
-
-  return parseJsonArraySafely(text);
+  const { text, usage } = await complete(MODEL_FAST, 600, prompt);
+  return { value: parseJsonArraySafely(text), model: MODEL_FAST, usage };
 }
 
 /**
@@ -203,8 +184,9 @@ Respond ONLY with a JSON array of exactly 3 strings, no preamble, no markdown fe
  * PDF/DOCX/TXT resume. Returns data matching ResumeData - never invents
  * experience or education entries that aren't clearly present in the text.
  */
-export async function extractResumeFromText(rawText: string): Promise<ResumeData> {
-  const client = getClient();
+export const IMPORT_MODEL = MODEL_FAST;
+
+export async function extractResumeFromText(rawText: string): Promise<AiResult<ResumeData>> {
 
   const prompt = `Extract structured resume data from the following resume text. This text was
 mechanically extracted from a PDF or Word document, so formatting/line breaks may be imperfect -
@@ -240,15 +222,7 @@ Respond ONLY with a JSON object matching this exact shape, no preamble, no markd
 }
 Use empty arrays for projects, certifications, languages or achievements if the resume has none.`;
 
-  const response = await client.messages.create({
-    model: MODEL_FAST,
-    max_tokens: 4000,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const text = response.content
-    .map((block) => (block.type === "text" ? block.text : ""))
-    .join("");
+  const { text, usage } = await complete(MODEL_FAST, 4000, prompt);
 
   const cleaned = text.replace(/```json|```/g, "").trim();
   let parsed: unknown;
@@ -258,10 +232,11 @@ Use empty arrays for projects, certifications, languages or achievements if the 
     throw new Error("Couldn't parse the resume - the file may not contain readable resume text.");
   }
 
-  return normalizeExtractedResume(parsed);
+  return { value: normalizeExtractedResume(parsed), model: MODEL_FAST, usage };
 }
 
-function normalizeExtractedResume(raw: unknown): ResumeData {
+/** Also used on a reused import, which gives every entry fresh ids. */
+export function normalizeExtractedResume(raw: unknown): ResumeData {
   const r = raw as Record<string, unknown>;
   const contact = (r.contact as Record<string, unknown>) ?? {};
   const experience = Array.isArray(r.experience) ? r.experience : [];
@@ -329,14 +304,11 @@ export type ReviewAnalysis = {
   reply: string;
 };
 
-/**
- * Analyzes a user's review to extract specific likes/dislikes (for the
- * admin "what users don't like" view) and writes a genuine, specific reply
- * - not a generic "thanks for your feedback" template.
- */
-export async function analyzeReview(rating: number, content: string): Promise<ReviewAnalysis> {
-  const client = getClient();
+export const REVIEW_MODEL = MODEL_FAST;
+const REVIEW_MAX_TOKENS = 700;
 
+/** The request for one review analysis. Shared by the instant path and the batch job. */
+export function reviewAnalysisRequest(rating: number, content: string): Anthropic.MessageCreateParamsNonStreaming {
   const prompt = `A user left this review of Lettr, an AI resume builder, with a star rating of ${rating}/5:
 
 "${content}"
@@ -357,17 +329,11 @@ Rules:
   the actual things they mentioned (praise or complaints) rather than a generic "thanks for your
   feedback!" message. If they raised a real problem, acknowledge it honestly and don't over-promise a
   fix timeline. Don't be sycophantic or over-the-top - genuine and brief.`;
+  return { model: REVIEW_MODEL, max_tokens: REVIEW_MAX_TOKENS, messages: [{ role: "user", content: prompt }] };
+}
 
-  const response = await client.messages.create({
-    model: MODEL_FAST,
-    max_tokens: 700,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const text = response.content
-    .map((block) => (block.type === "text" ? block.text : ""))
-    .join("");
-
+/** Turns the model's answer into a ReviewAnalysis, with safe defaults if it isn't clean JSON. */
+export function parseReviewAnalysis(text: string): ReviewAnalysis {
   const cleaned = text.replace(/```json|```/g, "").trim();
   try {
     const parsed = JSON.parse(cleaned);
@@ -381,6 +347,18 @@ Rules:
     return { sentiment: "neutral", likes: [], dislikes: [], reply: "Thanks for sharing your feedback with us." };
   }
 }
+
+/**
+ * Analyzes a user's review straight away (likes/dislikes for the admin
+ * "what users don't like" view, plus a specific reply). Normally reviews go
+ * through the cheaper batch job in lib/review-batch.ts; this is the fallback.
+ */
+export async function analyzeReview(rating: number, content: string): Promise<AiResult<ReviewAnalysis>> {
+  const response = await getClient().messages.create(reviewAnalysisRequest(rating, content));
+  return { value: parseReviewAnalysis(textOf(response)), model: REVIEW_MODEL, usage: usageFromApi(response.usage) };
+}
+
+export { getClient as getAnthropicClient };
 
 function parseJsonArraySafely(text: string): string[] {  const cleaned = text.replace(/```json|```/g, "").trim();
   try {

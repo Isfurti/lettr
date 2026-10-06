@@ -33,7 +33,7 @@ export function FeedbackForm() {
       return;
     }
 
-    setReply(body.reply);
+    setReply(body.reply ?? null);
     setStatus("done");
   }
 
@@ -41,7 +41,9 @@ export function FeedbackForm() {
     return (
       <div className="bg-white border-2 border-rule rounded-[28px] p-6 sm:p-8">
         <p className="font-extrabold text-brand-blue mb-2">Thanks for the feedback</p>
-        <p className="text-sm leading-relaxed">{reply}</p>
+        <p className="text-sm leading-relaxed">
+          {reply ?? "We read every review. We'll email you a reply soon, and it will show here on this page too."}
+        </p>
       </div>
     );
   }

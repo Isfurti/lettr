@@ -112,3 +112,62 @@ describe("executeTool", () => {
     expect(next.summary).toBe("changed");
   });
 });
+
+import { runAgentTurn } from "@/lib/ai-agent";
+import type Anthropic from "@anthropic-ai/sdk";
+
+describe("runAgentTurn - prompt caching", () => {
+  it("caches tools and instructions, moves one breakpoint along the tool loop, and adds up usage", async () => {
+    const calls: Anthropic.MessageCreateParamsNonStreaming[] = [];
+    const replies = [
+      {
+        content: [{ type: "tool_use", id: "t1", name: "update_summary", input: { summary: "New" } }],
+        stop_reason: "tool_use",
+        usage: { input_tokens: 3000, output_tokens: 50, cache_creation_input_tokens: 2000, cache_read_input_tokens: 0 },
+      },
+      {
+        content: [{ type: "text", text: "Updated your summary." }],
+        stop_reason: "end_turn",
+        usage: { input_tokens: 100, output_tokens: 20, cache_creation_input_tokens: 80, cache_read_input_tokens: 5000 },
+      },
+    ];
+    const client = {
+      messages: {
+        create: async (p: Anthropic.MessageCreateParamsNonStreaming) => {
+          calls.push(JSON.parse(JSON.stringify(p)));
+          return replies[calls.length - 1] as unknown as Anthropic.Message;
+        },
+      },
+    };
+    const result = await runAgentTurn(
+      {
+        resumeData: emptyResume,
+        history: [
+          { role: "user", content: "hi" },
+          { role: "assistant", content: "Hello" },
+          { role: "user", content: "tighten my summary" },
+        ],
+        userMessage: "tighten my summary",
+      },
+      client
+    );
+
+    expect(result.resumeData.summary).toBe("New");
+    expect(result.usage).toEqual({ inputTokens: 3100, outputTokens: 70, cacheReadTokens: 5000, cacheWriteTokens: 2080 });
+
+    for (const call of calls) {
+      const tools = call.tools as { cache_control?: unknown }[];
+      expect(tools[tools.length - 1].cache_control).toEqual({ type: "ephemeral" });
+      expect((call.system as { cache_control?: unknown }[])[0].cache_control).toEqual({ type: "ephemeral" });
+      // Exactly one breakpoint in the messages: on the last one.
+      const marked = JSON.stringify(call.messages).match(/cache_control/g) ?? [];
+      expect(marked.length).toBe(1);
+      const last = call.messages[call.messages.length - 1].content as { cache_control?: unknown }[];
+      expect(last[last.length - 1].cache_control).toEqual({ type: "ephemeral" });
+    }
+    // The duplicate copy of the new message is dropped from history.
+    const first = calls[0].messages;
+    expect(first.length).toBe(3);
+    expect(JSON.stringify(first[2])).toContain("User request: tighten my summary");
+  });
+});

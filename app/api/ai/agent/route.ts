@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { runAgentTurn } from "@/lib/ai-agent";
-import { getUserById } from "@/lib/db";
+import { runAgentTurn, AGENT_MODEL } from "@/lib/ai-agent";
+import { countAiUses, getUserById } from "@/lib/db";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
-import { canUseAiAgent, type Plan } from "@/lib/limits";
+import { canSendAgentMessage, canUseAiAgent, type Plan } from "@/lib/limits";
+import { monthStartIST } from "@/lib/ai-costs";
+import { trackAiUsage } from "@/lib/ai-usage";
 
 const Schema = z.object({
   resumeData: z.any(),
@@ -39,6 +41,13 @@ export async function POST(req: Request) {
     );
   }
 
+  // Monthly fair-use cap, lower in cheaper price regions (lib/ai-costs.ts).
+  const used = await countAiUses(userId, "agent", monthStartIST());
+  const cap = canSendAgentMessage(user?.pricing_tier, used);
+  if (!cap.allowed) {
+    return NextResponse.json({ error: cap.reason, capReached: true, usage: { used, limit: cap.limit } }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => null);
   const parsed = Schema.safeParse(body);
   if (!parsed.success) {
@@ -46,8 +55,9 @@ export async function POST(req: Request) {
   }
 
   try {
-    const result = await runAgentTurn(parsed.data);
-    return NextResponse.json(result);
+    const { usage, ...result } = await runAgentTurn(parsed.data);
+    await trackAiUsage({ userId, feature: "agent", model: AGENT_MODEL, usage });
+    return NextResponse.json({ ...result, usage: { used: used + 1, limit: cap.limit } });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Agent request failed";
     return NextResponse.json({ error: message }, { status: 502 });

@@ -378,7 +378,7 @@ export function ResumeEditor({
           { id: "agent", label: "AI Agent", pro: true },
           { id: "score", label: "Score" },
           { id: "match", label: "Job match" },
-          { id: "cover-letter", label: "Cover letter", pro: true },
+          { id: "cover-letter", label: "Cover letter" },
           { id: "resignation-letter", label: "Resignation letter", pro: true },
         ]}
         active={tab}
@@ -398,11 +398,7 @@ export function ResumeEditor({
           )}
           {tab === "score" && <ScorePanel data={data} plan={plan} />}
           {tab === "match" && <JobMatchPanel data={data} />}
-          {tab === "cover-letter" && (
-            <UpgradeGate locked={plan === "free"} feature="The cover letter builder">
-              <CoverLetterPanel data={data} />
-            </UpgradeGate>
-          )}
+          {tab === "cover-letter" && <CoverLetterPanel data={data} plan={plan} />}
           {tab === "resignation-letter" && (
             <UpgradeGate locked={plan === "free"} feature="The resignation letter builder">
               <ResignationLetterPanel initialName={data.contact.fullName} />
@@ -1108,6 +1104,7 @@ function AgentPanel({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [usage, setUsage] = useState<{ used: number; limit: number } | null>(null);
 
   async function send() {
     const text = input.trim();
@@ -1128,6 +1125,7 @@ function AgentPanel({
         }),
       });
       const body = await res.json();
+      if (body.usage) setUsage(body.usage);
       if (!res.ok) {
         setMessages((m) => [...m, { role: "assistant", content: body.error ?? "Something went wrong." }]);
         return;
@@ -1172,6 +1170,12 @@ function AgentPanel({
         ))}
         {loading && <p className="text-sm text-ink-soft">Thinking…</p>}
       </div>
+
+      {usage && usage.limit - usage.used <= 20 && (
+        <p className="text-xs text-ink-soft mb-2">
+          {Math.max(0, usage.limit - usage.used)} of {usage.limit} AI Agent messages left this month.
+        </p>
+      )}
 
       <div className="flex gap-2">
         <input
@@ -1363,26 +1367,40 @@ export function JobMatchPanel({ data }: { data: ResumeData }) {
 
 // ---------- Cover letter panel ----------
 
-function CoverLetterPanel({ data }: { data: ResumeData }) {
+function CoverLetterPanel({ data, plan }: { data: ResumeData; plan: Plan }) {
   const [jd, setJd] = useState("");
   const [company, setCompany] = useState("");
   const [letter, setLetter] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [upgrade, setUpgrade] = useState(false);
+  const [reused, setReused] = useState(false);
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
 
-  async function generate() {
-    if (!jd.trim() || jd.trim().length < 10) return;
+  async function generate(fresh = false) {
+    if (!jd.trim() || jd.trim().length < 10) {
+      setError("Paste the job post first.");
+      return;
+    }
     setLoading(true);
     setError(null);
+    setUpgrade(false);
     try {
       const res = await fetch("/api/ai/cover-letter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resume: data, jobDescription: jd, companyName: company || undefined }),
+        body: JSON.stringify({ resume: data, jobDescription: jd, companyName: company || undefined, fresh }),
       });
-      const body = await res.json();
-      if (res.ok) setLetter(body.letter);
-      else setError(body.error ?? "Couldn't generate a cover letter.");
+      const body = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setLetter(body.letter);
+        setReused(Boolean(body.reused));
+        setRemaining(typeof body.remaining === "number" ? body.remaining : null);
+      } else {
+        setError(body.error ?? "Couldn't generate a cover letter.");
+        setUpgrade(Boolean(body.upgradeRequired));
+      }
     } finally {
       setLoading(false);
     }
@@ -1390,6 +1408,15 @@ function CoverLetterPanel({ data }: { data: ResumeData }) {
 
   return (
     <div className="max-w-xl space-y-4">
+      {plan === "free" && (
+        <p className="text-sm text-slate bg-white border border-rule rounded-xl px-4 py-3">
+          Free plan: 3 cover letters a month.{" "}
+          <Link href="/pricing" className="font-bold text-brand-blue underline">
+            Pro
+          </Link>{" "}
+          has no monthly limit and uses our best writing model.
+        </p>
+      )}
       <Section title="Target role">
         <Input label="Company (optional)" value={company} onChange={setCompany} />
         <textarea
@@ -1397,27 +1424,57 @@ function CoverLetterPanel({ data }: { data: ResumeData }) {
           onChange={(e) => setJd(e.target.value)}
           rows={8}
           placeholder="Paste the job description…"
+          aria-label="Job description"
           className="w-full border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white focus:outline-none focus:border-brand-blue mt-2"
         />
         <button
-          onClick={generate}
+          onClick={() => generate(false)}
           disabled={loading}
-          className="mt-2 bg-brand-blue text-white text-sm px-4 py-2 rounded-xl hover:opacity-90 disabled:opacity-60"
+          className="mt-2 min-h-11 bg-brand-blue text-white text-sm font-bold px-5 py-2 rounded-xl hover:opacity-90 disabled:opacity-60"
         >
           {loading ? "Writing…" : "Generate cover letter"}
         </button>
-        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+        {error && (
+          <p className="text-sm text-red-600 mt-2">
+            {error}{" "}
+            {upgrade && (
+              <Link href="/pricing" className="font-bold underline">
+                See Pro
+              </Link>
+            )}
+          </p>
+        )}
       </Section>
 
       {letter && (
         <div className="bg-white border border-rule rounded-xl p-5">
-          <div className="flex justify-end mb-2">
-            <button
-              onClick={() => navigator.clipboard.writeText(letter)}
-              className="text-xs text-ink-soft hover:text-ink"
-            >
-              Copy
-            </button>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <p className="text-xs text-ink-soft">
+              {reused
+                ? "Same resume and job post as last time, so here's the letter we already wrote."
+                : remaining !== null
+                ? `${remaining} free cover letter${remaining === 1 ? "" : "s"} left this month.`
+                : ""}
+            </p>
+            <div className="flex gap-1">
+              <button
+                onClick={() => generate(true)}
+                disabled={loading}
+                className="min-h-10 px-3 rounded-lg text-xs font-bold text-brand-blue hover:bg-cream disabled:opacity-60"
+              >
+                Write another version
+              </button>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(letter);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1500);
+                }}
+                className="min-h-10 px-3 rounded-lg text-xs font-bold text-ink-soft hover:text-ink hover:bg-cream"
+              >
+                {copied ? "Copied" : "Copy"}
+              </button>
+            </div>
           </div>
           <p className="whitespace-pre-wrap text-sm leading-relaxed">{letter}</p>
         </div>

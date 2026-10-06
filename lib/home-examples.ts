@@ -103,7 +103,7 @@ export const CAREER_STAGES: CareerStage[] = [
     helps: [
       "Job match shows which skills the new role asks for, and which you already have.",
       "A summary that leads with what carries over, not your old job title.",
-      "Cover letters that explain your move in a sentence (Pro).",
+      "Cover letters that explain your move in a sentence (3 a month free).",
     ],
     cta: "Start my career switch",
     resume: {

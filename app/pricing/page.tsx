@@ -6,18 +6,19 @@ import { Footer } from "@/components/Footer";
 import { PublicNav } from "@/components/PublicNav";
 import { auth } from "@/lib/auth";
 import { getUserById } from "@/lib/db";
-import { getCountryFromHeaders } from "@/lib/pricing-region";
+import { getCountryFromHeaders, getTierForCountry } from "@/lib/pricing-region";
 import { TEMPLATE_IDS } from "@/lib/templates";
 import { getRegionPrices, savingsPercent, perMonth, type PlanId } from "@/lib/plans";
+import { agentMonthlyCap } from "@/lib/ai-costs";
 import { ensureUserRegion } from "@/lib/user-region";
 
 export const metadata: Metadata = {
   title: "Pricing | Lettr — Free AI Resume Builder",
-  description: "Free resume builder with AI bullet rewriting and resume scoring. Upgrade to Pro for cover letters, unlimited exports, and more.",
+  description: "Free resume builder with AI bullet rewriting, resume scoring and 3 cover letters a month. Upgrade to Pro for unlimited letters and exports.",
   alternates: { canonical: "/pricing" },
   openGraph: {
     title: "Lettr Pricing — Free to start, upgrade anytime",
-    description: "Free resume builder with AI writing tools. Pro unlocks cover letters, resignation letters, and unlimited exports. Regional pricing available.",
+    description: "Free resume builder with AI writing tools and 3 cover letters a month. Pro adds unlimited cover letters, resignation letters and exports. Regional pricing available.",
     url: "/pricing",
   },
 };
@@ -30,7 +31,7 @@ const COMPARISON: { feature: string; free: string | boolean; pro: string | boole
   { feature: "AI Resume Agent (chat editing)", free: false, pro: true },
   { feature: "Resume quality score", free: "Score + next best fix", pro: "Full breakdown" },
   { feature: "Job match / keyword targeting", free: true, pro: true },
-  { feature: "AI cover letter builder", free: false, pro: true },
+  { feature: "AI cover letter builder", free: "3 a month", pro: "Unlimited, best writing model" },
   { feature: "AI resignation letter builder", free: false, pro: true },
   { feature: "DOCX export", free: false, pro: true },
   { feature: "Google Drive export", free: false, pro: true },
@@ -59,7 +60,7 @@ const FAQS = [
   },
   {
     q: "Is there a free plan?",
-    a: "Yes — 1 resume, 2 templates, 3 PDF downloads, and 5 free AI bullet/summary rewrites, no credit card required.",
+    a: "Yes — 1 resume, 2 templates, 3 PDF downloads, 5 free AI bullet/summary rewrites and 3 cover letters a month, no credit card required.",
   },
 ];
 
@@ -70,7 +71,9 @@ export default async function PricingPage() {
   // now. Logged-out visitors see a live preview for where they're browsing from.
   const session = await auth();
   const headersList = await headers();
-  let prices = getRegionPrices(getCountryFromHeaders(headersList));
+  const visitorCountry = getCountryFromHeaders(headersList);
+  let prices = getRegionPrices(visitorCountry);
+  let tier: string = getTierForCountry(visitorCountry);
 
   if (session?.user) {
     const userId = (session.user as { id: string }).id;
@@ -79,6 +82,7 @@ export default async function PricingPage() {
       const withRegion = await ensureUserRegion(user, headersList);
       if (withRegion.country_code || withRegion.pricing_tier) {
         prices = getRegionPrices(withRegion.country_code, withRegion.pricing_tier);
+        tier = withRegion.pricing_tier ?? getTierForCountry(withRegion.country_code);
       }
     }
   }
@@ -218,7 +222,10 @@ export default async function PricingPage() {
                 </tr>
               </thead>
               <tbody>
-                {COMPARISON.map((row) => (
+                {COMPARISON.map((r) =>
+                  // The AI Agent's fair-use limit depends on the price region.
+                  r.feature.startsWith("AI Resume Agent") ? { ...r, pro: `Up to ${agentMonthlyCap(tier)} messages a month` } : r
+                ).map((row) => (
                   <tr key={row.feature} className="border-b border-rule/60 last:border-0">
                     <td className="py-4 px-4 sm:px-6 font-bold">{row.feature}</td>
                     <td className="py-4 px-3 text-center text-slate">

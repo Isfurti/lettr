@@ -5,6 +5,7 @@ import { polishBullet } from "@/lib/ai";
 import { logActivity, getUserById, incrementAiWritingAssistCount } from "@/lib/db";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import { canUseAiWritingAssist, type Plan } from "@/lib/limits";
+import { trackAiUsage } from "@/lib/ai-usage";
 
 const Schema = z.object({
   roughBullet: z.string().min(3).max(1000),
@@ -43,7 +44,8 @@ export async function POST(req: Request) {
   }
 
   try {
-    const options = await polishBullet(parsed.data);
+    const { value: options, model, usage } = await polishBullet(parsed.data);
+    await trackAiUsage({ userId, feature: "bullets", model, usage });
     await logActivity(userId, "ai_polish_applied", parsed.data.role);
     if (plan === "free") await incrementAiWritingAssistCount(userId);
     return NextResponse.json({ options });

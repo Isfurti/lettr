@@ -17,6 +17,7 @@ import {
   Star,
   LogOut,
   Receipt,
+  Sparkles,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { href: "/admin/templates", label: "Templates", icon: FileText },
   { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
   { href: "/admin/invoices", label: "Invoices", icon: Receipt },
+  { href: "/admin/ai", label: "AI costs", icon: Sparkles },
   { href: "/admin/system", label: "System", icon: Settings },
   { href: "/admin/support", label: "Support inbox", icon: Inbox },
 ];

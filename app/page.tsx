@@ -68,7 +68,7 @@ const BEFORE_AFTER_POINTS = [
 const JOURNEY = [
   { n: "1", t: "Get noticed", b: "Start from a guided form or import the resume you already have. A live score shows what to fix next." },
   { n: "2", t: "Match the job", b: "Paste a job post. See your match score and the exact keywords you're missing." },
-  { n: "3", t: "Polish with AI", b: "Rewrite weak bullets in one tap. Cover letters and the Resume Agent come with Pro." },
+  { n: "3", t: "Polish with AI", b: "Rewrite weak bullets in one tap and write 3 cover letters a month free. The Resume Agent comes with Pro." },
   { n: "4", t: "Download & apply", b: "Pick a template and download a clean PDF, ready for any job site or email." },
 ];
 
@@ -426,7 +426,7 @@ export default async function Home() {
             </div>
             <p className="mt-1 text-white/70">For when you&apos;re applying seriously.</p>
             <ul className="mt-6 flex flex-col gap-3 flex-1">
-              {["Unlimited resumes, downloads and AI rewrites", `All ${TEMPLATE_IDS.length} templates`, "Cover letters and resignation letters", "AI Resume Agent", "Word (DOCX) export"].map((x) => (
+              {["Unlimited resumes, downloads and AI rewrites", `All ${TEMPLATE_IDS.length} templates`, "Unlimited cover letters and resignation letters", "AI Resume Agent", "Word (DOCX) export"].map((x) => (
                 <li key={x} className="flex gap-3"><Tick color="var(--gold)" />{x}</li>
               ))}
             </ul>
