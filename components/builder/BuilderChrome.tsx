@@ -22,7 +22,7 @@ export function BuilderTabs({
   trailing?: React.ReactNode;
 }) {
   return (
-    <div className="border-b border-rule bg-cream px-3 sm:px-6 py-2.5 flex items-center gap-2 overflow-x-auto whitespace-nowrap">
+    <nav aria-label="Builder" className="border-b border-rule bg-cream px-3 sm:px-6 py-2.5 flex items-center gap-2 overflow-x-auto whitespace-nowrap">
       <div role="tablist" aria-label="Builder sections" className="flex items-center gap-1.5">
         {tabs.map((t) => {
           const on = active === t.id;
@@ -47,7 +47,7 @@ export function BuilderTabs({
         })}
       </div>
       {trailing && <div className="ml-auto pl-2 shrink-0">{trailing}</div>}
-    </div>
+    </nav>
   );
 }
 
@@ -155,7 +155,7 @@ export function LettrNotes({
         shown.map((n, i) => (
           <div key={`${n.key}-${i}`} className="flex flex-col gap-2">
             <p className="text-[15px] font-semibold leading-snug">
-              <span className="text-gold-deep font-extrabold">{n.label}:</span> {n.tip}
+              <span className="text-gold-text font-extrabold">{n.label}:</span> {n.tip}
             </p>
             <button
               onClick={() => onGo(n.key)}

@@ -128,7 +128,7 @@ export function AtsPanel({
 
       {report.topFixes.length > 0 && (
         <section className="bg-white border border-rule rounded-[24px] p-5">
-          <h3 className="font-extrabold mb-3">Fix these first</h3>
+          <h2 className="font-extrabold mb-3">Fix these first</h2>
           <ul className="space-y-3">
             {report.topFixes.map((c) => (
               <CheckRow key={c.id} c={c} fix={fixButton(c)} />
@@ -138,7 +138,7 @@ export function AtsPanel({
       )}
 
       <section className="bg-white border border-rule rounded-[24px] p-5">
-        <h3 className="font-extrabold">Match it to a job</h3>
+        <h2 className="font-extrabold">Match it to a job</h2>
         <p className="text-sm text-slate mt-1 mb-2">Paste the job post. Lettr checks the key terms the company&apos;s system will look for.</p>
         <textarea
           value={jd}
@@ -182,7 +182,7 @@ export function AtsPanel({
       </section>
 
       <section className="bg-gold-soft rounded-[24px] p-5">
-        <h3 className="font-extrabold">✦ Ask the ATS analyst</h3>
+        <h2 className="font-extrabold">✦ Ask the ATS analyst</h2>
         <p className="text-sm text-slate mt-1">
           Get a plain-English read of your score and rewrites of your own bullets that would rank better. Free accounts get 3 a month.
         </p>

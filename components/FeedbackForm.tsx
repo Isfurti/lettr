@@ -69,7 +69,7 @@ export function FeedbackForm() {
       </div>
 
       <label className="block">
-        <span className="text-sm font-bold text-slate">What's working, what isn't?</span>
+        <span className="text-sm font-bold text-slate">What&apos;s working, what isn&apos;t?</span>
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}

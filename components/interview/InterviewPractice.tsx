@@ -300,7 +300,7 @@ export function InterviewSession({ initial }: { initial: InterviewSessionRow }) 
         </div>
       </section>
 
-      <aside className="bg-white border border-rule rounded-[24px] p-5">
+      <aside aria-label="Questions" className="bg-white border border-rule rounded-[24px] p-5">
         <p className="font-extrabold">{initial.role}</p>
         {initial.company && <p className="text-sm text-slate">{initial.company}</p>}
         {avg !== null && (

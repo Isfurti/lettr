@@ -1,7 +1,20 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
+// Basic security headers on every page. Microphone stays allowed for this
+// site only (interview practice can listen to spoken answers).
+const securityHeaders = [
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=(self), payment=(self)" },
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+];
+
 const nextConfig: NextConfig = {
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
+  },
   // pdf-parse (via pdfjs-dist) dynamically loads a worker file at runtime.
   // Next.js's bundler mangles that dynamic import path, so we tell it to
   // leave this package alone and let Node resolve it normally from

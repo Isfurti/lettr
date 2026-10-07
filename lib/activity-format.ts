@@ -14,6 +14,10 @@ export function formatActivityLabel(action: string): { title: string; icon: stri
       return { title: "DOCX exported", icon: "⬇" };
     case "ai_polish_applied":
       return { title: "AI polish applied", icon: "✦" };
+    case "ai_consent_on":
+      return { title: "Turned on: help improve Lettr's AI", icon: "✦" };
+    case "ai_consent_off":
+      return { title: "Turned off: help improve Lettr's AI", icon: "✦" };
     default:
       return { title: action.replace(/_/g, " "), icon: "•" };
   }

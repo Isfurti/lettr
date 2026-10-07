@@ -215,6 +215,24 @@ function ensureSchema(): Promise<void> {
       );
       CREATE INDEX IF NOT EXISTS idx_interview_sessions_user ON interview_sessions(user_id, updated_at DESC);
 
+      -- AI learning loop: was each AI suggestion kept, edited or rejected?
+      -- Text is only stored for users who opted in, with personal details removed.
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_improvement_consent BOOLEAN NOT NULL DEFAULT false;
+      CREATE TABLE IF NOT EXISTS ai_feedback_events (
+        id BIGSERIAL PRIMARY KEY,
+        user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        feature TEXT NOT NULL,
+        action TEXT NOT NULL,
+        input_text TEXT,
+        suggestion_text TEXT,
+        final_text TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_ai_feedback_created ON ai_feedback_events(created_at);
+
+      -- Replies to 1-2 star reviews wait for a person to approve them.
+      ALTER TABLE reviews ADD COLUMN IF NOT EXISTS reply_held BOOLEAN NOT NULL DEFAULT false;
+
       -- Review analysis can run through the cheaper batch API.
       ALTER TABLE reviews ADD COLUMN IF NOT EXISTS analysis_status TEXT NOT NULL DEFAULT 'done';
       ALTER TABLE reviews ADD COLUMN IF NOT EXISTS analysis_batch_id TEXT;
@@ -245,6 +263,7 @@ export type UserRow = {
   password_reset_expiry: string | null;
   country_code: string | null;
   pricing_tier: string | null;
+  ai_improvement_consent: boolean;
   created_at: string;
 };
 
@@ -713,6 +732,11 @@ export async function listAdminAuditLog(limit = 50): Promise<AdminAuditRow[]> {
  */
 export async function deleteUserAccount(userId: string) {
   await ensureSchema();
+  // Any AI-improvement examples go too, not just the link to the user.
+  await pool.query(
+    "UPDATE ai_feedback_events SET input_text = NULL, suggestion_text = NULL, final_text = NULL WHERE user_id = $1",
+    [userId]
+  );
   await pool.query("DELETE FROM users WHERE id = $1", [userId]);
 }
 
@@ -730,6 +754,7 @@ export type ReviewRow = {
   analysis_status: "pending" | "submitted" | "done" | "failed";
   analysis_batch_id: string | null;
   reply_emailed: boolean;
+  reply_held: boolean;
   created_at: string;
 };
 
@@ -745,12 +770,13 @@ export async function createReview(params: {
   dislikes?: string[];
   aiReply?: string;
   replyEmailed?: boolean;
+  replyHeld?: boolean;
 }) {
   await ensureSchema();
   const analysed = typeof params.aiReply === "string";
   await pool.query(
-    `INSERT INTO reviews (id, user_id, rating, content, sentiment, likes, dislikes, ai_reply, consent_to_feature, analysis_status, reply_emailed)
-     VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9, $10, $11)`,
+    `INSERT INTO reviews (id, user_id, rating, content, sentiment, likes, dislikes, ai_reply, consent_to_feature, analysis_status, reply_emailed, reply_held)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9, $10, $11, $12)`,
     [
       params.id,
       params.userId,
@@ -763,6 +789,7 @@ export async function createReview(params: {
       params.consentToFeature,
       analysed ? "done" : "pending",
       params.replyEmailed ?? false,
+      params.replyHeld ?? false,
     ]
   );
 }
@@ -786,14 +813,26 @@ export async function markReviewsSubmitted(ids: string[], batchId: string) {
 
 export async function saveReviewAnalysis(
   id: string,
-  a: { sentiment: string; likes: string[]; dislikes: string[]; aiReply: string; replyEmailed: boolean }
+  a: { sentiment: string; likes: string[]; dislikes: string[]; aiReply: string; replyEmailed: boolean; replyHeld?: boolean }
 ) {
   await ensureSchema();
   await pool.query(
     `UPDATE reviews SET sentiment = $2, likes = $3::jsonb, dislikes = $4::jsonb, ai_reply = $5,
-       reply_emailed = $6, analysis_status = 'done' WHERE id = $1`,
-    [id, a.sentiment, JSON.stringify(a.likes), JSON.stringify(a.dislikes), a.aiReply, a.replyEmailed]
+       reply_emailed = $6, reply_held = $7, analysis_status = 'done' WHERE id = $1`,
+    [id, a.sentiment, JSON.stringify(a.likes), JSON.stringify(a.dislikes), a.aiReply, a.replyEmailed, a.replyHeld ?? false]
   );
+}
+
+/** An admin approved (and maybe edited) a held reply: store it and mark it sent or not. */
+export async function approveReviewReply(id: string, reply: string, emailed: boolean) {
+  await ensureSchema();
+  await pool.query("UPDATE reviews SET ai_reply = $2, reply_held = false, reply_emailed = $3 WHERE id = $1", [id, reply, emailed]);
+}
+
+export async function getReviewWithEmail(id: string): Promise<(ReviewRow & { user_email: string | null }) | undefined> {
+  await ensureSchema();
+  const res = await pool.query("SELECT r.*, u.email AS user_email FROM reviews r LEFT JOIN users u ON u.id = r.user_id WHERE r.id = $1", [id]);
+  return res.rows[0];
 }
 
 /** A failed or expired batch request goes back in the queue (up to the caller to give up). */
@@ -1268,4 +1307,51 @@ export async function saveInterviewQuestions(userId: string, id: string, questio
 export async function deleteInterviewSession(userId: string, id: string) {
   await ensureSchema();
   await pool.query("DELETE FROM interview_sessions WHERE id = $1 AND user_id = $2", [id, userId]);
+}
+
+// ---------- AI learning loop ----------
+
+export async function setAiImprovementConsent(userId: string, consent: boolean) {
+  await ensureSchema();
+  await pool.query("UPDATE users SET ai_improvement_consent = $2 WHERE id = $1", [userId, consent]);
+}
+
+export async function recordAiFeedback(e: {
+  userId: string | null;
+  feature: string;
+  action: "kept" | "edited" | "rejected";
+  inputText?: string | null;
+  suggestionText?: string | null;
+  finalText?: string | null;
+}) {
+  await ensureSchema();
+  await pool.query(
+    `INSERT INTO ai_feedback_events (user_id, feature, action, input_text, suggestion_text, final_text) VALUES ($1, $2, $3, $4, $5, $6)`,
+    [e.userId, e.feature, e.action, e.inputText ?? null, e.suggestionText ?? null, e.finalText ?? null]
+  );
+}
+
+export type AiFeedbackSummaryRow = { feature: string; kept: number; edited: number; rejected: number; examples: number };
+
+export async function getAiFeedbackSummary(since: Date): Promise<AiFeedbackSummaryRow[]> {
+  await ensureSchema();
+  const res = await pool.query(
+    `SELECT feature,
+       COUNT(*) FILTER (WHERE action = 'kept')::int AS kept,
+       COUNT(*) FILTER (WHERE action = 'edited')::int AS edited,
+       COUNT(*) FILTER (WHERE action = 'rejected')::int AS rejected,
+       COUNT(*) FILTER (WHERE suggestion_text IS NOT NULL)::int AS examples
+     FROM ai_feedback_events WHERE created_at >= $1 GROUP BY feature ORDER BY feature`,
+    [since.toISOString()]
+  );
+  return res.rows;
+}
+
+/** Turning consent off removes the examples saved from that user. */
+export async function deleteAiExamplesForUser(userId: string) {
+  await ensureSchema();
+  await pool.query(
+    "UPDATE ai_feedback_events SET input_text = NULL, suggestion_text = NULL, final_text = NULL WHERE user_id = $1",
+    [userId]
+  );
 }

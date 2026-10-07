@@ -18,6 +18,7 @@ export function RichTextarea({
   value,
   onChange,
   className = "",
+  onBlur,
   ...rest
 }: {
   value: string;
@@ -66,7 +67,10 @@ export function RichTextarea({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
+        onBlur={(e) => {
+          setFocused(false);
+          onBlur?.(e);
+        }}
         onKeyDown={(e) => {
           if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
           const key = e.key.toLowerCase();

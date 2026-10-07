@@ -107,17 +107,26 @@ export async function runReviewBatchJob(deps: Deps = {}): Promise<ReviewBatchSum
 }
 
 async function finish(
-  review: { id: string; user_email: string | null },
+  review: { id: string; rating: number; user_email: string | null },
   a: { sentiment: string; likes: string[]; dislikes: string[]; reply: string },
   sendReply: (email: string, reply: string) => Promise<{ sent: boolean }>
 ) {
+  // Replies to 1-2 star reviews wait for a person (admin Reviews page).
+  const held = review.rating <= 2;
   let emailed = false;
-  if (review.user_email) {
+  if (review.user_email && !held) {
     try {
       emailed = (await sendReply(review.user_email, a.reply)).sent;
     } catch (err) {
       Sentry.captureException(err);
     }
   }
-  await saveReviewAnalysis(review.id, { sentiment: a.sentiment, likes: a.likes, dislikes: a.dislikes, aiReply: a.reply, replyEmailed: emailed });
+  await saveReviewAnalysis(review.id, {
+    sentiment: a.sentiment,
+    likes: a.likes,
+    dislikes: a.dislikes,
+    aiReply: a.reply,
+    replyEmailed: emailed,
+    replyHeld: held,
+  });
 }

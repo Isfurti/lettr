@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { listAllReviews, getReviewStats } from "@/lib/db";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { FeatureReviewButton } from "@/components/FeatureReviewButton";
+import { HeldReplyEditor } from "@/components/HeldReplyEditor";
 import { runReviewBatchJob } from "@/lib/review-batch";
 
 export const metadata: Metadata = { title: "Reviews | Lettr Admin" };
@@ -45,7 +46,7 @@ export default async function AdminReviewsPage() {
       <AdminSidebar />
       <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-4xl">
         <h1 className="font-brand font-extrabold text-[36px] tracking-tight mb-1">Reviews</h1>
-        <p className="text-ink-soft mb-8">Real feedback, analyzed for what people actually like and don't.</p>
+        <p className="text-ink-soft mb-8">Real feedback, analyzed for what people actually like and don&apos;t.</p>
 
         <div className="grid grid-cols-3 gap-4 mb-8">
           <div className="bg-white border border-rule rounded-xl p-5 border-t-2 border-t-admin-accent">
@@ -112,7 +113,8 @@ export default async function AdminReviewsPage() {
                 <p className="text-xs text-ink-soft">{r.user_name || r.user_email} · {formatDate(r.created_at)}</p>
               </div>
               <p className="text-sm mb-2">{r.content}</p>
-              {r.ai_reply && (
+              {r.ai_reply && r.reply_held && <HeldReplyEditor reviewId={r.id} draft={r.ai_reply} />}
+              {r.ai_reply && !r.reply_held && (
                 <p className="text-xs text-ink-soft border-l-2 border-admin-accent-soft pl-2 mb-3">
                   <span className="font-medium">{r.reply_emailed ? "Auto-reply emailed:" : "Auto-reply (not emailed):"}</span> {r.ai_reply}
                 </p>

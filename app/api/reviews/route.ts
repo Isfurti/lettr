@@ -72,7 +72,9 @@ export async function POST(req: Request) {
   // Best-effort - the reply is already shown in the UI response either way,
   // so a failed/unconfigured email isn't a broken experience, just a missed
   // extra touchpoint.
-  const emailed = session.user.email ? (await sendReviewReplyEmail(session.user.email, analysis.reply)).sent : false;
+  // Replies to 1-2 star reviews wait for a person to approve them.
+  const held = parsed.data.rating <= 2;
+  const emailed = session.user.email && !held ? (await sendReviewReplyEmail(session.user.email, analysis.reply)).sent : false;
 
   await createReview({
     ...review,
@@ -81,9 +83,10 @@ export async function POST(req: Request) {
     dislikes: analysis.dislikes,
     aiReply: analysis.reply,
     replyEmailed: emailed,
+    replyHeld: held,
   });
 
   await logActivity(userId, "review_submitted", `${parsed.data.rating}★`);
 
-  return NextResponse.json({ reply: analysis.reply }, { status: 201 });
+  return NextResponse.json({ reply: held ? null : analysis.reply, queued: held }, { status: 201 });
 }

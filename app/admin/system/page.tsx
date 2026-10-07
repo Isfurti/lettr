@@ -76,7 +76,7 @@ export default async function AdminSystemPage() {
         <div className="bg-white border border-rule rounded-xl overflow-hidden">
           <div className="px-6 py-3 border-b border-rule">
             <p className="text-xs uppercase tracking-wide text-ink-soft font-medium">Admin audit log</p>
-            <p className="text-xs text-ink-soft mt-0.5">Every admin action that touched a user's data.</p>
+            <p className="text-xs text-ink-soft mt-0.5">Every admin action that touched a user&apos;s data.</p>
           </div>
           {auditLog.length === 0 ? (
             <p className="text-sm text-ink-soft px-6 py-6">No admin actions recorded yet.</p>

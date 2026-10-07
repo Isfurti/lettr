@@ -45,7 +45,7 @@ export default async function FeedbackPage() {
                     <span className="text-xs text-ink-soft">{formatDate(r.created_at)}</span>
                   </div>
                   <p className="text-sm whitespace-pre-wrap">{r.content}</p>
-                  {r.ai_reply ? (
+                  {r.ai_reply && !r.reply_held ? (
                     <p className="text-sm text-slate mt-3 pt-3 border-t border-rule">
                       <span className="font-bold text-brand-blue">Lettr replied: </span>
                       {r.ai_reply}

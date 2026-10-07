@@ -7,15 +7,21 @@ const COLUMNS = [
     title: "Product",
     links: [
       { href: "/builder/new", label: "Resume builder" },
-      { href: "/resume-checker", label: "Free resume checker" },
+      { href: "/resume-checker", label: "Free ATS checker" },
       { href: "/templates", label: "Templates" },
       { href: "/examples", label: "Resume examples" },
+      { href: "/tools/bullet-writer", label: "Bullet point writer" },
+      { href: "/tools/cover-letter-writer", label: "Cover letter writer" },
       { href: "/pricing", label: "Pricing" },
     ],
   },
   {
-    title: "Help",
+    title: "Company",
     links: [
+      { href: "/about", label: "About" },
+      { href: "/whats-new", label: "What's new" },
+      { href: "/reviews", label: "Reviews" },
+      { href: "/compare/rezi", label: "Lettr vs Rezi" },
       { href: "/support", label: "Support" },
       { href: "/privacy", label: "Privacy policy" },
       { href: "/terms", label: "Terms of service" },

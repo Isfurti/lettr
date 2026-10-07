@@ -1,5 +1,6 @@
 export const ACCENT_COLORS = [
-  { id: "gold", label: "Gold", hex: "#b8862e" }, // default, matches app brand
+  // Default. Darker than the brand gold so small headings stay readable (WCAG AA).
+  { id: "gold", label: "Gold", hex: "#7b5800" },
   { id: "navy", label: "Navy", hex: "#1e3a5f" },
   { id: "forest", label: "Forest", hex: "#2d5741" },
   { id: "burgundy", label: "Burgundy", hex: "#7a2e3a" },
@@ -54,4 +55,13 @@ export function softenHex(hex: string, amount = 0.85): string {
   const g = Math.floor(((num >> 8) & 0xff) + (255 - ((num >> 8) & 0xff)) * amount);
   const b = Math.floor((num & 0xff) + (255 - (num & 0xff)) * amount);
   return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
+/** Earlier versions used a lighter gold by default; show those resumes in today's gold. */
+const LEGACY_DEFAULT_ACCENTS = ["#b8862e", "#94681c"];
+
+/** The accent colour to draw with: the user's pick, or the default gold. */
+export function resolveAccent(hex: string | undefined | null): string {
+  if (!hex || LEGACY_DEFAULT_ACCENTS.includes(hex.toLowerCase())) return DEFAULT_ACCENT_COLOR;
+  return hex;
 }

@@ -116,9 +116,13 @@ const SECTIONS: LegalSection[] = [
           suggestion. Anthropic doesn&apos;t use this content to train its models.
         </p>
         <p>
-          We don&apos;t use your resumes to train AI either. If we ever want to use anonymised examples to improve
-          Lettr&apos;s suggestions, we&apos;ll ask for your permission first, and you can say no or change your mind at any
-          time.
+          We don&apos;t use your resumes to train AI. To see whether suggestions are useful, we count whether each AI
+          suggestion was kept, edited or rejected (no text).
+        </p>
+        <p>
+          If you turn on <strong>Help improve Lettr&apos;s AI</strong> (Dashboard → Account; it&apos;s off by default), we also keep
+          examples of suggestions you keep or edit, with your name, employers, email addresses, phone numbers and links removed, to
+          make future suggestions better. You can turn it off at any time, and the examples kept from you are deleted.
         </p>
       </>
     ),

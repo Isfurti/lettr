@@ -6,12 +6,15 @@ export function Reveal({
   children,
   className = "",
   delay = 0,
+  as = "div",
 }: {
   children: React.ReactNode;
   className?: string;
   delay?: number;
+  /** "li" when the animated block is a list item itself. */
+  as?: "div" | "li";
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -32,13 +35,14 @@ export function Reveal({
     return () => observer.disconnect();
   }, []);
 
+  const Tag = as;
   return (
-    <div
-      ref={ref}
+    <Tag
+      ref={ref as React.Ref<never>}
       className={`reveal-init ${visible ? "reveal-visible" : ""} ${className}`}
       style={{ transitionDelay: `${delay}ms` }}
     >
       {children}
-    </div>
+    </Tag>
   );
 }

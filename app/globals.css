@@ -72,6 +72,8 @@
   --color-brand-blue-soft: var(--brand-blue-soft);
   --color-gold: var(--gold);
   --color-gold-deep: var(--gold-deep);
+  /* Gold that's dark enough for small text (WCAG AA on cream and gold-soft). */
+  --color-gold-text: #8a6200;
   --color-gold-soft: var(--gold-soft);
   --color-cream: var(--cream);
   --color-sand: var(--sand);

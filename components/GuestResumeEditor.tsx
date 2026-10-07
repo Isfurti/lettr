@@ -152,7 +152,8 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
 
       <MobileViewToggle view={mobileView} setView={setMobileView} />
 
-      <div className="flex-1 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] min-h-0">
+      <main id="main" className="flex-1 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] min-h-0">
+        <h1 className="sr-only">Resume builder</h1>
         <div className={`overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 ${mobileView === "preview" ? "hidden lg:block" : ""}`}>
           {showSaveNudge && (
             <div role="status" className="max-w-xl mb-6 bg-gold-soft rounded-2xl px-5 py-4 flex items-start justify-between gap-3">
@@ -225,9 +226,12 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
                 </div>
               )}
               {/* Light, out-of-the-way watermark: marks this as a preview without covering the content. */}
-              <span className="pointer-events-none select-none absolute bottom-3 right-4 z-10 text-[11px] font-bold uppercase tracking-widest text-ink/25">
-                Preview · Lettr
-              </span>
+              {/* Decorative watermark, drawn with CSS so it isn't read as page text. */}
+              <span
+                aria-hidden="true"
+                data-mark="Preview · Lettr"
+                className="pointer-events-none select-none absolute bottom-3 right-4 z-10 text-[11px] font-bold uppercase tracking-widest text-ink/25 before:content-[attr(data-mark)]"
+              />
               <ResumePreview data={data} template={template} />
             </div>
             {!isTemplateFree(template) && (
@@ -240,7 +244,7 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
             </p>
           </div>
         </div>
-      </div>
+      </main>
 
       {showExportGate && (
         <div

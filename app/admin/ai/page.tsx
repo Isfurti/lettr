@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin-auth";
-import { getAiUsageSummary } from "@/lib/db";
+import { getAiFeedbackSummary, getAiUsageSummary } from "@/lib/db";
 import {
   AGENT_MONTHLY_CAP,
   FREE_COVER_LETTERS_PER_MONTH,
@@ -35,7 +35,7 @@ const modelName = (m: string) => (m === MODELS.sonnet ? "Sonnet" : m === MODELS.
 export default async function AdminAiPage() {
   await requireAdmin();
   const since = monthStartIST();
-  const rows = await getAiUsageSummary(since);
+  const [rows, feedback] = await Promise.all([getAiUsageSummary(since), getAiFeedbackSummary(since)]);
 
   const withCost = rows.map((r) => {
     const u: TokenUsage = {
@@ -105,6 +105,45 @@ export default async function AdminAiPage() {
                     <td className="px-4 py-3 font-bold">{usd(r.cost)}</td>
                   </tr>
                 ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <h2 className="font-brand font-extrabold text-lg mb-1">Are suggestions any good?</h2>
+        <p className="text-sm text-slate mb-3">
+          What people did with AI rewrites this month. Examples (text) are only kept from users who turned on &quot;Help improve Lettr&apos;s AI&quot;,
+          with personal details removed.
+        </p>
+        <div className="bg-white border border-rule rounded-[24px] overflow-x-auto mb-8">
+          <table className="w-full text-sm min-w-[560px]">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-wide text-slate bg-sand">
+                {["Feature", "Kept as is", "Kept, then edited", "Rejected", "Examples saved"].map((h) => (
+                  <th key={h} className="px-4 py-3 font-bold">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {feedback.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-6 text-center text-slate">No feedback yet this month.</td>
+                </tr>
+              ) : (
+                feedback.map((f) => {
+                  // "Edited" events follow a "kept" one, so they're part of the kept count.
+                  const total = f.kept + f.rejected || 1;
+                  const pct = (n: number) => `${n} (${Math.round((n / total) * 100)}%)`;
+                  return (
+                    <tr key={f.feature} className="border-t border-rule">
+                      <td className="px-4 py-3 font-bold">{FEATURE_LABELS[f.feature] ?? f.feature}</td>
+                      <td className="px-4 py-3">{pct(Math.max(0, f.kept - f.edited))}</td>
+                      <td className="px-4 py-3">{pct(f.edited)}</td>
+                      <td className="px-4 py-3">{pct(f.rejected)}</td>
+                      <td className="px-4 py-3">{f.examples}</td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

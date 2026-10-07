@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { ResumeCustomization, ResumeData } from "@/lib/types";
 import type { Plan } from "@/lib/limits";
-import { ACCENT_COLORS, DEFAULT_ACCENT_COLOR, FONT_PAIRS } from "@/lib/customization";
+import { ACCENT_COLORS, FONT_PAIRS, resolveAccent } from "@/lib/customization";
 import { TEMPLATE_IDS, isTemplateFree } from "@/lib/templates";
 import { SAMPLE_RESUME } from "@/lib/sample-resume";
 import {
@@ -61,7 +61,7 @@ export function DesignPanel({
   const order = sectionOrder(c);
   const hidden = hiddenSections(c);
   const scale = layoutScale(c);
-  const accent = c.accentColor || DEFAULT_ACCENT_COLOR;
+  const accent = resolveAccent(c.accentColor);
   const isPresetColour = ACCENT_COLORS.some((x) => x.hex.toLowerCase() === accent.toLowerCase());
 
   // Thumbnails show the sample resume in the user's colour and fonts.

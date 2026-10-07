@@ -17,9 +17,10 @@ import "@fontsource/inter/600.css";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { ServiceWorkerRegister } from "@/components/AppInstall";
+import { siteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:3000"),
+  metadataBase: new URL(siteUrl()),
   title: {
     default: "Lettr — AI Resume Builder",
     template: "%s",

@@ -14,7 +14,7 @@ import { scoreResumeQuality } from "@/lib/resume-score";
 import type { Plan } from "@/lib/limits";
 import { BuilderTabs, MobileViewToggle, LettrNotes, ScoreStamp, goToSection } from "@/components/builder/BuilderChrome";
 import { ScoreRing } from "@/components/ScoreRing";
-import { DEFAULT_ACCENT_COLOR, getFontPair, darkenHex, softenHex } from "@/lib/customization";
+import { resolveAccent, getFontPair, darkenHex, softenHex } from "@/lib/customization";
 import { RibbonPreview, SplitPreview, ScholarPreview, FresherPreview, GridPreview, SpotlightPreview } from "@/components/templates/NewPreviews";
 
 import { TEMPLATE_IDS, isTemplateFree } from "@/lib/templates";
@@ -394,6 +394,7 @@ export function ResumeEditor({
       <MobileViewToggle view={mobileView} setView={setMobileView} />
 
       <div className="flex-1 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] min-h-0">
+        <h1 className="sr-only">Resume builder</h1>
         <div className={`overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 ${mobileView === "preview" ? "hidden lg:block" : ""}`}>
           {tab === "edit" && (
             <EditForm data={data} setData={setData} plan={plan} aiWritingAssistsUsed={aiWritingAssistsUsed} template={template} setTemplate={setTemplate} />
@@ -782,6 +783,21 @@ function EmptyHint({ text, onClick }: { text: string; onClick: () => void }) {
 /** Shown in place of a real AI call when nobody is signed in - an explanation, not an error. */
 const GUEST_AI_KEY = "lettr_guest_ai_used";
 
+/** Learning loop: tell the server whether an AI suggestion was kept, edited or rejected. Fire and forget. */
+function sendAiFeedback(body: {
+  feature: "bullets" | "summary";
+  action: "kept" | "edited" | "rejected";
+  input?: string;
+  suggestion?: string;
+  final?: string;
+  names?: string[];
+  companies?: string[];
+}) {
+  fetch("/api/ai/feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), keepalive: true }).catch(
+    () => {}
+  );
+}
+
 function guestAiUsed(): boolean {
   try {
     return window.localStorage.getItem(GUEST_AI_KEY) === "1";
@@ -838,6 +854,10 @@ function SummaryField({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSignInHint, setShowSignInHint] = useState(false);
+  const [pickedSummary, setPickedSummary] = useState<string | null>(null);
+  const fb = (b: Omit<Parameters<typeof sendAiFeedback>[0], "feature" | "names" | "companies">) =>
+    !guest &&
+    sendAiFeedback({ ...b, feature: "summary", names: [data.contact.fullName].filter(Boolean), companies: data.experience.map((e) => e.company).filter(Boolean) });
 
   async function generate() {
     if (guest) {
@@ -881,6 +901,12 @@ function SummaryField({
         <RichTextarea
           value={data.summary}
           onChange={(v) => setData((d) => ({ ...d, summary: v }))}
+          onBlur={() => {
+            if (pickedSummary && data.summary !== pickedSummary) {
+              fb({ action: "edited", suggestion: pickedSummary, final: data.summary });
+              setPickedSummary(null);
+            }
+          }}
           aria-label="Summary"
           rows={3}
           placeholder="2-3 sentence pitch: your role, years of experience, and what you're great at."
@@ -910,6 +936,8 @@ function SummaryField({
             <button
               key={i}
               onClick={() => {
+                fb({ action: "kept", input: data.summary, suggestion: opt });
+                setPickedSummary(opt);
                 setData((d) => ({ ...d, summary: opt }));
                 setOptions([]);
               }}
@@ -918,6 +946,16 @@ function SummaryField({
               {opt}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => {
+              fb({ action: "rejected", input: data.summary, suggestion: options.join(" | ") });
+              setOptions([]);
+            }}
+            className="min-h-9 text-xs font-bold text-slate hover:text-ink"
+          >
+            None of these
+          </button>
         </div>
       )}
     </div>
@@ -941,6 +979,10 @@ function ExperienceCard({
   const [aiOptions, setAiOptions] = useState<Record<number, string[]>>({});
   const [loadingBullet, setLoadingBullet] = useState<number | null>(null);
   const [bulletError, setBulletError] = useState<Record<number, string>>({});
+  // The suggestion picked for each bullet, to notice if it's edited afterwards.
+  const [picked, setPicked] = useState<Record<number, { input: string; suggestion: string }>>({});
+  const fb = (b: Omit<Parameters<typeof sendAiFeedback>[0], "feature" | "companies">) =>
+    !guest && sendAiFeedback({ ...b, feature: "bullets", companies: exp.company ? [exp.company] : [] });
 
   function updateBullet(index: number, value: string) {
     const bullets = [...exp.bullets];
@@ -1013,6 +1055,17 @@ function ExperienceCard({
               <RichTextarea
                 value={b}
                 onChange={(v) => updateBullet(i, v)}
+                onBlur={() => {
+                  const p = picked[i];
+                  if (p && b !== p.suggestion) {
+                    fb({ action: "edited", input: p.input, suggestion: p.suggestion, final: b });
+                    setPicked((x) => {
+                      const next = { ...x };
+                      delete next[i];
+                      return next;
+                    });
+                  }
+                }}
                 rows={2}
                 aria-label={`Bullet ${i + 1}`}
                 placeholder={i === 0 ? "e.g. Launched referral program that brought in 1,200 new users in 3 months" : ""}
@@ -1047,6 +1100,8 @@ function ExperienceCard({
                   <button
                     key={oi}
                     onClick={() => {
+                      fb({ action: "kept", input: b, suggestion: opt });
+                      setPicked((x) => ({ ...x, [i]: { input: b, suggestion: opt } }));
                       updateBullet(i, opt);
                       setAiOptions((o) => ({ ...o, [i]: [] }));
                     }}
@@ -1055,6 +1110,18 @@ function ExperienceCard({
                     {opt}
                   </button>
                 ))}
+                {aiOptions[i].length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      fb({ action: "rejected", input: b, suggestion: aiOptions[i].join(" | ") });
+                      setAiOptions((o) => ({ ...o, [i]: [] }));
+                    }}
+                    className="min-h-9 text-xs font-bold text-slate hover:text-ink"
+                  >
+                    None of these
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -1474,7 +1541,7 @@ function ResignationLetterPanel({ initialName }: { initialName: string }) {
 export function ResumePreview({ data: raw, template }: { data: ResumeData; template: string }) {
   // Hidden sections and date style apply to every template the same way.
   const data = applyLayout(raw);
-  const accentColor = data.customization?.accentColor || DEFAULT_ACCENT_COLOR;
+  const accentColor = resolveAccent(data.customization?.accentColor);
   const fontPair = getFontPair(data.customization?.fontChoice);
   const scale = layoutScale(data.customization);
   const shape = photoShape(data.customization);
@@ -1640,7 +1707,7 @@ function ModernPreview({ data }: { data: ResumeData }) {
         )}
         <div>
           <h2 className="font-bold text-2xl tracking-tight">{data.contact.fullName || "Your Name"}</h2>
-          <p className="text-xs opacity-80 mt-1">{contactLine(data)}</p>
+          <p className="text-xs opacity-95 mt-1">{contactLine(data)}</p>
         </div>
       </div>
       <div className="p-8">
@@ -1701,7 +1768,7 @@ function ModernPreview({ data }: { data: ResumeData }) {
             <h3 className={modernHeading}>Skills</h3>
             <div className="flex flex-wrap gap-1.5">
               {data.skills.map((s) => (
-                <span key={s} className="text-xs bg-seal-soft text-seal px-2 py-0.5 rounded-full">
+                <span key={s} className="text-xs bg-seal-soft text-seal-deep px-2 py-0.5 rounded-full">
                   {s}
                 </span>
               ))}
@@ -1832,7 +1899,7 @@ function SidebarPreview({ data }: { data: ResumeData }) {
         <Ordered c={data.customization}>
         <Sec k="skills">{data.skills.length > 0 && (
           <div className={`mt-6 ${sideDivider}`}>
-            <h3 className="text-[10px] uppercase tracking-widest font-bold mb-2 opacity-80">Skills</h3>
+            <h3 className="text-[10px] uppercase tracking-widest font-bold mb-2 opacity-95">Skills</h3>
             <div className="flex flex-wrap gap-1">
               {data.skills.map((s) => (
                 <span key={s} className="text-[10px] bg-white/15 rounded-sm px-1.5 py-0.5">{s}</span>
@@ -1842,12 +1909,12 @@ function SidebarPreview({ data }: { data: ResumeData }) {
         )}</Sec>
         <Sec k="education">{data.education.length > 0 && (
           <div className={`mt-6 ${sideDivider}`}>
-            <h3 className="text-[10px] uppercase tracking-widest font-bold mb-2 opacity-80">Education</h3>
+            <h3 className="text-[10px] uppercase tracking-widest font-bold mb-2 opacity-95">Education</h3>
             {data.education.map((edu) => (
               <div key={edu.id} className="text-xs mb-2">
                 <p className="font-semibold">{edu.degree}</p>
-                <p className="opacity-80">{edu.school}</p>
-                <p className="opacity-70 text-[10px]">{edu.startDate} – {edu.endDate}</p>
+                <p className="opacity-95">{edu.school}</p>
+                <p className="opacity-90 text-[10px]">{edu.startDate} – {edu.endDate}</p>
               </div>
             ))}
           </div>
@@ -2040,13 +2107,13 @@ function TechnicalPreview({ data }: { data: ResumeData }) {
       <Ordered c={data.customization}>
       <Sec k="summary">{data.summary && (
         <>
-          <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">// summary</h3>
+          <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">{"// summary"}</h3>
           <p className="text-sm leading-relaxed"><Rich t={data.summary} /></p>
         </>
       )}</Sec>
       <Sec k="experience">{data.experience.length > 0 && (
         <>
-          <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">// experience</h3>
+          <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">{"// experience"}</h3>
           {data.experience.map((exp) => (
             <div key={exp.id} className={`mt-3 ${showDividers ? "border-l-2 border-seal pl-3" : ""}`}>
               <p className="font-mono text-sm font-semibold">{exp.role || "role"}<span className="text-seal">()</span> <span className="text-ink-soft font-normal">@ {exp.company}</span></p>
@@ -2068,7 +2135,7 @@ function TechnicalPreview({ data }: { data: ResumeData }) {
       )}</Sec>
       <Sec k="education">{data.education.length > 0 && (
         <>
-          <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">// education</h3>
+          <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">{"// education"}</h3>
           {data.education.map((edu) => (
             <p key={edu.id} className="text-sm">{edu.degree} — {edu.school}</p>
           ))}
@@ -2076,7 +2143,7 @@ function TechnicalPreview({ data }: { data: ResumeData }) {
       )}</Sec>
       <Sec k="skills">{data.skills.length > 0 && (
         <>
-          <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">// stack</h3>
+          <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">{"// stack"}</h3>
           <div className="flex flex-wrap gap-1.5">
             {data.skills.map((s) => (
               <span key={s} className="font-mono text-xs bg-seal-soft text-seal-deep px-1.5 py-0.5 rounded-sm">{s}</span>
@@ -2314,7 +2381,7 @@ function Section({
   return (
     <div id={id} className="scroll-mt-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-brand font-extrabold text-xl tracking-tight text-ink">{title}</h3>
+        <h2 className="font-brand font-extrabold text-xl tracking-tight text-ink">{title}</h2>
         {action}
       </div>
       {children}

@@ -21,6 +21,7 @@ import { ResumeSearch } from "@/components/ResumeSearch";
 import { VerifyEmailBanner } from "@/components/VerifyEmailBanner";
 import { GuestDraftRescue } from "@/components/GuestDraftRescue";
 import { DeleteAccountButton } from "@/components/DeleteAccountButton";
+import { AiConsentToggle } from "@/components/AiConsentToggle";
 
 export const metadata: Metadata = { title: "Dashboard | Lettr", robots: { index: false } };
 
@@ -351,6 +352,9 @@ export default async function DashboardPage({
 
         <section className="mt-12 pt-6 border-t border-rule">
           <p className="text-sm font-bold text-slate mb-3">Account</p>
+          <div className="bg-white rounded-[24px] border border-rule p-5 mb-5">
+            <AiConsentToggle initial={Boolean(user?.ai_improvement_consent)} />
+          </div>
           <DeleteAccountButton />
         </section>
       </main>

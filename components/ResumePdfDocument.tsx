@@ -7,7 +7,7 @@ import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/render
 import type { Style } from "@react-pdf/types";
 import { extraSections, type ResumeData } from "@/lib/types";
 import { pdfFonts } from "@/lib/pdf-fonts";
-import { DEFAULT_ACCENT_COLOR, darkenHex, softenHex } from "@/lib/customization";
+import { resolveAccent, darkenHex, softenHex } from "@/lib/customization";
 import { RibbonPdf, SplitPdf, ScholarPdf, FresherPdf, GridPdf, SpotlightPdf } from "@/components/templates/NewPdfs";
 
 const INK = "#1b2a4a";
@@ -43,7 +43,7 @@ export function ResumePdfDocument({ resume, template = "classic" }: { resume: Re
 }
 
 function TemplatePdf({ resume, template }: { resume: ResumeData; template: string }) {
-  const seal = resume.customization?.accentColor || DEFAULT_ACCENT_COLOR;
+  const seal = resolveAccent(resume.customization?.accentColor);
   const sealSoft = softenHex(seal);
   const sealDeep = darkenHex(seal);
 
@@ -161,7 +161,7 @@ function ModernPdf({ resume, seal, sealSoft }: { resume: ResumeData; seal: strin
     header: { backgroundColor: INK, color: PAPER, padding: 24, flexDirection: "row", alignItems: "center", gap: 14 },
     photo: { width: 56, height: 56, borderRadius: 28 },
     name: { fontFamily: f.display, fontSize: 20, fontWeight: 700 },
-    contactLine: { fontSize: 9, marginTop: 4, opacity: 0.85 },
+    contactLine: { fontSize: 9, marginTop: 4, opacity: 0.95 },
     body: { padding: 24 },
     sectionTitle: {
       fontSize: 10, fontWeight: 700, marginTop: 10, marginBottom: 5, textTransform: "uppercase",
@@ -316,10 +316,10 @@ function SidebarPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
     name: { fontFamily: f.display, fontSize: 16, fontWeight: 700, marginBottom: 8 },
     contactLine: { fontSize: 8.5, marginBottom: 3, opacity: 0.95 },
     sideSection: showDividers ? { marginTop: 14, borderTop: "1 solid rgba(255,255,255,0.3)", paddingTop: 10 } : { marginTop: 14 },
-    sideHeading: { fontSize: 8, fontWeight: 700, textTransform: "uppercase", marginBottom: 5, opacity: 0.85 },
+    sideHeading: { fontSize: 8, fontWeight: 700, textTransform: "uppercase", marginBottom: 5, opacity: 0.95 },
     sideSkill: { fontSize: 8.5, backgroundColor: "rgba(255,255,255,0.18)", padding: 3, borderRadius: 3, marginBottom: 3 },
     eduName: { fontSize: 8.5, fontWeight: 700 },
-    eduSchool: { fontSize: 8, opacity: 0.85, marginBottom: 6 },
+    eduSchool: { fontSize: 8, opacity: 0.95, marginBottom: 6 },
     sectionTitle: { fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: seal, marginTop: 10, marginBottom: 5 },
     entryHeader: { flexDirection: "row", justifyContent: "space-between", marginTop: 6 },
     entryTitle: { fontSize: 10, fontWeight: 700 },
@@ -534,10 +534,10 @@ function TechnicalPdf({ resume, seal, sealSoft, sealDeep }: { resume: ResumeData
           </View>
         </View>
         <Ordered c={resume.customization}>
-        <Sec k="summary">{resume.summary ? (<><Text style={s.sectionTitle}>// summary</Text><Text style={{ fontSize: 9.5, fontFamily: f.body, lineHeight: 1.35 }}>{resume.summary}</Text></>) : null}</Sec>
+        <Sec k="summary">{resume.summary ? (<><Text style={s.sectionTitle}>{"// summary"}</Text><Text style={{ fontSize: 9.5, fontFamily: f.body, lineHeight: 1.35 }}>{resume.summary}</Text></>) : null}</Sec>
         <Sec k="experience">{resume.experience.length > 0 && (
           <>
-            <Text style={s.sectionTitle}>// experience</Text>
+            <Text style={s.sectionTitle}>{"// experience"}</Text>
             {resume.experience.map((exp) => (
               <View key={exp.id} wrap={false} style={entryStyle}>
                 <Text style={s.entryTitle}>{exp.role}() @ {exp.company}</Text>
@@ -549,13 +549,13 @@ function TechnicalPdf({ resume, seal, sealSoft, sealDeep }: { resume: ResumeData
         )}</Sec>
         <Sec k="education">{resume.education.length > 0 && (
           <>
-            <Text style={s.sectionTitle}>// education</Text>
+            <Text style={s.sectionTitle}>{"// education"}</Text>
             {resume.education.map((edu) => <Text key={edu.id} style={{ fontSize: 9.5, fontFamily: f.body }}>{edu.degree} — {edu.school}</Text>)}
           </>
         )}</Sec>
         <Sec k="skills">{resume.skills.length > 0 && (
           <>
-            <Text style={s.sectionTitle}>// stack</Text>
+            <Text style={s.sectionTitle}>{"// stack"}</Text>
             <View style={s.chipsRow}>{resume.skills.map((skill) => <Text key={skill} style={s.chip}>{skill}</Text>)}</View>
           </>
         )}</Sec>

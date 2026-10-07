@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer";
 import { ResumeChecker } from "@/components/checker/ResumeChecker";
 
 export const metadata: Metadata = {
-  title: "Free Resume Checker: See What Job Sites Read | Lettr",
+  title: "Free ATS Resume Checker: See What Job Sites Read | Lettr",
   description:
     "Upload your resume or LinkedIn PDF and see exactly what hiring software reads from it, plus a free score and fixes. No account needed.",
   alternates: { canonical: "/resume-checker" },

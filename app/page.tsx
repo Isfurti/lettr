@@ -234,12 +234,12 @@ export default async function Home() {
         </div>
         <ol className="mt-14 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {BEFORE_AFTER_POINTS.map((p, i) => (
-            <Reveal key={p.t} delay={i * 60} className="bg-white border-2 border-ink rounded-3xl p-6 shadow-[5px_5px_0_var(--ink)]">
-              <li className="list-none">
-                <span className="font-brand font-extrabold text-gold-deep text-2xl">{i + 1}</span>
+            <Reveal as="li" key={p.t} delay={i * 60} className="bg-white border-2 border-ink rounded-3xl p-6 shadow-[5px_5px_0_var(--ink)]">
+              <div>
+                <span className="font-brand font-extrabold text-gold-text text-2xl">{i + 1}</span>
                 <p className="mt-2 font-extrabold text-lg leading-snug">{p.t}</p>
                 <p className="mt-2 text-slate leading-relaxed">{p.b}</p>
-              </li>
+              </div>
             </Reveal>
           ))}
         </ol>
@@ -299,12 +299,12 @@ export default async function Home() {
           </Reveal>
           <ol className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {JOURNEY.map((s, i) => (
-              <Reveal key={s.n} delay={i * 80} className="rounded-3xl bg-white/[0.06] border border-white/15 p-6">
-                <li className="list-none">
+              <Reveal as="li" key={s.n} delay={i * 80} className="rounded-3xl bg-white/[0.06] border border-white/15 p-6">
+                <div>
                   <span className="w-11 h-11 rounded-full bg-gold text-ink font-brand font-extrabold text-xl flex items-center justify-center">{s.n}</span>
                   <p className="mt-5 font-brand font-extrabold text-2xl">{s.t}</p>
                   <p className="mt-2 text-white/75 leading-relaxed">{s.b}</p>
-                </li>
+                </div>
               </Reveal>
             ))}
           </ol>
@@ -471,7 +471,7 @@ export default async function Home() {
           <h2 className="relative font-brand font-extrabold text-[36px] sm:text-[56px] leading-[1.02] tracking-tight">
             Your next job starts with one good page.
           </h2>
-          <p className="relative mt-4 text-lg text-white/85">Free to start. No card needed.</p>
+          <p className="relative mt-4 text-lg text-white/95">Free to start. No card needed.</p>
           <div className="relative mt-8 flex flex-wrap justify-center gap-3">
             <Link href="/builder/new" className="btn-press inline-flex items-center min-h-12 px-8 rounded-full bg-gold text-ink font-extrabold shadow-[0_5px_0_var(--gold-deep)]">
               Build my resume

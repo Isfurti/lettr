@@ -51,3 +51,12 @@ describe("getFontPair", () => {
     expect(getFontPair(undefined)?.id).toBe(FONT_PAIRS[0].id);
   });
 });
+
+import { resolveAccent, DEFAULT_ACCENT_COLOR as DEF } from "@/lib/customization";
+describe("resolveAccent", () => {
+  it("maps the old default golds and blanks to today's gold", () => {
+    expect(resolveAccent(undefined)).toBe(DEF);
+    expect(resolveAccent("#B8862E")).toBe(DEF);
+    expect(resolveAccent("#1e3a5f")).toBe("#1e3a5f");
+  });
+});

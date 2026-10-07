@@ -244,7 +244,7 @@ export function ResumeChecker({ initialMode = "file" }: { initialMode?: "file" |
                   <ul className="flex flex-col gap-3">
                     {result.score.tips.slice(0, 3).map((t, i) => (
                       <li key={i} className="text-[15px] font-semibold leading-snug">
-                        <span className="text-gold-deep font-extrabold">{t.section}:</span> {t.tip}
+                        <span className="text-gold-text font-extrabold">{t.section}:</span> {t.tip}
                       </li>
                     ))}
                   </ul>
