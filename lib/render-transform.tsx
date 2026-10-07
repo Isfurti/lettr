@@ -93,7 +93,13 @@ function richPdf(text: string, fontSize?: number): ReactNode {
   );
 }
 
-export type PdfLayout = { scale: number; pageSize: PageSize; photoShape: PhotoShape };
+export type PdfLayout = {
+  scale: number;
+  pageSize: PageSize;
+  photoShape: PhotoShape;
+  /** Small line at the bottom of every page (free-plan PDFs after the first). */
+  footer?: string;
+};
 
 /** Applies spacing, page size, photo shape and B/I/U to a react-pdf document tree. */
 export function transformPdf(node: ReactNode, opts: PdfLayout, inText = false, fontSize?: number): ReactNode {
@@ -136,5 +142,19 @@ export function transformPdf(node: ReactNode, opts: PdfLayout, inText = false, f
     props.style = [props.style ?? {}, { fontSize: size }].flat();
   }
   const children = transformPdf(el.props.children, opts, type === "TEXT" || inText, size);
-  return cloneElement(el, props, ...(Array.isArray(children) ? children : [children]));
+  const list = Array.isArray(children) ? children : [children];
+  if (type === "PAGE" && opts.footer) {
+    list.push(
+      createElement(
+        "TEXT",
+        {
+          key: "lettr-footer",
+          fixed: true,
+          style: { position: "absolute", bottom: 12, left: 0, right: 0, textAlign: "center", fontSize: 7, color: "#8a8f99" },
+        },
+        opts.footer
+      )
+    );
+  }
+  return cloneElement(el, props, ...list);
 }

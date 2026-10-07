@@ -23,10 +23,16 @@ export function AtsPanel({
   template,
   guest = false,
   onFix,
+  keywordsShown = guest ? 3 : Infinity,
+  analyst,
 }: {
   data: ResumeData;
   template: string;
   guest?: boolean;
+  /** Free plan: how many missing keywords to show; the rest are blurred. */
+  keywordsShown?: number;
+  /** Free-plan allowance for the AI analyst, for the "1 free" note. */
+  analyst?: { used: number; limit: number; period: "lifetime" | "month" };
   /** Opens the builder at a section ("experience", "design"...). */
   onFix: (section: string) => void;
 }) {
@@ -157,12 +163,31 @@ export function AtsPanel({
               <>
                 <p className="text-xs text-slate mt-2 mb-1.5">Missing. Add the ones that are true for you to your skills, summary or bullets:</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {report.keywords.missingKeywords.map((k) => (
+                  {report.keywords.missingKeywords.slice(0, keywordsShown).map((k) => (
                     <span key={k} className="text-xs font-bold bg-red-50 text-red-700 px-2 py-1 rounded-xl">
                       {k}
                     </span>
                   ))}
+                  {/* Hidden ones are drawn as blurred blanks: the words themselves never reach the page. */}
+                  {report.keywords.missingKeywords.slice(keywordsShown).map((k, i) => (
+                    <span
+                      key={`hidden-${i}`}
+                      aria-hidden="true"
+                      className="text-xs font-bold bg-red-50 text-red-700/70 px-2 py-1 rounded-xl blur-[3px] select-none"
+                    >
+                      {"x".repeat(Math.min(Math.max(k.length, 4), 14))}
+                    </span>
+                  ))}
                 </div>
+                {report.keywords.missingKeywords.length > keywordsShown && (
+                  <p className="text-xs mt-2">
+                    <strong>{report.keywords.missingKeywords.length - keywordsShown} more missing keywords</strong> are hidden on the
+                    free plan.{" "}
+                    <Link href={guest ? "/signup?continue=builder" : "/pricing"} className="font-bold text-brand-blue underline">
+                      {guest ? "Create a free account" : "See them all with Pro"}
+                    </Link>
+                  </p>
+                )}
               </>
             )}
             {report.keywords.matchedKeywords.length > 0 && (
@@ -184,7 +209,8 @@ export function AtsPanel({
       <section className="bg-gold-soft rounded-[24px] p-5">
         <h2 className="font-extrabold">✦ Ask the ATS analyst</h2>
         <p className="text-sm text-slate mt-1">
-          Get a plain-English read of your score and rewrites of your own bullets that would rank better. Free accounts get 3 a month.
+          Get a plain-English read of your score and rewrites of your own bullets that would rank better.{" "}
+          {analystNote(analyst, guest)}
         </p>
         <button
           type="button"
@@ -242,4 +268,11 @@ function CheckRow({ c, fix }: { c: AtsCheck; fix: React.ReactNode }) {
       {c.status !== "pass" && fix}
     </li>
   );
+}
+
+function analystNote(a: { used: number; limit: number; period: "lifetime" | "month" } | undefined, guest: boolean): string {
+  if (guest) return "Free accounts get one review.";
+  if (!a || !Number.isFinite(a.limit)) return "";
+  if (a.period === "month") return `Your plan includes ${a.limit} a month.`;
+  return a.used >= a.limit ? "You've used your free review." : `You have ${a.limit - a.used} free review${a.limit - a.used === 1 ? "" : "s"}.`;
 }

@@ -75,6 +75,7 @@ export function ApplicationsBoard({ initial, resumes }: { initial: ApplicationRo
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsPro, setNeedsPro] = useState(false);
   const [query, setQuery] = useState("");
 
   const counts = useMemo(() => {
@@ -131,6 +132,7 @@ export function ApplicationsBoard({ initial, resumes }: { initial: ApplicationRo
       const out = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(out.error ?? "Couldn't save. Try again.");
+        setNeedsPro(Boolean(out.upgradeRequired));
         return;
       }
       const row = out.application as ApplicationRow;
@@ -384,7 +386,16 @@ export function ApplicationsBoard({ initial, resumes }: { initial: ApplicationRo
                 <textarea value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} rows={3} className="field-input mt-1" placeholder="Recruiter name, salary range, what they asked…" />
               </label>
             </div>
-            {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
+            {error && (
+              <p className="text-sm text-red-600 mt-3">
+                {error}{" "}
+                {needsPro && (
+                  <a href="/pricing" className="font-bold underline">
+                    See Pro
+                  </a>
+                )}
+              </p>
+            )}
             <div className="flex flex-wrap items-center gap-3 mt-5">
               <button
                 type="button"

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { countAiUses, getInterviewSession, getUserById, saveInterviewQuestions } from "@/lib/db";
+import { getInterviewSession, getUserById, saveInterviewQuestions } from "@/lib/db";
 import { interviewFeedback } from "@/lib/ai";
 import { trackAiUsage } from "@/lib/ai-usage";
-import { monthStartIST } from "@/lib/ai-costs";
 import { canUseInterviewPractice, type Plan } from "@/lib/limits";
+import { recordUse, usageContext, usedSoFar } from "@/lib/free-usage";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 
 const Schema = z.object({
@@ -29,8 +29,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const user = await getUserById(userId);
   const plan = (user?.plan ?? "free") as Plan;
-  const used = await countAiUses(userId, "interview_feedback", monthStartIST());
-  const check = canUseInterviewPractice(plan, "feedback", used);
+  const ctx = await usageContext(user ?? { id: userId, email: session?.user?.email });
+  const used = await usedSoFar(ctx, "interview_feedback");
+  const check = canUseInterviewPractice(ctx.tier, "feedback", used);
   if (!check.allowed) return NextResponse.json({ error: check.reason, upgradeRequired: plan === "free" }, { status: 402 });
 
   const rate = await checkAndRecordRateLimit(userId, "interview-feedback", 20, 10);
@@ -39,6 +40,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   try {
     const { value, model, usage } = await interviewFeedback({ role: practice.role, question: q.question, answer: parsed.data.answer });
     await trackAiUsage({ userId, feature: "interview_feedback", model, usage });
+    await recordUse(ctx, "interview_feedback");
     const questions = practice.questions.map((x) => (x.id === q.id ? { ...x, answer: parsed.data.answer, feedback: value } : x));
     await saveInterviewQuestions(userId, id, questions);
     return NextResponse.json({ feedback: value });

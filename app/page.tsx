@@ -68,7 +68,7 @@ const BEFORE_AFTER_POINTS = [
 const JOURNEY = [
   { n: "1", t: "Get noticed", b: "Start from a guided form or import the resume you already have. A live score shows what to fix next." },
   { n: "2", t: "Match the job", b: "Paste a job post. See your match score and the exact keywords you're missing." },
-  { n: "3", t: "Polish with AI", b: "Rewrite weak bullets in one tap and write 3 cover letters a month free. The Resume Agent comes with Pro." },
+  { n: "3", t: "Polish with AI", b: "Rewrite weak bullets in one tap and try a cover letter free. Unlimited AI and the Resume Agent come with Pro." },
   { n: "4", t: "Download & apply", b: "Pick a template and download a clean PDF, ready for any job site or email." },
 ];
 
@@ -89,7 +89,7 @@ const GALLERY = [
 const FAQ = [
   {
     q: "Is Lettr really free?",
-    a: "Yes. The free plan gives you one resume, the Classic and Modern templates, 3 PDF downloads and 5 AI rewrites. No card needed. Pro unlocks everything else.",
+    a: "Yes. The free plan gives you one resume, the Classic and Modern templates, the live ATS score, a PDF download and a free try of every AI tool (3 rewrites, a cover letter, an ATS review and a practice interview). No card needed. Pro unlocks everything else.",
   },
   {
     q: "Do I need an account to start?",
@@ -414,7 +414,7 @@ export default async function Home() {
             <p className="font-brand font-extrabold text-3xl">Free</p>
             <p className="mt-1 text-slate">Everything you need for one strong resume.</p>
             <ul className="mt-6 flex flex-col gap-3 flex-1">
-              {["1 resume", "Classic and Modern templates", "3 PDF downloads", "5 AI rewrites", "ATS score and resume score"].map((x) => (
+              {["1 resume", "Classic and Modern templates", "Live ATS score and resume score", "PDF download", "Try every AI tool once"].map((x) => (
                 <li key={x} className="flex gap-3"><Tick />{x}</li>
               ))}
             </ul>

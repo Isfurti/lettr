@@ -6,6 +6,7 @@ import { trackAiUsage } from "@/lib/ai-usage";
 import { getUserById, incrementAiWritingAssistCount } from "@/lib/db";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import { canUseAiWritingAssist, type Plan } from "@/lib/limits";
+import { recordUse, rewritesUsed, usageContext } from "@/lib/free-usage";
 
 const Schema = z.object({
   experience: z.array(z.any()).default([]),
@@ -20,11 +21,12 @@ export async function POST(req: Request) {
   const userId = (session.user as { id: string }).id;
 
   // Same lifetime cap/counter as bullet rewriting - both count against the
-  // same 5-lifetime-calls free allowance, since they're the same kind of
+  // same lifetime free allowance, since they're the same kind of
   // "AI writing assist" from a cost perspective.
   const user = await getUserById(userId);
   const plan = (user?.plan ?? "free") as Plan;
-  const assistCheck = canUseAiWritingAssist(plan, user?.ai_writing_assist_count ?? 0);
+  const ctx = await usageContext(user ?? { id: userId, email: session.user.email });
+  const assistCheck = canUseAiWritingAssist(ctx.tier, await rewritesUsed(ctx, user?.ai_writing_assist_count ?? 0));
   if (!assistCheck.allowed) {
     return NextResponse.json({ error: assistCheck.reason, upgradeRequired: true }, { status: 402 });
   }
@@ -46,7 +48,10 @@ export async function POST(req: Request) {
   try {
     const { value: options, model, usage } = await generateSummary(parsed.data);
     await trackAiUsage({ userId, feature: "summary", model, usage });
-    if (plan === "free") await incrementAiWritingAssistCount(userId);
+    if (plan === "free") {
+      await incrementAiWritingAssistCount(userId);
+      await recordUse(ctx, "rewrite");
+    }
     return NextResponse.json({ options });
   } catch (err) {
     const message = err instanceof Error ? err.message : "AI generation failed";

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { countApplications, createApplication, listApplications } from "@/lib/db";
+import { countApplications, createApplication, getUserById, listApplications } from "@/lib/db";
+import { canTrackJob, limitTier } from "@/lib/limits";
 import { ApplicationSchema, MAX_APPLICATIONS } from "@/lib/applications";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 
@@ -20,9 +21,12 @@ export async function POST(req: Request) {
   if (!id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const limit = await checkAndRecordRateLimit(id, "applications-create", 60, 10);
   if (!limit.allowed) return NextResponse.json({ error: "Too many changes. Try again in a minute." }, { status: 429 });
-  if ((await countApplications(id)) >= MAX_APPLICATIONS) {
+  const tracked = await countApplications(id);
+  if (tracked >= MAX_APPLICATIONS) {
     return NextResponse.json({ error: `You can track up to ${MAX_APPLICATIONS} applications. Delete some old ones first.` }, { status: 400 });
   }
+  const planCheck = canTrackJob(limitTier(await getUserById(id)), tracked);
+  if (!planCheck.allowed) return NextResponse.json({ error: planCheck.reason, upgradeRequired: true }, { status: 402 });
   const parsed = ApplicationSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });

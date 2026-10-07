@@ -5,6 +5,7 @@ import { polishBullet } from "@/lib/ai";
 import { logActivity, getUserById, incrementAiWritingAssistCount } from "@/lib/db";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import { canUseAiWritingAssist, type Plan } from "@/lib/limits";
+import { recordUse, rewritesUsed, usageContext } from "@/lib/free-usage";
 import { trackAiUsage } from "@/lib/ai-usage";
 
 const Schema = z.object({
@@ -24,7 +25,8 @@ export async function POST(req: Request) {
   // bounds a free user's total AI cost to a small, fixed, one-time amount.
   const user = await getUserById(userId);
   const plan = (user?.plan ?? "free") as Plan;
-  const assistCheck = canUseAiWritingAssist(plan, user?.ai_writing_assist_count ?? 0);
+  const ctx = await usageContext(user ?? { id: userId, email: session.user.email });
+  const assistCheck = canUseAiWritingAssist(ctx.tier, await rewritesUsed(ctx, user?.ai_writing_assist_count ?? 0));
   if (!assistCheck.allowed) {
     return NextResponse.json({ error: assistCheck.reason, upgradeRequired: true }, { status: 402 });
   }
@@ -47,7 +49,10 @@ export async function POST(req: Request) {
     const { value: options, model, usage } = await polishBullet(parsed.data);
     await trackAiUsage({ userId, feature: "bullets", model, usage });
     await logActivity(userId, "ai_polish_applied", parsed.data.role);
-    if (plan === "free") await incrementAiWritingAssistCount(userId);
+    if (plan === "free") {
+      await incrementAiWritingAssistCount(userId);
+      await recordUse(ctx, "rewrite");
+    }
     return NextResponse.json({ options });
   } catch (err) {
     const message = err instanceof Error ? err.message : "AI generation failed";

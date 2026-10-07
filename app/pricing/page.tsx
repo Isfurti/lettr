@@ -11,30 +11,38 @@ import { TEMPLATE_IDS } from "@/lib/templates";
 import { getRegionPrices, savingsPercent, perMonth, type PlanId } from "@/lib/plans";
 import { agentMonthlyCap } from "@/lib/ai-costs";
 import { ensureUserRegion } from "@/lib/user-region";
+import { PLAN_LIMITS } from "@/lib/limits";
 
 export const metadata: Metadata = {
   title: "Pricing | Lettr — Free AI Resume Builder",
-  description: "Free resume builder with AI bullet rewriting, resume scoring and 3 cover letters a month. Upgrade to Pro for unlimited letters and exports.",
+  description: "Free resume builder with a live ATS score and a free try of every AI tool. Upgrade to Pro for unlimited AI writing, clean PDFs and exports.",
   alternates: { canonical: "/pricing" },
   openGraph: {
     title: "Lettr Pricing — Free to start, upgrade anytime",
-    description: "Free resume builder with AI writing tools and 3 cover letters a month. Pro adds unlimited cover letters, resignation letters and exports. Regional pricing available.",
+    description: "Build and score your resume free, and try every AI tool once. Pro adds unlimited AI writing, clean PDFs, every template and exports. Regional pricing available.",
     url: "/pricing",
   },
 };
 
+const FREE = PLAN_LIMITS.free;
+const PRO = PLAN_LIMITS.pro;
+
 const COMPARISON: { feature: string; free: string | boolean; pro: string | boolean }[] = [
-  { feature: "Resumes", free: "1", pro: "Unlimited" },
+  { feature: "Resumes", free: String(FREE.maxResumes), pro: "Unlimited" },
   { feature: "Templates", free: "2 (Classic, Modern)", pro: `All ${TEMPLATE_IDS.length}` },
-  { feature: "PDF downloads", free: "3", pro: "Unlimited" },
-  { feature: "AI bullet & summary rewriting", free: "5 total", pro: "Unlimited" },
-  { feature: "AI Resume Agent (chat editing)", free: false, pro: true },
+  { feature: "PDF downloads", free: "First one clean, then with a small Lettr line", pro: "Unlimited, no branding" },
+  { feature: "Word (.docx) and Google Drive export", free: false, pro: true },
+  { feature: "Live ATS score", free: true, pro: true },
+  { feature: "Missing keywords for a job post", free: `First ${FREE.keywordsShown}`, pro: "All of them" },
   { feature: "Resume quality score", free: "Score + next best fix", pro: "Full breakdown" },
-  { feature: "Job match / keyword targeting", free: true, pro: true },
-  { feature: "AI cover letter builder", free: "3 a month", pro: "Unlimited, best writing model" },
-  { feature: "AI resignation letter builder", free: false, pro: true },
-  { feature: "DOCX export", free: false, pro: true },
-  { feature: "Google Drive export", free: false, pro: true },
+  { feature: "AI bullet & summary rewriting", free: `${FREE.maxAiWritingAssists} free`, pro: "Unlimited" },
+  { feature: "AI cover letters", free: `${FREE.coverLetters} free`, pro: "Unlimited, best writing model" },
+  { feature: "ATS analyst (AI advice and rewrites)", free: `${FREE.atsAnalyst} free`, pro: `${PRO.atsAnalyst} a month` },
+  { feature: "Interview practice with AI feedback", free: `${FREE.interviewSets} free interview`, pro: `${PRO.interviewSets} a month` },
+  { feature: "AI Resume Agent (chat editing)", free: false, pro: true },
+  { feature: "AI resignation letters", free: false, pro: true },
+  { feature: "Job application tracker", free: `Up to ${FREE.trackedJobs} jobs`, pro: "Unlimited" },
+  { feature: "Any accent colour", free: "8 preset colours", pro: "Any colour" },
 ];
 
 const FAQS = [
@@ -56,11 +64,19 @@ const FAQS = [
   },
   {
     q: "When can I buy Pro?",
-    a: "Pro opens at launch. Until then, the free plan is fully usable, and your resumes will carry over when you upgrade.",
+    a: "Pro opens at launch. Until then, the free plan works as described, and your resumes will carry over when you upgrade.",
   },
   {
     q: "Is there a free plan?",
-    a: "Yes — 1 resume, 2 templates, 3 PDF downloads, 5 free AI bullet/summary rewrites and 3 cover letters a month, no credit card required.",
+    a: "Yes. 1 resume, 2 templates, the live ATS score, a clean PDF download, and a free try of every AI tool: 3 rewrites, a cover letter, an ATS analyst review and a practice interview. No credit card needed.",
+  },
+  {
+    q: "What does \"free once\" mean?",
+    a: "Each AI tool can be tried free once per person, not once per account, so please don't make extra accounts. After that, Pro unlocks it. Free accounts made before 7 October 2026 keep the monthly allowances they signed up with.",
+  },
+  {
+    q: "Can I keep downloading PDFs on the free plan?",
+    a: "Yes. Your first PDF is clean. After that, free PDFs have a small \"Made with Lettr\" line at the bottom of the page. Pro removes it.",
   },
 ];
 
@@ -121,7 +137,8 @@ export default async function PricingPage() {
           Start free. Upgrade when it&apos;s worth it.
         </h1>
         <p className="mt-5 text-slate text-lg max-w-xl mx-auto">
-          Everything you need for one strong resume is free. Pro unlocks the AI writing tools and unlimited downloads.
+          Build, score and download one strong resume free, and try every AI tool once. Pro unlocks unlimited AI and clean
+          downloads.
         </p>
       </section>
 
@@ -135,11 +152,11 @@ export default async function PricingPage() {
               <span className="text-sm text-slate font-bold"> / forever</span>
             </div>
             <ul className="space-y-3 mb-8 flex-1">
-              <FeatureLine included>1 resume</FeatureLine>
-              <FeatureLine included>Classic and Modern templates</FeatureLine>
-              <FeatureLine included>3 PDF downloads</FeatureLine>
-              <FeatureLine included>5 AI rewrites</FeatureLine>
-              <FeatureLine included>Job match and resume score</FeatureLine>
+              <FeatureLine included>1 resume, Classic and Modern templates</FeatureLine>
+              <FeatureLine included>Live ATS score and resume score</FeatureLine>
+              <FeatureLine included>1 clean PDF, then with a small Lettr line</FeatureLine>
+              <FeatureLine included>Try every AI tool once</FeatureLine>
+              <FeatureLine included>Track up to {FREE.trackedJobs} jobs</FeatureLine>
             </ul>
             <Link
               href="/signup"
@@ -180,12 +197,12 @@ export default async function PricingPage() {
                 </p>
                 <ul className="space-y-3 mb-8 flex-1">
                   <FeatureLine included dark={best}>Everything in Free</FeatureLine>
-                  <FeatureLine included dark={best}>Unlimited resumes and PDFs</FeatureLine>
-                  <FeatureLine included dark={best}>All {TEMPLATE_IDS.length} templates</FeatureLine>
-                  <FeatureLine included dark={best}>Unlimited AI writing</FeatureLine>
+                  <FeatureLine included dark={best}>Unlimited resumes, clean PDFs, Word &amp; Drive</FeatureLine>
+                  <FeatureLine included dark={best}>All {TEMPLATE_IDS.length} templates, any colour</FeatureLine>
+                  <FeatureLine included dark={best}>Unlimited AI rewrites &amp; cover letters</FeatureLine>
                   <FeatureLine included dark={best}>AI Resume Agent</FeatureLine>
-                  <FeatureLine included dark={best}>Cover &amp; resignation letters</FeatureLine>
-                  <FeatureLine included dark={best}>Word &amp; Google Drive export</FeatureLine>
+                  <FeatureLine included dark={best}>ATS analyst &amp; interview practice</FeatureLine>
+                  <FeatureLine included dark={best}>All missing keywords, unlimited job tracking</FeatureLine>
                 </ul>
                 <button
                   type="button"
@@ -201,7 +218,7 @@ export default async function PricingPage() {
           })}
         </div>
         <p className="mt-8 text-center text-slate">
-          Pro opens soon. Until then, everything on the free plan is yours to use.
+          Pro opens soon. Until then, everything in the free plan is yours to use.
           {prices.taxNote ? ` ${prices.taxNote}` : ""}
         </p>
       </section>

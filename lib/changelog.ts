@@ -1,6 +1,17 @@
 /** Release notes for /whats-new. Newest first. Keep entries short and in plain words. */
 export const CHANGELOG: { date: string; title: string; items: string[] }[] = [
   {
+    date: "2026-10-07",
+    title: "A simpler free plan",
+    items: [
+      "Every AI tool can now be tried free once: 3 AI rewrites, a cover letter, an ATS analyst review and a practice interview.",
+      "Free PDFs no longer stop: your first is clean, later ones have a small \"Made with Lettr\" line. Pro removes it.",
+      "The free plan shows the first 3 missing keywords for a job post and tracks up to 10 jobs.",
+      "Already have a free account? You keep the monthly allowances you signed up with.",
+      "\"Build my resume\" now takes signed-in users straight to the builder.",
+    ],
+  },
+  {
     date: "2026-10-06",
     title: "ATS score analyst, job tracker and interview practice",
     items: [

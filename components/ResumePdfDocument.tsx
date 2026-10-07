@@ -33,12 +33,24 @@ function layoutFlags(resume: ResumeData) {
  * hidden sections and the date style applied), then applies the Design
  * panel's page size, spacing, photo shape and bold / italic / underline.
  */
-export function ResumePdfDocument({ resume, template = "classic" }: { resume: ResumeData; template?: string }) {
+export const LETTR_PDF_FOOTER = "Made with Lettr · free resume builder";
+
+export function ResumePdfDocument({
+  resume,
+  template = "classic",
+  footer = false,
+}: {
+  resume: ResumeData;
+  template?: string;
+  /** Free plan, after the first clean PDF: a small "Made with Lettr" line. */
+  footer?: boolean;
+}) {
   const c = resume.customization;
   return transformPdf(<TemplatePdf resume={applyLayout(resume)} template={template} />, {
     scale: layoutScale(c),
     pageSize: pageSize(c),
     photoShape: photoShape(c),
+    footer: footer ? LETTR_PDF_FOOTER : undefined,
   }) as ReactElement<DocumentProps>;
 }
 

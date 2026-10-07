@@ -75,7 +75,7 @@ export const CAREER_STAGES: CareerStage[] = [
     helps: [
       "A projects section that turns college work into real experience.",
       "AI rewrites that turn \"helped with\" into what you actually achieved.",
-      "The free plan covers your first resume and three downloads.",
+      "The free plan covers your first resume and a clean PDF download.",
     ],
     cta: "Start my first resume",
     resume: {
@@ -103,7 +103,7 @@ export const CAREER_STAGES: CareerStage[] = [
     helps: [
       "Job match shows which skills the new role asks for, and which you already have.",
       "A summary that leads with what carries over, not your old job title.",
-      "Cover letters that explain your move in a sentence (3 a month free).",
+      "Cover letters that explain your move in a sentence (your first one free).",
     ],
     cta: "Start my career switch",
     resume: {

@@ -186,6 +186,12 @@ const SECTIONS: LegalSection[] = [
           or tracking cookies.
         </p>
         <p>
+          On the free plan we also set one cookie with a random code for your browser. Together with a one-way scrambled
+          code of your email address (we can&apos;t turn it back into the address), it lets us give each person their free
+          AI uses once, rather than once per account. These codes are kept after you delete your account, without your
+          name, email or anything else about you, so the free allowance isn&apos;t reused.
+        </p>
+        <p>
           If you build a resume without an account, your draft is saved in your own browser (local storage) so you
           don&apos;t lose it. It stays on your device until you sign up or clear your browser data.
         </p>
@@ -286,7 +292,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      updated="6 October 2026"
+      updated="7 October 2026"
       intro={<p>What we collect, why, who helps us, and the control you have. We&apos;ve kept it as plain as we can.</p>}
       sections={SECTIONS}
     />

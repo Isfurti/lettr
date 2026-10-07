@@ -3,7 +3,6 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { getAiFeedbackSummary, getAiUsageSummary } from "@/lib/db";
 import {
   AGENT_MONTHLY_CAP,
-  FREE_COVER_LETTERS_PER_MONTH,
   MODELS,
   costWithoutSavingsUsd,
   estimateCostUsd,
@@ -152,7 +151,7 @@ export default async function AdminAiPage() {
         <h2 className="font-brand font-extrabold text-lg mb-3">How costs are kept down</h2>
         <ul className="bg-white border border-rule rounded-[24px] p-6 space-y-2 text-sm text-slate list-disc pl-10">
           <li>AI Resume Agent: prompt caching, so follow-up steps read the resume from cache at about a tenth of the price.</li>
-          <li>Cover letters: Haiku on the free plan ({FREE_COVER_LETTERS_PER_MONTH} a month), Sonnet on Pro.</li>
+          <li>Cover letters: Haiku on the free plan (1 per person), Sonnet on Pro.</li>
           <li>Same resume and job post as before: the saved letter or import is reused for free (kept 30 days).</li>
           <li>
             AI Agent fair use per month: {AGENT_MONTHLY_CAP.full} messages (standard prices), {AGENT_MONTHLY_CAP.mid} (regional),{" "}

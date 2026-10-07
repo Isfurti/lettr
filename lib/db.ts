@@ -172,6 +172,22 @@ function ensureSchema(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_ai_usage_user_feature ON ai_usage_events(user_id, feature, created_at);
       CREATE INDEX IF NOT EXISTS idx_ai_usage_created ON ai_usage_events(created_at);
 
+      -- Free plan: each AI feature once per person. One row per use, matched
+      -- on the account, a one-way code of the (normalised) email and a random
+      -- browser code, so a new account doesn't get a new allowance. Rows stay,
+      -- without the user, after an account is deleted.
+      CREATE TABLE IF NOT EXISTS free_uses (
+        id BIGSERIAL PRIMARY KEY,
+        user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        email_hash TEXT,
+        device_id TEXT,
+        feature TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_free_uses_user ON free_uses(user_id, feature);
+      CREATE INDEX IF NOT EXISTS idx_free_uses_email ON free_uses(email_hash, feature);
+      CREATE INDEX IF NOT EXISTS idx_free_uses_device ON free_uses(device_id, feature);
+
       -- Saved AI results, so asking again with the same resume and job post
       -- is instant and free. Per user, deleted with the account, 30 days max.
       CREATE TABLE IF NOT EXISTS ai_result_cache (
@@ -1070,6 +1086,30 @@ export async function countAiUses(userId: string, feature: string, since: Date):
     [userId, feature, since.toISOString()]
   );
   return res.rows[0].n;
+}
+
+export type FreeUseWho = { userId: string; emailHash: string | null; deviceId: string | null };
+
+/** Free-plan uses of a feature by this person: same account, same email or same browser. */
+export async function countFreeUses(who: FreeUseWho, features: string[]): Promise<number> {
+  await ensureSchema();
+  const res = await pool.query(
+    `SELECT COUNT(*)::int AS n FROM free_uses
+      WHERE feature = ANY($1)
+        AND (user_id = $2 OR ($3::text IS NOT NULL AND email_hash = $3) OR ($4::text IS NOT NULL AND device_id = $4))`,
+    [features, who.userId, who.emailHash, who.deviceId]
+  );
+  return res.rows[0].n;
+}
+
+export async function recordFreeUse(who: FreeUseWho, feature: string) {
+  await ensureSchema();
+  await pool.query("INSERT INTO free_uses (user_id, email_hash, device_id, feature) VALUES ($1, $2, $3, $4)", [
+    who.userId,
+    who.emailHash,
+    who.deviceId,
+    feature,
+  ]);
 }
 
 export type AiUsageSummaryRow = {

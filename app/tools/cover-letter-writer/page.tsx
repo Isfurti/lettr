@@ -5,9 +5,9 @@ import { MarketingPage, WRAP, H2, Faq, faqJsonLd, CtaBand, BTN_BLUE, BTN_OUTLINE
 export const metadata: Metadata = {
   title: "Free AI Cover Letter Writer | Lettr",
   description:
-    "Write a tailored cover letter from your resume and the job post in under a minute. 3 free a month, no card needed. Includes a cover letter format guide and example.",
+    "Write a tailored cover letter from your resume and the job post in under a minute. Your first one is free, no card needed. Includes a cover letter format guide and example.",
   alternates: { canonical: "/tools/cover-letter-writer" },
-  openGraph: { title: "Free AI Cover Letter Writer", description: "Your resume + the job post = a tailored cover letter. 3 free a month.", url: "/tools/cover-letter-writer" },
+  openGraph: { title: "Free AI Cover Letter Writer", description: "Your resume + the job post = a tailored cover letter. Your first one is free.", url: "/tools/cover-letter-writer" },
 };
 
 const STEPS = [
@@ -20,7 +20,7 @@ const STEPS = [
 const FAQ = [
   { q: "Do I still need a cover letter?", a: "Often, yes. Many recruiters skip them, but for competitive roles, career changes and small companies a short, specific letter can tip the balance. A generic one does nothing, which is why Lettr writes it from your own resume and the actual job post." },
   { q: "How long should a cover letter be?", a: "Under a page: three or four short paragraphs, about 200-320 words." },
-  { q: "Is it free?", a: "A free Lettr account writes 3 cover letters a month. Pro has no monthly limit and uses our best writing model." },
+  { q: "Is it free?", a: "A free Lettr account writes your first cover letter free. Pro has no limit and uses our best writing model." },
   { q: "Will it make things up?", a: "No. It only uses achievements that are in your resume. Read it through and add a personal line before you send it." },
 ];
 
@@ -29,7 +29,7 @@ export default function CoverLetterWriterPage() {
     <MarketingPage
       eyebrow="Free tool"
       title="Cover letter writer"
-      intro={<p>Paste the job post. Lettr writes a short, specific cover letter from your own resume, ready to edit and send. 3 free every month.</p>}
+      intro={<p>Paste the job post. Lettr writes a short, specific cover letter from your own resume, ready to edit and send. Your first one is free.</p>}
       jsonLd={faqJsonLd(FAQ)}
     >
       <section className={`${WRAP} pb-14 flex flex-wrap gap-3`}>

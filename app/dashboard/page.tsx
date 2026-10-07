@@ -8,6 +8,7 @@ import { isAdminEmail } from "@/lib/admin-auth";
 import { listResumesForUser, getUserById, listRecentActivity, listInvoicesForUser, listApplications } from "@/lib/db";
 import { formatMoney } from "@/lib/gst";
 import { PLAN_LIMITS, type Plan } from "@/lib/limits";
+import { planAllowances } from "@/lib/free-usage";
 import { scoreResumeQuality } from "@/lib/resume-score";
 import { formatActivityLabel, timeAgo } from "@/lib/activity-format";
 import { displayTitle } from "@/lib/resume-title";
@@ -51,6 +52,7 @@ export default async function DashboardPage({
   const user = foundUser ? await ensureUserRegion(foundUser, headersList) : foundUser;
   const plan = (user?.plan ?? "free") as Plan;
   const resumeLimit = PLAN_LIMITS[plan].maxResumes;
+  const allowances = user && plan === "free" ? await planAllowances(user) : null;
   const atResumeLimit = resumeRows.length >= resumeLimit;
   const { drive_connected, drive_error, import: wantsImport } = await searchParams;
 
@@ -78,8 +80,8 @@ export default async function DashboardPage({
         plan={plan}
         isPaidPro={isPaidPro}
         usage={
-          plan === "free" && user
-            ? { label: "downloads", used: user.pdf_download_count ?? 0, limit: PLAN_LIMITS.free.maxPdfDownloads }
+          allowances
+            ? { label: "AI rewrites", used: allowances.rewrites.used, limit: allowances.rewrites.limit }
             : undefined
         }
       />
@@ -207,7 +209,15 @@ export default async function DashboardPage({
             <div className={`${card} bg-gold-soft`}>
               <p className="font-extrabold flex items-center gap-2">
                 Need a cover letter?
-                {plan !== "pro" && <span className="bg-ink text-gold text-xs font-extrabold px-2 py-0.5 rounded-full">3 free a month</span>}
+                {allowances && (
+                  <span className="bg-ink text-gold text-xs font-extrabold px-2 py-0.5 rounded-full">
+                    {allowances.period === "month"
+                      ? `${allowances.coverLetters.limit} free a month`
+                      : allowances.coverLetters.used >= allowances.coverLetters.limit
+                        ? "Pro"
+                        : "1 free"}
+                  </span>
+                )}
               </p>
               <p className="mt-2 text-slate leading-relaxed flex-1">
                 Lettr writes one from your resume and the job post, in the tone you choose.
@@ -279,7 +289,7 @@ export default async function DashboardPage({
             )}
           </section>
 
-          {plan === "free" && user && (
+          {allowances && user && (
             <section className="bg-white rounded-[28px] border border-rule p-6">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
                 <h2 className="font-brand font-extrabold text-2xl">Your free plan</h2>
@@ -289,9 +299,12 @@ export default async function DashboardPage({
               </div>
               <div className="space-y-5">
                 {[
-                  { label: "Resumes", used: resumes.length, limit: PLAN_LIMITS.free.maxResumes },
-                  { label: "PDF downloads", used: user.pdf_download_count ?? 0, limit: PLAN_LIMITS.free.maxPdfDownloads },
-                  { label: "AI rewrites", used: user.ai_writing_assist_count ?? 0, limit: PLAN_LIMITS.free.maxAiWritingAssists },
+                  { label: "Resumes", used: resumes.length, limit: resumeLimit },
+                  { label: "Clean PDF downloads (no Lettr line)", ...allowances.cleanPdfs },
+                  { label: "AI rewrites", ...allowances.rewrites },
+                  { label: allowances.period === "month" ? "Cover letters this month" : "AI cover letter", ...allowances.coverLetters },
+                  { label: allowances.period === "month" ? "ATS analyst reviews this month" : "ATS analyst review", ...allowances.atsAnalyst },
+                  { label: allowances.period === "month" ? "Practice interviews this month" : "Practice interview", ...allowances.interviewSets },
                 ].map((u) => {
                   const used = Math.min(u.used, u.limit);
                   return (

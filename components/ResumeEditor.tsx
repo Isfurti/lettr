@@ -12,6 +12,7 @@ import Link from "next/link";
 import { extraSections, type ResumeData, type ExperienceEntry, type EducationEntry, type ProjectEntry, type CertificationEntry } from "@/lib/types";
 import { scoreResumeQuality } from "@/lib/resume-score";
 import type { Plan } from "@/lib/limits";
+import type { Allowance, PlanAllowances } from "@/lib/free-usage";
 import { BuilderTabs, MobileViewToggle, LettrNotes, ScoreStamp, goToSection } from "@/components/builder/BuilderChrome";
 import { ScoreRing } from "@/components/ScoreRing";
 import { resolveAccent, getFontPair, darkenHex, softenHex } from "@/lib/customization";
@@ -28,7 +29,7 @@ export function ResumeEditor({
   plan,
   googleDriveConnected,
   userInitial,
-  aiWritingAssistsUsed,
+  allowances,
   initialTab = "edit",
 }: {
   resumeId: string;
@@ -38,7 +39,8 @@ export function ResumeEditor({
   plan: Plan;
   googleDriveConnected: boolean;
   userInitial: string;
-  aiWritingAssistsUsed?: number;
+  /** Free-plan counters ("1 of 1 used"). Not needed on Pro. */
+  allowances?: PlanAllowances;
   initialTab?: "edit" | "score" | "match" | "agent" | "cover-letter" | "resignation-letter";
 }) {
   const router = useRouter();
@@ -49,6 +51,8 @@ export function ResumeEditor({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [tab, setTab] = useState<"edit" | "score" | "match" | "agent" | "cover-letter" | "resignation-letter">(initialTab);
   const [pdfUpgradeRequired, setPdfUpgradeRequired] = useState<string | null>(null);
+  /** Shown after a free-plan PDF that carries the "Made with Lettr" line. */
+  const [pdfFooterNote, setPdfFooterNote] = useState(false);
   const [docxUpgradeRequired, setDocxUpgradeRequired] = useState<string | null>(null);
   const [driveStatus, setDriveStatus] = useState<"idle" | "loading" | "upgrade" | "connect">("idle");
   const [driveLink, setDriveLink] = useState<string | null>(null);
@@ -93,6 +97,7 @@ export function ResumeEditor({
       setSaveError(body.error ?? "Couldn't create the PDF. Please try again.");
       return null;
     }
+    setPdfFooterNote(res.headers.get("X-Lettr-Footer") === "1");
     return { blob: await res.blob(), name: `${(data.contact.fullName || "resume").replace(/\s+/g, "_")}.pdf` };
   }
 
@@ -315,6 +320,25 @@ export function ResumeEditor({
         </div>
       </header>
 
+      {pdfFooterNote && !(saveError || upgradeMessage) && (
+        <div className="bg-gold-soft text-ink px-4 sm:px-6 py-3 flex items-center justify-between gap-3 text-sm">
+          <span>
+            Your PDF is ready. Free PDFs after your first have a small &ldquo;Made with Lettr&rdquo; line at the bottom.
+          </span>
+          <div className="flex items-center gap-3 shrink-0">
+            <Link href="/pricing" className="underline font-bold">
+              Remove it with Pro →
+            </Link>
+            <button
+              onClick={() => setPdfFooterNote(false)}
+              aria-label="Dismiss"
+              className="w-10 h-10 rounded-full hover:bg-gold/40"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
       {(saveError || upgradeMessage || driveStatus === "upgrade") && (
         <div className="bg-red-50 text-red-700 px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <span>{saveError || upgradeMessage || "Google Drive export is a Pro feature."}</span>
@@ -397,7 +421,7 @@ export function ResumeEditor({
         <h1 className="sr-only">Resume builder</h1>
         <div className={`overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 ${mobileView === "preview" ? "hidden lg:block" : ""}`}>
           {tab === "edit" && (
-            <EditForm data={data} setData={setData} plan={plan} aiWritingAssistsUsed={aiWritingAssistsUsed} template={template} setTemplate={setTemplate} />
+            <EditForm data={data} setData={setData} plan={plan} rewrites={allowances?.rewrites} template={template} setTemplate={setTemplate} />
           )}
           {tab === "agent" && (
             <UpgradeGate locked={plan === "free"} feature="The AI Resume Agent">
@@ -405,8 +429,16 @@ export function ResumeEditor({
             </UpgradeGate>
           )}
           {tab === "score" && <ScorePanel data={data} plan={plan} />}
-          {tab === "match" && <AtsPanel data={data} template={template} onFix={goFix} />}
-          {tab === "cover-letter" && <CoverLetterPanel data={data} plan={plan} />}
+          {tab === "match" && (
+            <AtsPanel
+              data={data}
+              template={template}
+              onFix={goFix}
+              keywordsShown={allowances?.keywordsShown}
+              analyst={allowances ? { ...allowances.atsAnalyst, period: allowances.period } : undefined}
+            />
+          )}
+          {tab === "cover-letter" && <CoverLetterPanel data={data} plan={plan} allowance={allowances?.coverLetters} period={allowances?.period} />}
           {tab === "resignation-letter" && (
             <UpgradeGate locked={plan === "free"} feature="The resignation letter builder">
               <ResignationLetterPanel initialName={data.contact.fullName} />
@@ -475,7 +507,7 @@ export function EditForm({
   data,
   setData,
   plan,
-  aiWritingAssistsUsed,
+  rewrites,
   guest = false,
   template,
   setTemplate,
@@ -483,7 +515,7 @@ export function EditForm({
   data: ResumeData;
   setData: React.Dispatch<React.SetStateAction<ResumeData>>;
   plan?: Plan;
-  aiWritingAssistsUsed?: number;
+  rewrites?: Allowance;
   /** For the template picker in the Design panel. */
   template?: string;
   setTemplate?: (t: string) => void;
@@ -570,15 +602,19 @@ export function EditForm({
 
   return (
     <div className="space-y-10 max-w-xl mx-auto lg:mx-0">
-      {plan === "free" && aiWritingAssistsUsed !== undefined && (
+      {plan === "free" && rewrites && Number.isFinite(rewrites.limit) && (
         <div className="bg-white border border-rule rounded-xl p-3 flex items-center justify-between text-xs">
           <span className="text-ink-soft">
-            AI bullet/summary rewrites: <strong className="text-ink">{Math.min(aiWritingAssistsUsed, 5)} of 5</strong> free uses
+            AI bullet/summary rewrites:{" "}
+            <strong className="text-ink">
+              {Math.min(rewrites.used, rewrites.limit)} of {rewrites.limit}
+            </strong>{" "}
+            free uses
           </span>
-          {aiWritingAssistsUsed >= 5 ? (
+          {rewrites.used >= rewrites.limit ? (
             <Link href="/pricing" className="text-brand-blue font-medium hover:underline">Upgrade for unlimited →</Link>
           ) : (
-            <span className="text-ink-soft">{5 - aiWritingAssistsUsed} left</span>
+            <span className="text-ink-soft">{rewrites.limit - rewrites.used} left</span>
           )}
         </div>
       )}
@@ -1326,7 +1362,17 @@ export function ScorePanel({ data, plan }: { data: ResumeData; plan: Plan }) {
 
 // ---------- Cover letter panel ----------
 
-function CoverLetterPanel({ data, plan }: { data: ResumeData; plan: Plan }) {
+function CoverLetterPanel({
+  data,
+  plan,
+  allowance,
+  period = "lifetime",
+}: {
+  data: ResumeData;
+  plan: Plan;
+  allowance?: Allowance;
+  period?: "lifetime" | "month";
+}) {
   const [jd, setJd] = useState("");
   const [company, setCompany] = useState("");
   const [letter, setLetter] = useState("");
@@ -1385,11 +1431,13 @@ function CoverLetterPanel({ data, plan }: { data: ResumeData; plan: Plan }) {
     <div className="max-w-xl space-y-4">
       {plan === "free" && (
         <p className="text-sm text-slate bg-white border border-rule rounded-xl px-4 py-3">
-          Free plan: 3 cover letters a month.{" "}
+          {period === "lifetime"
+            ? `Free plan: ${allowance?.limit ?? 1} free cover letter${(allowance?.limit ?? 1) === 1 ? "" : "s"}${allowance && allowance.used >= allowance.limit ? " (used)" : ""}.`
+            : `Free plan: ${allowance?.limit ?? 3} cover letters a month.`}{" "}
           <Link href="/pricing" className="font-bold text-brand-blue underline">
             Pro
           </Link>{" "}
-          has no monthly limit and uses our best writing model.
+          has no limit and uses our best writing model.
         </p>
       )}
       <Section title="Target role">
@@ -1428,7 +1476,7 @@ function CoverLetterPanel({ data, plan }: { data: ResumeData; plan: Plan }) {
               {reused
                 ? "Same resume and job post as last time, so here's the letter we already wrote."
                 : remaining !== null
-                ? `${remaining} free cover letter${remaining === 1 ? "" : "s"} left this month.`
+                ? `${remaining} free cover letter${remaining === 1 ? "" : "s"} left${period === "month" ? " this month" : ""}.`
                 : ""}
             </p>
             <div className="flex gap-1">

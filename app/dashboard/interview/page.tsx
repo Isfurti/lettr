@@ -3,10 +3,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-auth";
-import { countAiUses, getUserById, listInterviewSessions, listResumesForUser } from "@/lib/db";
+import { getUserById, listInterviewSessions, listResumesForUser } from "@/lib/db";
 import { displayTitle } from "@/lib/resume-title";
-import { monthStartIST } from "@/lib/ai-costs";
 import { PLAN_LIMITS, type Plan } from "@/lib/limits";
+import { usageContext, usedSoFar } from "@/lib/free-usage";
 import type { ResumeData } from "@/lib/types";
 import { AppSidebar } from "@/components/AppSidebar";
 import { StartInterview } from "@/components/interview/InterviewPractice";
@@ -17,16 +17,13 @@ export default async function InterviewPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
   const userId = (session.user as { id: string }).id;
-  const [user, rows, sessions, usedSets] = await Promise.all([
-    getUserById(userId),
-    listResumesForUser(userId),
-    listInterviewSessions(userId),
-    countAiUses(userId, "interview", monthStartIST()),
-  ]);
+  const [user, rows, sessions] = await Promise.all([getUserById(userId), listResumesForUser(userId), listInterviewSessions(userId)]);
   const plan = (user?.plan ?? "free") as Plan;
+  const ctx = await usageContext(user ?? { id: userId, email: session.user.email });
+  const usedSets = await usedSoFar(ctx, "interview");
   const resumes = rows.map((r) => ({ ...r, data: JSON.parse(r.data) as ResumeData }));
   const defaultRole = resumes.map((r) => r.data.experience[0]?.role?.trim()).find(Boolean) ?? "";
-  const limit = PLAN_LIMITS[plan].interviewSetsPerMonth;
+  const limit = PLAN_LIMITS[ctx.tier].interviewSets;
   const left = Math.max(0, limit - usedSets);
 
   return (
@@ -39,7 +36,15 @@ export default async function InterviewPage() {
         <StartInterview
           resumes={resumes.map((r) => ({ id: r.id, title: displayTitle(r) }))}
           defaultRole={defaultRole}
-          limitNote={plan === "free" ? `${left} of ${limit} free practice interviews left this month.` : `${left} left this month.`}
+          limitNote={
+            ctx.tier === "free"
+              ? left > 0
+                ? "Your free practice interview: 6 questions with feedback on each answer."
+                : "You've used your free practice interview. Pro gives you 40 a month."
+              : ctx.tier === "free_legacy"
+                ? `${left} of ${limit} free practice interviews left this month.`
+                : `${left} left this month.`
+          }
         />
 
         <section className="mt-10">

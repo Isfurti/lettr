@@ -46,9 +46,9 @@ describe("job applications", () => {
 
 describe("interview practice limits", () => {
   it("gives free users a few sets a month and Pro many more", () => {
-    expect(canUseInterviewPractice("free", "set", 1).allowed).toBe(true);
-    expect(canUseInterviewPractice("free", "set", 2).allowed).toBe(false);
+    expect(canUseInterviewPractice("free_legacy", "set", 1).allowed).toBe(true);
+    expect(canUseInterviewPractice("free_legacy", "set", 2).allowed).toBe(false);
     expect(canUseInterviewPractice("pro", "set", 39).allowed).toBe(true);
-    expect(canUseInterviewPractice("free", "feedback", 15).allowed).toBe(false);
+    expect(canUseInterviewPractice("free_legacy", "feedback", 15).allowed).toBe(false);
   });
 });

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { countAiUses, getUserById } from "@/lib/db";
+import { getUserById } from "@/lib/db";
 import { atsAnalystAdvice } from "@/lib/ai";
 import { analyzeAts } from "@/lib/ats-analyst";
 import { trackAiUsage } from "@/lib/ai-usage";
-import { monthStartIST } from "@/lib/ai-costs";
+import { recordUse, usageContext, usedSoFar } from "@/lib/free-usage";
 import { canUseAtsAnalyst, type Plan } from "@/lib/limits";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import type { ResumeData } from "@/lib/types";
@@ -30,7 +30,8 @@ export async function POST(req: Request) {
 
   const user = await getUserById(userId);
   const plan = (user?.plan ?? "free") as Plan;
-  const check = canUseAtsAnalyst(plan, await countAiUses(userId, "ats_analyst", monthStartIST()));
+  const ctx = await usageContext(user ?? { id: userId, email: session?.user?.email });
+  const check = canUseAtsAnalyst(ctx.tier, await usedSoFar(ctx, "ats_analyst"));
   if (!check.allowed) return NextResponse.json({ error: check.reason, upgradeRequired: plan === "free" }, { status: 402 });
   const rate = await checkAndRecordRateLimit(userId, "ats-analyst", 10, 10);
   if (!rate.allowed) return NextResponse.json({ error: `Too many requests. Try again in ${rate.retryAfterSeconds}s.` }, { status: 429 });
@@ -45,6 +46,7 @@ export async function POST(req: Request) {
       missingKeywords: report.keywords?.missingKeywords ?? [],
     });
     await trackAiUsage({ userId, feature: "ats_analyst", model, usage });
+    await recordUse(ctx, "ats_analyst");
     return NextResponse.json({ advice: value });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "The analyst couldn't finish." }, { status: 502 });

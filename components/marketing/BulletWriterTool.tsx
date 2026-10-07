@@ -68,7 +68,7 @@ export function BulletWriterTool() {
       <button type="button" onClick={rewrite} disabled={busy} className="btn-press mt-4 inline-flex items-center min-h-12 px-6 rounded-full bg-brand-blue text-white font-bold shadow-[0_4px_0_var(--brand-blue-deep)] disabled:opacity-60">
         {busy ? "Writing…" : "✦ Write my bullet"}
       </button>
-      {!signedIn && <p className="text-xs text-slate mt-2">One free rewrite a day without an account. A free account gets 5 more.</p>}
+      {!signedIn && <p className="text-xs text-slate mt-2">One free rewrite a day without an account. A free account gets 3 more.</p>}
       {error && (
         <p className="text-sm text-red-700 mt-3">
           {error.text}{" "}

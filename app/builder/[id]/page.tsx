@@ -4,6 +4,7 @@ import { getResume, getUserById } from "@/lib/db";
 import { ResumeEditor } from "@/components/ResumeEditor";
 import type { ResumeData } from "@/lib/types";
 import type { Plan } from "@/lib/limits";
+import { planAllowances } from "@/lib/free-usage";
 
 const TABS = ["edit", "score", "match", "agent", "cover-letter", "resignation-letter"] as const;
 
@@ -29,6 +30,7 @@ export default async function BuilderPage({
   const plan = (user?.plan ?? "free") as Plan;
   const googleDriveConnected = Boolean(user?.google_refresh_token);
   const userInitial = (session.user.name || session.user.email || "?")[0]?.toUpperCase();
+  const allowances = user && plan === "free" ? await planAllowances(user) : undefined;
 
   return (
     <ResumeEditor
@@ -39,7 +41,7 @@ export default async function BuilderPage({
       plan={plan}
       googleDriveConnected={googleDriveConnected}
       userInitial={userInitial}
-      aiWritingAssistsUsed={user?.ai_writing_assist_count ?? 0}
+      allowances={allowances}
       initialTab={initialTab}
     />
   );

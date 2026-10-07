@@ -26,9 +26,6 @@ export function coverLetterModel(plan: "free" | "pro"): ModelId {
   return plan === "pro" ? MODELS.sonnet : MODELS.haiku;
 }
 
-/** Free plan: a few cover letters a month on the fast model. */
-export const FREE_COVER_LETTERS_PER_MONTH = 3;
-
 /**
  * AI Agent messages a Pro user can send per calendar month (India time).
  * Lower where prices are lower, so a heavy user can't cost more than they pay.

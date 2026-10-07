@@ -103,10 +103,16 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          The Free plan includes {PLAN_LIMITS.free.maxResumes} resume, {PLAN_LIMITS.free.maxPdfDownloads} PDF downloads,{" "}
-          {PLAN_LIMITS.free.maxAiWritingAssists} AI rewrites and the Classic and Modern templates. Pro unlocks the rest. The
-          plans on offer (for example Monthly, a 3-month pass and Yearly) and their prices are shown on our{" "}
-          <Link href="/pricing">pricing page</Link>.
+          The Free plan includes {PLAN_LIMITS.free.maxResumes} resume, the Classic and Modern templates, the ATS score and a
+          one-time free try of the AI features ({PLAN_LIMITS.free.maxAiWritingAssists} AI rewrites, 1 cover letter, 1 ATS
+          analyst review and 1 practice interview). Your first PDF is free of any Lettr branding; later free PDFs carry a small
+          &quot;Made with Lettr&quot; line. Pro unlocks the rest. The plans on offer (for example Monthly, a 3-month pass and
+          Yearly) and their prices are shown on our <Link href="/pricing">pricing page</Link>.
+        </p>
+        <p>
+          The free allowances are once per person, not per account. Creating extra accounts to get more free use isn&apos;t
+          allowed; we may match accounts by email address and browser to apply this. Free accounts created before 7 October
+          2026 keep the monthly allowances they signed up with.
         </p>
         <p>
           Prices are set for your country. Prices in Indian rupees include GST. Whether a plan renews automatically, and
@@ -250,7 +256,7 @@ export default function TermsPage() {
   return (
     <LegalPage
       title="Terms of Service"
-      updated="6 October 2026"
+      updated="7 October 2026"
       intro={<p>The rules for using Lettr, in plain language. Please read them before you sign up or pay.</p>}
       sections={SECTIONS}
     />

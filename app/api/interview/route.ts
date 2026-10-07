@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { countAiUses, createInterviewSession, getResume, getUserById } from "@/lib/db";
+import { createInterviewSession, getResume, getUserById } from "@/lib/db";
 import { generateInterviewQuestions } from "@/lib/ai";
 import { trackAiUsage } from "@/lib/ai-usage";
-import { monthStartIST } from "@/lib/ai-costs";
 import { canUseInterviewPractice, type Plan } from "@/lib/limits";
+import { recordUse, usageContext, usedSoFar } from "@/lib/free-usage";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import type { ResumeData } from "@/lib/types";
 
@@ -28,8 +28,9 @@ export async function POST(req: Request) {
 
   const user = await getUserById(userId);
   const plan = (user?.plan ?? "free") as Plan;
-  const used = await countAiUses(userId, "interview", monthStartIST());
-  const check = canUseInterviewPractice(plan, "set", used);
+  const ctx = await usageContext(user ?? { id: userId, email: session?.user?.email });
+  const used = await usedSoFar(ctx, "interview");
+  const check = canUseInterviewPractice(ctx.tier, "set", used);
   if (!check.allowed) return NextResponse.json({ error: check.reason, upgradeRequired: plan === "free" }, { status: 402 });
 
   const rate = await checkAndRecordRateLimit(userId, "interview", 10, 10);
@@ -44,6 +45,7 @@ export async function POST(req: Request) {
   try {
     const { value, model, usage } = await generateInterviewQuestions({ ...parsed.data, resume });
     await trackAiUsage({ userId, feature: "interview", model, usage });
+    await recordUse(ctx, "interview");
     const row = await createInterviewSession(
       userId,
       parsed.data.role,
