@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MarketingPage, WRAP, H2, CtaBand } from "@/components/marketing/MarketingPage";
-import { COMPANY } from "@/lib/company";
+import { COMPANY, SELLER } from "@/lib/company";
 
 export const metadata: Metadata = {
   title: "About Lettr | AI Resume Builder from India",
-  description: `Lettr helps job seekers build honest, job-ready resumes, practise interviews and track applications. Made in Meerut, India by ${COMPANY.legalName}.`,
+  description: "Lettr helps job seekers build honest, job-ready resumes, practise interviews and track applications. Made in India.",
   alternates: { canonical: "/about" },
 };
 
@@ -71,12 +71,25 @@ export default function AboutPage() {
         <div className={`${WRAP} py-14`}>
           <h2 className={H2}>Who we are</h2>
           <p className="mt-4 text-lg text-slate max-w-3xl leading-relaxed">
-            Lettr is made by <strong className="text-ink">{COMPANY.legalName}</strong>, {COMPANY.addressLines.join(", ")}. Questions, ideas or
-            problems? Email{" "}
-            <a href={`mailto:${COMPANY.contactEmail}`} className="font-bold text-brand-blue underline">
-              {COMPANY.contactEmail}
-            </a>{" "}
-            or visit our <Link href="/support" className="font-bold text-brand-blue underline">help page</Link>. See what we&apos;ve shipped lately on{" "}
+            Lettr is made in India
+            {SELLER ? (
+              <>
+                {" "}by <strong className="text-ink">{SELLER.legalName}</strong>, {SELLER.addressLines.join(", ")}
+              </>
+            ) : null}
+            . Questions, ideas or problems?{" "}
+            {COMPANY.contactEmail ? (
+              <>
+                Email{" "}
+                <a href={`mailto:${COMPANY.contactEmail}`} className="font-bold text-brand-blue underline">
+                  {COMPANY.contactEmail}
+                </a>{" "}
+                or visit
+              </>
+            ) : (
+              "Write to us from"
+            )}{" "}
+            our <Link href="/support" className="font-bold text-brand-blue underline">help page</Link>. See what we&apos;ve shipped lately on{" "}
             <Link href="/whats-new" className="font-bold text-brand-blue underline">What&apos;s new</Link>.
           </p>
         </div>

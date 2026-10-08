@@ -51,14 +51,18 @@ export default function SupportPage() {
             <div className="mt-8 bg-white rounded-2xl border border-rule p-5 text-slate leading-relaxed">
               <p className="font-extrabold text-ink">Contact and grievances</p>
               <p className="mt-1">
-                Lettr is run by {COMPANY.legalName}, {COMPANY.addressLines.join(", ")}.
-              </p>
-              <p className="mt-1">
-                Email{" "}
-                <a href={`mailto:${COMPANY.contactEmail}`} className="font-bold text-brand-blue hover:underline">
-                  {COMPANY.contactEmail}
-                </a>
-                . Grievance officer: {COMPANY.grievanceOfficer.name}.
+                {COMPANY.contactEmail ? (
+                  <>
+                    Email{" "}
+                    <a href={`mailto:${COMPANY.contactEmail}`} className="font-bold text-brand-blue hover:underline">
+                      {COMPANY.contactEmail}
+                    </a>{" "}
+                    or use the form on this page.
+                  </>
+                ) : (
+                  "Use the form on this page. A real person reads every message."
+                )}{" "}
+                Grievance officer: {COMPANY.grievanceOfficer.name}.
               </p>
             </div>
           </div>

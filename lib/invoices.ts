@@ -1,4 +1,4 @@
-import { COMPANY, getGstConfig } from "./company";
+import { getGstConfig, SELLER, type Seller } from "./company";
 import { computeGst, financialYear, formatInvoiceNumber, stateCodeFromGstin, validateGstin } from "./gst";
 import { createInvoiceRecord, type InvoiceRow } from "./db";
 
@@ -27,16 +27,16 @@ export type IssueInvoiceInput = {
  * invoicing is switched off (COMPANY_GSTIN=off). Call it from the payment
  * provider's "payment succeeded" webhook.
  */
-export async function issueGstInvoice(input: IssueInvoiceInput): Promise<InvoiceRow | null> {
-  const config = getGstConfig();
-  if (!config) return null;
+export async function issueGstInvoice(input: IssueInvoiceInput, seller: Seller | null = SELLER): Promise<InvoiceRow | null> {
+  const config = getGstConfig(process.env, seller);
+  if (!config || !seller) return null;
   const issuedAt = input.issuedAt ?? new Date();
   const buyerGstin = validateGstin(input.buyerGstin);
   const country = (input.buyerCountry || "IN").toUpperCase();
   const buyerStateCode = buyerGstin ? stateCodeFromGstin(buyerGstin) : input.buyerStateCode || null;
   const gst = computeGst({
     total: input.total,
-    sellerStateCode: COMPANY.stateCode,
+    sellerStateCode: seller.stateCode,
     buyerCountry: country,
     buyerStateCode,
   });
@@ -66,15 +66,25 @@ export async function issueGstInvoice(input: IssueInvoiceInput): Promise<Invoice
   );
 }
 
+/** Stand-in company for the invoice preview while Lettr has no company of its own. */
+export const PLACEHOLDER_SELLER: Seller = {
+  legalName: "Your Company Pvt. Ltd.",
+  addressLines: ["Registered office address", "City, State, India"],
+  city: "City",
+  state: "Uttar Pradesh",
+  stateCode: "09",
+  gstin: "09AAAAA0000A1Z5",
+};
+
 /** A made-up invoice for previewing the layout. Never saved. */
-export function sampleInvoice(kind: "intra" | "inter" | "export" = "intra"): InvoiceRow {
-  const config = getGstConfig() ?? { gstin: COMPANY.gstin, sac: "998314", invoicePrefix: "LTR" };
+export function sampleInvoice(kind: "intra" | "inter" | "export" = "intra", seller: Seller = SELLER ?? PLACEHOLDER_SELLER): InvoiceRow {
+  const config = getGstConfig(process.env, seller) ?? { gstin: seller.gstin, sac: "998314", invoicePrefix: "LTR" };
   const now = new Date();
   const fy = financialYear(now);
   const country = kind === "export" ? "US" : "IN";
   const state = kind === "inter" ? "27" : "09";
   const total = kind === "export" ? 4900 : 149900;
-  const gst = computeGst({ total, sellerStateCode: COMPANY.stateCode, buyerCountry: country, buyerStateCode: state });
+  const gst = computeGst({ total, sellerStateCode: seller.stateCode, buyerCountry: country, buyerStateCode: state });
   return {
     id: "sample",
     number: formatInvoiceNumber(config.invoicePrefix, fy, 1),

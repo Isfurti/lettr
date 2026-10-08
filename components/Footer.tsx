@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
-import { COMPANY } from "@/lib/company";
+import { COMPANY, SELLER } from "@/lib/company";
 
 const COLUMNS = [
   {
@@ -61,12 +61,24 @@ export function Footer() {
       <div className="border-t border-rule">
         <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-8 lg:px-14 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate">
           <p>
-            © {new Date().getFullYear()} Lettr is a product of <span className="font-bold text-ink">{COMPANY.legalName}</span>,{" "}
-            {COMPANY.addressLines.join(", ")}. GSTIN {COMPANY.gstin}.
+            © {new Date().getFullYear()} Lettr
+            {SELLER && (
+              <>
+                {" "}is a product of <span className="font-bold text-ink">{SELLER.legalName}</span>, {SELLER.addressLines.join(", ")}.
+                GSTIN {SELLER.gstin}
+              </>
+            )}
+            .
           </p>
-          <a href={`mailto:${COMPANY.contactEmail}`} className="inline-flex items-center min-h-10 font-bold hover:text-brand-blue">
-            {COMPANY.contactEmail}
-          </a>
+          {COMPANY.contactEmail ? (
+            <a href={`mailto:${COMPANY.contactEmail}`} className="inline-flex items-center min-h-10 font-bold hover:text-brand-blue">
+              {COMPANY.contactEmail}
+            </a>
+          ) : (
+            <Link href={COMPANY.contactUrl} className="inline-flex items-center min-h-10 font-bold hover:text-brand-blue">
+              Contact us
+            </Link>
+          )}
         </div>
       </div>
     </footer>

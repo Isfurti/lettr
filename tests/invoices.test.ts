@@ -2,7 +2,10 @@ import { describe, it, expect, afterAll } from "vitest";
 import { randomUUID } from "node:crypto";
 import { createUser, listInvoicesForUser, deleteUserAccount } from "@/lib/db";
 import pool from "@/lib/db";
-import { issueGstInvoice } from "@/lib/invoices";
+import { issueGstInvoice as issue, PLACEHOLDER_SELLER } from "@/lib/invoices";
+
+// Lettr has no company of its own yet, so invoicing is off in the app; test with a stand-in one.
+const issueGstInvoice = (input: Parameters<typeof issue>[0]) => issue(input, PLACEHOLDER_SELLER);
 
 afterAll(async () => {
   await pool.end();
@@ -29,7 +32,7 @@ describe("GST invoices", () => {
     expect(a!.financial_year).toBe("2099-00");
     expect(b!.serial).toBe(a!.serial + 1);
     expect(b!.number).toMatch(/^LTR\/2099-00\/\d{4}$/);
-    expect(a!.seller_gstin).toBe("09AALCN4402B1ZS");
+    expect(a!.seller_gstin).toBe("09AAAAA0000A1Z5");
   });
 
   it("never creates two invoices for the same payment", async () => {
@@ -59,5 +62,11 @@ describe("GST invoices", () => {
     const res = await pool.query("SELECT user_id, buyer_email FROM invoices WHERE id = $1", [inv!.id]);
     expect(res.rows[0].user_id).toBeNull();
     expect(res.rows[0].buyer_email).toBe(`buyer-${userId}@example.com`);
+  });
+});
+
+describe("without a company", () => {
+  it("issues no invoice", async () => {
+    expect(await issue({ ...base(randomUUID()), userId: null, paymentRef: `pay-${randomUUID()}` })).toBeNull();
   });
 });

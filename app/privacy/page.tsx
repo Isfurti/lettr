@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage, type LegalSection } from "@/components/LegalPage";
-import { COMPANY } from "@/lib/company";
+import { COMPANY, SELLER } from "@/lib/company";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Lettr",
@@ -10,7 +10,12 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-const mail = <a href={`mailto:${COMPANY.contactEmail}`}>{COMPANY.contactEmail}</a>;
+// Until Lettr has a public email address, people reach us through the help page.
+const mail = COMPANY.contactEmail ? (
+  <a href={`mailto:${COMPANY.contactEmail}`}>{COMPANY.contactEmail}</a>
+) : (
+  <Link href={COMPANY.contactUrl}>our help page</Link>
+);
 
 const SECTIONS: LegalSection[] = [
   {
@@ -18,7 +23,14 @@ const SECTIONS: LegalSection[] = [
     title: "Who looks after your data",
     body: (
       <p>
-        Lettr is run by <strong>{COMPANY.legalName}</strong>, {COMPANY.addressLines.join(", ")}. We decide how your
+        {SELLER ? (
+          <>
+            Lettr is run by <strong>{SELLER.legalName}</strong>, {SELLER.addressLines.join(", ")}.
+          </>
+        ) : (
+          <>Lettr is an online resume builder made in India.</>
+        )}{" "}
+        We decide how your
         personal data is used for Lettr, so we are responsible for it (the &quot;data fiduciary&quot; under India&apos;s
         Digital Personal Data Protection Act, 2023, and the &quot;controller&quot; under the EU and UK GDPR).
       </p>
@@ -235,7 +247,7 @@ const SECTIONS: LegalSection[] = [
           If you&apos;re in the EU or UK, you also have the GDPR rights to get a copy of your data in a portable format, to
           object to or restrict some processing, and to complain to your local data protection authority.
         </p>
-        <p>To use any of these rights, email {mail}. We&apos;ll reply within 30 days.</p>
+        <p>To use any of these rights, contact us through {mail}. We&apos;ll reply within 30 days.</p>
       </>
     ),
   },
@@ -275,9 +287,8 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          Grievance officer: <strong>{COMPANY.grievanceOfficer.name}</strong>, {COMPANY.legalName},{" "}
-          {COMPANY.addressLines.join(", ")}. Email:{" "}
-          <a href={`mailto:${COMPANY.grievanceOfficer.email}`}>{COMPANY.grievanceOfficer.email}</a>.
+          Grievance officer: <strong>{COMPANY.grievanceOfficer.name}</strong>
+          {SELLER ? `, ${SELLER.legalName}, ${SELLER.addressLines.join(", ")}` : ""}. Contact: {mail}.
         </p>
         <p>
           We acknowledge complaints within 48 hours and aim to resolve them within one month. You can also reach us through
@@ -292,7 +303,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      updated="7 October 2026"
+      updated="8 October 2026"
       intro={<p>What we collect, why, who helps us, and the control you have. We&apos;ve kept it as plain as we can.</p>}
       sections={SECTIONS}
     />

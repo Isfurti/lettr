@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-auth";
 import { listInvoices } from "@/lib/db";
-import { COMPANY, getGstConfig } from "@/lib/company";
+import { SELLER, getGstConfig } from "@/lib/company";
 import { formatMoney } from "@/lib/gst";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { AdminStatCard } from "@/components/AdminWidgets";
@@ -34,8 +34,9 @@ export default async function AdminInvoicesPage({ searchParams }: { searchParams
       <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 w-full max-w-6xl">
         <h1 className="font-brand font-extrabold text-[36px] tracking-tight mb-1">Invoices</h1>
         <p className="text-slate mb-6">
-          GST invoices issued by {COMPANY.legalName}
-          {config ? ` · GSTIN ${config.gstin} · SAC ${config.sac} · numbers like ${config.invoicePrefix}/2026-27/0001` : " · invoicing is switched off"}
+          {SELLER && config
+            ? `GST invoices issued by ${SELLER.legalName} · GSTIN ${config.gstin} · SAC ${config.sac} · numbers like ${config.invoicePrefix}/2026-27/0001`
+            : "Invoicing is off until Lettr's own company and GSTIN are set up. The sample shows the layout with placeholder details."}
         </p>
 
         <div className="flex flex-wrap items-center gap-2 mb-6">

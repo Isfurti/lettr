@@ -1,17 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage, type LegalSection } from "@/components/LegalPage";
-import { COMPANY } from "@/lib/company";
+import { COMPANY, SELLER, operatorName } from "@/lib/company";
 import { PLAN_LIMITS } from "@/lib/limits";
 
 export const metadata: Metadata = {
   title: "Terms of Service | Lettr",
-  description: "The terms that govern your use of Lettr, a product of Noonscope Media Pvt. Ltd.",
+  description: "The terms that govern your use of Lettr, the AI resume builder.",
   alternates: { canonical: "/terms" },
   robots: { index: true, follow: true },
 };
 
-const mail = <a href={`mailto:${COMPANY.contactEmail}`}>{COMPANY.contactEmail}</a>;
+// Until Lettr has a public email address, people reach us through the help page.
+const mail = COMPANY.contactEmail ? (
+  <a href={`mailto:${COMPANY.contactEmail}`}>{COMPANY.contactEmail}</a>
+) : (
+  <Link href={COMPANY.contactUrl}>our help page</Link>
+);
+const owner = operatorName();
 
 const SECTIONS: LegalSection[] = [
   {
@@ -20,8 +26,14 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          Lettr is a product of <strong>{COMPANY.legalName}</strong>, a company registered in India with its office at{" "}
-          {COMPANY.addressLines.join(", ")} (&quot;Lettr&quot;, &quot;we&quot;, &quot;us&quot;).
+          {SELLER ? (
+            <>
+              Lettr is a product of <strong>{SELLER.legalName}</strong>, a company registered in India with its office at{" "}
+              {SELLER.addressLines.join(", ")} (&quot;Lettr&quot;, &quot;we&quot;, &quot;us&quot;).
+            </>
+          ) : (
+            <>Lettr (&quot;Lettr&quot;, &quot;we&quot;, &quot;us&quot;) is an online resume builder made in India.</>
+          )}
         </p>
         <p>
           These terms apply to the Lettr website and app. By creating an account or using Lettr, you agree to them. If you
@@ -40,7 +52,7 @@ const SECTIONS: LegalSection[] = [
           the builder and the free resume checker.
         </p>
         <p>
-          Keep your login details safe. You&apos;re responsible for what happens in your account. Tell us at {mail} if you
+          Keep your login details safe. You&apos;re responsible for what happens in your account. Tell us through {mail} if you
           think someone else has used it.
         </p>
       </>
@@ -120,8 +132,8 @@ const SECTIONS: LegalSection[] = [
           checkout. We don&apos;t see or store your full card or bank details.
         </p>
         <p>
-          For payments in India we issue a GST invoice in the name of {COMPANY.legalName}. Business customers can add
-          their GSTIN at checkout.
+          For payments in India we issue a GST invoice{SELLER ? ` in the name of ${SELLER.legalName}` : ""}. Business
+          customers can add their GSTIN at checkout.
         </p>
         <p>
           If we change the price of a plan you already pay for, the new price applies from your next renewal, and
@@ -141,7 +153,7 @@ const SECTIONS: LegalSection[] = [
         </p>
         <p>
           Payments are not refundable for time already started, except where the law requires it or where we made a
-          mistake. If you were charged twice or charged in error, email {mail} within 7 days and we&apos;ll refund it.
+          mistake. If you were charged twice or charged in error, contact us through {mail} within 7 days and we&apos;ll refund it.
         </p>
       </>
     ),
@@ -173,7 +185,7 @@ const SECTIONS: LegalSection[] = [
     title: "Lettr's templates and content",
     body: (
       <p>
-        The Lettr app, templates, designs, example resumes and brand belong to {COMPANY.legalName}. You can use them to
+        The Lettr app, templates, designs, example resumes and brand belong to {owner}. You can use them to
         create and send your own resumes and letters, including PDFs you download. You can&apos;t copy or resell the
         templates or the app itself. The example resumes are made-up people and are there to show style only.
       </p>
@@ -217,9 +229,9 @@ const SECTIONS: LegalSection[] = [
     title: "Law and disputes",
     body: (
       <p>
-        These terms are governed by the laws of India. If we can&apos;t sort out a problem together, the courts at{" "}
-        {COMPANY.city}, {COMPANY.state} will have jurisdiction, without affecting any right you have to go to a consumer
-        forum where you live.
+        These terms are governed by the laws of India. If we can&apos;t sort out a problem together, the courts
+        {SELLER ? ` at ${SELLER.city}, ${SELLER.state}` : " of India"} will have jurisdiction, without affecting any right you
+        have to go to a consumer forum where you live.
       </p>
     ),
   },
@@ -239,12 +251,11 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          Questions or complaints: email {mail} or use our <Link href="/support">help page</Link>.
+          Questions or complaints: {COMPANY.contactEmail ? <>email {mail} or use our <Link href="/support">help page</Link></> : <>write to us through {mail}</>}.
         </p>
         <p>
-          Grievance officer: <strong>{COMPANY.grievanceOfficer.name}</strong>, {COMPANY.legalName},{" "}
-          {COMPANY.addressLines.join(", ")}. Email:{" "}
-          <a href={`mailto:${COMPANY.grievanceOfficer.email}`}>{COMPANY.grievanceOfficer.email}</a>. We acknowledge
+          Grievance officer: <strong>{COMPANY.grievanceOfficer.name}</strong>
+          {SELLER ? `, ${SELLER.legalName}, ${SELLER.addressLines.join(", ")}` : ""}. Contact: {mail}. We acknowledge
           complaints within 48 hours and aim to resolve them within one month.
         </p>
       </>
@@ -256,7 +267,7 @@ export default function TermsPage() {
   return (
     <LegalPage
       title="Terms of Service"
-      updated="7 October 2026"
+      updated="8 October 2026"
       intro={<p>The rules for using Lettr, in plain language. Please read them before you sign up or pay.</p>}
       sections={SECTIONS}
     />

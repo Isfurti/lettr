@@ -52,7 +52,7 @@ export async function applyStripeEvent(event: Stripe.Event): Promise<void> {
     }
 
     case "invoice.paid": {
-      // Every successful charge gets a GST invoice in Noonscope's name.
+      // Every successful charge gets a GST invoice once Lettr's company is set up (lib/company.ts).
       // Failures here are reported but never fail the webhook - the payment
       // itself already succeeded and Stripe would otherwise retry forever.
       const invoice = event.data.object as Stripe.Invoice;

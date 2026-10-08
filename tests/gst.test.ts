@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { computeGst, financialYear, formatInvoiceNumber, validateGstin, rupeesInWords, formatMoney } from "@/lib/gst";
 import { getGstConfig } from "@/lib/company";
+import { PLACEHOLDER_SELLER } from "@/lib/invoices";
 
 describe("financial year", () => {
   it("runs April to March in India time", () => {
@@ -66,10 +67,13 @@ describe("amounts", () => {
 });
 
 describe("GST config", () => {
-  it("uses Noonscope's GSTIN by default and can be switched off", () => {
-    expect(getGstConfig({})).toMatchObject({ gstin: "09AALCN4402B1ZS", invoicePrefix: "LTR" });
-    expect(validateGstin(getGstConfig({})!.gstin)).toBe("09AALCN4402B1ZS");
-    expect(getGstConfig({ COMPANY_GSTIN: "off" })).toBeNull();
-    expect(getGstConfig({ COMPANY_GSTIN: " 09abcde1234f1z5 " })).toMatchObject({ gstin: "09ABCDE1234F1Z5" });
+  const seller = { ...PLACEHOLDER_SELLER, gstin: "09AAAAA0000A1Z5" };
+  it("is off while Lettr has no company of its own", () => {
+    expect(getGstConfig({})).toBeNull();
+  });
+  it("uses the company's GSTIN once there is one, and can be switched off", () => {
+    expect(getGstConfig({}, seller)).toMatchObject({ gstin: "09AAAAA0000A1Z5", invoicePrefix: "LTR" });
+    expect(getGstConfig({ COMPANY_GSTIN: "off" }, seller)).toBeNull();
+    expect(getGstConfig({ COMPANY_GSTIN: " 09abcde1234f1z5 " }, seller)).toMatchObject({ gstin: "09ABCDE1234F1Z5" });
   });
 });

@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-auth";
 import { getInvoiceById } from "@/lib/db";
 import { InvoicePdf } from "@/components/InvoicePdf";
+import { SELLER } from "@/lib/company";
 
 export const runtime = "nodejs";
 
@@ -17,7 +18,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (!invoice || (invoice.user_id !== userId && !isAdminEmail(session.user.email))) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  const buffer = await renderToBuffer(InvoicePdf({ invoice }));
+  if (!SELLER) return NextResponse.json({ error: "Invoices aren't available yet." }, { status: 404 });
+  const buffer = await renderToBuffer(InvoicePdf({ invoice, seller: SELLER }));
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
