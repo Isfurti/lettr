@@ -164,8 +164,9 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          &quot;Unlimited&quot; Pro features are for one person&apos;s normal job search. Some AI features have a monthly
-          fair-use limit (for example, AI Resume Agent messages), shown on the pricing page and in the app. Please don&apos;t:
+          &quot;Unlimited&quot; Pro features are for one person&apos;s normal job search. AI features have daily fair-use
+          limits on every plan, and some also have a monthly limit (for example, AI Resume Agent messages). Daily limits
+          reset at midnight India time and are shown in the app when you reach them. Please don&apos;t:
         </p>
         <ul>
           <li>share your account, or resell or automate Lettr;</li>

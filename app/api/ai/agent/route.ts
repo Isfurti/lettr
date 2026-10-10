@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { checkDailyAiCap } from "@/lib/daily-caps";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { runAgentTurn, AGENT_MODEL } from "@/lib/ai-agent";
 import { countAiUses, getUserById } from "@/lib/db";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
-import { canSendAgentMessage, canUseAiAgent, type Plan } from "@/lib/limits";
+import { canSendAgentMessage, canUseAiAgent, limitTier, type Plan } from "@/lib/limits";
 import { monthStartIST } from "@/lib/ai-costs";
 import { trackAiUsage } from "@/lib/ai-usage";
 
@@ -33,6 +34,10 @@ export async function POST(req: Request) {
   // Tighter limit than the other AI endpoints - each agent turn can
   // internally make up to 5 Anthropic calls (tool-use loop), so this is
   // the endpoint most worth capping.
+  // Daily fair-use limit (resets at midnight India time).
+  const daily = await checkDailyAiCap(userId, limitTier(user), "agent");
+  if (!daily.allowed) return NextResponse.json({ error: daily.reason, dailyCap: true }, { status: 429 });
+
   const rateLimit = await checkAndRecordRateLimit(userId, "ai-agent", 15, 10);
   if (!rateLimit.allowed) {
     return NextResponse.json(

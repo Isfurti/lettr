@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { checkDailyAiCap } from "@/lib/daily-caps";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getUserById } from "@/lib/db";
-import { canUseResignationLetterBuilder, type Plan } from "@/lib/limits";
+import { canUseResignationLetterBuilder, limitTier, type Plan } from "@/lib/limits";
 import { generateResignationLetter } from "@/lib/ai";
 import { trackAiUsage } from "@/lib/ai-usage";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
@@ -27,6 +28,10 @@ export async function POST(req: Request) {
   if (!check.allowed) {
     return NextResponse.json({ error: check.reason, upgradeRequired: true }, { status: 402 });
   }
+
+  // Daily fair-use limit (resets at midnight India time).
+  const daily = await checkDailyAiCap(userId, limitTier(user), "resignation_letter");
+  if (!daily.allowed) return NextResponse.json({ error: daily.reason, dailyCap: true }, { status: 429 });
 
   const rateLimit = await checkAndRecordRateLimit(userId, "resignation-letter", 15, 10);
   if (!rateLimit.allowed) {

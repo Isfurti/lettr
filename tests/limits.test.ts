@@ -173,3 +173,28 @@ describe("canUseTemplate - free tier limited to 2 templates", () => {
     expect(canUseTemplate("free", "not-a-real-template").allowed).toBe(false);
   });
 });
+
+import { canUseAiToday, DAILY_LIMITS } from "@/lib/limits";
+import { dayStartIST } from "@/lib/ai-costs";
+
+describe("daily AI limits", () => {
+  it("allows use under the feature limit and the daily total", () => {
+    expect(canUseAiToday("pro", "rewrite", 0, 0).allowed).toBe(true);
+    expect(canUseAiToday("pro", "rewrite", DAILY_LIMITS.pro.rewrite - 1, 10).allowed).toBe(true);
+  });
+  it("stops at the feature's daily limit", () => {
+    const r = canUseAiToday("pro", "cover_letter", DAILY_LIMITS.pro.cover_letter, 10);
+    expect(r.allowed).toBe(false);
+    if (!r.allowed) expect(r.reason).toMatch(/today's limit of \d+ cover letters/);
+  });
+  it("stops at the all-AI daily total even if one feature has room", () => {
+    const r = canUseAiToday("pro", "rewrite", 0, DAILY_LIMITS.pro.total);
+    expect(r.allowed).toBe(false);
+    if (!r.allowed) expect(r.reason).toMatch(/AI requests/);
+  });
+  it("resets at midnight India time", () => {
+    // 10 Oct 2026, 02:00 IST = 9 Oct 20:30 UTC -> day starts 9 Oct 18:30 UTC
+    expect(dayStartIST(new Date("2026-10-09T20:30:00Z")).toISOString()).toBe("2026-10-09T18:30:00.000Z");
+    expect(dayStartIST(new Date("2026-10-09T18:00:00Z")).toISOString()).toBe("2026-10-08T18:30:00.000Z");
+  });
+});

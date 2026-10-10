@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkDailyAiCap } from "@/lib/daily-caps";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getInterviewSession, getUserById, saveInterviewQuestions } from "@/lib/db";
@@ -33,6 +34,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const used = await usedSoFar(ctx, "interview_feedback");
   const check = canUseInterviewPractice(ctx.tier, "feedback", used);
   if (!check.allowed) return NextResponse.json({ error: check.reason, upgradeRequired: plan === "free" }, { status: 402 });
+
+  // Daily fair-use limit (resets at midnight India time).
+  const daily = await checkDailyAiCap(userId, ctx.tier, "interview_feedback");
+  if (!daily.allowed) return NextResponse.json({ error: daily.reason, dailyCap: true }, { status: 429 });
 
   const rate = await checkAndRecordRateLimit(userId, "interview-feedback", 20, 10);
   if (!rate.allowed) return NextResponse.json({ error: `Too many requests. Try again in ${rate.retryAfterSeconds}s.` }, { status: 429 });

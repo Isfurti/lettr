@@ -50,6 +50,12 @@ export function monthStartIST(now = new Date()): Date {
   return new Date(Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth(), 1) - IST_OFFSET_MS);
 }
 
+/** Start of today in India time, as a real instant. Daily limits reset here. */
+export function dayStartIST(now = new Date()): Date {
+  const ist = new Date(now.getTime() + IST_OFFSET_MS);
+  return new Date(Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth(), ist.getUTCDate()) - IST_OFFSET_MS);
+}
+
 /** When the monthly limits reset next, e.g. "1 November". */
 export function nextResetLabel(now = new Date()): string {
   const ist = new Date(now.getTime() + IST_OFFSET_MS);

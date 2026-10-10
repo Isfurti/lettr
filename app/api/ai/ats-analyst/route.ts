@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkDailyAiCap } from "@/lib/daily-caps";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getUserById } from "@/lib/db";
@@ -33,6 +34,10 @@ export async function POST(req: Request) {
   const ctx = await usageContext(user ?? { id: userId, email: session?.user?.email });
   const check = canUseAtsAnalyst(ctx.tier, await usedSoFar(ctx, "ats_analyst"));
   if (!check.allowed) return NextResponse.json({ error: check.reason, upgradeRequired: plan === "free" }, { status: 402 });
+  // Daily fair-use limit (resets at midnight India time).
+  const daily = await checkDailyAiCap(userId, ctx.tier, "ats_analyst");
+  if (!daily.allowed) return NextResponse.json({ error: daily.reason, dailyCap: true }, { status: 429 });
+
   const rate = await checkAndRecordRateLimit(userId, "ats-analyst", 10, 10);
   if (!rate.allowed) return NextResponse.json({ error: `Too many requests. Try again in ${rate.retryAfterSeconds}s.` }, { status: 429 });
 

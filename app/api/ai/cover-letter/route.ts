@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkDailyAiCap } from "@/lib/daily-caps";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getCachedAiResult, getUserById, saveCachedAiResult } from "@/lib/db";
@@ -62,6 +63,10 @@ export async function POST(req: Request) {
   if (!check.allowed) {
     return NextResponse.json({ error: check.reason, upgradeRequired: true }, { status: 402 });
   }
+
+  // Daily fair-use limit (resets at midnight India time).
+  const daily = await checkDailyAiCap(userId, ctx.tier, "cover_letter");
+  if (!daily.allowed) return NextResponse.json({ error: daily.reason, dailyCap: true }, { status: 429 });
 
   try {
     const { value: letter, usage } = await generateCoverLetter(prompt, model);

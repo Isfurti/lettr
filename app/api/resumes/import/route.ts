@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { checkDailyAiCap } from "@/lib/daily-caps";
 import { auth } from "@/lib/auth";
 import { getUserById, countResumesForUser, upsertResume, logActivity, getCachedAiResult, saveCachedAiResult } from "@/lib/db";
-import { canCreateResume, type Plan } from "@/lib/limits";
+import { canCreateResume, limitTier, type Plan } from "@/lib/limits";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import { extractTextFromFile } from "@/lib/extract-text";
 import { extractResumeFromText, normalizeExtractedResume, IMPORT_MODEL } from "@/lib/ai";
@@ -74,6 +75,8 @@ export async function POST(req: Request) {
       resumeData = normalizeExtractedResume(saved);
       await trackAiUsage({ userId, feature: "import", model: IMPORT_MODEL, reused: true });
     } else {
+      const daily = await checkDailyAiCap(userId, limitTier(user), "import");
+      if (!daily.allowed) return NextResponse.json({ error: daily.reason, dailyCap: true }, { status: 429 });
       const result = await extractResumeFromText(text);
       resumeData = result.value;
       await trackAiUsage({ userId, feature: "import", model: result.model, usage: result.usage });

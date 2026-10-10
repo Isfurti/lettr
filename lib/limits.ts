@@ -242,3 +242,92 @@ export function canTrackJob(tier: LimitTier, tracked: number): LimitCheck {
     reason: `The free plan tracks up to ${limit} jobs. Remove one, or upgrade to Pro to track as many as you like.`,
   };
 }
+
+/**
+ * Daily fair-use limits on AI, per account, reset at midnight India time.
+ * They stop one account (or a script) from running up the AI bill in a
+ * single day. Normal use never gets near them. The free plan's own
+ * once-per-person allowances still apply on top.
+ */
+export type DailyFeature =
+  | "agent"
+  | "rewrite"
+  | "cover_letter"
+  | "resignation_letter"
+  | "ats_analyst"
+  | "interview"
+  | "interview_feedback"
+  | "import";
+
+export const DAILY_FEATURE_LABELS: Record<DailyFeature, string> = {
+  agent: "AI Agent messages",
+  rewrite: "AI rewrites",
+  cover_letter: "cover letters",
+  resignation_letter: "resignation letters",
+  ats_analyst: "ATS analyst reviews",
+  interview: "practice interviews",
+  interview_feedback: "answer reviews",
+  import: "resume imports",
+};
+
+export const DAILY_LIMITS: Record<LimitTier, Record<DailyFeature, number> & { total: number }> = {
+  free: {
+    agent: 0,
+    rewrite: 3,
+    cover_letter: 1,
+    resignation_letter: 0,
+    ats_analyst: 1,
+    interview: 1,
+    interview_feedback: 6,
+    import: 3,
+    total: 15,
+  },
+  free_legacy: {
+    agent: 0,
+    rewrite: 5,
+    cover_letter: 3,
+    resignation_letter: 0,
+    ats_analyst: 3,
+    interview: 2,
+    interview_feedback: 15,
+    import: 3,
+    total: 25,
+  },
+  pro: {
+    agent: 40,
+    rewrite: 60,
+    cover_letter: 10,
+    resignation_letter: 5,
+    ats_analyst: 10,
+    interview: 5,
+    interview_feedback: 40,
+    import: 10,
+    total: 150,
+  },
+};
+
+/** Checks one feature's daily limit and the all-AI daily total. */
+export function canUseAiToday(
+  tier: LimitTier,
+  feature: DailyFeature,
+  usedFeatureToday: number,
+  usedAllToday: number
+): LimitCheck & { limit: number } {
+  const limits = DAILY_LIMITS[tier];
+  const limit = limits[feature];
+  if (usedFeatureToday >= limit) {
+    return {
+      allowed: false,
+      limit,
+      reason: `You've reached today's limit of ${limit} ${DAILY_FEATURE_LABELS[feature]}. It resets at midnight (India time).`,
+    };
+  }
+  if (usedAllToday >= limits.total) {
+    return {
+      allowed: false,
+      limit: limits.total,
+      reason: `You've reached today's limit of ${limits.total} AI requests. It resets at midnight (India time). Everything else in Lettr still works.`,
+    };
+  }
+  return { allowed: true, limit };
+}

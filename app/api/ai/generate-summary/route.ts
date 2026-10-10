@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkDailyAiCap } from "@/lib/daily-caps";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { generateSummary } from "@/lib/ai";
@@ -30,6 +31,10 @@ export async function POST(req: Request) {
   if (!assistCheck.allowed) {
     return NextResponse.json({ error: assistCheck.reason, upgradeRequired: true }, { status: 402 });
   }
+
+  // Daily fair-use limit (resets at midnight India time).
+  const daily = await checkDailyAiCap(userId, ctx.tier, "rewrite");
+  if (!daily.allowed) return NextResponse.json({ error: daily.reason, dailyCap: true }, { status: 429 });
 
   const rateLimit = await checkAndRecordRateLimit(userId, "generate-summary", 20, 10);
   if (!rateLimit.allowed) {

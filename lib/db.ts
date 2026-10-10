@@ -1088,6 +1088,18 @@ export async function countAiUses(userId: string, feature: string, since: Date):
   return res.rows[0].n;
 }
 
+/** AI requests by a user since `since` across several features (null = every feature except review replies). Cached answers don't count. */
+export async function countAiUsesAny(userId: string, features: string[] | null, since: Date): Promise<number> {
+  await ensureSchema();
+  const res = await pool.query(
+    `SELECT COUNT(*)::int AS n FROM ai_usage_events
+      WHERE user_id = $1 AND created_at >= $2 AND reused = false
+        AND ($3::text[] IS NULL OR feature = ANY($3)) AND feature <> 'review'`,
+    [userId, since.toISOString(), features]
+  );
+  return res.rows[0].n;
+}
+
 export type FreeUseWho = { userId: string; emailHash: string | null; deviceId: string | null };
 
 /** Free-plan uses of a feature by this person: same account, same email or same browser. */

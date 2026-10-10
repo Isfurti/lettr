@@ -11,7 +11,9 @@ import { TEMPLATE_IDS } from "@/lib/templates";
 import { getRegionPrices, savingsPercent, perMonth, type PlanId } from "@/lib/plans";
 import { agentMonthlyCap } from "@/lib/ai-costs";
 import { ensureUserRegion } from "@/lib/user-region";
-import { PLAN_LIMITS } from "@/lib/limits";
+import { DAILY_LIMITS, PLAN_LIMITS } from "@/lib/limits";
+
+const PLAN_LIMITS_DAILY_PRO = DAILY_LIMITS.pro;
 
 export const metadata: Metadata = {
   title: "Pricing | Lettr — Free AI Resume Builder",
@@ -73,6 +75,10 @@ const FAQS = [
   {
     q: "What does \"free once\" mean?",
     a: "Each AI tool can be tried free once per person, not once per account, so please don't make extra accounts. After that, Pro unlocks it. Free accounts made before 7 October 2026 keep the monthly allowances they signed up with.",
+  },
+  {
+    q: "Is Pro really unlimited?",
+    a: `For normal job hunting, yes. To keep AI costs fair, every account has a daily limit, for example ${PLAN_LIMITS_DAILY_PRO.rewrite} AI rewrites, ${PLAN_LIMITS_DAILY_PRO.cover_letter} cover letters and ${PLAN_LIMITS_DAILY_PRO.agent} AI Agent messages a day on Pro. Limits reset at midnight India time.`,
   },
   {
     q: "Can I keep downloading PDFs on the free plan?",

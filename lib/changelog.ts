@@ -1,6 +1,14 @@
 /** Release notes for /whats-new. Newest first. Keep entries short and in plain words. */
 export const CHANGELOG: { date: string; title: string; items: string[] }[] = [
   {
+    date: "2026-10-10",
+    title: "Fair daily limits on AI",
+    items: [
+      "Every account now has a daily limit on AI requests (rewrites, cover letters, the AI Agent, interview practice and more). Normal use never gets near it.",
+      "Limits reset at midnight India time, and everything else in Lettr keeps working.",
+    ],
+  },
+  {
     date: "2026-10-07",
     title: "A simpler free plan",
     items: [
