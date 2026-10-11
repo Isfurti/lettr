@@ -25,7 +25,7 @@ const ROWS: { label: string; lettr: Cell; rezi: Cell }[] = [
   { label: "Indian example resumes (campus, CA, ITI, BPO...)", lettr: true, rezi: false },
   { label: "Share on WhatsApp", lettr: true, rezi: false },
   { label: "Expert human resume review", lettr: false, rezi: "1 a month on Pro" },
-  { label: "Money-back guarantee", lettr: "Not yet", rezi: "30 days" },
+  { label: "Money-back guarantee", lettr: "No (accidental charges refunded)", rezi: "30 days" },
 ];
 
 function Value({ v }: { v: Cell }) {

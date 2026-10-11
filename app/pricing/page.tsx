@@ -77,6 +77,10 @@ const FAQS = [
     a: "Each AI tool can be tried free once per person, not once per account, so please don't make extra accounts. After that, Pro unlocks it. Free accounts made before 7 October 2026 keep the monthly allowances they signed up with.",
   },
   {
+    q: "Do you offer refunds?",
+    a: "There's no money-back guarantee for now, so please try the free plan first. If you're charged twice or by mistake, tell us within 7 days and we'll refund it. You can cancel any time and keep Pro until the end of the period you paid for.",
+  },
+  {
     q: "Is Pro really unlimited?",
     a: `For normal job hunting, yes. To keep AI costs fair, every account has a daily limit, for example ${PLAN_LIMITS_DAILY_PRO.rewrite} AI rewrites, ${PLAN_LIMITS_DAILY_PRO.cover_letter} cover letters and ${PLAN_LIMITS_DAILY_PRO.agent} AI Agent messages a day on Pro. Limits reset at midnight India time.`,
   },

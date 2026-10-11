@@ -37,6 +37,9 @@ export const COMPANY = {
   /** Where people reach us when there's no public email. */
   contactUrl: "/support",
   grievanceOfficer: { name: "Sagar Agarwal" },
+  founder: { name: "Sagar Agarwal", title: "Founder" },
+  /** Lettr doesn't offer a money-back guarantee for now (see the terms' refund section). */
+  moneyBackGuarantee: false,
 };
 
 /** Who's behind Lettr, for one line of text: the company if there is one, otherwise just "Lettr". */

@@ -67,6 +67,44 @@ export default function AboutPage() {
         </ul>
       </section>
 
+      <section className={`${WRAP} pb-14`}>
+        <div className="max-w-3xl bg-gold-soft rounded-[28px] p-7 sm:p-9">
+          <h2 className="font-brand font-extrabold text-2xl sm:text-3xl tracking-tight">A note from the founder</h2>
+          <div className="mt-4 space-y-3 text-lg leading-relaxed">
+            <p>
+              Job hunting is hard enough without resume tools that hide the price, make up numbers for you, or ask for your
+              card before you&apos;ve seen what you get.
+            </p>
+            <p>
+              So Lettr works the other way. You see your score and your fixes for free. The AI only rewrites what you tell it.
+              And the price is set for the country you live in.
+            </p>
+            <p>
+              If something doesn&apos;t work for you, or there&apos;s a feature you need,{" "}
+              {COMPANY.contactEmail ? (
+                <>
+                  write to me at{" "}
+                  <a href={`mailto:${COMPANY.contactEmail}`} className="font-bold text-brand-blue underline">
+                    {COMPANY.contactEmail}
+                  </a>
+                </>
+              ) : (
+                <>
+                  write to me from our <Link href="/support" className="font-bold text-brand-blue underline">help page</Link>
+                </>
+              )}
+              . I read every message.
+            </p>
+          </div>
+          <p className="mt-5 font-bold">
+            {COMPANY.founder.name}
+            <span className="block font-normal text-slate">
+              {COMPANY.founder.title}, Lettr
+            </span>
+          </p>
+        </div>
+      </section>
+
       <section className="bg-white border-y border-rule">
         <div className={`${WRAP} py-14`}>
           <h2 className={H2}>Who we are</h2>

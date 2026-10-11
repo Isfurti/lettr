@@ -10,6 +10,7 @@ import { HERO_EXAMPLE, AFTER_EXAMPLE } from "@/lib/home-examples";
 import { SAMPLE_RESUME } from "@/lib/sample-resume";
 import { getFeaturedReviews } from "@/lib/db";
 import { TEMPLATE_IDS } from "@/lib/templates";
+import { COMPANY, operatorName } from "@/lib/company";
 
 // Revalidate hourly rather than fetching featured reviews on every single
 // page load - this is the highest-traffic page, no reason to hit the
@@ -129,6 +130,7 @@ export default async function Home() {
       priceCurrency: "USD",
       description: "Free plan available; Pro plan with regional pricing",
     },
+    publisher: { "@type": "Organization", name: operatorName(), founder: { "@type": "Person", name: COMPANY.founder.name } },
   };
 
   return (
