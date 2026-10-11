@@ -96,6 +96,7 @@ export function AtsPanel({
           <div className="min-w-0">
             <p className="text-xs font-extrabold uppercase tracking-wide text-slate">ATS score</p>
             <p className="font-extrabold text-lg leading-snug">{report.verdict}</p>
+            {report.heldBackBy && <p className="text-xs font-bold text-ink mt-1">Held back by {report.heldBackBy}.</p>}
             <p className="text-xs text-slate mt-1">Updates as you edit. {report.keywords ? "Includes keyword match for your job post." : "Paste a job post below to add keyword matching."}</p>
           </div>
         </div>

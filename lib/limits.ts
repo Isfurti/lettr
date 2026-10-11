@@ -1,5 +1,6 @@
 import { isTemplateFree } from "./templates";
 import { agentMonthlyCap, nextResetLabel } from "./ai-costs";
+import { FREE_AI_REWRITES } from "./free-plan";
 
 export type Plan = "free" | "pro";
 
@@ -46,7 +47,7 @@ export const PLAN_LIMITS: Record<LimitTier, Limits> = {
     period: "lifetime",
     maxResumes: 1,
     cleanPdfDownloads: 1,
-    maxAiWritingAssists: 3,
+    maxAiWritingAssists: FREE_AI_REWRITES,
     aiAgent: false,
     coverLetters: 1,
     interviewSets: 1,

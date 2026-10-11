@@ -1,7 +1,7 @@
 import { extraSections, type ResumeData } from "./types";
 import { plainResume } from "./rich-text";
-import { ACTION_VERBS } from "./resume-score";
-import { scoreResumeAgainstJob, type AtsResult } from "./ats-score";
+import { ACTION_VERBS, isObjectiveStyle } from "./resume-score";
+import { keywordInText, scoreResumeAgainstJob, type AtsResult } from "./ats-score";
 
 /**
  * The ATS score analyst: how well a resume will get through applicant
@@ -13,6 +13,13 @@ import { scoreResumeAgainstJob, type AtsResult } from "./ats-score";
  * - Keywords for this job: only when a job post is pasted
  * - Content that ranks: numbers, action verbs, bullets, summary, length
  * - Structure and dates: titles, dates, order, education
+ *
+ * The overall score is a weighted average, then held back by the problems
+ * that matter most however good the rest looks: very little content, no
+ * numbers in any bullet, or a poor keyword match for the pasted job. A
+ * builder resume is always readable and well structured, so those parts
+ * weigh less than content and keywords - otherwise a thin, generic resume
+ * scores "Good" just for having an email address and dates.
  */
 
 export type CheckStatus = "pass" | "warn" | "fail";
@@ -25,6 +32,8 @@ export type AtsCheck = {
   /** Builder section to open to fix it. */
   section?:
     "contact" | "summary" | "experience" | "education" | "skills" | "design";
+  /** How much this check counts within its part (default 1). */
+  weight?: number;
 };
 
 export type AtsCategory = {
@@ -42,6 +51,8 @@ export type AtsReport = {
   keywords: AtsResult | null;
   /** The most valuable fixes first. */
   topFixes: AtsCheck[];
+  /** When a serious problem caps the score, what it is (e.g. "very little content"). */
+  heldBackBy: string | null;
 };
 
 /** Templates whose two-column layouts some older systems read out of order. */
@@ -58,9 +69,12 @@ function category(
   checks: AtsCheck[],
   bonus = 0,
 ): AtsCategory {
-  const score = checks.length
+  const total = checks.reduce((n, c) => n + (c.weight ?? 1), 0);
+  const score = total
     ? Math.round(
-        (checks.reduce((n, c) => n + pts[c.status], 0) / checks.length) * 100,
+        (checks.reduce((n, c) => n + pts[c.status] * (c.weight ?? 1), 0) /
+          total) *
+          100,
       )
     : 100;
   return {
@@ -269,9 +283,8 @@ export function analyzeAts(
             },
     );
     // Keywords inside experience bullets count for more than a skills list.
-    const bulletText = bullets.join(" ").toLowerCase();
     const inBullets = keywords.matchedKeywords.filter((k) =>
-      bulletText.includes(k),
+      bullets.some((b) => keywordInText(k, b)),
     ).length;
     kwChecks.push(
       keywords.matchedKeywords.length === 0
@@ -340,6 +353,7 @@ export function analyzeAts(
       label: "No experience bullets",
       detail: "Add 2-6 bullets per role: what you did and the result.",
       section: "experience",
+      weight: 3,
     });
   } else {
     content.push(
@@ -349,6 +363,7 @@ export function analyzeAts(
             status: "pass",
             label: `${quantified} of ${bullets.length} bullets have numbers`,
             detail: "Numbers prove impact and stand out on a quick read.",
+            weight: 3,
           }
         : {
             id: "numbers",
@@ -357,6 +372,7 @@ export function analyzeAts(
             detail:
               "Add a number where you can: %, ₹, time saved, team size, customers, rankings.",
             section: "experience",
+            weight: 3,
           },
     );
     content.push(
@@ -366,6 +382,7 @@ export function analyzeAts(
             status: "pass",
             label: "Bullets start with strong verbs",
             detail: "Led, Built, Grew... reads as ownership.",
+            weight: 2,
           }
         : {
             id: "verbs",
@@ -374,6 +391,7 @@ export function analyzeAts(
             detail:
               "Start with what you did: Led, Built, Reduced, Launched, Negotiated.",
             section: "experience",
+            weight: 2,
           },
     );
     const long = bullets.filter((b) => b.split(/\s+/).length > 35).length;
@@ -394,6 +412,19 @@ export function analyzeAts(
           },
     );
   }
+  // AI rewrites leave [X]-style blanks for real numbers; they must be filled in before applying.
+  const BLANK = /\[[^\]]{1,30}\]/;
+  const withBlanks = [r.summary, ...bullets].filter((t) => BLANK.test(t)).length;
+  if (withBlanks)
+    content.push({
+      id: "blanks",
+      status: "fail",
+      label: `${withBlanks} line${withBlanks === 1 ? " has" : "s have"} blanks to fill in`,
+      detail:
+        "Replace the [X]-style blanks with your real numbers, or delete them before you apply.",
+      section: BLANK.test(r.summary) ? "summary" : "experience",
+      weight: 2,
+    });
   const sw = r.summary.trim().split(/\s+/).filter(Boolean).length;
   content.push(
     sw === 0
@@ -413,7 +444,16 @@ export function analyzeAts(
             detail: "Trim it to 2-3 sentences.",
             section: "summary",
           }
-        : {
+        : isObjectiveStyle(r.summary)
+          ? {
+              id: "summary",
+              status: "warn",
+              label: "Summary reads like an objective",
+              detail:
+                "Say what you do and what you're great at, not what you're looking for. Lead with your title.",
+              section: "summary",
+            }
+          : {
             id: "summary",
             status: "pass",
             label: "Summary present",
@@ -464,6 +504,7 @@ export function analyzeAts(
           detail:
             "Under about 150 words gives systems too little to match. Add roles, bullets and skills.",
           section: "experience",
+          weight: 2,
         }
       : words > 1100
         ? {
@@ -473,12 +514,14 @@ export function analyzeAts(
             detail:
               "Over about 1,100 words. Unless you're senior, aim for one page (Design → Fit to one page).",
             section: "design",
+            weight: 2,
           }
         : {
             id: "length",
             status: "pass",
             label: "Good length",
             detail: "Enough to match on, short enough to read.",
+            weight: 2,
           },
   );
 
@@ -595,37 +638,65 @@ export function analyzeAts(
         },
   );
 
+  // The keyword part is mostly the match itself; showing skills in bullets
+  // and a matching title only nudge it. (A 13% match must never read as fine.)
+  const keywordCategory = (): AtsCategory => {
+    const support = category("keywords", "", 0, kwChecks.filter((c) => c.id !== "kw-match")).score;
+    return {
+      ...category("keywords", "Keywords for this job", 40, kwChecks),
+      score: Math.round(0.7 * (keywords?.score ?? 0) + 0.3 * support),
+    };
+  };
+
+  // Content and keywords decide whether a resume gets picked. A builder
+  // resume is nearly always readable and well structured, so those weigh less.
   const categories = [
-    category("readable", "Readable by job sites", 30, readable),
-    ...(keywords
-      ? [
-          category(
-            "keywords",
-            "Keywords for this job",
-            30,
-            kwChecks,
-            Math.round((keywords.score - 50) / 5),
-          ),
-        ]
-      : []),
-    category("content", "Content that ranks", keywords ? 25 : 40, content),
-    category("structure", "Structure and dates", keywords ? 15 : 30, structure),
+    category("readable", "Readable by job sites", keywords ? 10 : 20, readable),
+    ...(keywords ? [keywordCategory()] : []),
+    category("content", "Content that ranks", keywords ? 35 : 55, content),
+    category("structure", "Structure and dates", keywords ? 15 : 25, structure),
   ];
   const totalWeight = categories.reduce((n, cat) => n + cat.weight, 0);
-  const overall = Math.round(
+  const average = Math.round(
     categories.reduce((n, cat) => n + cat.score * cat.weight, 0) / totalWeight,
   );
 
+  // Serious problems hold the score back however good the rest looks.
+  const caps: { max: number; reason: string }[] = [];
+  if (bullets.length === 0) caps.push({ max: 40, reason: "no experience bullets" });
+  if (words < 80) caps.push({ max: 49, reason: "very little content" });
+  else if (words < 150) caps.push({ max: 75, reason: "not much content yet" });
+  if (bullets.length > 0 && quantified / bullets.length < 0.25)
+    caps.push({ max: 79, reason: "few numbers in your bullets" });
+  if (keywords) {
+    const pct = keywords.score;
+    const reason = `a ${pct}% keyword match`;
+    if (pct < 30) caps.push({ max: 49, reason });
+    else if (pct < 50) caps.push({ max: 64, reason });
+    else if (pct < 70) caps.push({ max: 84, reason });
+  }
+  const binding = caps
+    .filter((c) => c.max < average)
+    .sort((a, b) => a.max - b.max);
+  const overall = binding.length ? binding[0].max : average;
+  const heldBackBy = binding.length
+    ? binding
+        .filter((c) => c.max === binding[0].max)
+        .slice(0, 2)
+        .map((c) => c.reason)
+        .join(" and ")
+    : null;
+
   const order: Record<CheckStatus, number> = { fail: 0, warn: 1, pass: 2 };
-  const weightOf = (id: string) =>
-    categories.find((cat) => cat.checks.some((ch) => ch.id === id))?.weight ??
-    0;
+  const weightOf = (ch: AtsCheck) =>
+    (categories.find((cat) => cat.checks.some((c) => c.id === ch.id))?.weight ??
+      0) * (ch.weight ?? 1);
   const topFixes = categories
     .flatMap((cat) => cat.checks)
     .filter((ch) => ch.status !== "pass")
     .sort(
       (a, b) =>
-        order[a.status] - order[b.status] || weightOf(b.id) - weightOf(a.id),
+        order[a.status] - order[b.status] || weightOf(b) - weightOf(a),
     )
     .slice(0, 5);
 
@@ -638,5 +709,12 @@ export function analyzeAts(
           ? "Fair. Fix the items below before applying to big-company portals."
           : "Needs work. Systems may skip or misread this resume.";
 
-  return { overall, verdict, categories, keywords, topFixes };
+  return {
+    overall,
+    verdict,
+    categories,
+    keywords,
+    topFixes,
+    heldBackBy,
+  };
 }

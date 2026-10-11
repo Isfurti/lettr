@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { extraSections, type ResumeData, type ExperienceEntry, type EducationEntry, type ProjectEntry, type CertificationEntry } from "@/lib/types";
-import { scoreResumeQuality } from "@/lib/resume-score";
+import { scoreResumeQuality, resumeScoreLevel } from "@/lib/resume-score";
 import type { Plan } from "@/lib/limits";
 import type { Allowance, PlanAllowances } from "@/lib/free-usage";
 import { BuilderTabs, MobileViewToggle, LettrNotes, ScoreStamp, goToSection } from "@/components/builder/BuilderChrome";
@@ -19,6 +19,7 @@ import { resolveAccent, getFontPair, darkenHex, softenHex } from "@/lib/customiz
 import { RibbonPreview, SplitPreview, ScholarPreview, FresherPreview, GridPreview, SpotlightPreview } from "@/components/templates/NewPreviews";
 
 import { TEMPLATE_IDS, isTemplateFree } from "@/lib/templates";
+import { FREE_AI_REWRITES } from "@/lib/free-plan";
 const TEMPLATES: readonly string[] = TEMPLATE_IDS;
 
 export function ResumeEditor({
@@ -868,7 +869,7 @@ async function guestRewrite(body: unknown): Promise<{ options: string[] } | { er
 function AiSignInHint({ used = true }: { used?: boolean }) {
   return (
     <p className="text-xs text-ink-soft mt-1.5 bg-brand-blue-soft rounded-xl px-2 py-1.5">
-      ✦ {used ? "That was your free AI rewrite. " : ""}AI writing is free with an account (5 rewrites included).{" "}
+      ✦ {used ? "That was your free AI rewrite. " : ""}AI writing is free with an account ({FREE_AI_REWRITES} rewrites included).{" "}
       <Link href="/signup?continue=builder" className="text-brand-blue font-medium hover:underline">
         Create a free account
       </Link>{" "}
@@ -1295,11 +1296,14 @@ export function ScorePanel({ data, plan }: { data: ResumeData; plan: Plan }) {
           <div>
             <p className="font-brand font-bold text-lg">Resume Score</p>
             <p className="text-sm text-ink-soft">
-              {result.overall >= 80
-                ? "Strong resume — minor polish left."
-                : result.overall >= 50
-                ? "Solid start — a few gaps to close."
-                : "Early stage — fill in more sections on the Edit tab."}
+              {
+                {
+                  strong: "Strong resume — minor polish left.",
+                  solid: "Solid start — a few gaps to close.",
+                  "needs-work": "Needs work — follow the tips below.",
+                  early: "Early stage — fill in more sections on the Edit tab.",
+                }[resumeScoreLevel(result.overall)]
+              }
             </p>
           </div>
         </div>

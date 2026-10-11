@@ -28,6 +28,27 @@ export const ACTION_VERBS = [
 
 const HAS_NUMBER = /\d/;
 
+/**
+ * An old-style objective ("Hardworking person looking for a job where I can
+ * grow") says what the person wants, not what they offer. Recruiters skip it.
+ */
+const OBJECTIVE_STYLE =
+  /\b(looking for|seeking|in search of|opportunit(y|ies) to|where i can|to work (in|with|for) a|reputed (organi[sz]ation|company|firm)|grow along with|utili[sz]e my|to use my skills)\b/i;
+
+export function isObjectiveStyle(summary: string): boolean {
+  return OBJECTIVE_STYLE.test(summary);
+}
+
+export type ResumeScoreLevel = "strong" | "solid" | "needs-work" | "early";
+
+/** How to describe an overall resume score. Shared by the builder and the dashboard so they never disagree. */
+export function resumeScoreLevel(overall: number): ResumeScoreLevel {
+  if (overall >= 80) return "strong";
+  if (overall >= 65) return "solid";
+  if (overall >= 45) return "needs-work";
+  return "early";
+}
+
 function scoreContact(resume: ResumeData): SectionScore {
   const tips: string[] = [];
   const c = resume.contact;
@@ -73,6 +94,11 @@ function scoreSummary(resume: ResumeData): SectionScore {
     tips.push('Drop first-person pronouns like "I" — resume style omits them (e.g. "Led a team of..." not "I led a team of...").');
   } else {
     points += 20;
+  }
+
+  if (isObjectiveStyle(summary)) {
+    points = Math.max(10, points - 30);
+    tips.push("Your summary reads like an old-style objective (what you want). Say what you do and what you're great at instead.");
   }
 
   return { key: "summary", label: "Summary", score: Math.min(100, points), tips };

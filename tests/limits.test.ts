@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { FREE_AI_REWRITES } from "@/lib/free-plan";
 import {
   canCreateResume,
   pdfNeedsFooter,
@@ -14,6 +15,7 @@ import {
   canUseAiWritingAssist,
   canUseAiAgent,
   canUseTemplate,
+  PLAN_LIMITS,
 } from "@/lib/limits";
 
 describe("canCreateResume", () => {
@@ -196,5 +198,11 @@ describe("daily AI limits", () => {
     // 10 Oct 2026, 02:00 IST = 9 Oct 20:30 UTC -> day starts 9 Oct 18:30 UTC
     expect(dayStartIST(new Date("2026-10-09T20:30:00Z")).toISOString()).toBe("2026-10-09T18:30:00.000Z");
     expect(dayStartIST(new Date("2026-10-09T18:00:00Z")).toISOString()).toBe("2026-10-08T18:30:00.000Z");
+  });
+});
+
+describe("free AI rewrite allowance", () => {
+  it("is the single number the app, pricing page and sign-up hints all use", () => {
+    expect(PLAN_LIMITS.free.maxAiWritingAssists).toBe(FREE_AI_REWRITES);
   });
 });

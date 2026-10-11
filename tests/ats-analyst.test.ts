@@ -44,3 +44,54 @@ describe("ATS score analyst", () => {
     expect(all).toMatchObject({ email: "fail", dates: "fail", order: "warn" });
   });
 });
+
+describe("ATS score stays honest", () => {
+  const SALES_JD =
+    "Sales Executive (B2B) - Pune. Generate new leads and close B2B deals; manage the sales pipeline in Salesforce CRM; negotiate pricing with distributors; prepare weekly sales reports in Excel; build long-term client relationships. Requirements: B2B sales experience, negotiation and communication skills, advanced Excel, Marathi and Hindi.";
+  const thin = {
+    ...emptyResume,
+    contact: { fullName: "Karan Mehta", email: "karan@example.com", phone: "+91 90000 00000", location: "Pune, India" },
+    summary: "Hardworking person looking for a job in a good company where I can grow.",
+    experience: [
+      { id: "1", role: "Sales Executive", company: "ABC Traders", startDate: "Jun 2021", endDate: "Present", bullets: ["Responsible for sales in Pune region.", "Handled clients and did follow ups."] },
+    ],
+    education: [{ id: "e", school: "Pune University", degree: "B.Com", startDate: "", endDate: "" }],
+    skills: ["MS Office", "Communication", "Hard working", "Team player"],
+  };
+
+  it("doesn't call a thin, generic resume good just because it has contact details and dates", () => {
+    const r = analyzeAts(thin, "classic");
+    expect(r.overall).toBeLessThan(50);
+    expect(r.verdict).toMatch(/^Needs work/);
+    expect(r.heldBackBy).toMatch(/very little content/);
+  });
+
+  it("keeps a poor keyword match from reading as good", () => {
+    const r = analyzeAts(thin, "classic", SALES_JD);
+    expect(r.keywords!.score).toBeLessThan(30);
+    expect(r.overall).toBeLessThan(50);
+    expect(r.heldBackBy).toMatch(/keyword match/);
+  });
+
+  it("flags an objective-style summary", () => {
+    const r = analyzeAts(thin, "classic");
+    const summary = r.categories.flatMap((c) => c.checks).find((c) => c.id === "summary")!;
+    expect(summary.status).toBe("warn");
+    expect(summary.label).toMatch(/objective/i);
+  });
+
+  it("reminds people to fill in AI blanks before applying", () => {
+    const withBlank = {
+      ...SAMPLE_RESUME,
+      experience: [{ ...SAMPLE_RESUME.experience[0], bullets: ["Grew sales by [X]% in [time period]", ...SAMPLE_RESUME.experience[0].bullets] }, SAMPLE_RESUME.experience[1]],
+    };
+    const r = analyzeAts(withBlank, "classic");
+    expect(r.topFixes.map((c) => c.id)).toContain("blanks");
+  });
+
+  it("still scores a strong resume well, and better with a matching job post", () => {
+    const r = analyzeAts(SAMPLE_RESUME, "classic", JD);
+    expect(r.keywords!.score).toBeGreaterThan(70);
+    expect(r.overall).toBeGreaterThanOrEqual(70);
+  });
+});

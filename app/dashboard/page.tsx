@@ -9,7 +9,7 @@ import { listResumesForUser, getUserById, listRecentActivity, listInvoicesForUse
 import { formatMoney } from "@/lib/gst";
 import { PLAN_LIMITS, type Plan } from "@/lib/limits";
 import { planAllowances } from "@/lib/free-usage";
-import { scoreResumeQuality } from "@/lib/resume-score";
+import { scoreResumeQuality, resumeScoreLevel } from "@/lib/resume-score";
 import { formatActivityLabel, timeAgo } from "@/lib/activity-format";
 import { displayTitle } from "@/lib/resume-title";
 import type { ResumeData } from "@/lib/types";
@@ -177,11 +177,14 @@ export default async function DashboardPage({
                   <p className="text-sm font-bold text-slate">Your best resume</p>
                   <h2 className="font-brand font-extrabold text-2xl leading-tight line-clamp-2 break-words">{displayTitle(mostRecent)}</h2>
                   <p className="mt-1 text-slate">
-                    {score && score.overall >= 80
-                      ? "Strong resume. Minor polish left."
-                      : score && score.overall >= 50
-                      ? "Solid start. A few gaps to close."
-                      : "Early stage. Worth filling in more sections."}
+                    {
+                      {
+                        strong: "Strong resume. Minor polish left.",
+                        solid: "Solid start. A few gaps to close.",
+                        "needs-work": "Needs work. Open the score to see what to fix.",
+                        early: "Early stage. Worth filling in more sections.",
+                      }[resumeScoreLevel(score?.overall ?? 0)]
+                    }
                   </p>
                   <Link
                     href={`/builder/${mostRecent.id}?tab=score`}

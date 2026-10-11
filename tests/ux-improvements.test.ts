@@ -13,7 +13,8 @@ describe("job-description filler words", () => {
       expect(keywords).not.toContain(filler);
     }
     expect(keywords).toContain("hubspot");
-    expect(keywords).toContain("stakeholder");
+    // Known multi-word skills are kept whole rather than split into single words.
+    expect(keywords).toContain("stakeholder management");
   });
 });
 

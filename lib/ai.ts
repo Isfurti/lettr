@@ -1,7 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { ResumeData } from "./types";
-import { MODELS, usageFromApi, type ModelId, type TokenUsage } from "./ai-costs";
+import { MODELS, addUsage, usageFromApi, type ModelId, type TokenUsage } from "./ai-costs";
 import { plainResume, stripRich } from "./rich-text";
+import { HONESTY_RULES, guardRewrites, retryReminder, yearsOfExperience } from "./ai-honesty";
 
 function getClient() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -45,9 +46,33 @@ async function complete(model: ModelId, maxTokens: number, prompt: string): Prom
   return { text: textOf(response), usage: usageFromApi(response.usage) };
 }
 
+/** Shown when even the retry only came back with options that made things up. */
+const NO_HONEST_OPTIONS =
+  "Couldn't write a rewrite that sticks to your facts this time. Add a detail about what changed because of you, then try again.";
+
 /**
- * Turn a rough, unpolished bullet point into 3 achievement-focused,
- * ATS-friendly resume bullet options.
+ * Asks for 3 options, then checks them against what the person actually
+ * wrote (lib/ai-honesty.ts). If fewer than 2 survive, asks once more with a
+ * reminder. Never returns an option that adds facts they didn't give.
+ */
+async function honestOptions(prompt: string, maxTokens: number, source: string, extraNumbers: (string | number)[] = []) {
+  const first = await complete(MODEL_FAST, maxTokens, prompt);
+  let usage = first.usage;
+  const firstPass = guardRewrites(source, parseJsonArraySafely(first.text), extraNumbers);
+  let kept = firstPass.kept;
+  if (kept.length < 2) {
+    const second = await complete(MODEL_FAST, maxTokens, prompt + retryReminder(firstPass.dropped));
+    usage = addUsage(usage, second.usage);
+    const again = guardRewrites(source, parseJsonArraySafely(second.text), extraNumbers);
+    kept = [...kept, ...again.kept.filter((o) => !kept.some((k) => k.toLowerCase() === o.toLowerCase()))];
+  }
+  if (kept.length === 0) throw new Error(NO_HONEST_OPTIONS);
+  return { options: kept.slice(0, 3), usage };
+}
+
+/**
+ * Turn a rough, unpolished bullet point into 3 resume bullet options that
+ * use only the person's own facts, with [X] blanks where a result would help.
  */
 export async function polishBullet(params: {
   roughBullet: string;
@@ -55,25 +80,34 @@ export async function polishBullet(params: {
   targetJobDescription?: string;
 }): Promise<AiResult<string[]>> {
   params = { ...params, roughBullet: stripRich(params.roughBullet) };
-  const prompt = `You are an expert resume writer. Rewrite the following rough work
-accomplishment into 3 distinct, polished resume bullet point options for a "${params.role}" role.
+  const prompt = `You are an expert resume writer. Rewrite the rough work point below into 3 distinct
+resume bullet options for a "${params.role}" role.
 
-Rules for each bullet:
-- Start with a strong action verb
-- Quantify impact with a number or metric if one is plausible (do not invent
-  specific figures that weren't implied; use "X%" style placeholders only if
-  truly unknown, otherwise keep it qualitative)
-- Keep each bullet to one line (max ~220 characters)
-- No first-person pronouns
-- ATS-friendly plain text, no special characters beyond standard punctuation
-${params.targetJobDescription ? `- Where natural, favor terminology consistent with this target job description:\n${params.targetJobDescription.slice(0, 1500)}` : ""}
+${HONESTY_RULES}
 
-Rough accomplishment: "${params.roughBullet}"
+How to write each bullet:
+- Start with a plain action verb.
+- Turn duties into results using only the person's own facts. If the result isn't given, add a blank
+  they can fill in, e.g. "Grew sales by [X]% in [time period]" or "Handled [number] client accounts".
+- One line each (under about 220 characters), no first-person pronouns, plain text with standard punctuation.
+${
+  params.targetJobDescription
+    ? `- A target job post is below. Reuse its wording only for things the rough point already says.
+  Never add a skill, tool or duty from the job post that isn't in the rough point.
+
+Target job post:
+${params.targetJobDescription.slice(0, 1500)}
+`
+    : ""
+}
+Rough point: "${params.roughBullet}"
 
 Respond ONLY with a JSON array of exactly 3 strings, no preamble, no markdown fences.`;
 
-  const { text, usage } = await complete(MODEL_FAST, 500, prompt);
-  return { value: parseJsonArraySafely(text), model: MODEL_FAST, usage };
+  // Only the person's own words count as facts - not the job post.
+  const source = `${params.roughBullet}\n${params.role}`;
+  const { options, usage } = await honestOptions(prompt, 500, source);
+  return { value: options, model: MODEL_FAST, usage };
 }
 
 /**
@@ -96,7 +130,7 @@ Skills: ${resume.skills.join(", ")}
   return `Write a concise, compelling cover letter (3-4 short paragraphs, under 320 words)
 for the candidate below, tailored to the target job description.
 ${companyName ? `The target company is "${companyName}".` : ""}
-Do not invent specific achievements not present in the resume summary. Professional but warm tone.
+Do not invent achievements, numbers, employers or skills that aren't in the resume summary below. Professional but warm tone.
 Output plain text only, no markdown, no placeholders like [Company Name] left unfilled if the company is known.
 
 CANDIDATE RESUME SUMMARY:
@@ -161,26 +195,31 @@ export async function generateSummary(params: {
   const experienceText = experience
     .map((e) => `${e.role} at ${e.company} (${e.startDate}–${e.endDate}): ${e.bullets.join("; ")}`)
     .join("\n");
+  const years = yearsOfExperience(experience);
 
   const prompt = `You are an expert resume writer. Write 3 distinct professional summary options
 (2-3 sentences each, under 400 characters) for a resume${targetRole ? ` targeting a "${targetRole}" role` : ""}.
 
 Base it on this experience:
 ${experienceText || "(no experience listed yet - write a summary suitable for someone early in their career, based on the skills below)"}
+${years ? `Total experience: about ${years} years (from the dates above).` : ""}
 
 Skills: ${skills.join(", ") || "(none listed)"}
 
-Rules:
-- Third person is not needed - write as the candidate's own voice, no "I" pronoun needed either (resume style, e.g. "Results-driven engineer with...")
-- Lead with role/seniority, not a generic adjective
-- Mention 1-2 concrete strengths grounded in the experience given
-- No buzzword soup - avoid stacking more than one of "passionate", "dynamic", "synergy", "results-driven" per summary
-- Plain text only
+${HONESTY_RULES}
+
+How to write each summary:
+- Resume style: no "I" and no third person (start like "Sales executive who...").
+- Lead with role/seniority, not a generic adjective.
+- Mention 1-2 concrete strengths taken from the experience or skills above.
+- Say what the person does and is good at - not what they're looking for (no "seeking a role where I can grow").
+- Plain text only.
 
 Respond ONLY with a JSON array of exactly 3 strings, no preamble, no markdown fences.`;
 
-  const { text, usage } = await complete(MODEL_FAST, 600, prompt);
-  return { value: parseJsonArraySafely(text), model: MODEL_FAST, usage };
+  const source = [experienceText, skills.join(", "), targetRole ?? ""].join("\n");
+  const { options, usage } = await honestOptions(prompt, 600, source, years ? [years] : []);
+  return { value: options, model: MODEL_FAST, usage };
 }
 
 /**

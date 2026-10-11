@@ -70,7 +70,7 @@ const FAQS = [
   },
   {
     q: "Is there a free plan?",
-    a: "Yes. 1 resume, 2 templates, the live ATS score, a clean PDF download, and a free try of every AI tool: 3 rewrites, a cover letter, an ATS analyst review and a practice interview. No credit card needed.",
+    a: `Yes. 1 resume, 2 templates, the live ATS score, a clean PDF download, and a free try of every AI tool: ${FREE.maxAiWritingAssists} rewrites, a cover letter, an ATS analyst review and a practice interview. No credit card needed.`,
   },
   {
     q: "What does \"free once\" mean?",

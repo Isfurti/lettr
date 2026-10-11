@@ -1,6 +1,22 @@
 import { extraSections, type ResumeData } from "./types";
 import { plainResume } from "./rich-text";
 
+/**
+ * Job-post keyword matching, in plain code (no AI), so it's instant, free
+ * and gives the same answer every time.
+ *
+ * What counts as a keyword:
+ * - known multi-word skills ("b2b sales", "stakeholder management", "power bi")
+ * - known single skills and tools ("salesforce", "excel", "sql", "negotiation"),
+ *   plus acronyms and tool-like words (CRM, B2B, C++, Node.js)
+ * - other words the post uses, ranked below those
+ * What doesn't: filler ("strong", "years"), generic verbs ("grow", "manage",
+ * "build"), job-title nouns ("executive") and places ("Pune", "Maharashtra").
+ *
+ * Words are compared in a light base form, so "relationships" matches
+ * "relationship" and "negotiate" matches "negotiation".
+ */
+
 const STOPWORDS = new Set([
   "the","and","a","an","to","of","in","for","on","with","is","are","as","at",
   "by","be","this","that","will","you","your","we","our","it","or","from",
@@ -21,35 +37,198 @@ const STOPWORDS = new Set([
   "senior","junior","level","mid","we're","you'll","you're","us","s",
   // Hiring-post verbs that describe the job ad, not a skill.
   "hiring","hire","seeking","seek","own","owning","run","running","partner","partners",
-  "want","wants","love","passionate","day","days","week","weeks","month","months",
+  "want","wants","wanted","love","passionate","day","days","week","weeks","month","months",
   "fast","paced","fast-paced","environment","culture","apply","applying","offer","offers",
+  // Generic action verbs: every job asks you to "grow", "build" or "manage"
+  // something. The skill is the thing being managed, not the verb.
+  "grow","grows","growing","generate","generating","close","closing","manage","manages",
+  "managing","achieve","achieving","prepare","preparing","build","builds","building",
+  "deliver","delivering","drive","driving","ensure","ensuring","support","supporting",
+  "provide","providing","create","creating","maintain","maintaining","handle","handling",
+  "develop","developing","assist","assisting","perform","performing","conduct","conducting",
+  "identify","identifying","collaborate","collaborating","work","get","take","keep","set",
+  // Describing words and time words that aren't skills.
+  "key","various","multiple","daily","weekly","monthly","quarterly","annual","annually",
+  "long-term","short-term","related","relevant","similar","equivalent","existing","current",
+  "high","large","small","top","best","better","clear","quick","quickly","effective",
+  "effectively","efficient","efficiently","successful","successfully","professional",
+  "solid","deep","hands-on","familiarity","familiar","exposure","proficiency","proficient",
+  "fluency","fluent","willing","willingness","ready","duties","duty","tools","tool",
+  "business","organisation","organization","travel","travelling","traveling","two-wheeler",
+  // Job-title nouns. Title matching is its own check (see ats-analyst.ts).
+  "executive","executives","associate","officer","coordinator","assistant","trainee",
+  "intern","specialist",
 ]);
 
-function tokenize(text: string): string[] {
+/** Places: a job's location says nothing about the skills it needs. */
+const PLACES = new Set([
+  "india","remote","hybrid","onsite","on-site","wfh","location","locations","office","offices",
+  "pune","mumbai","delhi","ncr","new-delhi","noida","gurgaon","gurugram","bengaluru","bangalore",
+  "hyderabad","chennai","kolkata","ahmedabad","jaipur","lucknow","chandigarh","indore","bhopal",
+  "nagpur","nashik","surat","vadodara","kochi","cochin","coimbatore","trivandrum","thiruvananthapuram",
+  "mysore","mysuru","mangalore","visakhapatnam","vizag","vijayawada","bhubaneswar","patna","ranchi",
+  "guwahati","dehradun","kanpur","agra","meerut","ghaziabad","faridabad","ludhiana","amritsar",
+  "maharashtra","karnataka","gujarat","rajasthan","punjab","haryana","kerala","nadu",
+  "telangana","andhra","pradesh","uttar","madhya","bengal","west","odisha","bihar","assam",
+  "goa","uttarakhand","jharkhand","chhattisgarh","himachal","kashmir",
+  "dubai","uae","singapore","london","usa","uk","us","canada","australia","germany","europe",
+]);
+
+/** Common multi-word skills, written in base form (see baseForm). */
+const PHRASES = [
+  // Sales
+  "b2b sale", "b2c sale", "inside sale", "field sale", "channel sale", "retail sale", "enterprise sale",
+  "lead generation", "sale pipeline", "pipeline management", "account management", "key account management",
+  "client relationship", "customer relationship", "relationship management", "business development",
+  "cold calling", "sale forecasting", "sale target", "revenue target", "dealer management",
+  "distributor management", "channel partner", "territory management", "market research", "competitor analysis",
+  // Marketing
+  "digital marketing", "content marketing", "email marketing", "social media", "performance marketing",
+  "product marketing", "brand management", "search engine optimization", "google ad", "google analytic",
+  "meta ad", "facebook ad", "paid media", "marketing automation", "content writing", "go-to-market",
+  "a/b testing", "conversion rate optimization", "influencer marketing", "public relation",
+  // Tech and data
+  "machine learning", "deep learning", "data analysis", "data analytic", "data science", "data visualization",
+  "data engineering", "data pipeline", "natural language processing", "computer vision", "software development",
+  "web development", "front end", "back end", "full stack", "rest api", "unit testing", "test automation",
+  "cloud computing", "system design", "version control", "spring boot", "power bi", "google sheet", "microsoft excel",
+  "ms excel", "advanced excel", "ms office", "microsoft office",
+  // Operations, finance, people, design
+  "project management", "product management", "agile methodology", "stakeholder management", "change management",
+  "risk management", "quality assurance", "quality control", "technical support", "customer service",
+  "customer support", "customer success", "supply chain", "inventory management", "vendor management",
+  "financial modeling", "financial modelling", "financial analysis", "financial reporting", "accounts payable",
+  "accounts receivable", "bank reconciliation", "tally erp", "gst filing", "tax compliance", "statutory compliance",
+  "budget management", "cost reduction", "process improvement", "six sigma", "talent acquisition",
+  "employee engagement", "performance management", "payroll processing", "ui design", "ux design",
+  "user research", "user experience", "user interface", "graphic design", "motion graphic", "visual design",
+  "interaction design", "usability testing",
+].map((p) => p.split(" "));
+
+/** Known single skills and tools (base form). Rank above words the post merely uses. */
+const SKILLS = new Set([
+  // Business tools and skills
+  "excel", "salesforce", "hubspot", "zoho", "crm", "erp", "sap", "tally", "gst", "tds", "quickbooks", "xero",
+  "negotiation", "communication", "presentation", "forecasting", "analysis", "pricing", "budgeting", "reporting",
+  "seo", "sem", "ppc", "copywriting", "branding", "positioning", "analytic", "kpi", "okr", "jira", "asana",
+  "trello", "slack", "canva", "figma", "photoshop", "illustrator", "indesign", "premiere", "sketch",
+  "wireframing", "prototyping", "recruitment", "recruiting", "onboarding", "payroll", "compliance", "auditing",
+  "accounting", "bookkeeping", "procurement", "logistic", "merchandising", "underwriting", "telecalling",
+  "leadership", "mentoring", "coaching", "scrum", "agile", "kanban",
+  // Tech
+  "sql", "mysql", "postgresql", "mongodb", "redis", "python", "java", "javascript", "typescript", "react",
+  "angular", "vue", "node.js", "nodejs", "django", "flask", "kotlin", "swift", "golang", "rust",
+  "php", "laravel", "ruby", "c++", "c#", "dotnet", "html", "css", "tailwind", "aws", "azure", "gcp",
+  "docker", "kubernete", "terraform", "linux", "git", "github", "devop", "api", "graphql", "tableau", "looker",
+  "pandas", "numpy", "tensorflow", "pytorch", "spark", "hadoop", "airflow", "snowflake", "selenium", "cypress",
+  "playwright", "android", "ios", "flutter",
+  // Languages people list on Indian resumes
+  "english", "hindi", "marathi", "tamil", "telugu", "kannada", "malayalam", "bengali", "gujarati", "punjabi",
+  "urdu", "odia", "french", "german", "spanish", "arabic", "japanese",
+]);
+
+/** A few word families that should match each other ("negotiate" ↔ "negotiation"). */
+const FAMILIES: [RegExp, string][] = [
+  [/^negotiat/, "negotiation"],
+  [/^communicat/, "communication"],
+  [/^forecast/, "forecasting"],
+  [/^analy[sz](e|ed|es|ing|is)$/, "analysis"],
+];
+const FAMILY_NAMES = new Set(FAMILIES.map(([, base]) => base));
+
+/** Light base form: lowercase, drop plural "s", join word families. Tech words with symbols stay as they are. */
+export function baseForm(word: string): string {
+  const w = word.toLowerCase();
+  for (const [re, base] of FAMILIES) if (re.test(w)) return base;
+  if (w.length <= 3 || /[^a-z-]/.test(w)) return w;
+  if (w.endsWith("ies") && w.length > 4) return `${w.slice(0, -3)}y`;
+  if (w.endsWith("ss") || w.endsWith("us") || w.endsWith("is")) return w;
+  if (w.endsWith("s")) return w.slice(0, -1);
+  return w;
+}
+
+type Token = { raw: string; base: string; keep: boolean };
+
+function words(text: string): Token[] {
   return text
     .toLowerCase()
-    .replace(/[^a-z0-9+.#\s-]/g, " ")
+    .replace(/\.net\b/g, " dotnet") // ".NET" would otherwise lose its dot below
+    .replace(/[^a-z0-9+.#/\s-]/g, " ")
     .split(/\s+/)
-    .map((w) => w.trim().replace(/^[.-]+|[.-]+$/g, "")) // drop stray edge punctuation (e.g. sentence-final periods) but keep meaningful trailing symbols like c++ / c#
-    .filter((w) => w.length > 1 && !STOPWORDS.has(w) && !/^[0-9+.%-]+$/.test(w)); // pure numbers like "5+" aren't keywords
+    .map((w) => w.trim().replace(/^[./-]+|[./-]+$/g, "")) // drop stray edge punctuation (e.g. sentence-final periods) but keep c++ / c# / node.js
+    .filter((w) => w.length > 1 && !/^[0-9+.%/-]+$/.test(w)) // pure numbers like "5+" or "2-4" aren't keywords
+    .map((raw) => ({ raw, base: baseForm(raw), keep: !STOPWORDS.has(raw) && !PLACES.has(raw) }));
 }
 
-// Extract candidate "keywords" from a job description: words/phrases that
-// appear meaningfully often, plus common skill-like tokens (capitalized
-// acronyms, tech terms with symbols like "C++", "Node.js").
-export function extractKeywords(jobDescription: string, limit = 30): string[] {
-  const tokens = tokenize(jobDescription);
-  const freq = new Map<string, number>();
-  for (const t of tokens) freq.set(t, (freq.get(t) ?? 0) + 1);
+/** Acronyms written in capitals in the post (CRM, SQL, KPI) - likely tools or skills. */
+function acronymsIn(text: string): Set<string> {
+  return new Set([...text.matchAll(/\b[A-Z][A-Z0-9&]{1,5}\b/g)].map((m) => m[0].toLowerCase()));
+}
 
-  return [...freq.entries()]
-    .sort((a, b) => b[1] - a[1])
+function isToolLike(raw: string, acronyms: Set<string>): boolean {
+  return acronyms.has(raw) || /[0-9+#.]/.test(raw);
+}
+
+/** Where each known phrase appears in a token list (by start index). */
+function phraseHits(tokens: Token[]): { phrase: string[]; at: number }[] {
+  const hits: { phrase: string[]; at: number }[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    for (const phrase of PHRASES) {
+      if (phrase.every((p, j) => tokens[i + j]?.base === p)) hits.push({ phrase, at: i });
+    }
+  }
+  return hits;
+}
+
+type Keyword = { key: string; label: string; parts: string[] };
+
+const MAX_KEYWORDS = 20;
+
+function extract(jobDescription: string, limit = MAX_KEYWORDS): Keyword[] {
+  const tokens = words(jobDescription);
+  const acronyms = acronymsIn(jobDescription);
+  const hits = phraseHits(tokens);
+
+  // Tokens that are part of a matched phrase count toward the phrase, not on their own.
+  const covered = new Set<number>();
+  for (const h of hits) h.phrase.forEach((_, j) => covered.add(h.at + j));
+
+  const found = new Map<string, Keyword & { score: number; first: number }>();
+  const bump = (kw: Keyword, at: number, bonus: number) => {
+    const existing = found.get(kw.key);
+    if (existing) existing.score += 1;
+    else found.set(kw.key, { ...kw, score: 1 + bonus, first: at });
+  };
+
+  for (const h of hits) {
+    const label = tokens.slice(h.at, h.at + h.phrase.length).map((t) => t.raw).join(" ");
+    bump({ key: h.phrase.join(" "), label, parts: h.phrase }, h.at, 4);
+  }
+  tokens.forEach((t, i) => {
+    if (!t.keep || covered.has(i)) return;
+    const known = SKILLS.has(t.base) || isToolLike(t.raw, acronyms);
+    // Show a word family by its skill name ("negotiation", not "negotiate").
+    const label = FAMILY_NAMES.has(t.base) ? t.base : t.raw;
+    bump({ key: t.base, label, parts: [t.base] }, i, known ? 3 : 0);
+  });
+
+  return [...found.values()]
+    .sort((a, b) => b.score - a.score || a.first - b.first)
     .slice(0, limit)
-    .map(([word]) => word);
+    .map(({ key, label, parts }) => ({ key, label, parts }));
 }
 
-function resumeToText(resume: ResumeData): string {
-  const parts: string[] = [resume.summary, resume.skills.join(" ")];
+/**
+ * The keywords a job post is looking for, most important first: known
+ * phrases and skills, then other words it repeats, then the rest.
+ */
+export function extractKeywords(jobDescription: string, limit = MAX_KEYWORDS): string[] {
+  return extract(jobDescription, limit).map((k) => k.label);
+}
+
+/** The pieces of a resume that are read separately: summary, each bullet, each skill... */
+function resumeSegments(resume: ResumeData): string[] {
+  const parts: string[] = [resume.summary, ...resume.skills];
   for (const exp of resume.experience) {
     parts.push(exp.role, exp.company, ...exp.bullets);
   }
@@ -60,7 +239,23 @@ function resumeToText(resume: ResumeData): string {
   for (const p of extra.projects) parts.push(p.name, p.description);
   for (const c of extra.certifications) parts.push(c.name, c.issuer ?? "");
   parts.push(...extra.languages, ...extra.achievements);
-  return parts.join(" ");
+  return parts.filter((p) => p && p.trim());
+}
+
+function segmentBases(segments: string[]): Set<string>[] {
+  return segments.map((s) => new Set(words(s).map((t) => t.base)));
+}
+
+function found(kw: Keyword, segments: Set<string>[]): boolean {
+  // A phrase counts when all its words show up in the same bullet, skill or line.
+  return segments.some((seg) => kw.parts.every((p) => seg.has(p)));
+}
+
+/** Whether a keyword (as returned by extractKeywords) appears in a piece of text. */
+export function keywordInText(keyword: string, text: string): boolean {
+  const parts = words(keyword).map((t) => t.base);
+  if (!parts.length) return false;
+  return found({ key: parts.join(" "), label: keyword, parts }, segmentBases([text]));
 }
 
 export type AtsResult = {
@@ -72,11 +267,11 @@ export type AtsResult = {
 
 export function scoreResumeAgainstJob(input: ResumeData, jobDescription: string): AtsResult {
   const resume = plainResume(input);
-  const keywords = extractKeywords(jobDescription);
-  const resumeTokens = new Set(tokenize(resumeToText(resume)));
+  const keywords = extract(jobDescription);
+  const segments = segmentBases(resumeSegments(resume));
 
-  const matched = keywords.filter((k) => resumeTokens.has(k));
-  const missing = keywords.filter((k) => !resumeTokens.has(k));
+  const matched = keywords.filter((k) => found(k, segments));
+  const missing = keywords.filter((k) => !found(k, segments));
 
   const score = keywords.length === 0
     ? 100
@@ -84,8 +279,8 @@ export function scoreResumeAgainstJob(input: ResumeData, jobDescription: string)
 
   return {
     score,
-    matchedKeywords: matched,
-    missingKeywords: missing,
+    matchedKeywords: matched.map((k) => k.label),
+    missingKeywords: missing.map((k) => k.label),
     totalKeywords: keywords.length,
   };
 }

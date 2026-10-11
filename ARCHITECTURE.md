@@ -22,6 +22,11 @@ lib/                    All business logic lives here, NOT in components or rout
                          it goes in db.ts, not inline in a route.
   auth.ts                NextAuth config (providers, callbacks)
   ai.ts / ai-agent.ts    Anthropic API calls
+  ai-honesty.ts          Keeps AI rewrites to the user's own facts: shared prompt
+                         rules, plus a code check that blanks invented numbers
+                         ([X]) and drops options with made-up claims
+  free-plan.ts           The free plan's AI rewrite allowance - the one number
+                         limits, pricing copy and builder hints all use
   limits.ts              Free vs Pro plan rules - pure functions, no I/O
   rate-limit.ts          Sliding-window rate limiter, backed by Postgres
   resume-score.ts         Deterministic resume quality scoring (no AI call)

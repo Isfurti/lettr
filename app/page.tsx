@@ -10,6 +10,7 @@ import { HERO_EXAMPLE, AFTER_EXAMPLE } from "@/lib/home-examples";
 import { SAMPLE_RESUME } from "@/lib/sample-resume";
 import { getFeaturedReviews } from "@/lib/db";
 import { TEMPLATE_IDS } from "@/lib/templates";
+import { FREE_AI_REWRITES } from "@/lib/free-plan";
 import { COMPANY, operatorName } from "@/lib/company";
 
 // Revalidate hourly rather than fetching featured reviews on every single
@@ -90,7 +91,7 @@ const GALLERY = [
 const FAQ = [
   {
     q: "Is Lettr really free?",
-    a: "Yes. The free plan gives you one resume, the Classic and Modern templates, the live ATS score, a PDF download and a free try of every AI tool (3 rewrites, a cover letter, an ATS review and a practice interview). No card needed. Pro unlocks everything else.",
+    a: `Yes. The free plan gives you one resume, the Classic and Modern templates, the live ATS score, a PDF download and a free try of every AI tool (${FREE_AI_REWRITES} rewrites, a cover letter, an ATS review and a practice interview). No card needed. Pro unlocks everything else.`,
   },
   {
     q: "Do I need an account to start?",

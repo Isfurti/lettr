@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { scoreResumeQuality } from "@/lib/resume-score";
+import { scoreResumeQuality, resumeScoreLevel, isObjectiveStyle } from "@/lib/resume-score";
 import { emptyResume } from "@/lib/types";
 import type { ResumeData } from "@/lib/types";
 
@@ -138,5 +138,23 @@ describe("scoreResumeQuality", () => {
     const full = scoreResumeQuality(complete);
     expect(full.overall).toBeGreaterThan(thin.overall);
     expect(full.overall).toBeGreaterThan(70);
+  });
+});
+
+describe("honest resume score wording", () => {
+  it("marks down an old-style objective summary", () => {
+    const objective = scoreResumeQuality({ ...emptyResume, summary: "Hardworking person looking for a job in a reputed organisation where I can grow along with the company." });
+    const pitch = scoreResumeQuality({ ...emptyResume, summary: "Sales executive with 5 years in B2B distribution, known for opening new dealer accounts and keeping them." });
+    const s = (r: typeof objective) => r.sections.find((x) => x.key === "summary")!;
+    expect(s(objective).score).toBeLessThan(s(pitch).score);
+    expect(s(objective).tips.some((t) => /objective/i.test(t))).toBe(true);
+    expect(isObjectiveStyle("Product marketer who turns complex features into launches people understand.")).toBe(false);
+  });
+
+  it("only calls a resume a solid start from 65 up", () => {
+    expect(resumeScoreLevel(85)).toBe("strong");
+    expect(resumeScoreLevel(65)).toBe("solid");
+    expect(resumeScoreLevel(50)).toBe("needs-work");
+    expect(resumeScoreLevel(30)).toBe("early");
   });
 });

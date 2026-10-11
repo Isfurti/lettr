@@ -5,6 +5,7 @@ import { polishBullet, generateSummary } from "@/lib/ai";
 import { trackAiUsage } from "@/lib/ai-usage";
 import { anonymousClientKey } from "@/lib/client-key";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
+import { FREE_AI_REWRITES } from "@/lib/free-plan";
 
 const Schema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("bullet"), text: z.string().trim().min(3).max(1000), role: z.string().max(200).optional() }),
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
   const key = anonymousClientKey(req.headers);
   const mine = await checkAndRecordRateLimit(key, "guest-rewrite", 1, 24 * 60);
   if (!mine.allowed) {
-    return NextResponse.json({ error: "You've used your free AI rewrite. Create a free account for 5 more.", signup: true }, { status: 429 });
+    return NextResponse.json({ error: `You've used your free AI rewrite. Create a free account for ${FREE_AI_REWRITES} more.`, signup: true }, { status: 429 });
   }
   const everyone = await checkAndRecordRateLimit("guest-rewrite:all", "guest-rewrite-global", 2000, 24 * 60);
   if (!everyone.allowed) {
