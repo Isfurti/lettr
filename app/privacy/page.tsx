@@ -303,7 +303,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      updated="8 October 2026"
+      updated="11 October 2026"
       intro={<p>What we collect, why, who helps us, and the control you have. We&apos;ve kept it as plain as we can.</p>}
       sections={SECTIONS}
     />

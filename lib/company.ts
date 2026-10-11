@@ -2,10 +2,8 @@
  * Who runs Lettr. Used by the footer, legal pages, the help page and GST
  * invoices, so the details only live in one place.
  *
- * Lettr is not launching under Noonscope. Until the new company is set up,
- * SELLER is null: pages just say "Lettr", people reach us through the
- * contact form, and GST invoices are switched off. When the company is
- * ready, fill in SELLER (and a contact email) and everything picks it up.
+ * Lettr is sold by Noonscope Media Pvt. Ltd. Set SELLER to null to show just
+ * "Lettr" on every page and switch GST invoices off.
  */
 
 export type Seller = {
@@ -20,14 +18,22 @@ export type Seller = {
   logoPath?: string;
 };
 
-/** The legal entity Lettr is sold under. Null until the new company is ready. */
-export const SELLER: Seller | null = null;
+/** The legal entity Lettr is sold under. Set to null to hide company details and switch invoices off. */
+export const SELLER: Seller | null = {
+  legalName: "Noonscope Media Pvt. Ltd.",
+  addressLines: ["D-42, Surya Palace, Delhi Road", "Meerut 250001, Uttar Pradesh, India"],
+  city: "Meerut",
+  state: "Uttar Pradesh",
+  stateCode: "09",
+  gstin: "09AALCN4402B1ZS",
+  logoPath: "/brand/noonscope-logo.png",
+};
 
 export const COMPANY = {
   productName: "Lettr",
   country: "India",
-  /** Public contact email. Null until the new company has one; the contact form is used instead. */
-  contactEmail: null as string | null,
+  /** Public contact email. Null to send people to the contact form instead. */
+  contactEmail: "sagar@noonscope.com" as string | null,
   /** Where people reach us when there's no public email. */
   contactUrl: "/support",
   grievanceOfficer: { name: "Sagar Agarwal" },

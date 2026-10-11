@@ -4,7 +4,7 @@ import { createUser, listInvoicesForUser, deleteUserAccount } from "@/lib/db";
 import pool from "@/lib/db";
 import { issueGstInvoice as issue, PLACEHOLDER_SELLER } from "@/lib/invoices";
 
-// Lettr has no company of its own yet, so invoicing is off in the app; test with a stand-in one.
+// Tests use a stand-in company so numbering doesn't depend on the real one.
 const issueGstInvoice = (input: Parameters<typeof issue>[0]) => issue(input, PLACEHOLDER_SELLER);
 
 afterAll(async () => {
@@ -67,6 +67,6 @@ describe("GST invoices", () => {
 
 describe("without a company", () => {
   it("issues no invoice", async () => {
-    expect(await issue({ ...base(randomUUID()), userId: null, paymentRef: `pay-${randomUUID()}` })).toBeNull();
+    expect(await issue({ ...base(randomUUID()), userId: null, paymentRef: `pay-${randomUUID()}` }, null)).toBeNull();
   });
 });
