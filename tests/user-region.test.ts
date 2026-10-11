@@ -63,6 +63,11 @@ describe("getAdminOverview", () => {
     expect(after.paidProUsers - before.paidProUsers).toBe(1);
     expect(after.compedProUsers - before.compedProUsers).toBe(1);
     const withoutComped = await getAdminOverview(comped.email);
-    expect(withoutComped.totalUsers).toBe(after.totalUsers - 1);
+    const latest = await getAdminOverview(null);
+    // Other test files add users in parallel, so the total can grow between
+    // these calls. Leaving one account out must still count one fewer than
+    // the totals on either side.
+    expect(withoutComped.totalUsers).toBeGreaterThanOrEqual(after.totalUsers - 1);
+    expect(withoutComped.totalUsers).toBeLessThanOrEqual(latest.totalUsers - 1);
   });
 });
