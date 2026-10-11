@@ -59,7 +59,7 @@ export function InvoicePdf({ invoice, seller, sample = false }: { invoice: Invoi
             {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image has no alt */}
             {img && <Image src={img} style={{ width: 34, height: 50 }} />}
             <View>
-              <Text style={{ fontSize: 13, fontWeight: 700 }}>{seller.legalName}</Text>
+              <Text style={{ fontSize: 13, fontWeight: 700, marginBottom: 3 }}>{seller.legalName}</Text>
               {seller.addressLines.map((l) => (
                 <Text key={l} style={{ color: MUTED }}>{l}</Text>
               ))}

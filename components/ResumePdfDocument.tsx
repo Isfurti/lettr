@@ -288,7 +288,12 @@ function BoldPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
                   <Text style={s.entryTitle}>{exp.role} — {exp.company}</Text>
                   <Text style={s.entryMeta}>{exp.startDate} – {exp.endDate}</Text>
                 </View>
-                {exp.bullets.map((b, i) => <Text key={i} style={s.bullet}>▸ {b}</Text>)}
+                {/* "›", not "▸": none of the PDF fonts has ▸, so it printed as a stray squiggle. */}
+                {exp.bullets.map((b, i) => (
+                  <Text key={i} style={s.bullet}>
+                    <Text style={{ color: seal, fontWeight: 700 }}>›</Text> {b}
+                  </Text>
+                ))}
               </View>
             ))}
           </>

@@ -62,10 +62,41 @@ function registerOnce(): boolean {
       ]),
     });
   }
-  // Keep words whole instead of hyphenating mid-word.
-  Font.registerHyphenationCallback((word) => [word]);
+  for (const f of FAMILIES) giveOwnName(`${f.family}Ext`);
+  // Keep words whole instead of hyphenating mid-word. A run of several spaces
+  // (the gaps in "a@b.com  •  +91..." or Grid's wide contact gaps) is handed
+  // back as single spaces: react-pdf treats a word followed by anything but a
+  // single space as a hyphenation point, so a line that wrapped there printed
+  // a stray "-" ("rahulverma-test-", "Pipeline management ·-").
+  Font.registerHyphenationCallback((word) => (/^ {2,}$/.test(word) ? word.split("") : [word]));
   registered = true;
   return true;
+}
+
+/**
+ * A font's latin and latin-ext files share one internal name (both are
+ * "Manrope-Regular"), and the PDF writer reuses an embedded font that has the
+ * same name. So a ₹ from the latin-ext file was drawn with the latin file's
+ * glyph at the same position - a tiny "8" instead of ₹ on every resume and
+ * GST invoice. Renaming each fallback file as it loads makes the writer embed
+ * it on its own, so ₹ (and é, ł, ş...) print correctly.
+ */
+function giveOwnName(family: string) {
+  const fonts = Font as unknown as {
+    getRegisteredFonts: () => Record<string, { sources: { fontWeight: number; fontStyle: string; data: unknown; load: () => Promise<void> }[] }>;
+  };
+  for (const source of fonts.getRegisteredFonts()[family]?.sources ?? []) {
+    const load = source.load.bind(source);
+    source.load = async () => {
+      await load();
+      if (source.data && typeof source.data === "object") {
+        Object.defineProperty(source.data, "postscriptName", {
+          value: `${family}-${source.fontWeight}-${source.fontStyle}`,
+          configurable: true,
+        });
+      }
+    };
+  }
 }
 
 type PdfFontFamily = string | string[];

@@ -19,11 +19,16 @@ const nextConfig: NextConfig = {
   // Next.js's bundler mangles that dynamic import path, so we tell it to
   // leave this package alone and let Node resolve it normally from
   // node_modules instead of bundling it.
-  serverExternalPackages: ["pdf-parse", "pdfjs-dist"],
+  serverExternalPackages: ["pdf-parse", "pdfjs-dist", "@napi-rs/canvas"],
   // PDF export loads the same web fonts the live preview uses (lib/pdf-fonts.ts)
   // straight from node_modules at runtime. They're read with fs, so the bundler
   // can't see them - list them here so they ship with the routes that render PDFs.
   outputFileTracingIncludes: {
+    // PDF uploads: pdfjs needs @napi-rs/canvas (a native module) and its worker
+    // file, both loaded in ways the tracer can't follow (see lib/extract-text.ts).
+    // Without these, every PDF upload on Vercel failed with "DOMMatrix is not defined".
+    "/api/check-resume": ["./node_modules/@napi-rs/canvas/**", "./node_modules/@napi-rs/canvas-linux-x64-gnu/**", "./node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"],
+    "/api/resumes/import": ["./node_modules/@napi-rs/canvas/**", "./node_modules/@napi-rs/canvas-linux-x64-gnu/**", "./node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"],
     "/api/resumes/pdf": ["./node_modules/@fontsource/*/files/*-latin-{400,600,700}-{normal,italic}.woff", "./node_modules/@fontsource/*/files/*-latin-ext-{400,700}-{normal,italic}.woff"],
     "/api/resumes/drive-export": ["./node_modules/@fontsource/*/files/*-latin-{400,600,700}-{normal,italic}.woff", "./node_modules/@fontsource/*/files/*-latin-ext-{400,700}-{normal,italic}.woff"],
     "/api/resumes/fit": ["./node_modules/@fontsource/*/files/*-latin-{400,600,700}-{normal,italic}.woff", "./node_modules/@fontsource/*/files/*-latin-ext-{400,700}-{normal,italic}.woff"],
