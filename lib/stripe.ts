@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { siteUrl } from "./site-url";
 
 function getStripeClient(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -9,7 +10,8 @@ function getStripeClient(): Stripe {
 }
 
 function getAppUrl(): string {
-  return process.env.NEXTAUTH_URL || "http://localhost:3000";
+  // Same address the sitemap uses, so checkout returns to the real site even without NEXTAUTH_URL.
+  return siteUrl();
 }
 
 function getPriceIdForTier(tier: string): string | undefined {

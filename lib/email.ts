@@ -1,3 +1,5 @@
+import { siteUrl } from "./site-url";
+
 /**
  * Base email sender via Resend. Returns whether it was actually sent -
  * false either means Resend isn't configured (no RESEND_API_KEY) or the
@@ -37,7 +39,8 @@ export async function sendEmail(params: {
 }
 
 function getAppUrl(): string {
-  return process.env.NEXTAUTH_URL || "http://localhost:3000";
+  // Same address the sitemap uses, so links work even without NEXTAUTH_URL.
+  return siteUrl();
 }
 
 export async function sendVerificationEmail(email: string, token: string): Promise<{ sent: boolean; reason?: string }> {
