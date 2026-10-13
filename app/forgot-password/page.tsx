@@ -6,7 +6,7 @@ import { CardPage } from "@/components/AuthShell";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "unavailable">("idle");
   const [error, setError] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
@@ -25,6 +25,11 @@ export default function ForgotPasswordPage() {
         setStatus("idle");
         return;
       }
+      const body = await res.json().catch(() => ({}));
+      if (body.emailEnabled === false) {
+        setStatus("unavailable");
+        return;
+      }
     } catch {
       setError("Couldn't reach the server. Check your connection and try again.");
       setStatus("idle");
@@ -37,7 +42,21 @@ export default function ForgotPasswordPage() {
 
   return (
     <CardPage>
-      {status === "sent" ? (
+      {status === "unavailable" ? (
+        <div className="text-center">
+          <h1 className="font-brand font-extrabold text-3xl tracking-tight mb-2">We&apos;ll reset it for you</h1>
+          <p className="text-slate">
+            Reset emails aren&apos;t switched on yet. Send us a message from the email you signed up with and we&apos;ll help you get back
+            in.
+          </p>
+          <Link
+            href="/support"
+            className="btn-press mt-6 inline-flex items-center justify-center min-h-12 px-6 rounded-full bg-brand-blue text-white font-bold shadow-[0_5px_0_var(--brand-blue-deep)]"
+          >
+            Contact support
+          </Link>
+        </div>
+      ) : status === "sent" ? (
         <div className="text-center">
           <h1 className="font-brand font-extrabold text-3xl tracking-tight mb-2">Check your email</h1>
           <p className="text-slate">If an account exists for {email}, a password reset link is on its way.</p>

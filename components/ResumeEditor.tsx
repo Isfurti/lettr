@@ -549,7 +549,7 @@ export function ResumeEditor({
             <strong>
               {blankWarning.count === 1 ? "1 line still has a blank" : `${blankWarning.count} lines still have blanks`} like [X] to fill in.
             </strong>{" "}
-            Recruiters will see them exactly as written.
+            Recruiters will see {blankWarning.count === 1 ? "it" : "them"} exactly as written.
           </p>
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
@@ -562,7 +562,14 @@ export function ResumeEditor({
               Show me
             </button>
             <button onClick={continueAnyway} className="inline-flex items-center min-h-10 px-3 text-sm font-bold underline">
-              {blankWarning.action === "docx" ? "Download anyway" : blankWarning.action === "share" ? "Share anyway" : "Download anyway"}
+              {blankWarning.action === "share" ? "Share anyway" : "Download anyway"}
+            </button>
+            <button
+              onClick={() => setBlankWarning(null)}
+              aria-label="Dismiss"
+              className="w-10 h-10 rounded-full hover:bg-gold/40"
+            >
+              ✕
             </button>
           </div>
         </div>

@@ -14,6 +14,13 @@ export async function POST(req: Request) {
 
   const email = parsed.data.email.toLowerCase();
 
+  // With no email service set up, a reset link can't be sent to anyone, so
+  // say so instead of pretending. This doesn't reveal whether the account
+  // exists: every address gets the same answer.
+  if (!process.env.RESEND_API_KEY) {
+    return NextResponse.json({ ok: true, emailEnabled: false });
+  }
+
   // Rate limit by email (not by user id, since this route works for
   // logged-out visitors) to stop someone spamming reset emails at a target.
   const rateLimit = await checkAndRecordRateLimit(email, "forgot-password", 3, 15);
@@ -28,12 +35,12 @@ export async function POST(req: Request) {
   // Always return the same response whether or not the account exists -
   // otherwise this endpoint becomes a way to check which emails are
   // registered, which is a real privacy leak.
-  if (user && process.env.RESEND_API_KEY) {
+  if (user) {
     const token = randomBytes(32).toString("hex");
     const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
     await setPasswordResetToken(user.id, token, expiry);
     await sendPasswordResetEmail(user.email, token);
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, emailEnabled: true });
 }

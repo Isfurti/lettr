@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 import { AuthShell } from "@/components/AuthShell";
 import { OAuthButtons } from "@/components/OAuthButtons";
@@ -15,6 +15,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { data: session, status } = useSession();
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -51,6 +52,14 @@ function LoginForm() {
 
   return (
     <>
+      {status === "authenticated" && session?.user && !searchParams.get("continue") && (
+        <p className="mb-5 bg-brand-blue-soft text-brand-blue-deep rounded-2xl px-4 py-3 text-sm">
+          You&apos;re already signed in{session.user.email ? ` as ${session.user.email}` : ""}.{" "}
+          <Link href="/dashboard" className="font-bold underline">
+            Go to your dashboard
+          </Link>
+        </p>
+      )}
       <form onSubmit={onSubmit} className="space-y-5">
         <label className="block">
           <span className="text-sm font-bold text-slate">Email address</span>
