@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ApplicationRow, ApplicationStatus } from "@/lib/db";
 import { STATUS_LABELS } from "@/lib/applications";
@@ -78,6 +78,27 @@ export function ApplicationsBoard({ initial, resumes }: { initial: ApplicationRo
   const [needsPro, setNeedsPro] = useState(false);
   const [query, setQuery] = useState("");
 
+  /** Open the editor for a new or existing application, without an old error showing. */
+  function openEditor(next: Draft | null) {
+    setError(null);
+    setNeedsPro(false);
+    setDraft(next);
+  }
+
+  // Escape closes the editor, like every other dialog.
+  const editorOpen = draft !== null;
+  useEffect(() => {
+    if (!editorOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setError(null);
+      setNeedsPro(false);
+      setDraft(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [editorOpen]);
+
   const counts = useMemo(() => {
     const c = Object.fromEntries(STATUSES.map((s) => [s, 0])) as Record<ApplicationStatus, number>;
     for (const a of apps) c[a.status]++;
@@ -137,7 +158,7 @@ export function ApplicationsBoard({ initial, resumes }: { initial: ApplicationRo
       }
       const row = out.application as ApplicationRow;
       setApps((list) => (draft.id ? list.map((a) => (a.id === row.id ? row : a)) : [row, ...list]));
-      setDraft(null);
+      openEditor(null);
     } catch {
       setError("Couldn't reach the server. Try again.");
     } finally {
@@ -164,14 +185,16 @@ export function ApplicationsBoard({ initial, resumes }: { initial: ApplicationRo
     const res = await fetch(`/api/applications/${id}`, { method: "DELETE" }).catch(() => null);
     if (res?.ok) {
       setApps((list) => list.filter((a) => a.id !== id));
-      setDraft(null);
+      openEditor(null);
     } else setError("Couldn't delete. Try again.");
   }
 
   function openWith(a: ApplicationRow, tab: "match" | "cover-letter") {
     if (!a.resume_id) return;
     try {
+      // Always replace (or clear) what's there, so another job's post never tags along.
       if (a.job_post) window.localStorage.setItem("lettr_pending_jd", a.job_post);
+      else window.localStorage.removeItem("lettr_pending_jd");
       window.localStorage.setItem("lettr_pending_company", a.company);
     } catch {
       // storage blocked - the builder just opens without the job post
@@ -183,7 +206,7 @@ export function ApplicationsBoard({ initial, resumes }: { initial: ApplicationRo
     const overdue = a.next_step_on && a.next_step_on < today() && a.status !== "rejected" && a.status !== "offer";
     return (
       <article key={a.id} className="bg-white border-2 border-rule rounded-2xl p-4 hover:border-ink transition-colors">
-        <button type="button" onClick={() => setDraft(toDraft(a))} className="block w-full text-left">
+        <button type="button" onClick={() => openEditor(toDraft(a))} className="block w-full text-left">
           <p className="font-extrabold leading-tight break-words">{a.company}</p>
           {a.role && <p className="text-sm text-slate break-words">{a.role}</p>}
           <p className="text-xs text-slate mt-1">
@@ -266,7 +289,7 @@ export function ApplicationsBoard({ initial, resumes }: { initial: ApplicationRo
       <div className="flex flex-wrap items-center gap-2 mb-5">
         <button
           type="button"
-          onClick={() => setDraft(emptyDraft(filter === "all" ? "saved" : filter))}
+          onClick={() => openEditor(emptyDraft(filter === "all" ? "saved" : filter))}
           className="btn-press inline-flex items-center min-h-11 px-5 rounded-full bg-brand-blue text-white font-bold shadow-[0_4px_0_var(--brand-blue-deep)]"
         >
           + Add application
@@ -276,7 +299,7 @@ export function ApplicationsBoard({ initial, resumes }: { initial: ApplicationRo
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search company or role"
           aria-label="Search applications"
-          className="field-input !w-auto flex-1 min-w-[12rem] max-w-xs"
+          className="field-input !w-auto flex-1 min-w-[12rem] sm:max-w-xs"
         />
         <div className="hidden lg:flex ml-auto p-1 rounded-full bg-sand">
           {(["board", "list"] as const).map((v) => (
@@ -338,13 +361,21 @@ export function ApplicationsBoard({ initial, resumes }: { initial: ApplicationRo
       )}
 
       {draft && (
-        <div className="fixed inset-0 z-50 bg-ink/50 flex items-end sm:items-center justify-center p-0 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="app-editor-title">
-          <div className="bg-cream w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto rounded-t-[28px] sm:rounded-[28px] p-5 sm:p-7">
+        <div
+          className="fixed inset-0 z-50 bg-ink/50 flex items-end sm:items-center justify-center p-0 sm:p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="app-editor-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !saving) openEditor(null);
+          }}
+        >
+          <div className="bg-cream w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto overscroll-contain rounded-t-[28px] sm:rounded-[28px] p-5 sm:p-7">
             <div className="flex items-center justify-between mb-4">
               <h2 id="app-editor-title" className="font-brand font-extrabold text-2xl">
                 {draft.id ? "Edit application" : "Add application"}
               </h2>
-              <button type="button" onClick={() => setDraft(null)} aria-label="Close" className="w-11 h-11 rounded-full hover:bg-sand text-xl">
+              <button type="button" onClick={() => openEditor(null)} aria-label="Close" className="w-11 h-11 rounded-full hover:bg-sand text-xl">
                 ✕
               </button>
             </div>
@@ -405,7 +436,7 @@ export function ApplicationsBoard({ initial, resumes }: { initial: ApplicationRo
               >
                 {saving ? "Saving…" : "Save"}
               </button>
-              <button type="button" onClick={() => setDraft(null)} className="min-h-11 px-4 font-bold text-slate">
+              <button type="button" onClick={() => openEditor(null)} className="min-h-11 px-4 font-bold text-slate">
                 Cancel
               </button>
               {draft.id && (

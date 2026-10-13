@@ -9,13 +9,18 @@ export function VerifyEmailBanner() {
   async function resend() {
     setStatus("sending");
     setError(null);
-    const res = await fetch("/api/auth/resend-verification", { method: "POST" });
-    const body = await res.json();
-    if (res.ok) {
-      setStatus("sent");
-    } else {
+    try {
+      const res = await fetch("/api/auth/resend-verification", { method: "POST" });
+      const body = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setStatus("sent");
+      } else {
+        setStatus("error");
+        setError(body.error ?? "Couldn't send email.");
+      }
+    } catch {
       setStatus("error");
-      setError(body.error ?? "Couldn't send email.");
+      setError("Couldn't reach the server. Try again.");
     }
   }
 

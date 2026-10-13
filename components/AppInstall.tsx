@@ -16,7 +16,16 @@ export function ServiceWorkerRegister() {
 }
 
 /** "Install the app" button, shown only when the browser offers installation (Chrome, Edge, Android). */
-export function InstallAppButton({ className = "" }: { className?: string }) {
+export function InstallAppButton({
+  className = "",
+  icon,
+  label = "Install the Lettr app",
+}: {
+  className?: string;
+  /** Shown before the label, to line up with the icons in a menu. */
+  icon?: React.ReactNode;
+  label?: string;
+}) {
   const [evt, setEvt] = useState<InstallEvent | null>(null);
   useEffect(() => {
     const onPrompt = (e: Event) => {
@@ -37,7 +46,8 @@ export function InstallAppButton({ className = "" }: { className?: string }) {
       }}
       className={className}
     >
-      Install the Lettr app
+      {icon}
+      {label}
     </button>
   );
 }

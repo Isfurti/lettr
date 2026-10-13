@@ -6,7 +6,7 @@ import { applyLayout, layoutScale, photoShape } from "@/lib/layout";
 import { RichTextarea } from "@/components/builder/RichTextarea";
 import { DesignPanel } from "@/components/builder/DesignPanel";
 import { AtsPanel } from "@/components/builder/AtsPanel";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { extraSections, type ResumeData, type ExperienceEntry, type EducationEntry, type ProjectEntry, type CertificationEntry } from "@/lib/types";
@@ -20,7 +20,13 @@ import { RibbonPreview, SplitPreview, ScholarPreview, FresherPreview, GridPrevie
 
 import { TEMPLATE_IDS, isTemplateFree } from "@/lib/templates";
 import { FREE_AI_REWRITES } from "@/lib/free-plan";
+import { findBlanks } from "@/lib/blanks";
 const TEMPLATES: readonly string[] = TEMPLATE_IDS;
+
+type EditorTab = "edit" | "score" | "match" | "agent" | "cover-letter" | "resignation-letter";
+
+/** How long after the last change the builder saves on its own. */
+const AUTOSAVE_DELAY_MS = 1500;
 
 export function ResumeEditor({
   resumeId,
@@ -29,7 +35,7 @@ export function ResumeEditor({
   initialData,
   plan,
   googleDriveConnected,
-  userInitial,
+  templateOverride,
   allowances,
   initialTab = "edit",
 }: {
@@ -39,18 +45,26 @@ export function ResumeEditor({
   initialData: ResumeData;
   plan: Plan;
   googleDriveConnected: boolean;
-  userInitial: string;
+  /** A template picked elsewhere ("Use this template") to switch to; saved like any other change. */
+  templateOverride?: string;
   /** Free-plan counters ("1 of 1 used"). Not needed on Pro. */
   allowances?: PlanAllowances;
-  initialTab?: "edit" | "score" | "match" | "agent" | "cover-letter" | "resignation-letter";
+  initialTab?: EditorTab;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(initialTitle);
-  const [template, setTemplate] = useState(initialTemplate);
+  const [template, setTemplate] = useState(templateOverride ?? initialTemplate);
   const [data, setData] = useState<ResumeData>(initialData);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"edit" | "score" | "match" | "agent" | "cover-letter" | "resignation-letter">(initialTab);
+  const [tab, setTab] = useState<EditorTab>(initialTab);
+  // Tabs stay mounted once opened, so a cover letter, the agent chat or a
+  // pasted job post aren't thrown away when you switch tabs and come back.
+  const [openedTabs, setOpenedTabs] = useState<EditorTab[]>([initialTab]);
+  // One job post for the whole builder: paste it once, use it for the ATS
+  // score and the cover letter.
+  const [jobPost, setJobPost] = useState("");
+  const [jobCompany, setJobCompany] = useState("");
   const [pdfUpgradeRequired, setPdfUpgradeRequired] = useState<string | null>(null);
   /** Shown after a free-plan PDF that carries the "Made with Lettr" line. */
   const [pdfFooterNote, setPdfFooterNote] = useState(false);
@@ -61,45 +75,171 @@ export function ResumeEditor({
   const [sharing, setSharing] = useState(false);
   const [shareNote, setShareNote] = useState<string | null>(null);
   const [readyFile, setReadyFile] = useState<File | null>(null);
+  /** A download that's waiting because the resume still has [X]-style blanks. */
+  const [blankWarning, setBlankWarning] = useState<{ action: "pdf" | "docx" | "share"; count: number } | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  async function save() {
-    setSaveStatus("saving");
-    setSaveError(null);
-    const res = await fetch(`/api/resumes/${resumeId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, template, data }),
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      setSaveStatus("error");
-      setSaveError(body.error ?? "Couldn't save. Try again.");
-      return;
-    }
-    setSaveStatus("saved");
-    setTimeout(() => setSaveStatus("idle"), 1500);
+  function showTab(next: EditorTab) {
+    setTab(next);
+    setOpenedTabs((list) => (list.includes(next) ? list : [...list, next]));
   }
+
+  // A job post handed over from the Applications tracker (or the homepage
+  // demo before sign-up). Read once, then cleared so it doesn't follow you
+  // to every other resume.
+  useEffect(() => {
+    try {
+      const pendingJd = window.localStorage.getItem("lettr_pending_jd");
+      const pendingCompany = window.localStorage.getItem("lettr_pending_company");
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only storage, must run after mount
+      if (pendingJd) setJobPost(pendingJd);
+      if (pendingCompany) setJobCompany(pendingCompany);
+      window.localStorage.removeItem("lettr_pending_jd");
+      window.localStorage.removeItem("lettr_pending_company");
+    } catch {
+      // storage unavailable
+    }
+  }, []);
+
+  // ---------- Saving ----------
+  // Every change is saved automatically a moment after you stop typing, so
+  // nothing is lost if you leave the page. The Save button still works for
+  // anyone who likes to press it.
+  const snapshot = useMemo(() => JSON.stringify({ title, template, data }), [title, template, data]);
+  // What the server has. Starts as the loaded resume, so a template switch
+  // passed in through the link counts as a change and gets saved.
+  const [savedSnapshot, setSavedSnapshot] = useState(() =>
+    JSON.stringify({ title: initialTitle, template: initialTemplate, data: initialData })
+  );
+  const dirty = snapshot !== savedSnapshot;
+  const latest = useRef({ title, template, data, snapshot });
+  const savedRef = useRef(savedSnapshot);
+  const saveQueue = useRef<Promise<unknown>>(Promise.resolve());
+  const deletedRef = useRef(false);
+  /** Free plan with a Pro template picked: it previews, but only Pro can save it. */
+  const proTemplatePreview = plan === "free" && !isTemplateFree(template);
+
+  useEffect(() => {
+    latest.current = { title, template, data, snapshot };
+  }, [title, template, data, snapshot]);
+
+  const save = useCallback(
+    (mode: "auto" | "manual" = "manual"): Promise<boolean> => {
+      const run = async (): Promise<boolean> => {
+        const cur = latest.current;
+        if (deletedRef.current) return true;
+        if (mode === "auto" && cur.snapshot === savedRef.current) return true;
+        // On the free plan a Pro template can be previewed but not saved, so
+        // automatic saves keep the content and leave the saved template alone.
+        const keepTemplate = mode === "auto" && plan === "free" && !isTemplateFree(cur.template);
+        setSaveStatus("saving");
+        setSaveError(null);
+        try {
+          const res = await fetch(`/api/resumes/${resumeId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(keepTemplate ? { title: cur.title, data: cur.data } : { title: cur.title, template: cur.template, data: cur.data }),
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            setSaveStatus("error");
+            setSaveError(body.error ?? "Couldn't save your changes. Try again.");
+            return false;
+          }
+          savedRef.current = cur.snapshot;
+          setSavedSnapshot(cur.snapshot);
+          setSaveStatus("saved");
+          return true;
+        } catch {
+          setSaveStatus("error");
+          setSaveError("Couldn't save. Check your internet connection. Your changes are still here, so try again.");
+          return false;
+        }
+      };
+      // One save at a time, in order, so an older save can never land last.
+      const next = saveQueue.current.then(run, run);
+      saveQueue.current = next;
+      return next;
+    },
+    [plan, resumeId]
+  );
+
+  // Save a moment after the last change.
+  useEffect(() => {
+    if (!dirty) return;
+    const t = window.setTimeout(() => void save("auto"), AUTOSAVE_DELAY_MS);
+    return () => window.clearTimeout(t);
+  }, [snapshot, dirty, save]);
+
+  // Leaving with changes that haven't reached the server yet: save them on
+  // the way out (in-app links), and ask before closing the tab.
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === "hidden" && latest.current.snapshot !== savedRef.current) void save("auto");
+    };
+    document.addEventListener("visibilitychange", onHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      if (latest.current.snapshot !== savedRef.current) void save("auto");
+    };
+  }, [save]);
+
+  useEffect(() => {
+    if (!dirty && saveStatus !== "saving") return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty, saveStatus]);
+
+  // The "More" menu closes when you tap anywhere else or press Escape.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDown = (e: PointerEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
+  const [downloading, setDownloading] = useState(false);
+  const fileBase = (data.contact.fullName || "resume").trim().replace(/\s+/g, "_");
 
   /** Builds the PDF on the server (counts as a download on the free plan). Returns null if blocked or failed. */
   async function fetchPdf(): Promise<{ blob: Blob; name: string } | null> {
     setPdfUpgradeRequired(null);
-    const res = await fetch("/api/resumes/pdf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume: data, template }),
-    });
-    if (res.status === 402) {
-      const body = await res.json().catch(() => ({}));
-      setPdfUpgradeRequired(body.error ?? "Upgrade to Pro to export this.");
+    try {
+      const res = await fetch("/api/resumes/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resume: data, template }),
+      });
+      if (res.status === 402) {
+        const body = await res.json().catch(() => ({}));
+        setPdfUpgradeRequired(body.error ?? "Upgrade to Pro to export this.");
+        return null;
+      }
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setSaveError(body.error ?? "Couldn't create the PDF. Please try again.");
+        return null;
+      }
+      setPdfFooterNote(res.headers.get("X-Lettr-Footer") === "1");
+      return { blob: await res.blob(), name: `${fileBase}.pdf` };
+    } catch {
+      setSaveError("Couldn't reach the server to make your PDF. Check your connection and try again.");
       return null;
     }
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      setSaveError(body.error ?? "Couldn't create the PDF. Please try again.");
-      return null;
-    }
-    setPdfFooterNote(res.headers.get("X-Lettr-Footer") === "1");
-    return { blob: await res.blob(), name: `${(data.contact.fullName || "resume").replace(/\s+/g, "_")}.pdf` };
   }
 
   function saveBlob(blob: Blob, name: string) {
@@ -107,12 +247,40 @@ export function ResumeEditor({
     const a = document.createElement("a");
     a.href = url;
     a.download = name;
+    a.rel = "noopener";
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    a.remove();
+    // Some browsers (Safari, Firefox) start the download after click() returns.
+    window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
   }
 
-  async function exportPdf() {
+  /**
+   * AI rewrites leave [X]-style blanks for real numbers. Before a file leaves
+   * Lettr, point them out once, so nobody sends "[X]%" to a recruiter.
+   */
+  function blanksCheck(action: "pdf" | "docx" | "share"): boolean {
+    const count = findBlanks(data).length;
+    if (count === 0) return true;
+    setMenuOpen(false);
+    setBlankWarning({ action, count });
+    return false;
+  }
+
+  function continueAnyway() {
+    const pending = blankWarning?.action;
+    setBlankWarning(null);
+    if (pending === "pdf") void exportPdf(true);
+    else if (pending === "docx") void exportDocx(true);
+    else if (pending === "share") void shareWhatsApp(true);
+  }
+
+  async function exportPdf(skipBlankCheck = false) {
+    if (downloading) return;
+    if (!skipBlankCheck && !blanksCheck("pdf")) return;
+    setDownloading(true);
     const pdf = await fetchPdf();
+    setDownloading(false);
     if (pdf) saveBlob(pdf.blob, pdf.name);
   }
 
@@ -121,11 +289,13 @@ export function ResumeEditor({
    * sheet. Computers without file sharing get the PDF downloaded plus a
    * pointer to WhatsApp Web, since a link can't carry the file itself.
    */
-  async function shareWhatsApp() {
+  async function shareWhatsApp(skipBlankCheck = false) {
+    if (!skipBlankCheck && !blanksCheck("share")) return;
     setShareNote(null);
     setSharing(true);
     const pdf = await fetchPdf();
     setSharing(false);
+    setMenuOpen(false);
     if (!pdf) return;
     const file = new File([pdf.blob], pdf.name, { type: "application/pdf" });
     const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
@@ -147,30 +317,30 @@ export function ResumeEditor({
     setShareNote("Your PDF is downloaded. Open WhatsApp and attach it to your chat.");
   }
 
-  async function exportDocx() {
+  async function exportDocx(skipBlankCheck = false) {
+    if (!skipBlankCheck && !blanksCheck("docx")) return;
+    setMenuOpen(false);
     setDocxUpgradeRequired(null);
-    const res = await fetch("/api/resumes/docx", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume: data }),
-    });
-    if (res.status === 402) {
-      const body = await res.json().catch(() => ({}));
-      setDocxUpgradeRequired(body.error ?? "DOCX export is a Pro feature.");
-      return;
+    try {
+      const res = await fetch("/api/resumes/docx", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resume: data }),
+      });
+      if (res.status === 402) {
+        const body = await res.json().catch(() => ({}));
+        setDocxUpgradeRequired(body.error ?? "DOCX export is a Pro feature.");
+        return;
+      }
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setSaveError(body.error ?? "Couldn't create the Word file. Please try again.");
+        return;
+      }
+      saveBlob(await res.blob(), `${fileBase}.docx`);
+    } catch {
+      setSaveError("Couldn't reach the server to make your Word file. Check your connection and try again.");
     }
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      setSaveError(body.error ?? "Couldn't create the Word file. Please try again.");
-      return;
-    }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(data.contact.fullName || "resume").replace(/\s+/g, "_")}.docx`;
-    a.click();
-    URL.revokeObjectURL(url);
   }
 
   async function exportToDrive() {
@@ -180,33 +350,45 @@ export function ResumeEditor({
     }
     setDriveStatus("loading");
     setDriveLink(null);
-    const res = await fetch("/api/resumes/drive-export", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume: data, template }),
-    });
-    const body = await res.json();
+    try {
+      const res = await fetch("/api/resumes/drive-export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resume: data, template }),
+      });
+      const body = await res.json().catch(() => ({}));
 
-    if (res.status === 402) {
-      setDriveStatus("upgrade");
-      return;
-    }
-    if (res.status === 428) {
-      setDriveStatus("connect");
-      return;
-    }
-    if (!res.ok) {
+      if (res.status === 402) {
+        setDriveStatus("upgrade");
+        return;
+      }
+      if (res.status === 428) {
+        setDriveStatus("connect");
+        return;
+      }
+      if (!res.ok) {
+        setDriveStatus("idle");
+        setSaveError(body.error ?? "Couldn't export to Google Drive.");
+        return;
+      }
       setDriveStatus("idle");
-      setSaveError(body.error ?? "Couldn't export to Google Drive.");
-      return;
+      setDriveLink(body.webViewLink);
+    } catch {
+      setDriveStatus("idle");
+      setSaveError("Couldn't reach Google Drive right now. Try again.");
     }
-    setDriveStatus("idle");
-    setDriveLink(body.webViewLink);
   }
 
   async function deleteThisResume() {
+    setMenuOpen(false);
     if (!confirm("Delete this resume? This cannot be undone.")) return;
-    await fetch(`/api/resumes/${resumeId}`, { method: "DELETE" });
+    deletedRef.current = true;
+    const res = await fetch(`/api/resumes/${resumeId}`, { method: "DELETE" }).catch(() => null);
+    if (!res?.ok) {
+      deletedRef.current = false;
+      setSaveError("Couldn't delete this resume. Try again.");
+      return;
+    }
     router.push("/dashboard");
   }
 
@@ -214,9 +396,14 @@ export function ResumeEditor({
   const upgradeMessage = pdfUpgradeRequired || docxUpgradeRequired;
 
   function goFix(sectionKey: string) {
-    setTab("edit");
+    showTab("edit");
     setMobileView("form");
     goToSection(sectionKey);
+  }
+
+  function blankSection(): string {
+    const first = findBlanks(data)[0];
+    return first?.section ?? "experience";
   }
 
   const pillOutline =
@@ -225,11 +412,17 @@ export function ResumeEditor({
   return (
     <main className="flex-1 flex flex-col bg-cream text-ink">
       <header className="border-b border-rule bg-cream px-3 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-[16rem] flex-1">
+        <div className="flex items-center gap-3 min-w-0 basis-full sm:basis-auto flex-1">
           <Link
             href="/dashboard"
             aria-label="Back to dashboard"
             title="Back to dashboard"
+            onClick={(e) => {
+              // Make sure the last few keystrokes are saved before leaving.
+              if (latest.current.snapshot === savedRef.current) return;
+              e.preventDefault();
+              void save("auto").then(() => router.push("/dashboard"));
+            }}
             className="w-11 h-11 shrink-0 rounded-full bg-ink text-gold font-brand font-extrabold text-xl flex items-center justify-center -rotate-6 hover:rotate-0 transition-transform"
           >
             L
@@ -241,18 +434,26 @@ export function ResumeEditor({
               aria-label="Resume title"
               className="font-brand font-extrabold text-xl sm:text-2xl tracking-tight bg-transparent focus:outline-none border-b-2 border-transparent focus:border-brand-blue min-w-0 w-full py-1"
             />
-            <p className="text-xs font-bold text-slate h-4" aria-live="polite">
+            <p className="text-xs font-bold text-slate min-h-4 truncate" aria-live="polite">
               {saveStatus === "saving"
                 ? "Saving…"
-                : saveStatus === "saved"
-                ? "✓ Saved"
                 : saveStatus === "error"
                 ? "Not saved"
+                : dirty
+                ? "Editing…"
+                : saveStatus === "saved"
+                ? "✓ All changes saved"
                 : ""}
+              {proTemplatePreview && saveStatus !== "error" && (
+                <span className="font-semibold">
+                  {saveStatus === "saving" || dirty || saveStatus === "saved" ? " · " : ""}
+                  Pro template: preview only
+                </span>
+              )}
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 ml-auto">
           <select
             value={template}
             onChange={(e) => setTemplate(e.target.value)}
@@ -267,59 +468,105 @@ export function ResumeEditor({
               </option>
             ))}
           </select>
-          <button onClick={save} className={pillOutline}>
-            Save
+          <button onClick={() => void save("manual")} disabled={saveStatus === "saving"} className={`${pillOutline} disabled:opacity-60`}>
+            {saveStatus === "saving" ? "Saving…" : "Save"}
           </button>
           <button
-            onClick={exportPdf}
-            className="btn-press inline-flex items-center justify-center min-h-11 px-5 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_4px_0_var(--brand-blue-deep)]"
+            onClick={() => void exportPdf()}
+            disabled={downloading}
+            aria-busy={downloading}
+            className="btn-press inline-flex items-center justify-center min-h-11 px-5 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_4px_0_var(--brand-blue-deep)] disabled:opacity-70"
           >
-            <span className="sm:hidden">PDF</span>
-            <span className="hidden sm:inline">Download PDF</span>
+            {downloading ? (
+              "Preparing…"
+            ) : (
+              <>
+                <span className="sm:hidden">PDF</span>
+                <span className="hidden sm:inline">Download PDF</span>
+              </>
+            )}
           </button>
-          <details className="relative">
-            <summary className={`${pillOutline} list-none cursor-pointer select-none [&::-webkit-details-marker]:hidden`}>
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              className={pillOutline}
+            >
               More
-            </summary>
-            <div className="absolute right-0 mt-2 z-30 bg-white border-2 border-ink rounded-2xl py-2 w-60 max-w-[calc(100vw-2rem)] text-[15px] shadow-[5px_5px_0_var(--ink)]">
-              <button
-                onClick={shareWhatsApp}
-                disabled={sharing}
-                className="flex items-center gap-2 w-full text-left px-4 min-h-11 font-bold hover:bg-sand disabled:opacity-60"
+            </button>
+            {menuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 mt-2 z-30 bg-white border-2 border-ink rounded-2xl py-2 w-60 max-w-[calc(100vw-1.5rem)] text-[15px] shadow-[5px_5px_0_var(--ink)]"
               >
-                <WhatsAppIcon />
-                {sharing ? "Preparing PDF…" : "Share on WhatsApp"}
-              </button>
-              <button onClick={exportDocx} className="flex items-center gap-2 w-full text-left px-4 min-h-11 hover:bg-sand">
-                Download Word (.docx)
-                {plan === "free" && <span className="text-[10px] font-extrabold bg-ink text-gold px-1.5 py-0.5 rounded-full">Pro</span>}
-              </button>
-              {driveStatus === "connect" ? (
-                <a href="/api/google/connect" className="flex items-center px-4 min-h-11 font-bold text-brand-blue hover:bg-sand">
-                  Connect Google Drive →
-                </a>
-              ) : driveLink ? (
-                <a href={driveLink} target="_blank" rel="noreferrer" className="flex items-center px-4 min-h-11 font-bold text-brand-blue hover:bg-sand">
-                  Open in Drive ✓
-                </a>
-              ) : (
                 <button
-                  onClick={exportToDrive}
-                  disabled={driveStatus === "loading"}
-                  className="flex items-center gap-2 w-full text-left px-4 min-h-11 hover:bg-sand disabled:opacity-60"
+                  role="menuitem"
+                  onClick={() => void shareWhatsApp()}
+                  disabled={sharing}
+                  className="flex items-center gap-2 w-full text-left px-4 min-h-11 font-bold hover:bg-sand disabled:opacity-60"
                 >
-                  {driveStatus === "loading" ? "Uploading…" : "Save to Google Drive"}
+                  <WhatsAppIcon />
+                  {sharing ? "Preparing PDF…" : "Share on WhatsApp"}
+                </button>
+                <button role="menuitem" onClick={() => void exportDocx()} className="flex items-center gap-2 w-full text-left px-4 min-h-11 hover:bg-sand">
+                  Download Word (.docx)
                   {plan === "free" && <span className="text-[10px] font-extrabold bg-ink text-gold px-1.5 py-0.5 rounded-full">Pro</span>}
                 </button>
-              )}
-              <div className="border-t border-rule my-1" />
-              <button onClick={deleteThisResume} className="flex items-center w-full text-left px-4 min-h-11 text-red-600 hover:bg-red-50">
-                Delete resume
-              </button>
-            </div>
-          </details>
+                {driveStatus === "connect" ? (
+                  <a role="menuitem" href="/api/google/connect" className="flex items-center px-4 min-h-11 font-bold text-brand-blue hover:bg-sand">
+                    Connect Google Drive →
+                  </a>
+                ) : driveLink ? (
+                  <a role="menuitem" href={driveLink} target="_blank" rel="noreferrer" className="flex items-center px-4 min-h-11 font-bold text-brand-blue hover:bg-sand">
+                    Open in Drive ✓
+                  </a>
+                ) : (
+                  <button
+                    role="menuitem"
+                    onClick={() => void exportToDrive()}
+                    disabled={driveStatus === "loading"}
+                    className="flex items-center gap-2 w-full text-left px-4 min-h-11 hover:bg-sand disabled:opacity-60"
+                  >
+                    {driveStatus === "loading" ? "Uploading…" : "Save to Google Drive"}
+                    {plan === "free" && <span className="text-[10px] font-extrabold bg-ink text-gold px-1.5 py-0.5 rounded-full">Pro</span>}
+                  </button>
+                )}
+                <div className="border-t border-rule my-1" />
+                <button role="menuitem" onClick={() => void deleteThisResume()} className="flex items-center w-full text-left px-4 min-h-11 text-red-600 hover:bg-red-50">
+                  Delete resume
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
+
+      {blankWarning && (
+        <div role="alertdialog" aria-labelledby="blank-warning-title" className="bg-gold-soft text-ink px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+          <p id="blank-warning-title" className="text-sm">
+            <strong>
+              {blankWarning.count === 1 ? "1 line still has a blank" : `${blankWarning.count} lines still have blanks`} like [X] to fill in.
+            </strong>{" "}
+            Recruiters will see them exactly as written.
+          </p>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              onClick={() => {
+                setBlankWarning(null);
+                goFix(blankSection());
+              }}
+              className="btn-press inline-flex items-center min-h-10 px-4 rounded-full bg-ink text-white text-sm font-bold"
+            >
+              Show me
+            </button>
+            <button onClick={continueAnyway} className="inline-flex items-center min-h-10 px-3 text-sm font-bold underline">
+              {blankWarning.action === "docx" ? "Download anyway" : blankWarning.action === "share" ? "Share anyway" : "Download anyway"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {pdfFooterNote && !(saveError || upgradeMessage) && (
         <div className="bg-gold-soft text-ink px-4 sm:px-6 py-3 flex items-center justify-between gap-3 text-sm">
@@ -412,7 +659,7 @@ export function ResumeEditor({
           { id: "resignation-letter", label: "Resignation letter", pro: true },
         ]}
         active={tab}
-        onChange={(id) => setTab(id as typeof tab)}
+        onChange={(id) => showTab(id as EditorTab)}
         showPro={plan === "free"}
       />
 
@@ -421,29 +668,52 @@ export function ResumeEditor({
       <div className="flex-1 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] min-h-0">
         <h1 className="sr-only">Resume builder</h1>
         <div className={`overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 ${mobileView === "preview" ? "hidden lg:block" : ""}`}>
-          {tab === "edit" && (
-            <EditForm data={data} setData={setData} plan={plan} rewrites={allowances?.rewrites} template={template} setTemplate={setTemplate} />
+          {openedTabs.includes("edit") && (
+            <div hidden={tab !== "edit"}>
+              <EditForm data={data} setData={setData} plan={plan} rewrites={allowances?.rewrites} template={template} setTemplate={setTemplate} />
+            </div>
           )}
-          {tab === "agent" && (
-            <UpgradeGate locked={plan === "free"} feature="The AI Resume Agent">
-              <AgentPanel data={data} setData={setData} />
-            </UpgradeGate>
+          {openedTabs.includes("agent") && (
+            <div hidden={tab !== "agent"}>
+              <UpgradeGate locked={plan === "free"} feature="The AI Resume Agent">
+                <AgentPanel data={data} setData={setData} />
+              </UpgradeGate>
+            </div>
           )}
           {tab === "score" && <ScorePanel data={data} plan={plan} />}
-          {tab === "match" && (
-            <AtsPanel
-              data={data}
-              template={template}
-              onFix={goFix}
-              keywordsShown={allowances?.keywordsShown}
-              analyst={allowances ? { ...allowances.atsAnalyst, period: allowances.period } : undefined}
-            />
+          {openedTabs.includes("match") && (
+            <div hidden={tab !== "match"}>
+              <AtsPanel
+                data={data}
+                template={template}
+                onFix={goFix}
+                jobPost={jobPost}
+                onJobPostChange={setJobPost}
+                keywordsShown={allowances?.keywordsShown}
+                analyst={allowances ? { ...allowances.atsAnalyst, period: allowances.period } : undefined}
+              />
+            </div>
           )}
-          {tab === "cover-letter" && <CoverLetterPanel data={data} plan={plan} allowance={allowances?.coverLetters} period={allowances?.period} />}
-          {tab === "resignation-letter" && (
-            <UpgradeGate locked={plan === "free"} feature="The resignation letter builder">
-              <ResignationLetterPanel initialName={data.contact.fullName} />
-            </UpgradeGate>
+          {openedTabs.includes("cover-letter") && (
+            <div hidden={tab !== "cover-letter"}>
+              <CoverLetterPanel
+                data={data}
+                plan={plan}
+                allowance={allowances?.coverLetters}
+                period={allowances?.period}
+                jd={jobPost}
+                setJd={setJobPost}
+                company={jobCompany}
+                setCompany={setJobCompany}
+              />
+            </div>
+          )}
+          {openedTabs.includes("resignation-letter") && (
+            <div hidden={tab !== "resignation-letter"}>
+              <UpgradeGate locked={plan === "free"} feature="The resignation letter builder">
+                <ResignationLetterPanel data={data} />
+              </UpgradeGate>
+            </div>
           )}
         </div>
         <div
@@ -681,6 +951,7 @@ export function EditForm({
         <CommaListInput
           value={data.skills}
           onChange={(skills) => setData((d) => ({ ...d, skills }))}
+          label="Skills"
           placeholder="Comma-separated, e.g. Python, Excel, Project management"
         />
       </Section>
@@ -690,7 +961,7 @@ export function EditForm({
           Optional sections — add the ones that help your story. Empty sections don&apos;t appear on your resume.
         </p>
         <div className="space-y-8">
-          <Section title="Projects" action={<AddButton onClick={addProject} label="Add project" />}>
+          <Section title="Projects" id="section-projects" action={<AddButton onClick={addProject} label="Add project" />}>
             <div className="space-y-3">
               {(data.projects ?? []).map((p) => (
                 <div key={p.id} className="bg-white border border-rule rounded-xl p-3 space-y-2">
@@ -713,7 +984,7 @@ export function EditForm({
             </div>
           </Section>
 
-          <Section title="Certifications" action={<AddButton onClick={addCertification} label="Add certification" />}>
+          <Section title="Certifications" id="section-certifications" action={<AddButton onClick={addCertification} label="Add certification" />}>
             <div className="space-y-3">
               {(data.certifications ?? []).map((c) => (
                 <div key={c.id} className="bg-white border border-rule rounded-xl p-3 space-y-2">
@@ -728,18 +999,20 @@ export function EditForm({
             </div>
           </Section>
 
-          <Section title="Achievements & awards">
+          <Section title="Achievements & awards" id="section-achievements">
             <LineListInput
               value={data.achievements ?? []}
               onChange={(achievements) => setData((d) => ({ ...d, achievements }))}
+              label="Achievements and awards"
               placeholder={"One per line, e.g.\nEmployee of the Quarter, Q2 2025\nWon Smart India Hackathon 2023"}
             />
           </Section>
 
-          <Section title="Languages">
+          <Section title="Languages" id="section-languages">
             <CommaListInput
               value={data.languages ?? []}
               onChange={(languages) => setData((d) => ({ ...d, languages }))}
+              label="Languages"
               placeholder="e.g. English (fluent), Hindi (native), German (basic)"
             />
           </Section>
@@ -1209,14 +1482,22 @@ function AgentPanel({
           userMessage: text,
         }),
       });
-      const body = await res.json();
+      const body = await res.json().catch(() => ({}));
       if (body.usage) setUsage(body.usage);
-      if (!res.ok) {
-        setMessages((m) => [...m, { role: "assistant", content: body.error ?? "Something went wrong." }]);
+      if (!res.ok || !body.resumeData) {
+        setMessages((m) => [
+          ...m,
+          { role: "assistant", content: body.error ?? "Something went wrong and nothing was changed. Please try again." },
+        ]);
         return;
       }
       setData(body.resumeData);
-      setMessages((m) => [...m, { role: "assistant", content: body.reply, actions: body.actionsTaken }]);
+      setMessages((m) => [...m, { role: "assistant", content: body.reply || "Done.", actions: body.actionsTaken }]);
+    } catch {
+      setMessages((m) => [
+        ...m,
+        { role: "assistant", content: "Couldn't reach the server, so nothing was changed. Check your connection and try again." },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -1228,11 +1509,11 @@ function AgentPanel({
         <p className="text-xs uppercase tracking-wide text-brand-blue font-bold mb-1">AI Resume Agent</p>
         <p className="text-sm text-ink-soft">
           Tell it what to change — &quot;tighten my summary&quot;, &quot;add a bullet about the Q3 migration
-          project&quot;, &quot;remove my second job&quot; — and it edits the resume directly.
+          project&quot;, &quot;remove my second job&quot; — and it edits the resume directly. Changes save automatically.
         </p>
       </div>
 
-      <div className="flex-1 space-y-3 mb-3">
+      <div className="flex-1 space-y-3 mb-3" aria-live="polite">
         {messages.map((m, i) => (
           <div key={i} className={m.role === "user" ? "text-right" : ""}>
             <div
@@ -1240,12 +1521,12 @@ function AgentPanel({
                 m.role === "user" ? "bg-ink text-paper" : "bg-white border border-rule"
               }`}
             >
-              <p className="whitespace-pre-wrap">{m.content}</p>
+              {m.role === "user" ? <p className="whitespace-pre-wrap">{m.content}</p> : <ChatText text={m.content} />}
               {m.actions && m.actions.length > 0 && (
                 <ul className="mt-2 pt-2 border-t border-rule/40 space-y-0.5">
                   {m.actions.map((a, ai) => (
-                    <li key={ai} className="text-xs text-brand-blue flex items-center gap-1">
-                      <span>✓</span> {a}
+                    <li key={ai} className="text-xs text-brand-blue flex items-start gap-1">
+                      <span aria-hidden="true">✓</span> <span>{a}</span>
                     </li>
                   ))}
                 </ul>
@@ -1262,22 +1543,58 @@ function AgentPanel({
         </p>
       )}
 
-      <div className="flex gap-2">
+      <form
+        className="flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void send();
+        }}
+      >
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && send()}
+          aria-label="Message to the AI Resume Agent"
           placeholder="e.g. Add a bullet about leading the migration"
-          className="flex-1 border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
+          className="flex-1 min-w-0 border-2 border-rule rounded-xl px-3 min-h-11 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
         />
         <button
-          onClick={send}
-          disabled={loading}
-          className="bg-brand-blue text-white text-sm px-4 py-2 rounded-xl hover:opacity-90 disabled:opacity-60"
+          type="submit"
+          disabled={loading || !input.trim()}
+          className="btn-press inline-flex items-center min-h-11 px-5 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_3px_0_var(--brand-blue-deep)] disabled:opacity-60"
         >
-          Send
+          {loading ? "…" : "Send"}
         </button>
-      </div>
+      </form>
+    </div>
+  );
+}
+
+/**
+ * The agent writes plain text, but sometimes slips into light markdown
+ * ("**Summary**", "- item"). Show that as real bold text and bullet lines
+ * instead of stray asterisks.
+ */
+function ChatText({ text }: { text: string }) {
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  const inline = (line: string) =>
+    line.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+      /^\*\*[^*]+\*\*$/.test(part) ? <strong key={i}>{part.slice(2, -2)}</strong> : <span key={i}>{part.replace(/(^|\s)\*(\S[^*]*\S|\S)\*(?=\s|$|[.,!?])/g, "$1$2")}</span>
+    );
+  return (
+    <div className="space-y-1">
+      {lines.map((line, i) => {
+        const bullet = line.match(/^\s*[-*•]\s+(.*)$/);
+        if (bullet) {
+          return (
+            <p key={i} className="pl-4 relative before:content-['•'] before:absolute before:left-1">
+              {inline(bullet[1])}
+            </p>
+          );
+        }
+        const heading = line.match(/^\s*#{1,6}\s+(.*)$/);
+        if (heading) return <p key={i} className="font-bold">{inline(heading[1])}</p>;
+        return line.trim() ? <p key={i}>{inline(line)}</p> : <div key={i} className="h-1" aria-hidden="true" />;
+      })}
     </div>
   );
 }
@@ -1371,14 +1688,21 @@ function CoverLetterPanel({
   plan,
   allowance,
   period = "lifetime",
+  jd,
+  setJd,
+  company,
+  setCompany,
 }: {
   data: ResumeData;
   plan: Plan;
   allowance?: Allowance;
   period?: "lifetime" | "month";
+  /** The job post, shared with the ATS score tab. */
+  jd: string;
+  setJd: (v: string) => void;
+  company: string;
+  setCompany: (v: string) => void;
 }) {
-  const [jd, setJd] = useState("");
-  const [company, setCompany] = useState("");
   const [letter, setLetter] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1386,22 +1710,6 @@ function CoverLetterPanel({
   const [reused, setReused] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
-
-  // Opened from the Applications tracker: bring the job post and company along.
-  useEffect(() => {
-    try {
-      const pendingJd = window.localStorage.getItem("lettr_pending_jd");
-      const pendingCompany = window.localStorage.getItem("lettr_pending_company");
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only storage, must run after mount
-      if (pendingJd) setJd((cur) => cur || pendingJd);
-      if (pendingCompany) {
-        setCompany((cur) => cur || pendingCompany);
-        window.localStorage.removeItem("lettr_pending_company");
-      }
-    } catch {
-      // storage unavailable
-    }
-  }, []);
 
   async function generate(fresh = false) {
     if (!jd.trim() || jd.trim().length < 10) {
@@ -1415,7 +1723,7 @@ function CoverLetterPanel({
       const res = await fetch("/api/ai/cover-letter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resume: data, jobDescription: jd, companyName: company || undefined, fresh }),
+        body: JSON.stringify({ resume: data, jobDescription: jd, companyName: company.trim() || undefined, fresh }),
       });
       const body = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -1426,8 +1734,20 @@ function CoverLetterPanel({
         setError(body.error ?? "Couldn't generate a cover letter.");
         setUpgrade(Boolean(body.upgradeRequired));
       }
+    } catch {
+      setError("Couldn't reach the server. Check your connection and try again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function copyLetter() {
+    try {
+      await navigator.clipboard.writeText(letter);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setError("Couldn't copy automatically. Select the letter and copy it by hand.");
     }
   }
 
@@ -1446,23 +1766,26 @@ function CoverLetterPanel({
       )}
       <Section title="Target role">
         <Input label="Company (optional)" value={company} onChange={setCompany} />
-        <textarea
-          value={jd}
-          onChange={(e) => setJd(e.target.value)}
-          rows={8}
-          placeholder="Paste the job description…"
-          aria-label="Job description"
-          className="w-full border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white focus:outline-none focus:border-brand-blue mt-2"
-        />
+        <label className="block mt-3">
+          <span className="text-sm font-bold text-slate">Job post</span>
+          <textarea
+            value={jd}
+            onChange={(e) => setJd(e.target.value)}
+            rows={8}
+            placeholder="Paste the job description…"
+            className="mt-1 w-full border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
+          />
+        </label>
+        <p className="text-xs text-slate mt-1">The same job post is used on the ATS score tab, so you only paste it once.</p>
         <button
           onClick={() => generate(false)}
           disabled={loading}
-          className="mt-2 min-h-11 bg-brand-blue text-white text-sm font-bold px-5 py-2 rounded-xl hover:opacity-90 disabled:opacity-60"
+          className="btn-press mt-3 inline-flex items-center min-h-11 px-5 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_4px_0_var(--brand-blue-deep)] disabled:opacity-60"
         >
-          {loading ? "Writing…" : "Generate cover letter"}
+          {loading ? "Writing…" : "✦ Generate cover letter"}
         </button>
         {error && (
-          <p className="text-sm text-red-600 mt-2">
+          <p className="text-sm text-red-600 mt-2" role="alert">
             {error}{" "}
             {upgrade && (
               <Link href="/pricing" className="font-bold underline">
@@ -1474,14 +1797,14 @@ function CoverLetterPanel({
       </Section>
 
       {letter && (
-        <div className="bg-white border border-rule rounded-xl p-5">
+        <div className="bg-white border border-rule rounded-xl p-5" aria-live="polite">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <p className="text-xs text-ink-soft">
               {reused
                 ? "Same resume and job post as last time, so here's the letter we already wrote."
                 : remaining !== null
                 ? `${remaining} free cover letter${remaining === 1 ? "" : "s"} left${period === "month" ? " this month" : ""}.`
-                : ""}
+                : "Read it through and make it yours before you send it."}
             </p>
             <div className="flex gap-1">
               <button
@@ -1489,17 +1812,10 @@ function CoverLetterPanel({
                 disabled={loading}
                 className="min-h-10 px-3 rounded-lg text-xs font-bold text-brand-blue hover:bg-cream disabled:opacity-60"
               >
-                Write another version
+                {loading ? "Writing…" : "Write another version"}
               </button>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(letter);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1500);
-                }}
-                className="min-h-10 px-3 rounded-lg text-xs font-bold text-ink-soft hover:text-ink hover:bg-cream"
-              >
-                {copied ? "Copied" : "Copy"}
+              <button onClick={() => void copyLetter()} className="min-h-10 px-3 rounded-lg text-xs font-bold text-ink-soft hover:text-ink hover:bg-cream">
+                {copied ? "✓ Copied" : "Copy"}
               </button>
             </div>
           </div>
@@ -1512,80 +1828,142 @@ function CoverLetterPanel({
 
 // ---------- Resignation letter panel ----------
 
-function ResignationLetterPanel({ initialName }: { initialName: string }) {
-  const [employeeName, setEmployeeName] = useState(initialName);
-  const [companyName, setCompanyName] = useState("");
-  const [jobTitle, setJobTitle] = useState("");
+function ResignationLetterPanel({ data }: { data: ResumeData }) {
+  // Start from the current job on the resume, if there is one.
+  const current = data.experience.find((e) => /present|current|now/i.test(e.endDate)) ?? data.experience[0];
+  const [employeeName, setEmployeeName] = useState(data.contact.fullName);
+  const [companyName, setCompanyName] = useState(current?.company ?? "");
+  const [jobTitle, setJobTitle] = useState(current?.role ?? "");
+  const [managerName, setManagerName] = useState("");
   const [lastDay, setLastDay] = useState("");
   const [tone, setTone] = useState<"warm" | "neutral" | "brief">("neutral");
   const [letter, setLetter] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   async function generate() {
-    if (!employeeName.trim() || !companyName.trim() || !jobTitle.trim() || !lastDay.trim()) return;
+    const missing = [
+      !employeeName.trim() && "your name",
+      !jobTitle.trim() && "your job title",
+      !companyName.trim() && "the company",
+      !lastDay.trim() && "your last working day",
+    ].filter(Boolean) as string[];
+    if (missing.length) {
+      setError(`Add ${missing.join(", ").replace(/, ([^,]*)$/, " and $1")} first.`);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/ai/resignation-letter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeName, companyName, jobTitle, lastDay, tone }),
+        body: JSON.stringify({
+          employeeName: employeeName.trim(),
+          companyName: companyName.trim(),
+          jobTitle: jobTitle.trim(),
+          lastDay: formatLastDay(lastDay),
+          managerName: managerName.trim() || undefined,
+          email: data.contact.email?.trim() || undefined,
+          phone: data.contact.phone?.trim() || undefined,
+          tone,
+        }),
       });
-      const body = await res.json();
+      const body = await res.json().catch(() => ({}));
       if (res.ok) setLetter(body.letter);
-      else setError(body.error ?? "Couldn't generate a resignation letter.");
+      else setError(body.error ?? "Couldn't generate a resignation letter. Try again.");
+    } catch {
+      setError("Couldn't reach the server. Check your connection and try again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function copyLetter() {
+    try {
+      await navigator.clipboard.writeText(letter);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setError("Couldn't copy automatically. Select the letter and copy it by hand.");
     }
   }
 
   return (
     <div className="max-w-xl space-y-4">
       <Section title="Details">
-        <div className="grid grid-cols-2 gap-3">
-          <Input label="Your name" value={employeeName} onChange={setEmployeeName} />
+        <div className="grid sm:grid-cols-2 gap-3">
+          <Input label="Your name" value={employeeName} onChange={setEmployeeName} autoComplete="name" />
           <Input label="Job title" value={jobTitle} onChange={setJobTitle} />
           <Input label="Company" value={companyName} onChange={setCompanyName} />
-          <Input label="Last working day" value={lastDay} onChange={setLastDay} />
+          <Input label="Manager's name (optional)" value={managerName} onChange={setManagerName} placeholder="e.g. Anita Rao" />
+          <label className="block">
+            <span className="text-sm font-bold text-slate">Last working day</span>
+            <input
+              type="date"
+              value={lastDay}
+              onChange={(e) => setLastDay(e.target.value)}
+              className="mt-1 w-full border-2 border-rule rounded-xl px-3 min-h-11 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
+            />
+          </label>
+          <label className="block">
+            <span className="text-sm font-bold text-slate">Tone</span>
+            <select
+              value={tone}
+              onChange={(e) => setTone(e.target.value as typeof tone)}
+              className="mt-1 w-full border-2 border-rule rounded-xl px-3 min-h-11 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
+            >
+              <option value="neutral">Neutral</option>
+              <option value="warm">Warm &amp; appreciative</option>
+              <option value="brief">Brief</option>
+            </select>
+          </label>
         </div>
-        <label className="block mt-3">
-          <span className="text-xs text-ink-soft">Tone</span>
-          <select
-            value={tone}
-            onChange={(e) => setTone(e.target.value as typeof tone)}
-            className="mt-0.5 w-full border border-rule rounded-xl px-2 py-1.5 text-sm bg-white"
-          >
-            <option value="neutral">Neutral</option>
-            <option value="warm">Warm &amp; appreciative</option>
-            <option value="brief">Brief</option>
-          </select>
-        </label>
         <button
-          onClick={generate}
+          onClick={() => void generate()}
           disabled={loading}
-          className="mt-3 bg-brand-blue text-white text-sm px-4 py-2 rounded-xl hover:opacity-90 disabled:opacity-60"
+          className="btn-press mt-4 inline-flex items-center min-h-11 px-5 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_4px_0_var(--brand-blue-deep)] disabled:opacity-60"
         >
-          {loading ? "Writing…" : "Generate resignation letter"}
+          {loading ? "Writing…" : "✦ Generate resignation letter"}
         </button>
-        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+        {error && (
+          <p className="text-sm text-red-600 mt-2" role="alert">
+            {error}
+          </p>
+        )}
       </Section>
 
       {letter && (
-        <div className="bg-white border border-rule rounded-xl p-5">
-          <div className="flex justify-end mb-2">
-            <button
-              onClick={() => navigator.clipboard.writeText(letter)}
-              className="text-xs text-ink-soft hover:text-ink"
-            >
-              Copy
-            </button>
+        <div className="bg-white border border-rule rounded-xl p-5" aria-live="polite">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <p className="text-xs text-ink-soft">Read it through and adjust anything before you send it.</p>
+            <div className="flex gap-1">
+              <button
+                onClick={() => void generate()}
+                disabled={loading}
+                className="min-h-10 px-3 rounded-lg text-xs font-bold text-brand-blue hover:bg-cream disabled:opacity-60"
+              >
+                {loading ? "Writing…" : "Write another version"}
+              </button>
+              <button onClick={() => void copyLetter()} className="min-h-10 px-3 rounded-lg text-xs font-bold text-ink-soft hover:text-ink hover:bg-cream">
+                {copied ? "✓ Copied" : "Copy"}
+              </button>
+            </div>
           </div>
           <p className="whitespace-pre-wrap text-sm leading-relaxed">{letter}</p>
         </div>
       )}
     </div>
   );
+}
+
+/** "2026-11-14" (from the date picker) → "14 November 2026". Anything else is passed through. */
+function formatLastDay(value: string): string {
+  const m = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return value.trim();
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 }
 
 // ---------- Live preview ----------
@@ -2596,10 +2974,12 @@ function CommaListInput({
   value,
   onChange,
   placeholder,
+  label,
 }: {
   value: string[];
   onChange: (v: string[]) => void;
   placeholder?: string;
+  label?: string;
 }) {
   // While focused we show exactly what they typed; otherwise we show the
   // canonical list (so changes from the AI agent or an import still appear).
@@ -2618,7 +2998,8 @@ function CommaListInput({
       }}
       onBlur={() => setFocused(false)}
       placeholder={placeholder}
-      className="w-full border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white placeholder:text-ink-soft/50 focus:outline-none focus:border-brand-blue"
+      aria-label={label}
+      className="w-full border-2 border-rule rounded-xl px-3 min-h-11 text-[15px] bg-white placeholder:text-ink-soft/50 focus:outline-none focus:border-brand-blue"
     />
   );
 }
@@ -2628,10 +3009,12 @@ function LineListInput({
   value,
   onChange,
   placeholder,
+  label,
 }: {
   value: string[];
   onChange: (v: string[]) => void;
   placeholder?: string;
+  label?: string;
 }) {
   const [text, setText] = useState(value.join("\n"));
   const [focused, setFocused] = useState(false);
@@ -2649,6 +3032,7 @@ function LineListInput({
         onChange(e.target.value.split("\n").map((x) => x.trim()).filter(Boolean));
       }}
       placeholder={placeholder}
+      aria-label={label}
       className="w-full border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white placeholder:text-ink-soft/50 focus:outline-none focus:border-brand-blue"
     />
   );

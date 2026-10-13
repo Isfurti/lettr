@@ -72,6 +72,9 @@ export default async function DashboardPage({
 
   const tipsLeft = score ? score.sections.reduce((n, s) => n + s.tips.length, 0) : 0;
   const card = "min-w-0 rounded-[28px] p-6 flex flex-col";
+  // The "start with the resume you already have" card has its own import and
+  // create buttons, so the header doesn't repeat them while it's showing.
+  const showStartCard = (Boolean(wantsImport) || resumes.length === 0) && !atResumeLimit;
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row bg-cream text-ink">
@@ -116,7 +119,7 @@ export default async function DashboardPage({
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3 shrink-0">
-            {!atResumeLimit ? (
+            {showStartCard ? null : !atResumeLimit ? (
               <>
                 <ImportResumeButton />
                 <NewResumeButton label="New resume" />
@@ -138,7 +141,7 @@ export default async function DashboardPage({
           </div>
         </div>
 
-        {(wantsImport || resumes.length === 0) && !atResumeLimit && (
+        {showStartCard && (
           <div className="mb-8 bg-white border-2 border-ink rounded-[28px] shadow-[6px_6px_0_var(--ink)] p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-5">
             <div>
               <p className="font-brand font-extrabold text-2xl">
@@ -312,15 +315,15 @@ export default async function DashboardPage({
                   const used = Math.min(u.used, u.limit);
                   return (
                     <div key={u.label}>
-                      <div className="flex justify-between mb-1.5">
-                        <span className="font-bold">{u.label}</span>
-                        <span className="text-slate">
+                      <div className="flex items-start justify-between gap-3 mb-1.5">
+                        <span className="font-bold min-w-0">{u.label}</span>
+                        <span className="text-slate shrink-0 whitespace-nowrap">
                           {used} of {u.limit} used
                         </span>
                       </div>
                       <div className="h-2.5 bg-sand rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full ${used >= u.limit ? "bg-red-500" : "bg-brand-blue"}`}
+                          className={`h-full rounded-full ${used >= u.limit ? "bg-gold-deep" : "bg-brand-blue"}`}
                           style={{ width: `${(used / u.limit) * 100}%` }}
                         />
                       </div>

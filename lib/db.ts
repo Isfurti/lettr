@@ -670,6 +670,17 @@ export async function recordRateLimitEvent(userId: string, endpoint: string) {
   }
 }
 
+/** Takes back the most recent recorded use (e.g. the AI call it allowed then failed). */
+export async function deleteLatestRateLimitEvent(userId: string, endpoint: string) {
+  await ensureSchema();
+  await pool.query(
+    `DELETE FROM rate_limit_events WHERE id = (
+       SELECT id FROM rate_limit_events WHERE user_id = $1 AND endpoint = $2 ORDER BY created_at DESC LIMIT 1
+     )`,
+    [userId, endpoint]
+  );
+}
+
 export async function setEmailVerificationToken(userId: string, token: string, expiry: Date) {
   await ensureSchema();
   await pool.query(

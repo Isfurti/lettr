@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { scoreResumeQuality } from "@/lib/resume-score";
+import { findBlanks } from "@/lib/blanks";
 import type { ResumeData } from "@/lib/types";
 
 export type BuilderTab = { id: string; label: string; pro?: boolean };
@@ -135,6 +136,9 @@ export function LettrNotes({
   const { notes } = getLettrNotes(data);
   const shown = fullAccess ? notes.slice(0, 4) : notes.slice(0, 1);
   const hidden = notes.length - shown.length;
+  // Blanks left by AI rewrites come first for everyone: they must be filled in before applying.
+  const blanks = findBlanks(data);
+  const total = notes.length + (blanks.length ? 1 : 0);
 
   return (
     <aside
@@ -143,14 +147,29 @@ export function LettrNotes({
     >
       <div className="flex items-center justify-between gap-3">
         <p className="font-extrabold">Lettr&apos;s notes</p>
-        {notes.length > 0 && (
+        {total > 0 && (
           <span className="bg-ink text-gold text-xs font-extrabold px-2.5 py-1 rounded-full">
-            {notes.length} {notes.length === 1 ? "tip" : "tips"}
+            {total} {total === 1 ? "tip" : "tips"}
           </span>
         )}
       </div>
+      {blanks.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <p className="text-[15px] font-semibold leading-snug">
+            <span className="text-red-700 font-extrabold">Fill in the blanks:</span>{" "}
+            {blanks.length === 1 ? "1 line still has" : `${blanks.length} lines still have`} a blank like [X] from an AI rewrite. Put in
+            your real number or detail, or delete it, before you send this resume.
+          </p>
+          <button
+            onClick={() => onGo(blanks[0].section)}
+            className="btn-press self-start inline-flex items-center min-h-10 px-4 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_3px_0_var(--brand-blue-deep)]"
+          >
+            Show me
+          </button>
+        </div>
+      )}
       {notes.length === 0 ? (
-        <p className="text-[15px] font-semibold">Nothing to fix. This resume covers the basics well.</p>
+        blanks.length === 0 && <p className="text-[15px] font-semibold">Nothing to fix. This resume covers the basics well.</p>
       ) : (
         shown.map((n, i) => (
           <div key={`${n.key}-${i}`} className="flex flex-col gap-2">

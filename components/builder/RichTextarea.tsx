@@ -1,7 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toggleMark, type RichMark } from "@/lib/rich-text";
+
+// useLayoutEffect warns during server rendering; this is the usual safe swap.
+const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 const MARKS: { mark: RichMark; label: string; title: string; className: string }[] = [
   { mark: "b", label: "B", title: "Bold (Ctrl+B)", className: "font-extrabold" },
@@ -27,6 +30,38 @@ export function RichTextarea({
 } & Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "value" | "onChange">) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const [focused, setFocused] = useState(false);
+
+  // Grow with the text, so a long bullet is never cut off behind a scrollbar
+  // (most noticeable on phones, where the box is narrow). `rows` stays the
+  // minimum height.
+  const fit = useCallback(() => {
+    const el = ref.current;
+    if (!el || el.offsetParent === null) return; // hidden (other tab / preview mode)
+    el.style.height = "auto";
+    const borders = el.offsetHeight - el.clientHeight;
+    el.style.height = `${el.scrollHeight + borders}px`;
+    // Only hide the scrollbar once the box is known to fit its text.
+    el.style.overflowY = "hidden";
+  }, []);
+
+  useIsoLayoutEffect(() => {
+    fit();
+  }, [value, fit]);
+
+  // Re-fit when the box changes width (rotating a phone, opening a hidden tab).
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    let lastWidth = el.clientWidth;
+    const ro = new ResizeObserver(() => {
+      if (el.clientWidth !== lastWidth) {
+        lastWidth = el.clientWidth;
+        fit();
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [fit]);
 
   function apply(mark: RichMark) {
     const el = ref.current;
@@ -79,7 +114,7 @@ export function RichTextarea({
             apply(key);
           }
         }}
-        className={className}
+        className={`${className} resize-none`}
         {...rest}
       />
     </div>

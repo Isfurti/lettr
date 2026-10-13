@@ -1,4 +1,23 @@
-import { countRecentRateLimitEvents, recordRateLimitEvent } from "./db";
+import { countRecentRateLimitEvents, deleteLatestRateLimitEvent, recordRateLimitEvent } from "./db";
+
+/** Checks a limit without counting this call (pair with recordRateLimitHit, e.g. to count only failed logins). */
+export async function isRateLimited(key: string, endpoint: string, maxRequests: number, windowMinutes: number): Promise<boolean> {
+  const windowStart = new Date(Date.now() - windowMinutes * 60_000);
+  const { count } = await countRecentRateLimitEvents(key, endpoint, windowStart);
+  return count >= maxRequests;
+}
+
+export async function recordRateLimitHit(key: string, endpoint: string): Promise<void> {
+  await recordRateLimitEvent(key, endpoint);
+}
+
+/**
+ * Gives back a use recorded by checkAndRecordRateLimit, for when the thing it
+ * allowed didn't happen (the AI call failed), so a failure never costs a free try.
+ */
+export async function refundRateLimit(userId: string, endpoint: string): Promise<void> {
+  await deleteLatestRateLimitEvent(userId, endpoint).catch(() => {});
+}
 
 export type RateLimitResult = { allowed: true } | { allowed: false; retryAfterSeconds: number };
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { Footer } from "@/components/Footer";
 import { PublicNav } from "@/components/PublicNav";
 import { COMPANY } from "@/lib/company";
@@ -10,19 +11,35 @@ export default function SupportPage() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [errorText, setErrorText] = useState<string | null>(null);
+  // Signed in: start with their account email, so they don't have to type it.
+  const { data: session } = useSession();
+  const [emailTouched, setEmailTouched] = useState(false);
+  const shownEmail = emailTouched ? email : email || session?.user?.email || "";
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setStatus("sending");
-    const res = await fetch("/api/support", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, subject, message }),
-    });
-    setStatus(res.ok ? "sent" : "error");
-    if (res.ok) {
-      setSubject("");
-      setMessage("");
+    setErrorText(null);
+    try {
+      const res = await fetch("/api/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: shownEmail.trim(), subject: subject.trim(), message: message.trim() }),
+      });
+      if (res.ok) {
+        setEmail(shownEmail);
+        setStatus("sent");
+        setSubject("");
+        setMessage("");
+        return;
+      }
+      const body = await res.json().catch(() => ({}));
+      setErrorText(res.status === 429 && body.error ? body.error : null);
+      setStatus("error");
+    } catch {
+      setErrorText("Couldn't reach the server. Check your connection and try again.");
+      setStatus("error");
     }
   }
 
@@ -88,18 +105,32 @@ export default function SupportPage() {
                 </div>
                 <label className="block">
                   <span className="text-sm font-bold text-slate">Your email</span>
-                  <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="field-input mt-1.5" />
+                  <input
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={shownEmail}
+                    onChange={(e) => {
+                      setEmailTouched(true);
+                      setEmail(e.target.value);
+                    }}
+                    className="field-input mt-1.5"
+                  />
                 </label>
                 <label className="block">
                   <span className="text-sm font-bold text-slate">Subject</span>
-                  <input required value={subject} onChange={(e) => setSubject(e.target.value)} className="field-input mt-1.5" />
+                  <input required maxLength={200} value={subject} onChange={(e) => setSubject(e.target.value)} className="field-input mt-1.5" />
                 </label>
                 <label className="block">
                   <span className="text-sm font-bold text-slate">Message</span>
-                  <textarea required rows={5} value={message} onChange={(e) => setMessage(e.target.value)} className="field-input mt-1.5" />
+                  <textarea required rows={5} maxLength={5000} value={message} onChange={(e) => setMessage(e.target.value)} className="field-input mt-1.5" />
                 </label>
 
-                {status === "error" && <p className="text-sm font-bold text-red-600">Something went wrong. Please try again.</p>}
+                {status === "error" && (
+                  <p className="text-sm font-bold text-red-600" role="alert">
+                    {errorText ?? "Something went wrong. Please try again."}
+                  </p>
+                )}
 
                 <button
                   type="submit"

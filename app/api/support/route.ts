@@ -4,6 +4,8 @@ import { randomUUID } from "node:crypto";
 import { auth } from "@/lib/auth";
 import { createSupportMessage } from "@/lib/db";
 import { notifyAdminOfSupportMessage } from "@/lib/notify";
+import { anonymousClientKey } from "@/lib/client-key";
+import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 
 const Schema = z.object({
   email: z.string().email(),
@@ -14,6 +16,15 @@ const Schema = z.object({
 export async function POST(req: Request) {
   const session = await auth();
   const userId = session?.user ? (session.user as { id: string }).id : null;
+
+  // Public form: keep it from being used to flood the inbox.
+  const rate = await checkAndRecordRateLimit(userId ?? anonymousClientKey(req.headers), "support", 5, 15);
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: `You've sent a few messages already. Please wait ${Math.ceil(rate.retryAfterSeconds / 60)} minutes and try again.` },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } }
+    );
+  }
 
   const body = await req.json().catch(() => null);
   const parsed = Schema.safeParse(body);

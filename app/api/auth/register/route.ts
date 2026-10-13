@@ -5,6 +5,8 @@ import { randomUUID, randomBytes } from "node:crypto";
 import { createUser, getUserByEmail, setEmailVerificationToken } from "@/lib/db";
 import { sendVerificationEmail } from "@/lib/email";
 import { getCountryFromHeaders, getTierForCountry } from "@/lib/pricing-region";
+import { anonymousClientKey } from "@/lib/client-key";
+import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 
 const RegisterSchema = z.object({
   name: z.string().min(1).max(120),
@@ -13,6 +15,16 @@ const RegisterSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  // Stops scripted mass sign-ups. Generous enough for a college or office
+  // where many people share one internet address.
+  const rate = await checkAndRecordRateLimit(anonymousClientKey(req.headers), "register", 20, 60);
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "Too many sign-ups from this network. Please try again in a little while." },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } }
+    );
+  }
+
   const body = await req.json().catch(() => null);
   const parsed = RegisterSchema.safeParse(body);
   if (!parsed.success) {

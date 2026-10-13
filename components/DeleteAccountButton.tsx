@@ -12,15 +12,21 @@ export function DeleteAccountButton() {
   async function remove() {
     setError(null);
     setLoading(true);
-    const res = await fetch("/api/account", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ confirm: confirmText }),
-    });
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) {
+    try {
+      const res = await fetch("/api/account", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirm: confirmText }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setLoading(false);
+        setError(body.error ?? "Couldn't delete your account. Please contact support.");
+        return;
+      }
+    } catch {
       setLoading(false);
-      setError(body.error ?? "Couldn't delete your account. Please contact support.");
+      setError("Couldn't reach the server. Check your connection and try again.");
       return;
     }
     await signOut({ callbackUrl: "/" });

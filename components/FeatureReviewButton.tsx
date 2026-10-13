@@ -23,8 +23,12 @@ export function FeatureReviewButton({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ featured: !isFeatured }),
-    });
+    }).catch(() => null);
     setLoading(false);
+    if (!res) {
+      setError("Couldn't reach the server. Try again.");
+      return;
+    }
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       setError(body.error ?? "Couldn't update.");

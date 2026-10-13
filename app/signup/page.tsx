@@ -22,25 +22,37 @@ function SignupForm() {
     setError(null);
     setLoading(true);
 
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
-    });
-
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      setError(body.error ?? "Something went wrong. Please try again.");
+    let res: Response;
+    try {
+      res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
+      });
+    } catch {
+      setError("Couldn't reach the server. Check your connection and try again.");
       setLoading(false);
       return;
     }
 
-    const signInResult = await signIn("credentials", { email, password, redirect: false });
-
-    if (signInResult?.error) {
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setError(
+        res.status === 409
+          ? "You already have an account with this email. Sign in instead, or reset your password."
+          : res.status === 400
+          ? "Check your name, email and password (at least 8 characters), then try again."
+          : body.error ?? "Something went wrong. Please try again."
+      );
       setLoading(false);
-      setError("Account created — please log in.");
-      router.push("/login");
+      return;
+    }
+
+    const signInResult = await signIn("credentials", { email: email.trim(), password, redirect: false }).catch(() => undefined);
+
+    if (!signInResult || signInResult.error) {
+      setLoading(false);
+      router.push(searchParams.get("continue") ? `/login?continue=${encodeURIComponent(searchParams.get("continue")!)}` : "/login");
       return;
     }
 
@@ -60,8 +72,8 @@ function SignupForm() {
   return (
     <>
       <form onSubmit={onSubmit} className="space-y-5">
-        <Field label="Name" value={name} onChange={setName} required />
-        <Field label="Email" type="email" value={email} onChange={setEmail} required />
+        <Field label="Name" value={name} onChange={setName} required autoComplete="name" />
+        <Field label="Email" type="email" value={email} onChange={setEmail} required autoComplete="email" />
         <Field
           label="Password"
           type="password"
@@ -69,6 +81,7 @@ function SignupForm() {
           onChange={setPassword}
           required
           minLength={8}
+          autoComplete="new-password"
           hint="At least 8 characters"
         />
 
@@ -87,7 +100,10 @@ function SignupForm() {
 
       <p className="text-slate mt-8 text-center">
         Already have an account?{" "}
-        <Link href="/login" className="font-bold text-brand-blue hover:underline">
+        <Link
+          href={searchParams.get("continue") ? `/login?continue=${encodeURIComponent(searchParams.get("continue")!)}` : "/login"}
+          className="font-bold text-brand-blue hover:underline"
+        >
           Sign in
         </Link>
       </p>
@@ -113,6 +129,7 @@ function Field({
   required,
   minLength,
   hint,
+  autoComplete,
 }: {
   label: string;
   value: string;
@@ -121,6 +138,7 @@ function Field({
   required?: boolean;
   minLength?: number;
   hint?: string;
+  autoComplete?: string;
 }) {
   return (
     <label className="block">
@@ -129,6 +147,7 @@ function Field({
         type={type}
         required={required}
         minLength={minLength}
+        autoComplete={autoComplete}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="field-input mt-1.5"

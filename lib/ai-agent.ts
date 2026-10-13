@@ -136,6 +136,14 @@ const CACHED_TOOLS: Anthropic.Tool[] = TOOLS.map((t, i) =>
 
 // ---------- Tool execution (pure, operates on a working copy) ----------
 
+/** "Data Analyst at Paytm" - how a role is named back to the user (they never see list indexes). */
+function roleName(exp: ExperienceEntry): string {
+  const role = exp.role?.trim();
+  const company = exp.company?.trim();
+  if (role && company) return `${role} at ${company}`;
+  return role || company || "a role";
+}
+
 export function executeTool(
   resume: ResumeData,
   toolName: string,
@@ -169,6 +177,7 @@ export function executeTool(
 
     case "update_experience": {
       const index = Number(input.index);
+      if (!resume.experience[index]) return { resume, description: "Couldn't find that role, so nothing changed" };
       const experience = resume.experience.map((exp, i) =>
         i === index
           ? {
@@ -180,20 +189,23 @@ export function executeTool(
             }
           : exp
       );
-      return { resume: { ...resume, experience }, description: `Updated experience #${index}` };
+      return { resume: { ...resume, experience }, description: `Updated ${roleName(experience[index])}` };
     }
 
     case "set_experience_bullets": {
       const index = Number(input.index);
+      if (!resume.experience[index]) return { resume, description: "Couldn't find that role, so nothing changed" };
       const bullets = Array.isArray(input.bullets) ? input.bullets.map(String) : [];
       const experience = resume.experience.map((exp, i) => (i === index ? { ...exp, bullets } : exp));
-      return { resume: { ...resume, experience }, description: `Rewrote bullets for experience #${index}` };
+      return { resume: { ...resume, experience }, description: `Rewrote bullets for ${roleName(experience[index])}` };
     }
 
     case "remove_experience": {
       const index = Number(input.index);
+      const removed = resume.experience[index];
+      if (!removed) return { resume, description: "Couldn't find that role, so nothing changed" };
       const experience = resume.experience.filter((_, i) => i !== index);
-      return { resume: { ...resume, experience }, description: `Removed experience #${index}` };
+      return { resume: { ...resume, experience }, description: `Removed ${roleName(removed)}` };
     }
 
     case "add_education": {
@@ -212,8 +224,11 @@ export function executeTool(
 
     case "remove_education": {
       const index = Number(input.index);
+      const removed = resume.education[index];
+      if (!removed) return { resume, description: "Couldn't find that education entry, so nothing changed" };
       const education = resume.education.filter((_, i) => i !== index);
-      return { resume: { ...resume, education }, description: `Removed education #${index}` };
+      const name = [removed.degree, removed.school].filter(Boolean).join(", ") || "an education entry";
+      return { resume: { ...resume, education }, description: `Removed ${name}` };
     }
 
     case "update_skills": {
@@ -249,8 +264,14 @@ user's real numbers, no first-person pronouns.
 Never invent facts. Only use what's already in the resume or what the user tells you in this chat - no
 made-up numbers, targets, awards, promotions, clients, tools or scope. Where a number or result would
 help but isn't given, write a blank like [X]% or [number] for the user to fill in, and tell them to.
-Keep replies brief and conversational - the resume UI shows the result, so you don't need to repeat
-the full text of what you wrote back to the user.`;
+Don't upgrade what the person did: if they "worked on" or "helped with" something, don't make it "led",
+"designed" or "owned" unless they tell you so - pick an honest strong verb (Ran, Analysed, Built, Supported)
+or ask. Don't add purposes or outcomes they didn't state ("to drive product decisions").
+Keep the resume's own spelling style (British "analysed" or American "analyzed").
+You can edit contact details, the summary, experience and its bullets, education and skills. Projects,
+certifications, languages and achievements are edited in the form, so point the user there for those.
+Keep replies brief and conversational, in plain text with no markdown (no ** or #) - the resume UI shows
+the result, so you don't need to repeat the full text of what you wrote back to the user.`;
 
 export async function runAgentTurn(
   params: {
