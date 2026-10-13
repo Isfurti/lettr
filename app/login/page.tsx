@@ -20,11 +20,22 @@ function LoginForm() {
     setError(null);
     setLoading(true);
 
-    const result = await signIn("credentials", { email, password, redirect: false });
+    let result: Awaited<ReturnType<typeof signIn>> | undefined;
+    try {
+      result = await signIn("credentials", { email, password, redirect: false });
+    } catch {
+      setLoading(false);
+      setError("Couldn't reach the server. Check your connection and try again.");
+      return;
+    }
 
     if (result?.error) {
       setLoading(false);
-      setError("Invalid email or password.");
+      setError(
+        result.code === "rate_limited"
+          ? "Too many wrong passwords for this email. Wait 15 minutes and try again, or reset your password."
+          : "Invalid email or password."
+      );
       return;
     }
 
@@ -84,7 +95,10 @@ function LoginForm() {
 
       <p className="text-slate mt-8 text-center">
         New to Lettr?{" "}
-        <Link href="/signup" className="font-bold text-brand-blue hover:underline">
+        <Link
+          href={searchParams.get("continue") ? `/signup?continue=${encodeURIComponent(searchParams.get("continue")!)}` : "/signup"}
+          className="font-bold text-brand-blue hover:underline"
+        >
           Create a free account
         </Link>
       </p>

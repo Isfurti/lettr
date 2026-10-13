@@ -6,7 +6,7 @@ import { BillingPortalButton } from "@/components/BillingPortalButton";
 import { Logo } from "@/components/Logo";
 import { InstallAppButton } from "@/components/AppInstall";
 import { signOut } from "next-auth/react";
-import { Home, LayoutTemplate, MessageSquare, LifeBuoy, Crown, CreditCard, LogOut, ShieldAlert, Globe, Briefcase, Mic } from "lucide-react";
+import { Home, LayoutTemplate, MessageSquare, LifeBuoy, Crown, CreditCard, LogOut, ShieldAlert, Globe, Briefcase, Mic, Download } from "lucide-react";
 
 const BASE_NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
@@ -44,6 +44,9 @@ export function AppSidebar({
     ? BASE_NAV_ITEMS
     : [...BASE_NAV_ITEMS, { href: "/pricing", label: plan === "pro" ? "Your plan" : "Upgrade to Pro", icon: Crown }];
 
+  // "Interview practice" stays highlighted inside one interview, and so on.
+  const isActive = (href: string) => pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
+
   const itemClass = (active: boolean) =>
     `flex items-center gap-3 px-3.5 min-h-11 rounded-xl text-[15px] transition-colors ${
       active ? "bg-white/10 text-white font-bold" : "text-white/70 hover:text-white hover:bg-white/5"
@@ -55,7 +58,7 @@ export function AppSidebar({
       <div className="lg:hidden bg-ink text-white">
         <div className="px-4 py-3 flex items-center justify-between">
           <Logo dark href="/" compact />
-          <InstallAppButton className="ml-auto mr-2 min-h-10 px-3.5 rounded-full bg-gold text-ink text-sm font-extrabold" />
+          <InstallAppButton label="Install app" className="ml-auto mr-2 min-h-10 px-3.5 rounded-full bg-gold text-ink text-sm font-extrabold whitespace-nowrap" />
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
             className="min-h-11 px-2 text-sm text-white/70 hover:text-white"
@@ -65,7 +68,7 @@ export function AppSidebar({
         </div>
         <nav className="flex gap-1.5 px-3 pb-3 overflow-x-auto whitespace-nowrap">
           {NAV_ITEMS.map((item) => {
-            const active = pathname === item.href;
+            const active = isActive(item.href);
             return (
               <Link
                 key={item.label}
@@ -110,7 +113,7 @@ export function AppSidebar({
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               return (
-                <Link key={item.label} href={item.href} className={itemClass(pathname === item.href)}>
+                <Link key={item.label} href={item.href} className={itemClass(isActive(item.href))} aria-current={isActive(item.href) ? "page" : undefined}>
                   <Icon className="w-[18px] h-[18px]" strokeWidth={2} />
                   {item.label}
                 </Link>
@@ -160,11 +163,14 @@ export function AppSidebar({
                 Admin Portal
               </Link>
             )}
-            <InstallAppButton className={`w-full ${itemClass(false)} !text-gold font-bold`} />
+            <InstallAppButton
+              icon={<Download className="w-[18px] h-[18px]" strokeWidth={2} />}
+              className={`w-full ${itemClass(false)} !text-gold font-bold`}
+            />
             <Link href="/" className={itemClass(false)}>
-            <Globe className="w-[18px] h-[18px]" strokeWidth={2} />
-            Lettr homepage
-          </Link>
+              <Globe className="w-[18px] h-[18px]" strokeWidth={2} />
+              Lettr homepage
+            </Link>
           <button onClick={() => signOut({ callbackUrl: "/" })} className={`w-full ${itemClass(false)}`}>
               <LogOut className="w-[18px] h-[18px]" strokeWidth={2} />
               Sign out

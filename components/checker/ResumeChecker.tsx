@@ -91,8 +91,12 @@ export function ResumeChecker({ initialMode = "file" }: { initialMode?: "file" |
           template: "classic",
           data: result.data,
         }),
-      });
+      }).catch(() => null);
       setOpening(false);
+      if (!res) {
+        setOpenError("Couldn't reach the server. Check your connection and try again.");
+        return;
+      }
       if (res.status === 402) {
         setOpenError("Your free plan already has a resume. Upgrade to Pro for more, or edit your existing one.");
         return;
@@ -101,7 +105,11 @@ export function ResumeChecker({ initialMode = "file" }: { initialMode?: "file" |
         setOpenError("Couldn't open it in the builder. Please try again.");
         return;
       }
-      const body = await res.json();
+      const body = await res.json().catch(() => ({}));
+      if (!body.id) {
+        setOpenError("Couldn't open it in the builder. Please try again.");
+        return;
+      }
       router.push(`/builder/${body.id}`);
       return;
     }

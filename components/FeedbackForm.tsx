@@ -20,11 +20,18 @@ export function FeedbackForm() {
     setStatus("sending");
     setError(null);
 
-    const res = await fetch("/api/reviews", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rating, content, consentToFeature }),
-    });
+    let res: Response;
+    try {
+      res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating, content, consentToFeature }),
+      });
+    } catch {
+      setStatus("error");
+      setError("Couldn't reach the server. Check your connection and try again.");
+      return;
+    }
     const body = await res.json().catch(() => ({}));
 
     if (!res.ok) {

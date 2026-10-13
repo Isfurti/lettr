@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-auth";
 import { listAllUsers, type AdminUserRow } from "@/lib/db";
-import { getDisplayPriceForUser } from "@/lib/pricing-region";
+import { monthlyPriceForUser } from "@/lib/plans";
+import { FREE_AI_REWRITES } from "@/lib/free-plan";
 import { formatDate } from "@/lib/format-date";
 import { timeAgo } from "@/lib/activity-format";
 import { AdminSidebar } from "@/components/AdminSidebar";
@@ -137,7 +138,7 @@ export default async function AdminUsersPage({
                   <td className="px-5 py-3 text-xs whitespace-nowrap">
                     {u.country_code ? (
                       <span className="font-mono">
-                        {u.country_code} · {getDisplayPriceForUser(u).display}
+                        {u.country_code} · {monthlyPriceForUser(u).label}
                       </span>
                     ) : (
                       <span className="text-ink-soft" title="Detected automatically on their next visit">
@@ -156,7 +157,8 @@ export default async function AdminUsersPage({
           </table>
         </div>
         <p className="text-xs text-ink-soft mt-3">
-          AI uses are only counted on the free plan (it&apos;s what the 5-rewrite limit is based on).
+          AI uses are only counted on the free plan (it&apos;s what the {FREE_AI_REWRITES}-rewrite limit is based on; free accounts made
+          before 7 October 2026 have 5).
         </p>
       </main>
     </div>

@@ -32,7 +32,7 @@ export default async function AdminTemplatesPage() {
                   <div key={t}>
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="font-medium text-sm capitalize">{t}</span>
-                      <span className="text-xs text-ink-soft font-mono">{count} resumes · {pct}%</span>
+                      <span className="text-xs text-ink-soft font-mono">{count} {count === 1 ? "resume" : "resumes"} · {pct}%</span>
                     </div>
                     <div className="h-2 bg-sand rounded-full overflow-hidden">
                       <div

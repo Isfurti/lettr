@@ -25,6 +25,8 @@ export function AtsPanel({
   onFix,
   keywordsShown = guest ? 3 : Infinity,
   analyst,
+  jobPost,
+  onJobPostChange,
 }: {
   data: ResumeData;
   template: string;
@@ -35,23 +37,31 @@ export function AtsPanel({
   analyst?: { used: number; limit: number; period: "lifetime" | "month" };
   /** Opens the builder at a section ("experience", "design"...). */
   onFix: (section: string) => void;
+  /** The job post, when the builder shares it with other tabs. Leave out to keep it here. */
+  jobPost?: string;
+  onJobPostChange?: (v: string) => void;
 }) {
-  const [jd, setJd] = useState("");
+  const [ownJd, setOwnJd] = useState("");
+  const controlled = jobPost !== undefined && onJobPostChange !== undefined;
+  const jd = controlled ? jobPost : ownJd;
+  const setJd = controlled ? onJobPostChange : setOwnJd;
   const [open, setOpen] = useState<string | null>(null);
   const [advice, setAdvice] = useState<AnalystAdvice | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<{ text: string; upgrade?: boolean; signup?: boolean } | null>(null);
 
-  // A job post pasted on the homepage demo or saved in the Applications tracker.
+  // A job post pasted on the homepage demo (before signing up). The signed-in
+  // builder reads and clears it itself and passes it in.
   useEffect(() => {
+    if (controlled) return;
     try {
       const pending = window.localStorage.getItem("lettr_pending_jd");
       // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only storage, must run after mount
-      if (pending) setJd((cur) => cur || pending);
+      if (pending) setOwnJd((cur) => cur || pending);
     } catch {
       // storage unavailable
     }
-  }, []);
+  }, [controlled]);
 
   const report = useMemo(() => analyzeAts(data, template, jd), [data, template, jd]);
 
@@ -107,11 +117,11 @@ export function AtsPanel({
               type="button"
               onClick={() => setOpen(open === cat.id ? null : cat.id)}
               aria-expanded={open === cat.id}
-              className={`text-left rounded-2xl px-3 py-2.5 border-2 ${open === cat.id ? "border-ink" : "border-rule"} hover:border-ink`}
+              className={`flex flex-col justify-between text-left rounded-2xl px-3 py-2.5 border-2 ${open === cat.id ? "border-ink" : "border-rule"} hover:border-ink`}
             >
-              <span className="flex justify-between text-sm font-bold">
-                <span className="truncate">{cat.label}</span>
-                <span>{cat.score}</span>
+              <span className="flex items-start justify-between gap-2 text-sm font-bold leading-snug">
+                <span className="min-w-0">{cat.label}</span>
+                <span className="shrink-0">{cat.score}</span>
               </span>
               <span className="block h-1.5 bg-sand rounded-full mt-1.5 overflow-hidden">
                 <span

@@ -46,7 +46,29 @@ export default function CompareReziPage() {
       }
     >
       <section className={`${WRAP} pb-6`}>
-        <div className="bg-white border-2 border-ink rounded-[28px] overflow-x-auto">
+        {/* Phones: one card per feature, so both columns are visible without sideways scrolling. */}
+        <ul className="sm:hidden bg-white border-2 border-ink rounded-[28px] divide-y divide-rule overflow-hidden">
+          {ROWS.map((r) => (
+            <li key={r.label} className="p-4">
+              <p className="font-bold">{r.label}</p>
+              <div className="mt-2 grid grid-cols-2 gap-3 text-sm">
+                <div className="bg-gold-soft/60 rounded-xl px-3 py-2">
+                  <p className="text-xs font-extrabold uppercase tracking-wide text-slate">Lettr</p>
+                  <p className="mt-0.5">
+                    <Value v={r.lettr} />
+                  </p>
+                </div>
+                <div className="bg-sand/60 rounded-xl px-3 py-2">
+                  <p className="text-xs font-extrabold uppercase tracking-wide text-slate">Rezi</p>
+                  <p className="mt-0.5">
+                    <Value v={r.rezi} />
+                  </p>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div className="hidden sm:block bg-white border-2 border-ink rounded-[28px] overflow-x-auto">
           <table className="w-full min-w-[620px] text-left">
             <thead>
               <tr className="border-b-2 border-ink">

@@ -18,12 +18,19 @@ function ResetPasswordForm() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const res = await fetch("/api/auth/reset-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, newPassword: password }),
-    });
-    const body = await res.json();
+    let res: Response;
+    try {
+      res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, newPassword: password }),
+      });
+    } catch {
+      setLoading(false);
+      setError("Couldn't reach the server. Check your connection and try again.");
+      return;
+    }
+    const body = await res.json().catch(() => ({}));
     setLoading(false);
     if (!res.ok) {
       setError(body.error ?? "Something went wrong.");

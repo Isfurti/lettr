@@ -37,22 +37,27 @@ export function ResumeSearch({
   async function duplicate(r: ResumeCard) {
     setBusyId(r.id);
     setError(null);
-    const res = await fetch("/api/resumes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: `${displayTitle(r)} (copy)`, template: r.template, data: r.data }),
-    });
-    setBusyId(null);
-    if (res.status === 402) {
-      setError("Your plan's resume limit is reached — upgrade to Pro for unlimited resumes.");
-      return;
+    try {
+      const res = await fetch("/api/resumes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: `${displayTitle(r)} (copy)`, template: r.template, data: r.data }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (res.status === 402) {
+        setError(body.error ?? "Your plan's resume limit is reached. Upgrade to Pro for unlimited resumes.");
+        return;
+      }
+      if (!res.ok || !body.id) {
+        setError("Couldn't duplicate that resume. Please try again.");
+        return;
+      }
+      router.push(`/builder/${body.id}`);
+    } catch {
+      setError("Couldn't reach the server. Check your connection and try again.");
+    } finally {
+      setBusyId(null);
     }
-    if (!res.ok) {
-      setError("Couldn't duplicate that resume. Please try again.");
-      return;
-    }
-    const body = await res.json();
-    router.push(`/builder/${body.id}`);
   }
 
   return (

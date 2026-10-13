@@ -55,9 +55,15 @@ const STOPWORDS = new Set([
   "solid","deep","hands-on","familiarity","familiar","exposure","proficiency","proficient",
   "fluency","fluent","willing","willingness","ready","duties","duty","tools","tool",
   "business","organisation","organization","travel","travelling","traveling","two-wheeler",
+  // More job-ad filler: describing words and verbs that say nothing about the skill itself.
+  "write","writes","wrote","written","complex","simple","insight","insights","present","presenting",
+  "detail","details","oriented","detail-oriented","attention","motivated","self-motivated","self-starter",
+  "dynamic","driven","results-driven","fast-growing","world-class","cross-functional","functional",
+  "problem","problems","solving","think","thinking","ownership","impact","impactful","excited","exciting",
+  "query","queries",
   // Job-title nouns. Title matching is its own check (see ats-analyst.ts).
   "executive","executives","associate","officer","coordinator","assistant","trainee",
-  "intern","specialist",
+  "intern","specialist","analyst","analysts","manager","managers",
 ]);
 
 /** Places: a job's location says nothing about the skills it needs. */
@@ -84,15 +90,16 @@ const PHRASES = [
   "distributor management", "channel partner", "territory management", "market research", "competitor analysis",
   // Marketing
   "digital marketing", "content marketing", "email marketing", "social media", "performance marketing",
-  "product marketing", "brand management", "search engine optimization", "google ad", "google analytic",
-  "meta ad", "facebook ad", "paid media", "marketing automation", "content writing", "go-to-market",
+  "product marketing", "brand management", "search engine optimization", "google ad", "google ads", "google analytic",
+  "meta ad", "meta ads", "facebook ad", "facebook ads", "paid media", "marketing automation", "content writing", "go-to-market",
   "a/b testing", "conversion rate optimization", "influencer marketing", "public relation",
   // Tech and data
   "machine learning", "deep learning", "data analysis", "data analytic", "data science", "data visualization",
   "data engineering", "data pipeline", "natural language processing", "computer vision", "software development",
   "web development", "front end", "back end", "full stack", "rest api", "unit testing", "test automation",
   "cloud computing", "system design", "version control", "spring boot", "power bi", "google sheet", "microsoft excel",
-  "ms excel", "advanced excel", "ms office", "microsoft office",
+  "ms excel", "advanced excel", "ms office", "microsoft office", "funnel analysis", "cohort analysis",
+  "problem solving", "problem-solving", "technical writing", "data modeling", "data modelling", "etl pipeline",
   // Operations, finance, people, design
   "project management", "product management", "agile methodology", "stakeholder management", "change management",
   "risk management", "quality assurance", "quality control", "technical support", "customer service",
@@ -121,7 +128,9 @@ const SKILLS = new Set([
   "php", "laravel", "ruby", "c++", "c#", "dotnet", "html", "css", "tailwind", "aws", "azure", "gcp",
   "docker", "kubernete", "terraform", "linux", "git", "github", "devop", "api", "graphql", "tableau", "looker",
   "pandas", "numpy", "tensorflow", "pytorch", "spark", "hadoop", "airflow", "snowflake", "selenium", "cypress",
-  "playwright", "android", "ios", "flutter",
+  "playwright", "android", "ios", "flutter", "bigquery", "redshift", "databricks", "dbt", "mixpanel", "amplitude",
+  "metabase", "statistic", "sas", "spss", "stata", "matlab", "kafka", "jenkins", "firebase", "fastapi",
+  "powerpoint", "ecommerce", "e-commerce", "etl",
   // Languages people list on Indian resumes
   "english", "hindi", "marathi", "tamil", "telugu", "kannada", "malayalam", "bengali", "gujarati", "punjabi",
   "urdu", "odia", "french", "german", "spanish", "arabic", "japanese",
@@ -184,10 +193,49 @@ type Keyword = { key: string; label: string; parts: string[] };
 
 const MAX_KEYWORDS = 20;
 
+/**
+ * Most posts open with a title line: "Senior Data Analyst - Swiggy, Bengaluru".
+ * Its plain words are the job title, the hiring company and the place, none
+ * of which belong in a list of skills to add (title matching is its own
+ * check), so they're skipped there. Known skills in it still count.
+ * Only applies when there's more to the post after that line.
+ */
+function titleLineWordCount(jobDescription: string): number {
+  const text = jobDescription.trim();
+  const newline = text.indexOf("\n");
+  let end = newline >= 0 && newline <= 160 ? newline : -1;
+  if (end < 0) {
+    const sentence = text.search(/[.!?|]\s/);
+    if (sentence >= 0 && sentence <= 120) end = sentence;
+  }
+  if (end < 0) return 0;
+  const rest = text.slice(end + 1).trim();
+  if (rest.split(/\s+/).length < 8) return 0;
+  return words(text.slice(0, end)).length;
+}
+
+/**
+ * The hiring company's own name ("Zomato is hiring", "Join Swiggy", "About
+ * Razorpay", "Flipkart's") is never a keyword to add to a resume.
+ */
+function companyNames(jobDescription: string): Set<string> {
+  const names = new Set<string>();
+  const NAME = "([A-Z][A-Za-z0-9&.-]{1,30})";
+  const patterns = [
+    new RegExp(`\\b(?:at|join|about|why)\\s+${NAME}`, "g"),
+    new RegExp(`\\b${NAME}\\s+(?:is hiring|is looking|is seeking|offers|is a|is an|is one|was founded)\\b`, "g"),
+    new RegExp(`\\b${NAME}['’]s\\b`, "g"),
+  ];
+  for (const re of patterns) for (const m of jobDescription.matchAll(re)) names.add(m[1].toLowerCase().replace(/[.]+$/, ""));
+  return names;
+}
+
 function extract(jobDescription: string, limit = MAX_KEYWORDS): Keyword[] {
   const tokens = words(jobDescription);
   const acronyms = acronymsIn(jobDescription);
   const hits = phraseHits(tokens);
+  const titleWords = titleLineWordCount(jobDescription);
+  const companies = companyNames(jobDescription);
 
   // Tokens that are part of a matched phrase count toward the phrase, not on their own.
   const covered = new Set<number>();
@@ -207,6 +255,7 @@ function extract(jobDescription: string, limit = MAX_KEYWORDS): Keyword[] {
   tokens.forEach((t, i) => {
     if (!t.keep || covered.has(i)) return;
     const known = SKILLS.has(t.base) || isToolLike(t.raw, acronyms);
+    if (!known && (i < titleWords || companies.has(t.raw))) return;
     // Show a word family by its skill name ("negotiation", not "negotiate").
     const label = FAMILY_NAMES.has(t.base) ? t.base : t.raw;
     bump({ key: t.base, label, parts: [t.base] }, i, known ? 3 : 0);

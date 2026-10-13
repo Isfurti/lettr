@@ -29,9 +29,10 @@ export function StartResume({ template, fallbackId }: { template: string; fallba
           router.replace(`/builder/${body.id}`);
           return;
         }
-        // Plan limit or locked template: open their existing resume instead.
+        // Plan limit reached: open their existing resume, switched to the
+        // template they picked (the builder only keeps it if their plan allows it).
         if (res.status === 402) {
-          router.replace(fallbackId ? `/builder/${fallbackId}` : "/pricing");
+          router.replace(fallbackId ? `/builder/${fallbackId}?template=${encodeURIComponent(template)}` : "/pricing");
           return;
         }
         setFailed(true);

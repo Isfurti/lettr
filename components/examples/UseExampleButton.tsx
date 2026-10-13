@@ -35,9 +35,16 @@ export function UseExampleButton({ data, template, label = "Use this example" }:
       return;
     }
     setBusy(true);
-    let res = await create(template);
-    // Free plans can't save Pro templates: fall back to Classic rather than blocking.
-    if (res.status === 402 && template !== "classic") res = await create("classic");
+    let res: Response;
+    try {
+      res = await create(template);
+      // Free plans can't save Pro templates: fall back to Classic rather than blocking.
+      if (res.status === 402 && template !== "classic") res = await create("classic");
+    } catch {
+      setBusy(false);
+      setError("Couldn't reach the server. Check your connection and try again.");
+      return;
+    }
     setBusy(false);
     if (res.status === 402) {
       setError("Your free plan already has a resume. Upgrade to Pro for more, or edit your existing one.");
@@ -47,7 +54,11 @@ export function UseExampleButton({ data, template, label = "Use this example" }:
       setError("Couldn't open this example. Please try again.");
       return;
     }
-    const body = await res.json();
+    const body = await res.json().catch(() => ({}));
+    if (!body.id) {
+      setError("Couldn't open this example. Please try again.");
+      return;
+    }
     router.push(`/builder/${body.id}`);
   }
 

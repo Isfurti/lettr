@@ -11,7 +11,7 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     background_color: "#fffdf8",
     theme_color: "#041632",
-    orientation: "portrait",
+    // No orientation lock: tablets and phones in landscape should rotate freely.
     categories: ["productivity", "business", "education"],
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },

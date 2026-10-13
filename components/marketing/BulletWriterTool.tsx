@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { FREE_AI_REWRITES } from "@/lib/free-plan";
 
 /** The free bullet-point writer on /tools/bullet-writer. */
 export function BulletWriterTool() {
@@ -68,7 +69,7 @@ export function BulletWriterTool() {
       <button type="button" onClick={rewrite} disabled={busy} className="btn-press mt-4 inline-flex items-center min-h-12 px-6 rounded-full bg-brand-blue text-white font-bold shadow-[0_4px_0_var(--brand-blue-deep)] disabled:opacity-60">
         {busy ? "Writing…" : "✦ Write my bullet"}
       </button>
-      {!signedIn && <p className="text-xs text-slate mt-2">One free rewrite a day without an account. A free account gets 3 more.</p>}
+      {!signedIn && <p className="text-xs text-slate mt-2">One free rewrite a day without an account. A free account gets {FREE_AI_REWRITES} more.</p>}
       {error && (
         <p className="text-sm text-red-700 mt-3">
           {error.text}{" "}
@@ -93,9 +94,13 @@ export function BulletWriterTool() {
               <button
                 type="button"
                 onClick={() => {
-                  navigator.clipboard.writeText(o);
-                  setCopied(i);
-                  setTimeout(() => setCopied(null), 1500);
+                  navigator.clipboard
+                    .writeText(o)
+                    .then(() => {
+                      setCopied(i);
+                      setTimeout(() => setCopied(null), 1500);
+                    })
+                    .catch(() => setError({ text: "Couldn't copy automatically. Select the text and copy it by hand." }));
                 }}
                 className="shrink-0 min-h-9 px-3 rounded-full bg-white text-sm font-bold"
               >
@@ -104,7 +109,7 @@ export function BulletWriterTool() {
             </div>
           ))}
           <p className="text-sm text-slate pt-1">
-            Replace any number you don&apos;t actually know. Then{" "}
+            Fill in any [X] blanks with your real numbers. Then{" "}
             <Link href="/builder/new" className="font-bold text-brand-blue underline">
               put it in a full resume
             </Link>

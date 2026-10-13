@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import LinkedIn from "next-auth/providers/linkedin";
@@ -6,6 +6,17 @@ import type { Provider } from "next-auth/providers";
 import bcrypt from "bcryptjs";
 import { getUserByEmail } from "./db";
 import { findOrCreateOAuthUser } from "./oauth-user";
+import { isRateLimited, recordRateLimitHit } from "./rate-limit";
+
+/** Shown on the sign-in page instead of "wrong password" when an account is being guessed at. */
+class TooManyAttempts extends CredentialsSignin {
+  code = "rate_limited";
+}
+
+// Brute-force protection: after this many wrong passwords for one email in
+// the window, sign-in for that email pauses until the window passes.
+const MAX_FAILED_LOGINS = 10;
+const FAILED_LOGIN_WINDOW_MINUTES = 15;
 
 const providers: Provider[] = [
   Credentials({
@@ -14,15 +25,22 @@ const providers: Provider[] = [
       password: { label: "Password", type: "password" },
     },
     authorize: async (credentials) => {
-      const email = credentials?.email as string | undefined;
+      const email = (credentials?.email as string | undefined)?.trim().toLowerCase();
       const password = credentials?.password as string | undefined;
       if (!email || !password) return null;
 
-      const user = await getUserByEmail(email.toLowerCase());
-      if (!user) return null;
+      const key = `login:${email}`;
+      if (await isRateLimited(key, "login-failed", MAX_FAILED_LOGINS, FAILED_LOGIN_WINDOW_MINUTES)) {
+        throw new TooManyAttempts();
+      }
 
-      const valid = await bcrypt.compare(password, user.password_hash);
-      if (!valid) return null;
+      const user = await getUserByEmail(email);
+      // Accounts made with Google/LinkedIn may have no password at all.
+      const valid = Boolean(user?.password_hash) && (await bcrypt.compare(password, user!.password_hash).catch(() => false));
+      if (!user || !valid) {
+        await recordRateLimitHit(key, "login-failed");
+        return null;
+      }
 
       return { id: user.id, email: user.email, name: user.name ?? undefined };
     },

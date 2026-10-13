@@ -15,6 +15,9 @@ const Schema = z.object({
   lastDay: z.string().min(1).max(100),
   reason: z.string().max(1000).optional(),
   tone: z.enum(["warm", "neutral", "brief"]).optional(),
+  managerName: z.string().max(200).optional(),
+  email: z.string().max(200).optional(),
+  phone: z.string().max(60).optional(),
 });
 
 export async function POST(req: Request) {

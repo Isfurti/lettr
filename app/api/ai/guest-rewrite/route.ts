@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { polishBullet, generateSummary } from "@/lib/ai";
 import { trackAiUsage } from "@/lib/ai-usage";
 import { anonymousClientKey } from "@/lib/client-key";
-import { checkAndRecordRateLimit } from "@/lib/rate-limit";
+import { checkAndRecordRateLimit, refundRateLimit } from "@/lib/rate-limit";
 import { FREE_AI_REWRITES } from "@/lib/free-plan";
 
 const Schema = z.discriminatedUnion("kind", [
@@ -54,6 +54,9 @@ export async function POST(req: Request) {
     await trackAiUsage({ userId: null, feature: d.kind === "bullet" ? "bullets" : "summary", model: result.model, usage: result.usage });
     return NextResponse.json({ options: result.value });
   } catch {
+    // The rewrite didn't happen, so it doesn't use up their free try.
+    await refundRateLimit(key, "guest-rewrite");
+    await refundRateLimit("guest-rewrite:all", "guest-rewrite-global");
     return NextResponse.json({ error: "Couldn't rewrite that right now. Try again in a moment." }, { status: 502 });
   }
 }

@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { ResumeData } from "./types";
 import { MODELS, addUsage, usageFromApi, type ModelId, type TokenUsage } from "./ai-costs";
 import { plainResume, stripRich } from "./rich-text";
-import { HONESTY_RULES, guardRewrites, retryReminder, yearsOfExperience } from "./ai-honesty";
+import { HONESTY_RULES, blankInventedNumbers, guardRewrites, numbersIn, retryReminder, yearsOfExperience } from "./ai-honesty";
 
 function getClient() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -156,26 +156,41 @@ export async function generateResignationLetter(params: {
   lastDay: string;
   reason?: string;
   tone?: "warm" | "neutral" | "brief";
+  managerName?: string;
+  email?: string;
+  phone?: string;
+  /** The letter's date line. Defaults to today in India time. */
+  today?: string;
 }): Promise<AiResult<string>> {
-  const { employeeName, companyName, jobTitle, lastDay, reason, tone = "neutral" } = params;
+  const { employeeName, companyName, jobTitle, lastDay, reason, tone = "neutral", managerName, email, phone } = params;
+  const today =
+    params.today ??
+    new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" });
+  const contactLine = [email, phone].filter(Boolean).join(" · ");
 
   const prompt = `Write a professional resignation letter with these details:
 - Employee name: ${employeeName}
 - Job title: ${jobTitle}
 - Company: ${companyName}
 - Last day of work: ${lastDay}
+- Today's date: ${today}
+${managerName ? `- Addressed to: ${managerName}` : ""}
 ${reason ? `- Reason to briefly mention (optional, keep it graceful): ${reason}` : ""}
 
 Tone: ${tone === "warm" ? "warm and appreciative, express gratitude for the opportunity" : tone === "brief" ? "brief and to the point, 3-4 sentences total" : "professional and neutral"}.
 
+Layout, exactly in this order:
+1. The date line: ${today}
+2. A blank line, then "Dear ${managerName || "[Manager's name]"},"
+3. The letter body in short paragraphs
+4. A sign-off ("Sincerely," or "Warm regards,"), then the employee's name${contactLine ? `, then this contact line: ${contactLine}` : ""}
+
 Rules:
-- Standard business letter structure
-- State the resignation clearly in the first paragraph, including the last working day
+- State the resignation clearly in the first paragraph, including the job title and the last working day
 - Do not badmouth the company or manager, regardless of the reason given
 - End with an offer to help with the transition
-- Output plain text only, no markdown, no placeholders left unfilled
-
-Sign off with the employee's name.`;
+- No postal address blocks and no other [bracketed] fields${managerName ? "" : " apart from [Manager's name] in the greeting"} - use only the details above
+- Plain text only, no markdown`;
 
   const { text, usage } = await complete(MODEL_FAST, 600, prompt);
   return { value: text.trim(), model: MODEL_FAST, usage };
@@ -544,15 +559,23 @@ Write JSON only, no preamble, no markdown fences:
   "summary": "2-3 plain sentences: how this resume will fare with ATS and recruiters for ${params.jobPost ? "this job" : "the roles it targets"}, and the single biggest lever",
   "fixes": [ up to 4 items, most valuable first, each { "title": "short action", "why": "one sentence", "example": "a concrete rewrite of one of THEIR bullets or their summary, or the exact line to add" } ]
 }
-Rules: never invent employers, numbers or skills - where a number is needed write [your number]. Only suggest keywords the resume suggests they genuinely have, or tell them to add it only if true. Plain English, no jargon.`;
+Rules:
+- Don't state or predict a score or score range - the person already sees the score above. Talk about what to change.
+- Never invent employers, numbers, skills, tools, duties, teams, people or outcomes. An example may only rephrase facts already in the resume; where a number or detail would help, write [your number] or [your detail] instead.
+- Only suggest keywords the resume suggests they genuinely have, or tell them to add a keyword only if it's true for them.
+- Ignore the hiring company's own name and generic words when talking about keywords.
+- Match the resume's spelling style (British "analysed" or American "analyzed").
+- Plain English, no jargon, no markdown.`;
   const { text, usage } = await complete(MODEL_FAST, 1200, prompt);
+  // Same backstop as the rewrite tools: a figure the resume doesn't contain becomes a blank.
+  const allowed = numbersIn(resumeText);
   try {
     const p = JSON.parse(text.replace(/```json|```/g, "").trim());
     const fixes = Array.isArray(p.fixes)
       ? p.fixes.slice(0, 4).map((f: Record<string, unknown>) => ({
           title: String(f.title ?? ""),
           why: String(f.why ?? ""),
-          example: String(f.example ?? ""),
+          example: blankInventedNumbers(String(f.example ?? ""), allowed),
         }))
       : [];
     return { value: { summary: String(p.summary ?? ""), fixes }, model: MODEL_FAST, usage };

@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdmin, isAdminEmail } from "@/lib/admin-auth";
 import { listAllUsers, type AdminUserRow } from "@/lib/db";
-import { PRICING_TIERS, getDisplayPriceForUser, type PricingTier } from "@/lib/pricing-region";
+import { getTierForCountry, type PricingTier } from "@/lib/pricing-region";
+import { monthlyPriceForUser, monthlyRevenueLabel } from "@/lib/plans";
 import { getStripeStatus } from "@/lib/integrations";
 import { formatDate } from "@/lib/format-date";
 import { AdminSidebar } from "@/components/AdminSidebar";
@@ -20,8 +21,11 @@ export default async function AdminSubscriptionsPage() {
   const paid = users.filter((u) => u.plan === "pro" && u.stripe_subscription_id);
   const comped = users.filter((u) => u.plan === "pro" && !u.stripe_subscription_id);
 
-  const tierOf = (u: AdminUserRow): PricingTier => getDisplayPriceForUser(u).tier;
-  const mrr = paid.reduce((sum, u) => sum + PRICING_TIERS[tierOf(u)].usd, 0);
+  const tierOf = (u: AdminUserRow): PricingTier => {
+    const saved = u.pricing_tier;
+    return saved === "full" || saved === "mid" || saved === "value" ? saved : getTierForCountry(u.country_code);
+  };
+  const mrr = monthlyRevenueLabel(paid);
   const tierCounts: Record<PricingTier, number> = { full: 0, mid: 0, value: 0 };
   for (const u of paid) tierCounts[tierOf(u)] += 1;
 
@@ -45,8 +49,8 @@ export default async function AdminSubscriptionsPage() {
           />
           <AdminStatCard
             label="Monthly revenue (est.)"
-            value={`$${mrr}`}
-            sub="Paying subscribers only, at their regional price, before Stripe fees"
+            value={mrr}
+            sub="Paying subscribers at their regional monthly price, before fees. Longer plans count as monthly."
           />
           <AdminStatCard label="Comped Pro" value={String(comped.length)} sub="Pro for free — no revenue" />
         </div>
@@ -112,7 +116,7 @@ function SubscriberTable({
                 </Link>
               </td>
               <td className="px-6 py-3 text-xs font-mono">
-                {u.country_code ? `${u.country_code} · ${getDisplayPriceForUser(u).display}` : "Not detected yet"}
+                {u.country_code ? `${u.country_code} · ${monthlyPriceForUser(u).label}` : "Not detected yet"}
               </td>
               <td className="px-6 py-3 text-ink-soft text-xs">{formatDate(u.created_at)}</td>
               <td className="px-6 py-3">

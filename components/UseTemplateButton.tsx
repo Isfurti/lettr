@@ -6,11 +6,11 @@ import { useRouter } from "next/navigation";
 export function UseTemplateButton({
   template,
   label = "Use this template",
-  isLoggedIn = false,
   locked = false,
 }: {
   template: string;
   label?: string;
+  /** Kept for older call sites; signed-in or not, /builder/new does the right thing. */
   isLoggedIn?: boolean;
   /** True when we already know client-side this user's plan can't use this
    * template - skips the round-trip and goes straight to the upgrade path. */
@@ -19,38 +19,16 @@ export function UseTemplateButton({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  async function use() {
+  function use() {
     if (locked) {
       router.push("/pricing");
       return;
     }
-
-    // Not logged in - skip the API entirely and drop them straight into the
-    // guest builder. No account, no 401 round trip, just start building.
-    // (Guests can freely explore any template while building - the
-    // restriction is enforced server-side once they actually save/export
-    // after signing up, same as everywhere else.)
-    if (!isLoggedIn) {
-      router.push(`/builder/new?template=${template}`);
-      return;
-    }
-
+    // /builder/new handles everyone: guests start a draft in this template;
+    // signed-in people get a new resume in it, or, when their plan's resume
+    // limit is reached, their existing resume opens switched to it.
     setLoading(true);
-    const res = await fetch("/api/resumes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: "Untitled Resume", template }),
-    });
-    setLoading(false);
-
-    if (res.status === 402) {
-      router.push("/pricing");
-      return;
-    }
-    if (res.ok) {
-      const body = await res.json();
-      router.push(`/builder/${body.id}`);
-    }
+    router.push(`/builder/new?template=${encodeURIComponent(template)}`);
   }
 
   return (
@@ -63,7 +41,7 @@ export function UseTemplateButton({
           : "bg-brand-blue text-white shadow-[0_4px_0_var(--brand-blue-deep)]"
       }`}
     >
-      {loading ? "Creating…" : locked ? "Upgrade to use" : label}
+      {loading ? "Opening…" : locked ? "Upgrade to use" : label}
     </button>
   );
 }

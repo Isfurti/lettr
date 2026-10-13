@@ -8,7 +8,8 @@ import { AdminSidebar } from "@/components/AdminSidebar";
 import { AdminUserActions } from "@/components/AdminUserActions";
 import type { ResumeData } from "@/lib/types";
 import { formatDate, formatDateTime } from "@/lib/format-date";
-import { getDisplayPriceForUser } from "@/lib/pricing-region";
+import { monthlyPriceForUser } from "@/lib/plans";
+import { PLAN_LIMITS, limitTier } from "@/lib/limits";
 import { isAdminEmail } from "@/lib/admin-auth";
 import { PlanBadge } from "@/components/AdminWidgets";
 import { displayTitle } from "@/lib/resume-title";
@@ -67,9 +68,15 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
           {[
-            { label: "Region · price", value: user.country_code ? `${user.country_code} · ${getDisplayPriceForUser(user).display}` : "Not detected" },
+            { label: "Region · price", value: user.country_code ? `${user.country_code} · ${monthlyPriceForUser(user).label}` : "Not detected" },
             { label: "PDF downloads", value: String(user.pdf_download_count ?? 0) },
-            { label: "AI rewrites (free)", value: user.plan === "pro" ? "—" : `${user.ai_writing_assist_count ?? 0} of 5` },
+            {
+              label: "AI rewrites (free)",
+              value:
+                user.plan === "pro"
+                  ? "—"
+                  : `${user.ai_writing_assist_count ?? 0} of ${PLAN_LIMITS[limitTier(user)].maxAiWritingAssists}`,
+            },
             { label: "Last active", value: activity[0] ? formatDate(activity[0].created_at) : "—" },
           ].map((stat) => (
             <div key={stat.label} className="bg-white border border-rule rounded-xl p-3">

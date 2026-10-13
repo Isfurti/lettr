@@ -7,15 +7,29 @@ import { CardPage } from "@/components/AuthShell";
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
+  const [error, setError] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setStatus("sending");
-    await fetch("/api/auth/forgot-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      if (!res.ok && res.status !== 400) throw new Error("server");
+      if (res.status === 400) {
+        setError("That doesn't look like an email address. Check it and try again.");
+        setStatus("idle");
+        return;
+      }
+    } catch {
+      setError("Couldn't reach the server. Check your connection and try again.");
+      setStatus("idle");
+      return;
+    }
     // Always show the same success state, regardless of whether the email
     // exists - the API deliberately doesn't reveal that either.
     setStatus("sent");
@@ -38,11 +52,17 @@ export default function ForgotPasswordPage() {
               <input
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="field-input mt-1.5"
               />
             </label>
+            {error && (
+              <p className="text-sm font-bold text-red-600" role="alert">
+                {error}
+              </p>
+            )}
             <button
               type="submit"
               disabled={status === "sending"}
