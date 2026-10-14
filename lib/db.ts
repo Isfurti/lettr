@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { ApplicationStatus } from "./application-status";
 
 // Every call site in the app only uses the exported functions below, so
@@ -19,11 +19,8 @@ const pool = new Pool({
   ssl: connectionString.includes("localhost") ? false : { rejectUnauthorized: false },
 });
 
-let schemaReady: Promise<void> | null = null;
-
-function ensureSchema(): Promise<void> {
-  if (!schemaReady) {
-    schemaReady = pool.query(`
+// Tables and columns the app needs. Every statement is safe to run again.
+const SCHEMA_SQL = `
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         email TEXT UNIQUE NOT NULL,
@@ -254,7 +251,53 @@ function ensureSchema(): Promise<void> {
       ALTER TABLE reviews ADD COLUMN IF NOT EXISTS analysis_batch_id TEXT;
       ALTER TABLE reviews ADD COLUMN IF NOT EXISTS reply_emailed BOOLEAN NOT NULL DEFAULT false;
       CREATE INDEX IF NOT EXISTS idx_reviews_analysis ON reviews(analysis_status) WHERE analysis_status <> 'done';
-    `).then(() => undefined);
+`;
+
+// Changes whenever SCHEMA_SQL changes, so those statements run once after a
+// deploy that changes them instead of on every cold start. Running them on
+// every start took table locks that could deadlock with live requests.
+const SCHEMA_VERSION = createHash("sha256").update(SCHEMA_SQL).digest("hex");
+// Any fixed number; only applySchema takes this lock.
+const SCHEMA_LOCK = 734_221_905;
+
+/** Brings the database up to date. Exported for tests; the app calls ensureSchema. */
+export async function applySchema(): Promise<void> {
+  const client = await pool.connect();
+  try {
+    // One server at a time. Without the lock, two cold starts could both try
+    // to create a new table and one would fail.
+    const prelude = await client.query(`
+      BEGIN;
+      SELECT pg_advisory_xact_lock(${SCHEMA_LOCK});
+      CREATE TABLE IF NOT EXISTS schema_version (id INTEGER PRIMARY KEY, version TEXT NOT NULL);
+      SELECT version FROM schema_version WHERE id = 1;
+    `);
+    const last = Array.isArray(prelude) ? prelude[prelude.length - 1] : prelude;
+    if (last.rows[0]?.version !== SCHEMA_VERSION) {
+      await client.query(SCHEMA_SQL);
+      await client.query(
+        "INSERT INTO schema_version (id, version) VALUES (1, $1) ON CONFLICT (id) DO UPDATE SET version = EXCLUDED.version",
+        [SCHEMA_VERSION]
+      );
+    }
+    await client.query("COMMIT");
+    client.release();
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    client.release(true); // don't reuse a connection that just failed
+    throw err;
+  }
+}
+
+let schemaReady: Promise<void> | null = null;
+
+function ensureSchema(): Promise<void> {
+  if (!schemaReady) {
+    schemaReady = applySchema().catch((err) => {
+      // Try again on the next call instead of failing every request from now on.
+      schemaReady = null;
+      throw err;
+    });
   }
   return schemaReady;
 }

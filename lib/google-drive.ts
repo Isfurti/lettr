@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { getUserById, setGoogleTokens } from "./db";
+import { siteUrl } from "./site-url";
 
 const SCOPES = ["https://www.googleapis.com/auth/drive.file"];
 
@@ -11,7 +12,8 @@ function getOAuthClient() {
       "GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET are not set. Add them to your .env.local (local dev) or your hosting provider's environment variables (production) to enable Google Drive export."
     );
   }
-  const appUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  // Same address the sitemap uses, so Google sends people back to the real site even without NEXTAUTH_URL.
+  const appUrl = siteUrl();
   return new google.auth.OAuth2(clientId, clientSecret, `${appUrl}/api/google/callback`);
 }
 

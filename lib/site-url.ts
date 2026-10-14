@@ -1,7 +1,8 @@
 /**
- * The public address of the site, used for canonical links, the sitemap and
- * robots.txt. NEXTAUTH_URL wins; on Vercel we fall back to the project's
- * production domain so links never point at localhost.
+ * The public address of the site, used for canonical links, the sitemap,
+ * robots.txt, links in emails, and where Stripe and Google send people back.
+ * NEXTAUTH_URL wins; on Vercel we fall back to the project's production
+ * domain so links never point at localhost.
  */
 export function siteUrl(env: Record<string, string | undefined> = process.env): string {
   const explicit = env.NEXTAUTH_URL?.trim();
