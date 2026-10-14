@@ -18,7 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${baseUrl}/whats-new`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
     { url: `${baseUrl}/reviews`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
-    { url: `${baseUrl}/compare/rezi`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${baseUrl}/compare`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${baseUrl}/signup`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     // /login is marked noindex, so it isn't listed here.
     { url: `${baseUrl}/support`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },

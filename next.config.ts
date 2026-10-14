@@ -12,6 +12,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // The Rezi-only comparison grew into a comparison with several apps.
+  async redirects() {
+    return [{ source: "/compare/rezi", destination: "/compare", permanent: true }];
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
