@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CardPage } from "@/components/AuthShell";
+import { PasswordInput } from "@/components/PasswordInput";
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -70,14 +71,7 @@ function ResetPasswordForm() {
       <form onSubmit={submit} className="space-y-6 mt-6">
         <label className="block">
           <span className="text-sm font-bold text-slate">New password</span>
-          <input
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="field-input mt-1.5"
-          />
+          <PasswordInput required minLength={8} autoComplete="new-password" value={password} onChange={setPassword} />
           <span className="block mt-1 text-sm text-slate">At least 8 characters</span>
         </label>
         {error && <p className="text-sm font-bold text-red-600">{error}</p>}
