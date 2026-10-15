@@ -7,6 +7,7 @@ import Link from "next/link";
 import { AuthShell } from "@/components/AuthShell";
 import { OAuthButtons } from "@/components/OAuthButtons";
 import { completeGuestExport } from "@/lib/guest-draft";
+import { PasswordInput } from "@/components/PasswordInput";
 
 function LoginForm() {
   const router = useRouter();
@@ -79,14 +80,7 @@ function LoginForm() {
               Forgot password?
             </Link>
           </div>
-          <input
-            type="password"
-            required
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="field-input mt-1.5"
-          />
+          <PasswordInput required autoComplete="current-password" value={password} onChange={setPassword} />
         </label>
 
         {error && <p className="text-sm font-bold text-red-600">{error}</p>}

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { AuthShell } from "@/components/AuthShell";
 import { OAuthButtons } from "@/components/OAuthButtons";
 import { completeGuestExport } from "@/lib/guest-draft";
+import { PasswordInput } from "@/components/PasswordInput";
 
 function SignupForm() {
   const router = useRouter();
@@ -143,15 +144,19 @@ function Field({
   return (
     <label className="block">
       <span className="text-sm font-bold text-slate">{label}</span>
-      <input
-        type={type}
-        required={required}
-        minLength={minLength}
-        autoComplete={autoComplete}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="field-input mt-1.5"
-      />
+      {type === "password" ? (
+        <PasswordInput required={required} minLength={minLength} autoComplete={autoComplete} value={value} onChange={onChange} />
+      ) : (
+        <input
+          type={type}
+          required={required}
+          minLength={minLength}
+          autoComplete={autoComplete}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="field-input mt-1.5"
+        />
+      )}
       {hint && <span className="block mt-1 text-sm text-slate">{hint}</span>}
     </label>
   );
