@@ -12,9 +12,12 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  // The Rezi-only comparison grew into a comparison with several apps.
+  // The comparison pages were removed; send old links to pricing.
   async redirects() {
-    return [{ source: "/compare/rezi", destination: "/compare", permanent: true }];
+    return [
+      { source: "/compare", destination: "/pricing", permanent: true },
+      { source: "/compare/:path*", destination: "/pricing", permanent: true },
+    ];
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

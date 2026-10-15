@@ -2,9 +2,8 @@
 export const CHANGELOG: { date: string; title: string; items: string[] }[] = [
   {
     date: "2026-10-14",
-    title: "Lettr compared with other resume builders",
+    title: "A note from our founder",
     items: [
-      "New comparison of Lettr with Rezi, Zety, Resume.io, Teal and Kickresume: prices, free PDF downloads and trial small print.",
       "A note from our founder on the About page.",
     ],
   },

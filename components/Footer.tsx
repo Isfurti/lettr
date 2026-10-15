@@ -21,7 +21,6 @@ const COLUMNS = [
       { href: "/about", label: "About" },
       { href: "/whats-new", label: "What's new" },
       { href: "/reviews", label: "Reviews" },
-      { href: "/compare", label: "Lettr vs other apps" },
       { href: "/support", label: "Support" },
       { href: "/privacy", label: "Privacy policy" },
       { href: "/terms", label: "Terms of service" },
