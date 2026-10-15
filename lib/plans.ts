@@ -13,7 +13,7 @@ export type RegionPrices = {
   region: string;
   /** ISO currency code, so amounts in different currencies are never added together. */
   currency: "INR" | "USD" | "GBP" | "EUR" | "AUD";
-  /** Formats a whole-number amount in the region's currency, e.g. 699 → "₹699". */
+  /** Formats a whole-number amount in the region's currency, e.g. 599 → "₹599". */
   format: (amount: number) => string;
   monthly: number;
   quarter: number;
@@ -24,7 +24,7 @@ export type RegionPrices = {
 const fmt = (symbol: string, locale = "en-US") => (n: number) => `${symbol}${n.toLocaleString(locale)}`;
 
 export const REGION_PRICES: Record<string, RegionPrices> = {
-  IN: { region: "India", currency: "INR", format: fmt("₹", "en-IN"), monthly: 699, quarter: 1499, yearly: 3999, taxNote: "Prices include GST." },
+  IN: { region: "India", currency: "INR", format: fmt("₹", "en-IN"), monthly: 599, quarter: 1499, yearly: 4999, taxNote: "Prices include GST." },
   US: { region: "Standard", currency: "USD", format: fmt("$"), monthly: 24, quarter: 49, yearly: 149 },
   GB: { region: "United Kingdom", currency: "GBP", format: fmt("£"), monthly: 19, quarter: 39, yearly: 119 },
   EU: { region: "Europe", currency: "EUR", format: fmt("€"), monthly: 22, quarter: 45, yearly: 139 },
@@ -67,7 +67,7 @@ export function perMonth(prices: RegionPrices, plan: PlanId): number {
 
 /**
  * The Pro price a saved user sees on the pricing page (monthly plan), e.g.
- * "₹699/mo". The admin pages use this so they always match what people are shown.
+ * "₹599/mo". The admin pages use this so they always match what people are shown.
  */
 export function monthlyPriceForUser(user: { country_code: string | null; pricing_tier: string | null }): {
   prices: RegionPrices;
@@ -78,7 +78,7 @@ export function monthlyPriceForUser(user: { country_code: string | null; pricing
 }
 
 /**
- * Adds up monthly list prices per currency ("₹1,398 + $24"). A rough guide
+ * Adds up monthly list prices per currency ("₹1,198 + $24"). A rough guide
  * only: it doesn't know who's on a 3-month or yearly plan.
  */
 export function monthlyRevenueLabel(users: { country_code: string | null; pricing_tier: string | null }[]): string {

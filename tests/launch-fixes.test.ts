@@ -85,7 +85,7 @@ describe("AI agent action notes name the role, not a list index", () => {
 
 describe("admin prices match the pricing page", () => {
   it("shows India's monthly Pro price in rupees", () => {
-    expect(monthlyPriceForUser({ country_code: "IN", pricing_tier: "value" }).label).toBe("₹699/mo");
+    expect(monthlyPriceForUser({ country_code: "IN", pricing_tier: "value" }).label).toBe("₹599/mo");
     expect(monthlyPriceForUser({ country_code: "US", pricing_tier: "full" }).label).toBe("$24/mo");
   });
 
@@ -95,7 +95,7 @@ describe("admin prices match the pricing page", () => {
       { country_code: "IN", pricing_tier: "value" },
       { country_code: "US", pricing_tier: "full" },
     ]);
-    expect(label).toBe("₹1,398 + $24");
+    expect(label).toBe("₹1,198 + $24");
     expect(monthlyRevenueLabel([])).toBe("₹0");
   });
 });

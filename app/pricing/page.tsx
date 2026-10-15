@@ -10,6 +10,7 @@ import { getCountryFromHeaders, getTierForCountry } from "@/lib/pricing-region";
 import { TEMPLATE_IDS } from "@/lib/templates";
 import { getRegionPrices, savingsPercent, perMonth, type PlanId } from "@/lib/plans";
 import { agentMonthlyCap } from "@/lib/ai-costs";
+import { ProPlanPicker, type PickerPlan } from "@/components/ProPlanPicker";
 import { ensureUserRegion } from "@/lib/user-region";
 import { DAILY_LIMITS, PLAN_LIMITS } from "@/lib/limits";
 
@@ -113,25 +114,29 @@ export default async function PricingPage() {
     }
   }
 
-  const PRO_PLANS: { id: PlanId; name: string; price: number; period: string; blurb: string; badge?: string }[] = [
-    { id: "monthly", name: "Monthly", price: prices.monthly, period: "/ month", blurb: "Flexible. Cancel any time." },
-    {
-      id: "quarter",
-      name: "3-month pass",
-      price: prices.quarter,
-      period: "/ 3 months",
-      blurb: "Made for one focused job search.",
-      badge: "Most popular",
-    },
-    {
-      id: "yearly",
-      name: "Yearly",
-      price: prices.yearly,
-      period: "/ year",
-      blurb: "For your whole career year.",
-      badge: "Best value",
-    },
-  ];
+  const months = { monthly: 1, quarter: 3, yearly: 12 } as const;
+  const pickerPlans: PickerPlan[] = (
+    [
+      { id: "monthly", tab: "Monthly", name: "Monthly", blurb: "Flexible. Cancel any time.", amount: prices.monthly, period: "/ month" },
+      { id: "quarter", tab: "3 months", name: "3-month pass", blurb: "Made for one focused job search.", amount: prices.quarter, period: "/ 3 months" },
+      { id: "yearly", tab: "Yearly", name: "Yearly", blurb: "For your whole career year.", amount: prices.yearly, period: "/ year" },
+    ] as const
+  ).map((p) => {
+    const saved = prices.monthly * months[p.id] - p.amount;
+    return {
+      id: p.id,
+      tab: p.tab,
+      name: p.name,
+      blurb: p.blurb,
+      price: prices.format(p.amount),
+      period: p.period,
+      note:
+        p.id === "monthly"
+          ? ""
+          : `${prices.format(perMonth(prices, p.id))} a month${saved > 0 ? ` · you save ${prices.format(saved)}` : ""}`,
+      savePercent: savingsPercent(prices, p.id as PlanId),
+    };
+  });
 
   const H2 = "font-brand font-extrabold text-[32px] sm:text-[44px] leading-[1.05] tracking-tight";
 
@@ -153,11 +158,11 @@ export default async function PricingPage() {
       </section>
 
       <section className="max-w-[1280px] mx-auto w-full px-4 sm:px-8 lg:px-14 pb-20 sm:pb-24">
-        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
-          <Reveal className="bg-white border-2 border-rule rounded-[32px] p-7 flex flex-col">
+        <ProPlanPicker plans={pickerPlans} templateCount={TEMPLATE_IDS.length}>
+          <Reveal className="bg-white border-2 border-rule rounded-[32px] p-7 flex flex-col h-full">
             <h2 className="font-brand font-extrabold text-2xl">Free</h2>
-            <p className="mt-1 min-h-[3rem] text-slate">For one strong resume.</p>
-            <div className="mt-3 mb-[3.25rem]">
+            <p className="mt-1 text-slate">For one strong resume.</p>
+            <div className="mt-4 mb-8">
               <span className="font-brand font-extrabold text-[40px] leading-none">{prices.format(0)}</span>
               <span className="text-sm text-slate font-bold"> / forever</span>
             </div>
@@ -175,58 +180,7 @@ export default async function PricingPage() {
               Start free
             </Link>
           </Reveal>
-
-          {PRO_PLANS.map((plan, i) => {
-            const best = plan.id === "quarter";
-            const save = savingsPercent(prices, plan.id);
-            return (
-              <Reveal
-                key={plan.id}
-                delay={(i + 1) * 80}
-                className={`relative rounded-[32px] p-7 flex flex-col ${
-                  best ? "bg-ink text-white shadow-[8px_8px_0_var(--gold)]" : "bg-white border-2 border-ink shadow-[6px_6px_0_var(--ink)]"
-                }`}
-              >
-                {plan.badge && (
-                  <span className="absolute -top-3.5 right-6 bg-gold text-ink text-xs font-extrabold px-3 py-1.5 rounded-full rotate-[4deg]">
-                    {plan.badge}
-                  </span>
-                )}
-                <h2 className="font-brand font-extrabold text-2xl flex items-center gap-2">
-                  Pro <span className={best ? "text-gold" : "text-brand-blue"}>{plan.name}</span>
-                </h2>
-                <p className={`mt-1 min-h-[3rem] ${best ? "text-white/70" : "text-slate"}`}>{plan.blurb}</p>
-                <div className="mt-3 flex flex-wrap items-baseline gap-x-1.5">
-                  <span className="font-brand font-extrabold text-[40px] leading-none">{prices.format(plan.price)}</span>
-                  <span className={`text-sm font-bold whitespace-nowrap ${best ? "text-white/70" : "text-slate"}`}>{plan.period}</span>
-                </div>
-                <p className={`mt-2 mb-6 text-sm font-bold h-5 ${best ? "text-gold" : "text-brand-blue"}`}>
-                  {plan.id === "monthly"
-                    ? ""
-                    : `${prices.format(perMonth(prices, plan.id))} a month${save > 0 ? ` · save ${save}%` : ""}`}
-                </p>
-                <ul className="space-y-3 mb-8 flex-1">
-                  <FeatureLine included dark={best}>Everything in Free</FeatureLine>
-                  <FeatureLine included dark={best}>Unlimited resumes, clean PDFs, Word &amp; Drive</FeatureLine>
-                  <FeatureLine included dark={best}>All {TEMPLATE_IDS.length} templates, any colour</FeatureLine>
-                  <FeatureLine included dark={best}>Unlimited AI rewrites &amp; cover letters</FeatureLine>
-                  <FeatureLine included dark={best}>AI Resume Agent</FeatureLine>
-                  <FeatureLine included dark={best}>ATS analyst &amp; interview practice</FeatureLine>
-                  <FeatureLine included dark={best}>All missing keywords, unlimited job tracking</FeatureLine>
-                </ul>
-                <button
-                  type="button"
-                  disabled
-                  className={`w-full min-h-12 rounded-full font-extrabold cursor-not-allowed ${
-                    best ? "bg-gold/90 text-ink" : "bg-sand text-slate border-2 border-rule"
-                  }`}
-                >
-                  Opens at launch
-                </button>
-              </Reveal>
-            );
-          })}
-        </div>
+        </ProPlanPicker>
         <p className="mt-8 text-center text-slate">
           Pro opens soon. Until then, everything in the free plan is yours to use.
           {prices.taxNote ? ` ${prices.taxNote}` : ""}
