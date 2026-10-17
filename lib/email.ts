@@ -1,4 +1,5 @@
 import { siteUrl } from "./site-url";
+import { COMPANY } from "./company";
 
 /**
  * Base email sender via Resend. Returns whether it was actually sent -
@@ -26,7 +27,8 @@ export async function sendEmail(params: {
       body: JSON.stringify({
         from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
         to: params.to,
-        reply_to: params.replyTo,
+        // Replies to Lettr's emails go to the support inbox unless a caller says otherwise.
+        reply_to: params.replyTo ?? COMPANY.contactEmail ?? undefined,
         subject: params.subject,
         text: params.text,
       }),

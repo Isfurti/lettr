@@ -37,4 +37,13 @@ describe("links in emails", () => {
     const reset = await capture(() => sendPasswordResetEmail("a@example.com", "abc"));
     expect(reset).toContain("https://lettr.in/reset-password?token=abc");
   });
+
+  it("send replies to the support inbox", async () => {
+    vi.stubEnv("RESEND_API_KEY", "test-key");
+    const fetchMock = vi.fn(async () => new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await sendPasswordResetEmail("a@example.com", "abc");
+    const init = (fetchMock.mock.calls[0] as unknown[])[1] as { body: string };
+    expect(JSON.parse(init.body).reply_to).toBe("support@noonscope.com");
+  });
 });
