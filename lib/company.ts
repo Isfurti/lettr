@@ -16,6 +16,8 @@ export type Seller = {
   gstin: string;
   /** Logo printed on invoices, under /public. */
   logoPath?: string;
+  /** The company's own website, linked from the footer. */
+  website?: string;
 };
 
 /** The legal entity Lettr is sold under. Set to null to hide company details and switch invoices off. */
@@ -27,6 +29,7 @@ export const SELLER: Seller | null = {
   stateCode: "09",
   gstin: "09AALCN4402B1ZS",
   logoPath: "/brand/noonscope-logo.png",
+  website: "https://noonscope.com",
 };
 
 export const COMPANY = {

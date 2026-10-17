@@ -63,7 +63,15 @@ export function Footer() {
             © {new Date().getFullYear()} Lettr
             {SELLER && (
               <>
-                {" "}is a product of <span className="font-bold text-ink">{SELLER.legalName}</span>, {SELLER.addressLines.join(", ")}.
+                {" "}is a product of{" "}
+                {SELLER.website ? (
+                  <a href={SELLER.website} className="font-bold text-ink underline underline-offset-2 hover:text-brand-blue">
+                    {SELLER.legalName}
+                  </a>
+                ) : (
+                  <span className="font-bold text-ink">{SELLER.legalName}</span>
+                )}
+                , {SELLER.addressLines.join(", ")}.
                 GSTIN {SELLER.gstin}
               </>
             )}
