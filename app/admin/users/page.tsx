@@ -32,8 +32,8 @@ export default async function AdminUsersPage({
   const sortKey: SortKey = sort && sort in SORTS ? (sort as SortKey) : "joined";
 
   let users = await listAllUsers(q);
-  if (plan === "paid") users = users.filter((u) => u.plan === "pro" && u.stripe_subscription_id);
-  if (plan === "comp") users = users.filter((u) => u.plan === "pro" && !u.stripe_subscription_id);
+  if (plan === "paid") users = users.filter((u) => u.paid_pro);
+  if (plan === "comp") users = users.filter((u) => u.plan === "pro" && !u.paid_pro);
   if (plan === "free") users = users.filter((u) => u.plan !== "pro");
   users = [...users].sort(SORTS[sortKey].fn);
 
@@ -133,7 +133,7 @@ export default async function AdminUsersPage({
                     </Link>
                   </td>
                   <td className="px-5 py-3">
-                    <PlanBadge plan={u.plan} paid={Boolean(u.stripe_subscription_id)} />
+                    <PlanBadge plan={u.plan} paid={u.paid_pro} />
                   </td>
                   <td className="px-5 py-3 text-xs whitespace-nowrap">
                     {u.country_code ? (

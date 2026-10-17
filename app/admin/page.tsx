@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-auth";
 import pool, { getAdminOverview, listRecentUsers } from "@/lib/db";
-import { getStripeStatus } from "@/lib/integrations";
+import { getPaymentsStatus } from "@/lib/integrations";
 import { formatDate } from "@/lib/format-date";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { AdminStatCard, SignupsChart, PaymentsWarning, PlanBadge } from "@/components/AdminWidgets";
@@ -27,8 +27,8 @@ export default async function AdminOverviewPage() {
     listRecentUsers(8),
     dbOk(),
   ]);
-  const stripe = getStripeStatus();
-  const healthy = databaseOk && stripe.ready && Boolean(process.env.ANTHROPIC_API_KEY);
+  const payments = getPaymentsStatus();
+  const healthy = databaseOk && payments.ready && Boolean(process.env.ANTHROPIC_API_KEY);
 
   const pct = (n: number) => (overview.totalUsers === 0 ? 0 : Math.round((n / overview.totalUsers) * 100));
   const segments = [
@@ -58,7 +58,7 @@ export default async function AdminOverviewPage() {
           </Link>
         </div>
 
-        {!stripe.ready && <PaymentsWarning missing={stripe.missing} />}
+        {!payments.ready && <PaymentsWarning missing={payments.missing} partlyReady={payments.partlyReady} />}
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <AdminStatCard
@@ -156,7 +156,7 @@ export default async function AdminOverviewPage() {
                         </Link>
                       </td>
                       <td className="px-6 py-3">
-                        <PlanBadge plan={u.plan} paid={Boolean(u.stripe_subscription_id)} />
+                        <PlanBadge plan={u.plan} paid={u.paid_pro} />
                       </td>
                       <td className="px-6 py-3 text-ink-soft text-xs">{formatDate(u.created_at)}</td>
                     </tr>

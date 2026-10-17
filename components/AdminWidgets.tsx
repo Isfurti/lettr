@@ -57,10 +57,14 @@ export function SignupsChart({ weeks, totalWeeks = 12 }: { weeks: { week: string
 }
 
 /** Red banner shown across the admin portal while payments can't be taken. */
-export function PaymentsWarning({ missing }: { missing: string[] }) {
+export function PaymentsWarning({ missing, partlyReady = false }: { missing: string[]; partlyReady?: boolean }) {
   return (
     <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-      <p className="font-medium">Payments are not set up — nobody can upgrade to Pro right now.</p>
+      <p className="font-medium">
+        {partlyReady
+          ? "Payments work, but the Razorpay webhook isn't set up — a payment can be missed if the buyer closes the tab too early."
+          : "Payments are not set up — nobody can upgrade to Pro right now."}
+      </p>
       <p className="text-xs mt-1">
         Add these in Vercel → Project → Settings → Environment Variables, then redeploy:{" "}
         <span className="font-mono">{missing.join(", ")}</span>.{" "}
@@ -76,7 +80,7 @@ export function PlanBadge({ plan, paid }: { plan: string; paid: boolean }) {
     <span className="whitespace-nowrap text-xs font-mono uppercase px-2 py-0.5 rounded-xl bg-green-50 text-green-800">Pro · paid</span>
   ) : (
     <span
-      title="Pro given by an admin - no Stripe subscription, no revenue"
+      title="Pro given by an admin - not paid for, no revenue"
       className="whitespace-nowrap text-xs font-mono uppercase px-2 py-0.5 rounded-xl bg-amber-50 text-amber-800"
     >
       Pro · comp

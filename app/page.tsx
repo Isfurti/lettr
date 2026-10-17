@@ -110,8 +110,8 @@ const FAQ = [
     a: "It depends on your country, and you'll always see the price in your currency before you pay. See the pricing page for yours.",
   },
   {
-    q: "Can I cancel any time?",
-    a: "Yes. Cancel from the billing portal in your dashboard and you keep Pro until the end of the period you've paid for.",
+    q: "Does Pro renew automatically?",
+    a: "No. Pro is a one-time payment for 1, 3 or 12 months, so there's nothing to cancel and no surprise charges. Buy more time whenever you like.",
   },
 ];
 

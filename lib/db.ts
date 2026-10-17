@@ -1,6 +1,7 @@
 import { Pool } from "pg";
 import { createHash, randomUUID } from "node:crypto";
 import type { ApplicationStatus } from "./application-status";
+import { proHasLapsed } from "./pro-pass";
 
 // Every call site in the app only uses the exported functions below, so
 // swapping providers (e.g. a different Postgres host, or connection pooling
@@ -49,6 +50,27 @@ const SCHEMA_SQL = `
       ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_expiry TIMESTAMPTZ;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS country_code TEXT;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS pricing_tier TEXT;
+      -- Paid Pro (one-time passes). pro_until is when the paid time runs out;
+      -- NULL on a Pro plan means it was given by an admin (no end date).
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS pro_until TIMESTAMPTZ;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS pro_plan TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS pro_reminder_sent_for TIMESTAMPTZ;
+
+      -- One row per Razorpay order. Marked paid once, so a payment that's
+      -- confirmed by both the checkout and the webhook only adds time once.
+      CREATE TABLE IF NOT EXISTS payments (
+        order_id TEXT PRIMARY KEY,
+        user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        plan_id TEXT NOT NULL,
+        months INTEGER NOT NULL,
+        amount INTEGER NOT NULL,
+        currency TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'created',
+        payment_id TEXT UNIQUE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        paid_at TIMESTAMPTZ
+      );
+      CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id);
 
       CREATE TABLE IF NOT EXISTS support_messages (
         id TEXT PRIMARY KEY,
@@ -322,6 +344,9 @@ export type UserRow = {
   password_reset_expiry: string | null;
   country_code: string | null;
   pricing_tier: string | null;
+  pro_until: string | Date | null;
+  pro_plan: string | null;
+  pro_reminder_sent_for: string | Date | null;
   ai_improvement_consent: boolean;
   created_at: string;
 };
@@ -336,16 +361,27 @@ export type ResumeRow = {
   updated_at: string;
 };
 
+/**
+ * Paid Pro ends when its time runs out. Checked whenever a user is loaded, so
+ * nobody keeps Pro past their end date; the daily billing job does the same
+ * for everyone at once.
+ */
+async function withProExpiry(row: UserRow | undefined): Promise<UserRow | undefined> {
+  if (!row || !proHasLapsed(row)) return row;
+  await pool.query("UPDATE users SET plan = 'free' WHERE id = $1 AND plan = 'pro' AND pro_until < now()", [row.id]);
+  return { ...row, plan: "free" };
+}
+
 export async function getUserByEmail(email: string): Promise<UserRow | undefined> {
   await ensureSchema();
   const res = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-  return res.rows[0];
+  return withProExpiry(res.rows[0]);
 }
 
 export async function getUserById(id: string): Promise<UserRow | undefined> {
   await ensureSchema();
   const res = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
-  return res.rows[0];
+  return withProExpiry(res.rows[0]);
 }
 
 export async function createUser(u: {
@@ -404,12 +440,6 @@ export async function countResumesForUser(userId: string): Promise<number> {
   return res.rows[0].count;
 }
 
-export async function getUserByStripeCustomerId(customerId: string): Promise<UserRow | undefined> {
-  await ensureSchema();
-  const res = await pool.query("SELECT * FROM users WHERE stripe_customer_id = $1", [customerId]);
-  return res.rows[0];
-}
-
 /**
  * Saves a user's country + pricing tier only if none was saved yet - for
  * accounts created via Google/LinkedIn (no request headers at signup) or
@@ -430,21 +460,135 @@ export async function setUserRegionIfMissing(
   return rows[0];
 }
 
-export async function setStripeCustomerId(userId: string, customerId: string) {
+/**
+ * Admin plan change. Pro given here has no end date; taking Pro away also
+ * clears any paid time so it can't come back on its own.
+ */
+export async function updateUserPlan(params: { userId: string; plan: "free" | "pro" }) {
   await ensureSchema();
-  await pool.query("UPDATE users SET stripe_customer_id = $1 WHERE id = $2", [customerId, userId]);
+  await pool.query("UPDATE users SET plan = $1, pro_until = NULL WHERE id = $2", [params.plan, params.userId]);
 }
 
-export async function updateUserPlan(params: {
+// ---------- Pro passes (Razorpay orders) ----------
+
+export type PaymentRow = {
+  order_id: string;
+  user_id: string | null;
+  plan_id: string;
+  months: number;
+  amount: number;
+  currency: string;
+  status: string;
+  payment_id: string | null;
+  created_at: string;
+  paid_at: string | null;
+};
+
+/** Saves a Razorpay order before the buyer pays, so we know what it was for. */
+export async function createPaymentRecord(p: {
+  orderId: string;
   userId: string;
-  plan: "free" | "pro";
-  stripeSubscriptionId?: string | null;
+  planId: string;
+  months: number;
+  amount: number;
+  currency: string;
 }) {
   await ensureSchema();
   await pool.query(
-    "UPDATE users SET plan = $1, stripe_subscription_id = $2 WHERE id = $3",
-    [params.plan, params.stripeSubscriptionId ?? null, params.userId]
+    "INSERT INTO payments (order_id, user_id, plan_id, months, amount, currency) VALUES ($1, $2, $3, $4, $5, $6)",
+    [p.orderId, p.userId, p.planId, p.months, p.amount, p.currency]
   );
+}
+
+export async function getPaymentRecord(orderId: string): Promise<PaymentRow | undefined> {
+  await ensureSchema();
+  const res = await pool.query("SELECT * FROM payments WHERE order_id = $1", [orderId]);
+  return res.rows[0];
+}
+
+/**
+ * Marks an order paid and adds its months of Pro, in one transaction. Time
+ * is added after any Pro the person still has left. Returns null if the
+ * order was already marked paid (the checkout and the webhook both report
+ * the same payment), so the time is only ever added once.
+ */
+export async function markPaymentPaid(
+  orderId: string,
+  paymentId: string
+): Promise<{ payment: PaymentRow; user: UserRow | undefined } | null> {
+  await ensureSchema();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const paid = await client.query(
+      "UPDATE payments SET status = 'paid', payment_id = $2, paid_at = now() WHERE order_id = $1 AND status <> 'paid' RETURNING *",
+      [orderId, paymentId]
+    );
+    const payment: PaymentRow | undefined = paid.rows[0];
+    if (!payment) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+    let user: UserRow | undefined;
+    if (payment.user_id) {
+      const res = await client.query(
+        `UPDATE users SET
+           plan = 'pro',
+           pro_plan = $3,
+           pro_until = GREATEST(COALESCE(pro_until, now()), now()) + make_interval(months => $2)
+         WHERE id = $1
+         RETURNING *`,
+        [payment.user_id, payment.months, payment.plan_id]
+      );
+      user = res.rows[0];
+    }
+    await client.query("COMMIT");
+    return { payment, user };
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** Money taken for Pro passes in the last `days` days, per currency (amounts in paise/cents). */
+export async function paymentTotals(days: number): Promise<{ currency: string; total: number; count: number }[]> {
+  await ensureSchema();
+  const res = await pool.query(
+    `SELECT currency, SUM(amount)::int AS total, COUNT(*)::int AS count FROM payments
+     WHERE status = 'paid' AND paid_at > now() - make_interval(days => $1)
+     GROUP BY currency ORDER BY currency`,
+    [days]
+  );
+  return res.rows;
+}
+
+/** Moves everyone whose paid Pro has run out back to Free. Returns how many. */
+export async function expireLapsedPro(): Promise<number> {
+  await ensureSchema();
+  const res = await pool.query(
+    "UPDATE users SET plan = 'free' WHERE plan = 'pro' AND pro_until IS NOT NULL AND pro_until < now()"
+  );
+  return res.rowCount ?? 0;
+}
+
+/** Paid Pro ending within the next `days` days that hasn't had a reminder for this end date. */
+export async function listProEndingSoon(days: number): Promise<UserRow[]> {
+  await ensureSchema();
+  const res = await pool.query(
+    `SELECT * FROM users
+     WHERE plan = 'pro' AND pro_until IS NOT NULL
+       AND pro_until > now() AND pro_until <= now() + make_interval(days => $1)
+       AND (pro_reminder_sent_for IS NULL OR pro_reminder_sent_for <> pro_until)`,
+    [days]
+  );
+  return res.rows;
+}
+
+export async function markProReminderSent(userId: string, proUntil: string | Date) {
+  await ensureSchema();
+  await pool.query("UPDATE users SET pro_reminder_sent_for = $2 WHERE id = $1", [userId, proUntil]);
 }
 
 export async function incrementPdfDownloadCount(userId: string): Promise<number> {
@@ -532,11 +676,11 @@ export async function updateSupportMessageStatus(id: string, status: "open" | "r
 
 export type AdminOverview = {
   totalUsers: number;
-  /** All Pro accounts: paid through Stripe + given Pro by an admin. */
+  /** All Pro accounts: paid Pro passes + Pro given by an admin. */
   proUsers: number;
-  /** Pro with a real Stripe subscription - the only ones that bring in money. */
+  /** Pro bought with a pass (has an end date) - the only ones that bring in money. */
   paidProUsers: number;
-  /** Pro given by an admin (no Stripe subscription) - free to them, no revenue. */
+  /** Pro given by an admin (no end date) - free to them, no revenue. */
   compedProUsers: number;
   freeUsers: number;
   totalResumes: number;
@@ -565,7 +709,7 @@ export async function getAdminOverview(excludeEmail?: string | null): Promise<Ad
     pool.query(
       `SELECT COUNT(*)::int AS total,
               COUNT(*) FILTER (WHERE plan = 'pro')::int AS pro,
-              COUNT(*) FILTER (WHERE plan = 'pro' AND stripe_subscription_id IS NOT NULL)::int AS paid,
+              COUNT(*) FILTER (WHERE plan = 'pro' AND pro_until IS NOT NULL)::int AS paid,
               COUNT(*) FILTER (WHERE plan = 'free')::int AS free,
               COUNT(*) FILTER (WHERE created_at > now() - interval '30 days')::int AS signups30,
               COALESCE(SUM(pdf_download_count), 0)::int AS pdfs,
@@ -615,13 +759,14 @@ export type RecentUserRow = {
   name: string | null;
   plan: string;
   created_at: string;
-  stripe_subscription_id: string | null;
+  /** Pro someone paid for (it has an end date), as opposed to Pro given by an admin. */
+  paid_pro: boolean;
 };
 
 export async function listRecentUsers(limit = 6): Promise<RecentUserRow[]> {
   await ensureSchema();
   const res = await pool.query(
-    "SELECT id, email, name, plan, created_at, stripe_subscription_id FROM users ORDER BY created_at DESC LIMIT $1",
+    "SELECT id, email, name, plan, created_at, (plan = 'pro' AND pro_until IS NOT NULL) AS paid_pro FROM users ORDER BY created_at DESC LIMIT $1",
     [limit]
   );
   return res.rows;
@@ -655,8 +800,9 @@ export type AdminUserRow = {
   resume_count: number;
   country_code: string | null;
   pricing_tier: string | null;
-  stripe_subscription_id: string | null;
-  stripe_customer_id: string | null;
+  paid_pro: boolean;
+  pro_until: string | Date | null;
+  pro_plan: string | null;
   pdf_download_count: number;
   ai_writing_assist_count: number;
   /** Most recent recorded activity (resume created, export, AI use...), if any. */
@@ -667,7 +813,8 @@ export async function listAllUsers(search?: string): Promise<AdminUserRow[]> {
   await ensureSchema();
   const res = await pool.query(
     `SELECT u.id, u.email, u.name, u.plan, u.created_at, u.country_code, u.pricing_tier,
-            u.stripe_subscription_id, u.stripe_customer_id, u.pdf_download_count, u.ai_writing_assist_count,
+            (u.plan = 'pro' AND u.pro_until IS NOT NULL) AS paid_pro, u.pro_until, u.pro_plan,
+            u.pdf_download_count, u.ai_writing_assist_count,
             (SELECT COUNT(*)::int FROM resumes r WHERE r.user_id = u.id) AS resume_count,
             (SELECT MAX(a.created_at) FROM activity_log a WHERE a.user_id = u.id) AS last_active
      FROM users u

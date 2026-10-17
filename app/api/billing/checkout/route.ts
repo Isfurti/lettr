@@ -1,12 +1,23 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getUserById } from "@/lib/db";
-import { createCheckoutSession } from "@/lib/stripe";
+import { createPaymentRecord, getUserById } from "@/lib/db";
 import { ensureUserRegion } from "@/lib/user-region";
+import { getRegionPrices } from "@/lib/plans";
+import { isPlanId, passAmountMinor, passDescription, PRO_PASSES } from "@/lib/pro-pass";
+import { createOrder, currencyAllowed, razorpayConfigured } from "@/lib/razorpay";
 
+/**
+ * Starts buying a Pro pass: makes a Razorpay order for the price shown to
+ * this person on the pricing page and returns what Razorpay Checkout needs.
+ * The price always comes from the server, never from the browser.
+ */
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user) return NextResponse.json({ error: "Please sign in to buy Pro." }, { status: 401 });
+
+  const body = await req.json().catch(() => ({}));
+  const plan: unknown = body?.plan;
+  if (!isPlanId(plan)) return NextResponse.json({ error: "Pick a plan." }, { status: 400 });
 
   const userId = (session.user as { id: string }).id;
   const found = await getUserById(userId);
@@ -14,28 +25,50 @@ export async function POST(req: Request) {
   // Charge the price for their region, detecting it now if it was never saved.
   const user = await ensureUserRegion(found, req.headers);
 
-  if (user.plan === "pro") {
-    return NextResponse.json({ error: "Already on the Pro plan" }, { status: 400 });
+  if (user.plan === "pro" && !user.pro_until) {
+    return NextResponse.json({ error: "You already have Pro from the Lettr team." }, { status: 400 });
   }
-
-  // Payments not set up yet (no Stripe key in this environment) - say so
-  // plainly instead of showing the raw configuration error to a customer.
-  if (!process.env.STRIPE_SECRET_KEY) {
-    console.error("Checkout attempted but STRIPE_SECRET_KEY is not set");
+  if (!razorpayConfigured()) {
+    console.error("Checkout attempted but Razorpay keys are not set");
     return NextResponse.json(
-      { error: "Upgrades are temporarily unavailable. Please try again soon or contact support." },
+      { error: "Payments are temporarily unavailable. Please try again soon or contact support." },
       { status: 503 }
     );
   }
 
+  const prices = getRegionPrices(user.country_code, user.pricing_tier);
+  if (!currencyAllowed(prices.currency)) {
+    return NextResponse.json(
+      { error: "Pro can only be bought from India for now. Payments from your country open soon." },
+      { status: 403 }
+    );
+  }
+
+  const amount = passAmountMinor(prices, plan);
   try {
-    const url = await createCheckoutSession({
-      userId: user.id,
-      email: user.email,
-      existingStripeCustomerId: user.stripe_customer_id,
-      pricingTier: user.pricing_tier ?? "full",
+    const order = await createOrder({
+      amount,
+      currency: prices.currency,
+      receipt: `lettr_${plan}_${Date.now()}`,
+      notes: { userId: user.id, plan },
     });
-    return NextResponse.json({ url });
+    await createPaymentRecord({
+      orderId: order.id,
+      userId: user.id,
+      planId: plan,
+      months: PRO_PASSES[plan].months,
+      amount: order.amount,
+      currency: order.currency,
+    });
+    return NextResponse.json({
+      keyId: process.env.RAZORPAY_KEY_ID,
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      description: passDescription(plan),
+      name: user.name ?? "",
+      email: user.email,
+    });
   } catch (err) {
     console.error("Checkout failed", err);
     return NextResponse.json(

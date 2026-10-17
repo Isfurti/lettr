@@ -11,6 +11,9 @@ import { TEMPLATE_IDS } from "@/lib/templates";
 import { getRegionPrices, savingsPercent, perMonth, type PlanId } from "@/lib/plans";
 import { agentMonthlyCap } from "@/lib/ai-costs";
 import { ProPlanPicker, type PickerPlan } from "@/components/ProPlanPicker";
+import type { CheckoutState } from "@/components/ProCheckoutButton";
+import { currencyAllowed, razorpayConfigured } from "@/lib/razorpay";
+import { formatProDate, hasPaidPro } from "@/lib/pro-pass";
 import { ensureUserRegion } from "@/lib/user-region";
 import { DAILY_LIMITS, PLAN_LIMITS } from "@/lib/limits";
 
@@ -48,10 +51,10 @@ const COMPARISON: { feature: string; free: string | boolean; pro: string | boole
   { feature: "Any accent colour", free: "8 preset colours", pro: "Any colour" },
 ];
 
-const FAQS = [
+const faqs = (open: boolean) => [
   {
-    q: "Can I cancel anytime?",
-    a: "Yes. You can cancel from your dashboard at any time and keep Pro until the end of the period you already paid for.",
+    q: "Does Pro renew automatically?",
+    a: "No. Every plan is a one-time payment for 1, 3 or 12 months, so there's nothing to cancel and you're never charged again by surprise. We email you a few days before Pro ends. Buy another pass any time and the new months are added after the time you have left.",
   },
   {
     q: "How does the resume score work?",
@@ -65,10 +68,15 @@ const FAQS = [
     q: "What's the difference between the Pro plans?",
     a: "Nothing in what you get: Monthly, the 3-month pass and Yearly all unlock every Pro feature. The longer plans just cost less per month.",
   },
-  {
-    q: "When can I buy Pro?",
-    a: "Pro opens at launch. Until then, the free plan works as described, and your resumes will carry over when you upgrade.",
-  },
+  open
+    ? {
+        q: "How can I pay?",
+        a: "Through Razorpay, with UPI (Google Pay, PhonePe, Paytm and others), debit or credit cards, netbanking or wallets. You get a GST invoice on your dashboard straight after paying.",
+      }
+    : {
+        q: "When can I buy Pro?",
+        a: "Pro opens at launch. Until then, the free plan works as described, and your resumes will carry over when you upgrade.",
+      },
   {
     q: "Is there a free plan?",
     a: `Yes. 1 resume, 2 templates, the live ATS score, a clean PDF download, and a free try of every AI tool: ${FREE.maxAiWritingAssists} rewrites, a cover letter, an ATS analyst review and a practice interview. No credit card needed.`,
@@ -79,7 +87,7 @@ const FAQS = [
   },
   {
     q: "Do you offer refunds?",
-    a: "There's no money-back guarantee for now, so please try the free plan first. If you're charged twice or by mistake, tell us within 7 days and we'll refund it. You can cancel any time and keep Pro until the end of the period you paid for.",
+    a: "There's no money-back guarantee for now, so please try the free plan first. If you're charged twice or by mistake, tell us within 7 days and we'll refund it. Passes don't renew, so you won't be charged again unless you buy another one.",
   },
   {
     q: "Is Pro really unlimited?",
@@ -101,6 +109,8 @@ export default async function PricingPage() {
   const visitorCountry = getCountryFromHeaders(headersList);
   let prices = getRegionPrices(visitorCountry);
   let tier: string = getTierForCountry(visitorCountry);
+  let compedPro = false;
+  let proUntil: string | null = null;
 
   if (session?.user) {
     const userId = (session.user as { id: string }).id;
@@ -111,15 +121,28 @@ export default async function PricingPage() {
         prices = getRegionPrices(withRegion.country_code, withRegion.pricing_tier);
         tier = withRegion.pricing_tier ?? getTierForCountry(withRegion.country_code);
       }
+      compedPro = withRegion.plan === "pro" && !withRegion.pro_until;
+      if (hasPaidPro(withRegion) && withRegion.pro_until) proUntil = formatProDate(withRegion.pro_until);
     }
   }
+
+  const checkout: CheckoutState = !razorpayConfigured()
+    ? "closed"
+    : !currencyAllowed(prices.currency)
+    ? "unavailable"
+    : !session?.user
+    ? "signed-out"
+    : compedPro
+    ? "comped"
+    : "ready";
+  const paymentsOpen = checkout !== "closed";
 
   const months = { monthly: 1, quarter: 3, yearly: 12 } as const;
   const pickerPlans: PickerPlan[] = (
     [
-      { id: "monthly", tab: "Monthly", name: "Monthly", blurb: "Flexible. Cancel any time.", amount: prices.monthly, period: "/ month" },
-      { id: "quarter", tab: "3 months", name: "3-month pass", blurb: "Made for one focused job search.", amount: prices.quarter, period: "/ 3 months" },
-      { id: "yearly", tab: "Yearly", name: "Yearly", blurb: "For your whole career year.", amount: prices.yearly, period: "/ year" },
+      { id: "monthly", tab: "Monthly", name: "1 month", blurb: "A quick push. Pay once, no renewal.", amount: prices.monthly, period: "for 1 month", addLabel: "Add 1 month" },
+      { id: "quarter", tab: "3 months", name: "3 months", blurb: "Made for one focused job search.", amount: prices.quarter, period: "for 3 months", addLabel: "Add 3 months" },
+      { id: "yearly", tab: "Yearly", name: "12 months", blurb: "For your whole career year.", amount: prices.yearly, period: "for 12 months", addLabel: "Add 12 months" },
     ] as const
   ).map((p) => {
     const saved = prices.monthly * months[p.id] - p.amount;
@@ -135,6 +158,7 @@ export default async function PricingPage() {
           ? ""
           : `${prices.format(perMonth(prices, p.id))} a month${saved > 0 ? ` · you save ${prices.format(saved)}` : ""}`,
       savePercent: savingsPercent(prices, p.id as PlanId),
+      addLabel: p.addLabel,
     };
   });
 
@@ -158,7 +182,7 @@ export default async function PricingPage() {
       </section>
 
       <section className="max-w-[1280px] mx-auto w-full px-4 sm:px-8 lg:px-14 pb-20 sm:pb-24">
-        <ProPlanPicker plans={pickerPlans} templateCount={TEMPLATE_IDS.length}>
+        <ProPlanPicker plans={pickerPlans} templateCount={TEMPLATE_IDS.length} checkout={checkout} proUntil={proUntil}>
           <Reveal className="bg-white border-2 border-rule rounded-[32px] p-7 flex flex-col h-full">
             <h2 className="font-brand font-extrabold text-2xl">Free</h2>
             <p className="mt-1 text-slate">For one strong resume.</p>
@@ -182,7 +206,11 @@ export default async function PricingPage() {
           </Reveal>
         </ProPlanPicker>
         <p className="mt-8 text-center text-slate">
-          Pro opens soon. Until then, everything in the free plan is yours to use.
+          {checkout === "closed"
+            ? "Pro opens soon. Until then, everything in the free plan is yours to use."
+            : checkout === "unavailable"
+            ? "Pro can be bought from India for now. Everything in the free plan is yours to use."
+            : "Secure payments by Razorpay. GST invoice on your dashboard after paying."}
           {prices.taxNote ? ` ${prices.taxNote}` : ""}
         </p>
       </section>
@@ -236,7 +264,7 @@ export default async function PricingPage() {
             </p>
           </Reveal>
           <div className="flex flex-col gap-3">
-            {FAQS.map((f) => (
+            {faqs(paymentsOpen).map((f) => (
               <details key={f.q} className="group bg-white rounded-2xl border border-rule open:border-ink transition-colors">
                 <summary className="cursor-pointer list-none flex items-center justify-between gap-4 min-h-14 px-5 py-4 font-bold text-lg [&::-webkit-details-marker]:hidden">
                   {f.q}

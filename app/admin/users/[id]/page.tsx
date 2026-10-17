@@ -12,6 +12,7 @@ import { monthlyPriceForUser } from "@/lib/plans";
 import { PLAN_LIMITS, limitTier } from "@/lib/limits";
 import { isAdminEmail } from "@/lib/admin-auth";
 import { PlanBadge } from "@/components/AdminWidgets";
+import { hasPaidPro, formatProDate } from "@/lib/pro-pass";
 import { displayTitle } from "@/lib/resume-title";
 
 export const metadata: Metadata = { title: "User | Lettr Admin" };
@@ -47,7 +48,8 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             <h1 className="font-brand font-extrabold text-[36px] tracking-tight mb-1">{user.name || "—"}</h1>
             <p className="text-ink-soft break-all">{user.email}</p>
             <p className="text-xs text-ink-soft mt-2 flex flex-wrap items-center gap-2">
-              <PlanBadge plan={user.plan} paid={Boolean(user.stripe_subscription_id)} />
+              <PlanBadge plan={user.plan} paid={hasPaidPro(user)} />
+              {hasPaidPro(user) && user.pro_until && <span>Pro until {formatProDate(user.pro_until)} ·</span>}
               <span>Joined {formatDate(user.created_at)}</span>
               <span>·</span>
               {user.email_verified ? (
@@ -61,7 +63,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             userId={id}
             currentPlan={user.plan}
             emailVerified={user.email_verified}
-            hasPaidSubscription={Boolean(user.stripe_subscription_id)}
+            paidPro={hasPaidPro(user)}
             isSelf={isAdminEmail(user.email)}
           />
         </div>

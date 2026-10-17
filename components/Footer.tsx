@@ -24,6 +24,8 @@ const COLUMNS = [
       { href: "/support", label: "Support" },
       { href: "/privacy", label: "Privacy policy" },
       { href: "/terms", label: "Terms of service" },
+      { href: "/refund-policy", label: "Refund policy" },
+      { href: "/delivery-policy", label: "Delivery policy" },
     ],
   },
   {

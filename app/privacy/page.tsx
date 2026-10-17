@@ -169,7 +169,7 @@ const SECTIONS: LegalSection[] = [
           <li><strong>Vercel</strong>: hosting the website and app;</li>
           <li><strong>our database provider</strong>: storing account and resume data;</li>
           <li><strong>Anthropic</strong>: AI features;</li>
-          <li><strong>our payment provider</strong> (named at checkout): taking payments;</li>
+          <li><strong>Razorpay</strong>: taking payments;</li>
           <li><strong>Google</strong> and <strong>LinkedIn</strong>: sign-in, and Google Drive if you connect it;</li>
           <li><strong>Resend</strong>: sending emails;</li>
           <li><strong>Sentry</strong>: error reports so we can fix bugs.</li>
@@ -303,7 +303,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      updated="11 October 2026"
+      updated="17 October 2026"
       intro={<p>What we collect, why, who helps us, and the control you have. We&apos;ve kept it as plain as we can.</p>}
       sections={SECTIONS}
     />

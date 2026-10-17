@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ProCheckoutButton, type CheckoutState } from "@/components/ProCheckoutButton";
 
 export type PickerPlan = {
   id: "monthly" | "quarter" | "yearly";
@@ -13,6 +14,8 @@ export type PickerPlan = {
   /** "₹500 a month · you save ₹298" style line, empty for monthly. */
   note: string;
   savePercent: number;
+  /** Button text when Pro is already running, e.g. "Add 3 months". */
+  addLabel: string;
 };
 
 const FEATURES = (templateCount: number) => [
@@ -28,14 +31,20 @@ const FEATURES = (templateCount: number) => [
 /**
  * The Monthly / 3 months / Yearly switch above the plan cards, and the one Pro
  * card it controls. Starts on the 3-month pass. `children` is the Free card.
+ * Every plan is a one-time payment; buying while on Pro adds the time.
  */
 export function ProPlanPicker({
   plans,
   templateCount,
+  checkout,
+  proUntil = null,
   children,
 }: {
   plans: PickerPlan[];
   templateCount: number;
+  checkout: CheckoutState;
+  /** End date of the Pro pass this person already has, e.g. "17 Jan 2027". */
+  proUntil?: string | null;
   children: React.ReactNode;
 }) {
   const [selected, setSelected] = useState<PickerPlan["id"]>("quarter");
@@ -127,13 +136,20 @@ export function ProPlanPicker({
               </li>
             ))}
           </ul>
-          <button
-            type="button"
-            disabled
-            className="w-full min-h-12 rounded-full font-extrabold cursor-not-allowed bg-gold/90 text-ink"
-          >
-            Opens at launch
-          </button>
+          {proUntil && checkout === "ready" && (
+            <p className="mb-3 text-sm text-white/80">
+              You&apos;re on Pro until {proUntil}. Buying now adds the time after that.
+            </p>
+          )}
+          <ProCheckoutButton
+            key={plan.id}
+            plan={plan.id}
+            state={checkout}
+            label={proUntil ? plan.addLabel : "Get Pro"}
+          />
+          <p className="mt-3 text-center text-xs text-white/60">
+            One-time payment · No auto-renewal · UPI, cards &amp; netbanking
+          </p>
         </div>
       </div>
     </div>

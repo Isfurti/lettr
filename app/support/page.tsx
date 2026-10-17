@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Footer } from "@/components/Footer";
 import { PublicNav } from "@/components/PublicNav";
-import { COMPANY } from "@/lib/company";
+import { COMPANY, SELLER } from "@/lib/company";
 
 export default function SupportPage() {
   const [email, setEmail] = useState("");
@@ -81,6 +81,11 @@ export default function SupportPage() {
                 )}{" "}
                 Grievance officer: {COMPANY.grievanceOfficer.name}.
               </p>
+              {SELLER && (
+                <p className="mt-2">
+                  {SELLER.legalName}, {SELLER.addressLines.join(", ")}.
+                </p>
+              )}
             </div>
           </div>
 

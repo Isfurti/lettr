@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BillingPortalButton } from "@/components/BillingPortalButton";
 import { Logo } from "@/components/Logo";
 import { InstallAppButton } from "@/components/AppInstall";
 import { signOut } from "next-auth/react";
-import { Home, LayoutTemplate, MessageSquare, LifeBuoy, Crown, CreditCard, LogOut, ShieldAlert, Globe, Briefcase, Mic, Download } from "lucide-react";
+import { Home, LayoutTemplate, MessageSquare, LifeBuoy, Crown, LogOut, ShieldAlert, Globe, Briefcase, Mic, Download } from "lucide-react";
 
 const BASE_NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
@@ -23,7 +22,6 @@ export type SidebarUsage = { label: string; used: number; limit: number };
 export function AppSidebar({
   isAdmin = false,
   plan = "free",
-  isPaidPro = false,
   usage,
 }: {
   /** Kept for older call sites; the new sidebar always shows the Lettr logo. */
@@ -31,18 +29,13 @@ export function AppSidebar({
   eyebrow?: string;
   isAdmin?: boolean;
   plan?: string;
-  /** Pro with a real Stripe subscription - gets "Billing" (manage/cancel) instead of the pricing page. */
-  isPaidPro?: boolean;
   /** Optional free-plan usage to show in the plan card (e.g. PDF downloads). */
   usage?: SidebarUsage;
 }) {
   const pathname = usePathname();
-  // Free users are sent to upgrade; paying Pro users manage billing in
-  // Stripe (see BillingPortalButton below); Pro added by the team has
-  // nothing to manage, so it just shows the plans.
-  const NAV_ITEMS = isPaidPro
-    ? BASE_NAV_ITEMS
-    : [...BASE_NAV_ITEMS, { href: "/pricing", label: plan === "pro" ? "Your plan" : "Upgrade to Pro", icon: Crown }];
+  // Free users are sent to upgrade; Pro users see their plan there and can
+  // add more time (passes don't renew on their own).
+  const NAV_ITEMS = [...BASE_NAV_ITEMS, { href: "/pricing", label: plan === "pro" ? "Your plan" : "Upgrade to Pro", icon: Crown }];
 
   // "Interview practice" stays highlighted inside one interview, and so on.
   const isActive = (href: string) => pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
@@ -81,11 +74,6 @@ export function AppSidebar({
               </Link>
             );
           })}
-          {isPaidPro && (
-            <span className="inline-flex items-center min-h-10 px-3.5 rounded-full bg-white/5 shrink-0">
-              <BillingPortalButton label="Billing" className="text-sm text-white/75" />
-            </span>
-          )}
           {isAdmin && (
             <Link
               href="/admin"
@@ -119,12 +107,6 @@ export function AppSidebar({
                 </Link>
               );
             })}
-            {isPaidPro && (
-              <div className={itemClass(false)}>
-                <CreditCard className="w-[18px] h-[18px] shrink-0" strokeWidth={2} />
-                <BillingPortalButton label="Billing" className="text-[15px] text-inherit hover:text-white" />
-              </div>
-            )}
           </nav>
 
           <div className="px-3 pb-5 space-y-1">

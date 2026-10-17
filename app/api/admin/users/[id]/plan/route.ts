@@ -17,16 +17,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const parsed = Schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
-  // A paying subscriber's plan is owned by Stripe (the webhook keeps it in
-  // sync) - changing it here would drift from what they're actually billed.
-  if (target.stripe_subscription_id && target.plan === "pro") {
-    return NextResponse.json(
-      { error: "This user pays through Stripe. Change or cancel their subscription in Stripe instead." },
-      { status: 409 }
-    );
-  }
-
-  await updateUserPlan({ userId: id, plan: parsed.data.plan, stripeSubscriptionId: target.stripe_subscription_id });
+  // Pro passes don't renew, so an admin can always change the plan (e.g.
+  // removing Pro after a refund). Pro given here has no end date.
+  await updateUserPlan({ userId: id, plan: parsed.data.plan });
 
   await logAdminAction({
     adminUserId: admin.id,
