@@ -28,7 +28,7 @@ export default async function InterviewPage() {
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row bg-cream text-ink">
-      <AppSidebar isAdmin={isAdminEmail(session.user.email)} plan={plan} isPaidPro={plan === "pro" && Boolean(user?.stripe_subscription_id)} />
+      <AppSidebar isAdmin={isAdminEmail(session.user.email)} plan={plan} />
       <main className="flex-1 min-w-0 px-4 sm:px-8 lg:px-12 py-6 sm:py-10 max-w-[1100px] w-full">
         <h1 className="font-brand font-extrabold text-[32px] sm:text-[44px] leading-tight tracking-tight">Interview practice</h1>
         <p className="text-lg text-slate mt-1 mb-7">Practise the questions you&apos;re likely to get, and walk in prepared.</p>

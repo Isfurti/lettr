@@ -1,5 +1,6 @@
 "use client";
 
+import { afterSignIn } from "@/lib/after-sign-in";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -67,7 +68,7 @@ function SignupForm() {
     }
 
     setLoading(false);
-    router.push(searchParams.get("continue") === "import" ? "/dashboard?import=1" : "/dashboard");
+    router.push(afterSignIn(searchParams.get("continue")));
   }
 
   return (
@@ -97,7 +98,7 @@ function SignupForm() {
         </button>
       </form>
 
-      <OAuthButtons callbackUrl={searchParams.get("continue") === "import" ? "/dashboard?import=1" : "/dashboard"} />
+      <OAuthButtons callbackUrl={afterSignIn(searchParams.get("continue"))} />
 
       <p className="text-slate mt-8 text-center">
         Already have an account?{" "}

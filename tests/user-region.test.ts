@@ -53,12 +53,14 @@ describe("getDisplayPriceForUser", () => {
 
 describe("getAdminOverview", () => {
   it("separates paid from comped Pro and can leave the admin account out", async () => {
-    const { getAdminOverview, updateUserPlan } = await import("@/lib/db");
+    const { getAdminOverview, updateUserPlan, createPaymentRecord, markPaymentPaid } = await import("@/lib/db");
     const before = await getAdminOverview(null);
     const paid = await newUser();
     const comped = await newUser();
-    await updateUserPlan({ userId: paid.id, plan: "pro", stripeSubscriptionId: "sub_test_123" });
-    await updateUserPlan({ userId: comped.id, plan: "pro", stripeSubscriptionId: null });
+    const orderId = `order_test_${paid.id}`;
+    await createPaymentRecord({ orderId, userId: paid.id, planId: "quarter", months: 3, amount: 149900, currency: "INR" });
+    await markPaymentPaid(orderId, `pay_test_${paid.id}`);
+    await updateUserPlan({ userId: comped.id, plan: "pro" });
     const after = await getAdminOverview(null);
     expect(after.paidProUsers - before.paidProUsers).toBe(1);
     expect(after.compedProUsers - before.compedProUsers).toBe(1);

@@ -4,11 +4,8 @@ import { getUserById, deleteUserAccount } from "@/lib/db";
 
 /**
  * Self-serve account deletion. Removes the user row; resumes and activity
- * cascade-delete with it (see deleteUserAccount in lib/db.ts).
- *
- * An active Pro subscription must be cancelled first - deleting the account
- * out from under a live Stripe subscription would keep charging them with
- * no way to log in and stop it.
+ * cascade-delete with it (see deleteUserAccount in lib/db.ts). Pro passes don't renew, so
+ * there's never a payment left running after the account is gone.
  */
 export async function DELETE(req: Request) {
   const session = await auth();
@@ -22,17 +19,6 @@ export async function DELETE(req: Request) {
 
   const user = await getUserById(userId);
   if (!user) return NextResponse.json({ error: "Account not found" }, { status: 404 });
-
-  if (user.plan === "pro" && user.stripe_subscription_id) {
-    return NextResponse.json(
-      {
-        error:
-          "Please cancel your Pro subscription first (Manage billing on your dashboard), then delete your account.",
-        subscriptionActive: true,
-      },
-      { status: 409 }
-    );
-  }
 
   await deleteUserAccount(userId);
   return NextResponse.json({ ok: true });

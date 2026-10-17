@@ -17,7 +17,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { ScoreRing } from "@/components/ScoreRing";
 import { NewResumeButton } from "@/components/NewResumeButton";
 import { ImportResumeButton } from "@/components/ImportResumeButton";
-import { BillingPortalButton } from "@/components/BillingPortalButton";
+import { formatProDate, hasPaidPro, isPlanId, PRO_PASSES } from "@/lib/pro-pass";
 import { ResumeSearch } from "@/components/ResumeSearch";
 import { VerifyEmailBanner } from "@/components/VerifyEmailBanner";
 import { GuestDraftRescue } from "@/components/GuestDraftRescue";
@@ -29,7 +29,7 @@ export const metadata: Metadata = { title: "Dashboard | Lettr", robots: { index:
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ drive_connected?: string; drive_error?: string; import?: string }>;
+  searchParams: Promise<{ drive_connected?: string; drive_error?: string; import?: string; upgraded?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
@@ -54,7 +54,7 @@ export default async function DashboardPage({
   const resumeLimit = PLAN_LIMITS[plan].maxResumes;
   const allowances = user && plan === "free" ? await planAllowances(user) : null;
   const atResumeLimit = resumeRows.length >= resumeLimit;
-  const { drive_connected, drive_error, import: wantsImport } = await searchParams;
+  const { drive_connected, drive_error, import: wantsImport, upgraded } = await searchParams;
 
   const resumes = resumeRows.map((r) => ({ ...r, data: JSON.parse(r.data) as ResumeData }));
   const scored = resumes.map((r) => ({ ...r, quality: scoreResumeQuality(r.data) }));
@@ -62,7 +62,9 @@ export default async function DashboardPage({
   // a brand-new blank one scoring 0 tells the user nothing.
   const mostRecent = scored.find((r) => r.quality.overall > 0) ?? scored[0];
   const score = mostRecent ? mostRecent.quality : null;
-  const isPaidPro = plan === "pro" && Boolean(user?.stripe_subscription_id);
+  const isPaidPro = Boolean(user && hasPaidPro(user));
+  const proUntil = isPaidPro && user?.pro_until ? formatProDate(user.pro_until) : null;
+  const passName = user && isPlanId(user.pro_plan) ? PRO_PASSES[user.pro_plan].name : "Pro pass";
 
   const rawName = session.user.name || session.user.email?.split("@")[0] || "there";
   // Names typed in lowercase ("sagar agarwal") read better capitalised.
@@ -81,7 +83,6 @@ export default async function DashboardPage({
       <AppSidebar
         isAdmin={isAdmin}
         plan={plan}
-        isPaidPro={isPaidPro}
         usage={
           allowances
             ? { label: "AI rewrites", used: allowances.rewrites.used, limit: allowances.rewrites.limit }
@@ -92,6 +93,11 @@ export default async function DashboardPage({
       <main className="flex-1 min-w-0 px-4 sm:px-8 lg:px-12 py-6 sm:py-10 max-w-[1200px] w-full">
         {user && !user.email_verified && <VerifyEmailBanner />}
         <GuestDraftRescue />
+        {upgraded && plan === "pro" && (
+          <div className="mb-6 bg-gold-soft text-ink font-bold rounded-2xl px-5 py-4">
+            Welcome to Pro! Every Pro feature is unlocked{proUntil ? ` until ${proUntil}` : ""}. Your invoice is below.
+          </div>
+        )}
         {drive_connected && (
           <div className="mb-6 bg-brand-blue-soft text-brand-blue-deep font-bold rounded-2xl px-5 py-4">
             Google Drive connected. You can now save resumes straight to Drive from the builder.
@@ -335,12 +341,19 @@ export default async function DashboardPage({
           )}
         </div>
 
-        {isPaidPro || plan === "pro" ? (
+        {plan === "pro" ? (
           <section className="mt-5 bg-white rounded-[28px] border border-rule p-6 flex flex-wrap items-center justify-between gap-3">
-            <p className="font-bold">
-              {isPaidPro ? "You're on Pro." : "You're on Pro (added by the Lettr team)."}
-            </p>
-            {isPaidPro && <BillingPortalButton />}
+            <div>
+              <p className="font-bold">
+                {isPaidPro ? `You're on Pro (${passName}) until ${proUntil}.` : "You're on Pro (added by the Lettr team)."}
+              </p>
+              {isPaidPro && <p className="text-sm text-slate mt-1">It won&apos;t renew on its own, so you&apos;re never charged again unless you buy more time.</p>}
+            </div>
+            {isPaidPro && (
+              <Link href="/pricing" className="inline-flex items-center min-h-11 font-bold text-brand-blue hover:underline">
+                Add more time →
+              </Link>
+            )}
           </section>
         ) : null}
 

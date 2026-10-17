@@ -7,14 +7,14 @@ export function AdminUserActions({
   userId,
   currentPlan,
   emailVerified,
-  hasPaidSubscription = false,
+  paidPro = false,
   isSelf = false,
 }: {
   userId: string;
   currentPlan: string;
   emailVerified: boolean;
-  /** Has a live Stripe subscription - plan is controlled by Stripe, not here. */
-  hasPaidSubscription?: boolean;
+  /** On a Pro pass they paid for (passes don't renew, so there's nothing to cancel). */
+  paidPro?: boolean;
   /** This is the admin's own account. */
   isSelf?: boolean;
 }) {
@@ -50,6 +50,8 @@ export function AdminUserActions({
     const toPro = currentPlan !== "pro";
     const message = toPro
       ? "Give this user Pro for free? They won't be charged, and it shows as \"Pro · comp\"."
+      : paidPro
+      ? "This user paid for Pro. Only remove it after refunding them in Razorpay. Remove Pro now?"
       : "Remove this user's Pro access? They'll go back to the Free plan limits straight away.";
     if (!confirm(message)) return;
     if (await call(`/api/admin/users/${userId}/plan`, { plan: toPro ? "pro" : "free" })) router.refresh();
@@ -82,25 +84,13 @@ export function AdminUserActions({
             Mark email verified
           </button>
         )}
-        {hasPaidSubscription ? (
-          <span className="text-xs text-ink-soft" title="Cancel or refund in Stripe - the plan updates automatically">
-            Paid via Stripe — manage there
-          </span>
-        ) : (
-          <button onClick={togglePlan} disabled={loading} className={btn}>
-            {currentPlan === "pro" ? "Remove comped Pro" : "Give Pro (comp)"}
-          </button>
-        )}
+        <button onClick={togglePlan} disabled={loading} className={btn}>
+          {currentPlan === "pro" ? (paidPro ? "Remove Pro (after a refund)" : "Remove comped Pro") : "Give Pro (comp)"}
+        </button>
         <button
           onClick={deleteAccount}
-          disabled={loading || isSelf || hasPaidSubscription}
-          title={
-            isSelf
-              ? "You can't delete your own admin account here"
-              : hasPaidSubscription
-              ? "Cancel their Stripe subscription first, so they aren't charged after deletion"
-              : undefined
-          }
+          disabled={loading || isSelf}
+          title={isSelf ? "You can't delete your own admin account here" : undefined}
           className="text-sm text-red-600 border border-red-200 rounded-xl px-3 py-1.5 hover:bg-red-50 disabled:opacity-40 disabled:hover:bg-transparent"
         >
           Delete account

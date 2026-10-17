@@ -43,24 +43,15 @@ endpoints (bullet rewriting and cover letter generation) — auth, resume
 CRUD, ATS scoring, and PDF export are all pure-code/no-external-API and work
 immediately.
 
-## Billing setup (Stripe)
+## Billing setup (Razorpay)
 
-Lettr's Free vs Pro plan matches Rezi's actual published pricing:
+Pro is sold as one-time passes (1, 3 or 12 months, prices in `lib/plans.ts`). No auto-renewal: buying again while on Pro adds the time after the current end date, a daily job (`/api/cron/billing`) moves lapsed passes back to Free and emails a reminder 3 days before the end.
 
-| | Free | Pro ($19/mo) |
-|---|---|---|
-| Resumes | 1 | Unlimited |
-| PDF downloads | 3 | Unlimited |
-| Cover letter builder | ❌ | ✅ |
-| Resignation letter builder | ❌ | ✅ |
+1. In Razorpay, go to **Account & Settings → API Keys** and copy the key id and secret into `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`.
+2. Add a webhook at **Account & Settings → Webhooks** pointing at `https://your-domain.com/api/billing/webhook`, events `order.paid` and `payment.captured`. Copy its secret into `RAZORPAY_WEBHOOK_SECRET`.
+3. Prices outside India are charged in USD/GBP/EUR/AUD, which Razorpay only accepts once international payments are approved. Until then only India can buy; set `RAZORPAY_INTERNATIONAL=on` after approval.
 
-To enable it:
-1. Create a Stripe account, go to **Products**, create a recurring $19/month price. Copy its Price ID into `STRIPE_PRO_PRICE_ID`.
-2. Copy your **Secret key** from the Stripe dashboard into `STRIPE_SECRET_KEY`.
-3. Add a webhook endpoint in Stripe pointing at `https://your-domain.com/api/billing/webhook`, subscribed to `checkout.session.completed`, `customer.subscription.updated`, and `customer.subscription.deleted`. Copy the signing secret into `STRIPE_WEBHOOK_SECRET`.
-4. For local testing, use the Stripe CLI: `stripe listen --forward-to localhost:3000/api/billing/webhook`
-
-Without real Stripe keys, everything else in the app still works — the app just can't process real upgrades (the `/pricing` page's checkout button will error).
+Without keys everything else works, and the Pro button says "Opens at launch".
 
 ## Social login setup (Google + LinkedIn)
 

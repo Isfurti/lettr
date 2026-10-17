@@ -21,7 +21,6 @@ export default async function FeedbackPage() {
         eyebrow="Resume workspace"
         isAdmin={isAdminEmail(session.user.email)}
         plan={user?.plan ?? "free"}
-        isPaidPro={user?.plan === "pro" && Boolean(user?.stripe_subscription_id)}
       />
       <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 max-w-xl w-full">
         <h1 className="font-brand font-extrabold text-[32px] sm:text-[40px] leading-tight tracking-tight mb-2">How&apos;s Lettr working for you?</h1>

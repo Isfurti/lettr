@@ -118,8 +118,8 @@ const SECTIONS: LegalSection[] = [
           The Free plan includes {PLAN_LIMITS.free.maxResumes} resume, the Classic and Modern templates, the ATS score and a
           one-time free try of the AI features ({PLAN_LIMITS.free.maxAiWritingAssists} AI rewrites, 1 cover letter, 1 ATS
           analyst review and 1 practice interview). Your first PDF is free of any Lettr branding; later free PDFs carry a small
-          &quot;Made with Lettr&quot; line. Pro unlocks the rest. The plans on offer (for example Monthly, a 3-month pass and
-          Yearly) and their prices are shown on our <Link href="/pricing">pricing page</Link>.
+          &quot;Made with Lettr&quot; line. Pro unlocks the rest. Pro is sold as one-time passes for 1, 3 or 12 months, with
+          prices shown on our <Link href="/pricing">pricing page</Link>.
         </p>
         <p>
           The free allowances are once per person, not per account. Creating extra accounts to get more free use isn&apos;t
@@ -127,17 +127,19 @@ const SECTIONS: LegalSection[] = [
           2026 keep the monthly allowances they signed up with.
         </p>
         <p>
-          Prices are set for your country. Prices in Indian rupees include GST. Whether a plan renews automatically, and
-          when, is shown at checkout before you pay. Payments are handled by our payment provider, which is named at
-          checkout. We don&apos;t see or store your full card or bank details.
+          Prices are set for your country. Prices in Indian rupees include GST. Each pass is a single payment and does not
+          renew automatically: Pro ends at the end of the time you paid for, and we email you a few days before. If you buy
+          another pass while Pro is still running, the new time is added after your current end date. Pro is switched on
+          straight after payment. Payments are handled by Razorpay; we don&apos;t see or store your full card, UPI or bank
+          details.
         </p>
         <p>
-          For payments in India we issue a GST invoice{SELLER ? ` in the name of ${SELLER.legalName}` : ""}. Business
-          customers can add their GSTIN at checkout.
+          For payments in India we issue a GST invoice{SELLER ? ` in the name of ${SELLER.legalName}` : ""}, which you can
+          download from your dashboard. Business customers who need their GSTIN on the invoice can write to us within 7
+          days of paying.
         </p>
         <p>
-          If we change the price of a plan you already pay for, the new price applies from your next renewal, and
-          we&apos;ll tell you before it does.
+          If we change our prices, the change never affects a pass you have already bought.
         </p>
       </>
     ),
@@ -148,12 +150,13 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          You can cancel a renewing plan at any time from your dashboard. You keep Pro until the end of the period you
-          already paid for, and you won&apos;t be charged again.
+          Passes don&apos;t renew, so there is nothing to cancel and you won&apos;t be charged again unless you buy another
+          pass. You keep Pro until the end of the time you paid for.
         </p>
         <p>
           Payments are not refundable for time already started, except where the law requires it or where we made a
           mistake. If you were charged twice or charged in error, contact us through {mail} within 7 days and we&apos;ll refund it.
+          Approved refunds go back to the original payment method within 5–7 working days.
         </p>
       </>
     ),
@@ -268,7 +271,7 @@ export default function TermsPage() {
   return (
     <LegalPage
       title="Terms of Service"
-      updated="11 October 2026"
+      updated="17 October 2026"
       intro={<p>The rules for using Lettr, in plain language. Please read them before you sign up or pay.</p>}
       sections={SECTIONS}
     />

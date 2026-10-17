@@ -70,3 +70,28 @@ export async function sendReviewReplyEmail(email: string, reply: string): Promis
     text: `${reply}\n\n— The Lettr team`,
   });
 }
+
+export async function sendProConfirmationEmail(params: {
+  email: string;
+  passName: string;
+  proUntil: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  return sendEmail({
+    to: params.email,
+    subject: "You're on Lettr Pro",
+    text:
+      `Thanks for buying the Lettr Pro ${params.passName}. Every Pro feature is now unlocked.\n\n` +
+      `Your Pro runs until ${params.proUntil}. It won't renew on its own, so you'll never be charged again unless you buy another pass.\n\n` +
+      `Your invoice is on your dashboard: ${getAppUrl()}/dashboard\n\n— The Lettr team`,
+  });
+}
+
+export async function sendProEndingSoonEmail(params: { email: string; proUntil: string }): Promise<{ sent: boolean; reason?: string }> {
+  return sendEmail({
+    to: params.email,
+    subject: "Your Lettr Pro ends soon",
+    text:
+      `Your Lettr Pro ends on ${params.proUntil}. After that your account moves to the free plan, and all your resumes stay saved.\n\n` +
+      `To keep Pro, buy another pass before then and the new time is added after your current end date:\n${getAppUrl()}/pricing\n\n— The Lettr team`,
+  });
+}
