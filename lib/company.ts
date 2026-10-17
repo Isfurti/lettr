@@ -33,7 +33,7 @@ export const COMPANY = {
   productName: "Lettr",
   country: "India",
   /** Public contact email. Null to send people to the contact form instead. */
-  contactEmail: "support@noonscope.com" as string | null,
+  contactEmail: "support@getlettr.com" as string | null,
   /** Where people reach us when there's no public email. */
   contactUrl: "/support",
   grievanceOfficer: { name: "Sagar Agarwal" },

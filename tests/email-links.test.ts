@@ -44,6 +44,6 @@ describe("links in emails", () => {
     vi.stubGlobal("fetch", fetchMock);
     await sendPasswordResetEmail("a@example.com", "abc");
     const init = (fetchMock.mock.calls[0] as unknown[])[1] as { body: string };
-    expect(JSON.parse(init.body).reply_to).toBe("support@noonscope.com");
+    expect(JSON.parse(init.body).reply_to).toBe("support@getlettr.com");
   });
 });
