@@ -8,6 +8,7 @@ const COLUMNS = [
     links: [
       { href: "/builder/new", label: "Resume builder" },
       { href: "/resume-checker", label: "Free ATS checker" },
+      { href: "/resume-builder-for-freshers", label: "Resume builder for freshers" },
       { href: "/templates", label: "Templates" },
       { href: "/examples", label: "Resume examples" },
       { href: "/tools/bullet-writer", label: "Bullet point writer" },
@@ -19,6 +20,7 @@ const COLUMNS = [
     title: "Company",
     links: [
       { href: "/about", label: "About" },
+      { href: "/guides", label: "Guides" },
       { href: "/whats-new", label: "What's new" },
       { href: "/reviews", label: "Reviews" },
       { href: "/support", label: "Support" },
