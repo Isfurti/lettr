@@ -1,11 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { InstallAppButton } from "@/components/AppInstall";
 import { signOut } from "next-auth/react";
-import { Home, LayoutTemplate, MessageSquare, LifeBuoy, Crown, LogOut, ShieldAlert, Globe, Briefcase, Mic, Download } from "lucide-react";
+import { Home, LayoutTemplate, MessageSquare, LifeBuoy, Crown, LogOut, ShieldAlert, Globe, Briefcase, Mic, Download, Menu, X } from "lucide-react";
 
 const BASE_NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
@@ -33,6 +34,29 @@ export function AppSidebar({
   usage?: SidebarUsage;
 }) {
   const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Close the phone menu when a link takes you to another page.
+  const [menuPath, setMenuPath] = useState(pathname);
+  if (menuPath !== pathname) {
+    setMenuPath(pathname);
+    setMenuOpen(false);
+  }
+
+  // While the menu is open: Escape closes it and the page behind doesn't scroll.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = overflow;
+    };
+  }, [menuOpen]);
   // Free users are sent to upgrade; Pro users see their plan there and can
   // add more time (passes don't renew on their own).
   const NAV_ITEMS = [...BASE_NAV_ITEMS, { href: "/pricing", label: plan === "pro" ? "Your plan" : "Upgrade to Pro", icon: Crown }];
@@ -47,48 +71,70 @@ export function AppSidebar({
 
   return (
     <>
-      {/* Phones: a compact top bar instead of a sidebar that would eat the whole screen. */}
-      <div className="lg:hidden bg-ink text-white">
-        <div className="px-4 py-3 flex items-center justify-between">
+      {/* Phones and tablets: a slim top bar, with everything else behind the ☰ menu. */}
+      <div className="lg:hidden sticky top-0 z-50 bg-ink text-white">
+        <div className="px-4 py-2.5 flex items-center justify-between">
           <Logo dark href="/" compact />
-          <InstallAppButton label="Install app" className="ml-auto mr-2 min-h-10 px-3.5 rounded-full bg-gold text-ink text-sm font-extrabold whitespace-nowrap" />
           <button
-            onClick={() => signOut({ callbackUrl: "/" })}
-            className="min-h-11 px-2 text-sm text-white/70 hover:text-white"
+            type="button"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-expanded={menuOpen}
+            aria-controls="app-menu"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            className="w-11 h-11 -mr-1.5 flex items-center justify-center rounded-full hover:bg-white/10"
           >
-            Sign out
+            {menuOpen ? <X className="w-6 h-6" strokeWidth={2.25} /> : <Menu className="w-6 h-6" strokeWidth={2.25} />}
           </button>
         </div>
-        <nav className="flex gap-1.5 px-3 pb-3 overflow-x-auto whitespace-nowrap">
-          {NAV_ITEMS.map((item) => {
-            const active = isActive(item.href);
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`inline-flex items-center min-h-10 px-3.5 rounded-full text-sm shrink-0 ${
-                  active ? "bg-white text-ink font-bold" : "text-white/75 bg-white/5"
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-          {isAdmin && (
-            <Link
-              href="/admin"
-              className="inline-flex items-center min-h-10 px-3.5 rounded-full text-sm shrink-0 text-white/75 bg-white/5"
+
+        {menuOpen && (
+          <>
+            <button
+              type="button"
+              aria-label="Close menu"
+              tabIndex={-1}
+              onClick={() => setMenuOpen(false)}
+              className="fixed inset-0 top-16 bg-ink/50"
+            />
+            <nav
+              id="app-menu"
+              aria-label="Main menu"
+              className="absolute inset-x-0 top-full bg-ink border-t border-white/10 px-3 pt-2 pb-4 max-h-[calc(100dvh-4rem)] overflow-y-auto shadow-2xl"
             >
-              Admin
-            </Link>
-          )}
-          <Link
-            href="/"
-            className="inline-flex items-center min-h-10 px-3.5 rounded-full text-sm shrink-0 text-white/75 bg-white/5"
-          >
-            Lettr homepage
-          </Link>
-        </nav>
+              {NAV_ITEMS.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.href);
+                return (
+                  <Link key={item.label} href={item.href} className={itemClass(active)} aria-current={active ? "page" : undefined}>
+                    <Icon className="w-[18px] h-[18px]" strokeWidth={2} />
+                    {item.label}
+                  </Link>
+                );
+              })}
+              <div className="my-2 border-t border-white/10" />
+              {isAdmin && (
+                <Link href="/admin" className={itemClass(false)}>
+                  <ShieldAlert className="w-[18px] h-[18px]" strokeWidth={2} />
+                  Admin Portal
+                </Link>
+              )}
+              <InstallAppButton
+                icon={<Download className="w-[18px] h-[18px]" strokeWidth={2} />}
+                label="Install the app"
+                onDone={() => setMenuOpen(false)}
+                className={`w-full ${itemClass(false)} !text-gold font-bold`}
+              />
+              <Link href="/" className={itemClass(false)}>
+                <Globe className="w-[18px] h-[18px]" strokeWidth={2} />
+                Lettr homepage
+              </Link>
+              <button onClick={() => signOut({ callbackUrl: "/" })} className={`w-full ${itemClass(false)}`}>
+                <LogOut className="w-[18px] h-[18px]" strokeWidth={2} />
+                Sign out
+              </button>
+            </nav>
+          </>
+        )}
       </div>
 
       <aside className="hidden lg:block w-64 shrink-0 bg-ink text-white">

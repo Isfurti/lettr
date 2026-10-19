@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Logo } from "@/components/Logo";
+import { InstallAppButton } from "@/components/AppInstall";
 
 const LINKS = [
   { href: "/#how", label: "How it works" },
@@ -88,10 +89,15 @@ export function PublicNav() {
             </Link>
           ))}
           {isLoggedIn ? (
-            <Link href="/dashboard" className="py-3" onClick={() => setOpen(false)}>Dashboard</Link>
+            <Link href="/dashboard" className="py-3 border-b border-rule/60" onClick={() => setOpen(false)}>Dashboard</Link>
           ) : (
-            <Link href="/login" className="py-3" onClick={() => setOpen(false)}>Sign in</Link>
+            <Link href="/login" className="py-3 border-b border-rule/60" onClick={() => setOpen(false)}>Sign in</Link>
           )}
+          <InstallAppButton
+            label="Install the Lettr app"
+            onDone={() => setOpen(false)}
+            className="py-3 text-left font-bold text-brand-blue"
+          />
         </nav>
       )}
     </header>
