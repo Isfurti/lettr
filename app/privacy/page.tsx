@@ -128,13 +128,16 @@ const SECTIONS: LegalSection[] = [
           suggestion. Anthropic doesn&apos;t use this content to train its models.
         </p>
         <p>
-          We don&apos;t use your resumes to train AI. To see whether suggestions are useful, we count whether each AI
-          suggestion was kept, edited or rejected (no text).
+          To make Lettr&apos;s AI suggestions better, we keep a record of whether each AI rewrite of a bullet point or summary
+          was kept, edited or rejected, together with the text involved: your original line, the suggestion and what you
+          kept. Before it&apos;s saved we remove your name, employers, email addresses, phone numbers and links. We use these
+          examples only to improve Lettr; we don&apos;t sell them or share them with anyone, and we don&apos;t send them to
+          Anthropic for training.
         </p>
         <p>
-          If you turn on <strong>Help improve Lettr&apos;s AI</strong> (Dashboard → Account; it&apos;s off by default), we also keep
-          examples of suggestions you keep or edit, with your name, employers, email addresses, phone numbers and links removed, to
-          make future suggestions better. You can turn it off at any time, and the examples kept from you are deleted.
+          You can opt out at any time by emailing {COMPANY.contactEmail ?? "us through our help page"} from the email on your
+          account. We&apos;ll stop keeping examples from you and delete the ones already kept. Deleting your account deletes
+          them too.
         </p>
       </>
     ),
@@ -303,7 +306,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      updated="17 October 2026"
+      updated="19 October 2026"
       intro={<p>What we collect, why, who helps us, and the control you have. We&apos;ve kept it as plain as we can.</p>}
       sections={SECTIONS}
     />

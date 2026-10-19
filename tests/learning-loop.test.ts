@@ -1,6 +1,6 @@
 import { describe, it, expect, afterAll } from "vitest";
 import { randomUUID } from "node:crypto";
-import pool, { createUser, recordAiFeedback, getAiFeedbackSummary, deleteAiExamplesForUser, deleteUserAccount, setAiImprovementConsent, getUserById } from "@/lib/db";
+import pool, { createUser, recordAiFeedback, getAiFeedbackSummary, deleteAiExamplesForUser, deleteUserAccount, setAiImprovementOptOut, getUserById } from "@/lib/db";
 import { anonymize } from "@/lib/anonymize";
 
 afterAll(async () => {
@@ -25,16 +25,17 @@ describe("AI feedback", () => {
   it("counts actions and deletes examples on opt-out and account deletion", async () => {
     const id = randomUUID();
     await createUser({ id, email: `ll-${id}@example.com`, passwordHash: "x", name: "LL" });
-    expect((await getUserById(id))?.ai_improvement_consent).toBe(false);
-    await setAiImprovementConsent(id, true);
+    expect((await getUserById(id))?.ai_improvement_opt_out).toBe(false);
     const feature = `t-${id.slice(0, 6)}`;
     const since = new Date(Date.now() - 60_000);
     await recordAiFeedback({ userId: id, feature, action: "kept", suggestionText: "Led launches" });
     await recordAiFeedback({ userId: id, feature, action: "edited", suggestionText: "Led launches", finalText: "Led 4 launches" });
     await recordAiFeedback({ userId: id, feature, action: "rejected" });
     expect((await getAiFeedbackSummary(since)).find((r) => r.feature === feature)).toMatchObject({ kept: 1, edited: 1, rejected: 1, examples: 2 });
-    await deleteAiExamplesForUser(id);
+    await setAiImprovementOptOut(id, true);
+    expect((await getUserById(id))?.ai_improvement_opt_out).toBe(true);
     expect((await getAiFeedbackSummary(since)).find((r) => r.feature === feature)?.examples).toBe(0);
+    await deleteAiExamplesForUser(id);
     await recordAiFeedback({ userId: id, feature, action: "kept", suggestionText: "x" });
     await deleteUserAccount(id);
     const left = await pool.query("SELECT COUNT(*)::int AS n FROM ai_feedback_events WHERE feature = $1 AND suggestion_text IS NOT NULL", [feature]);

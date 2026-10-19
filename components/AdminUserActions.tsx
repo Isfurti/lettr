@@ -8,6 +8,7 @@ export function AdminUserActions({
   currentPlan,
   emailVerified,
   paidPro = false,
+  aiOptOut = false,
   isSelf = false,
 }: {
   userId: string;
@@ -15,6 +16,8 @@ export function AdminUserActions({
   emailVerified: boolean;
   /** On a Pro pass they paid for (passes don't renew, so there's nothing to cancel). */
   paidPro?: boolean;
+  /** Asked support to stop keeping their AI examples. */
+  aiOptOut?: boolean;
   /** This is the admin's own account. */
   isSelf?: boolean;
 }) {
@@ -57,6 +60,14 @@ export function AdminUserActions({
     if (await call(`/api/admin/users/${userId}/plan`, { plan: toPro ? "pro" : "free" })) router.refresh();
   }
 
+  async function toggleAiOptOut() {
+    const message = aiOptOut
+      ? "Start keeping this user's anonymised AI examples again?"
+      : "Stop keeping this user's anonymised AI examples and delete the ones already kept? Use this when they ask support to opt out.";
+    if (!confirm(message)) return;
+    if (await call(`/api/admin/users/${userId}/ai-opt-out`, { optOut: !aiOptOut })) router.refresh();
+  }
+
   async function verifyEmail() {
     if (await call(`/api/admin/users/${userId}/verify-email`)) {
       setJustVerified(true);
@@ -86,6 +97,9 @@ export function AdminUserActions({
         )}
         <button onClick={togglePlan} disabled={loading} className={btn}>
           {currentPlan === "pro" ? (paidPro ? "Remove Pro (after a refund)" : "Remove comped Pro") : "Give Pro (comp)"}
+        </button>
+        <button onClick={toggleAiOptOut} disabled={loading} className={btn}>
+          {aiOptOut ? "Resume AI examples" : "Opt out of AI examples"}
         </button>
         <button
           onClick={deleteAccount}
