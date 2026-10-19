@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { PublicNav } from "@/components/PublicNav";
 import { Footer } from "@/components/Footer";
-import { UseTemplateButton } from "@/components/UseTemplateButton";
-import { TemplateThumbnail } from "@/components/TemplateThumbnail";
+import { headers } from "next/headers";
+import { TemplatesGrid } from "@/components/TemplatesGrid";
+import { getCountryFromHeaders } from "@/lib/pricing-region";
+import type { TemplateSampleId } from "@/lib/sample-resume";
 import { TEMPLATE_IDS, isTemplateFree, type TemplateId } from "@/lib/templates";
 import { getUserById } from "@/lib/db";
 import type { Plan } from "@/lib/limits";
@@ -57,6 +59,10 @@ export default async function TemplatesPage() {
 
   const freeCount = TEMPLATES.filter((t) => isTemplateFree(t.id)).length;
 
+  // Previews start with a resume from the visitor's part of the world; they can switch.
+  const country = getCountryFromHeaders(await headers());
+  const initialSample: TemplateSampleId = country === "IN" ? "in" : country === "GB" ? "uk" : country ? "us" : "in";
+
   return (
     <div className="flex-1 flex flex-col bg-cream text-ink">
       <PublicNav />
@@ -74,42 +80,12 @@ export default async function TemplatesPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
-          {TEMPLATES.map((t) => {
-            const free = isTemplateFree(t.id);
-            return (
-              <div key={t.id} className="flex flex-col">
-                <div className="lift relative bg-white rounded-2xl border border-rule p-3 shadow-[0_10px_24px_rgba(4,22,50,0.08)]">
-                  <span
-                    className={`absolute -top-3 left-3 z-10 text-xs font-extrabold px-2.5 py-1 rounded-full ${
-                      free ? "bg-gold text-ink" : "bg-ink text-gold"
-                    }`}
-                  >
-                    {free ? "Free" : "Pro"}
-                  </span>
-                  <div className="aspect-[1/1.25] rounded-md overflow-hidden">
-                    <TemplateThumbnail id={t.id} renderWidth={560} />
-                  </div>
-                </div>
-                <p className="mt-4 font-brand font-extrabold text-xl">{t.name}</p>
-                <p className="mt-1 text-slate leading-relaxed flex-1">{t.description}</p>
-                <div className="flex flex-wrap gap-1.5 mt-3 mb-4">
-                  {t.tags.map((tag) => (
-                    <span key={tag} className="text-xs font-bold bg-brand-blue-soft text-brand-blue-deep px-2.5 py-1 rounded-full">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                <UseTemplateButton
-                  template={t.id}
-                  label={free || plan === "pro" ? "Use this template" : "Try this template"}
-                  isLoggedIn={Boolean(session?.user)}
-                  locked={Boolean(session?.user) && plan === "free" && !free}
-                />
-              </div>
-            );
-          })}
-        </div>
+        <TemplatesGrid
+          templates={TEMPLATES.map((t) => ({ ...t, free: isTemplateFree(t.id) }))}
+          initialSample={initialSample}
+          canUseAll={plan === "pro"}
+          isLoggedIn={Boolean(session?.user)}
+        />
       </main>
       <Footer />
     </div>

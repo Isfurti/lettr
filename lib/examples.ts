@@ -16,7 +16,8 @@ export type ExampleCategory =
   | "Skilled trades"
   | "Operations & support"
   | "Education & design"
-  | "Career changes";
+  | "Career changes"
+  | "International";
 
 export type ExampleStage = "Fresher" | "Early career" | "Mid-level" | "Senior" | "Career change" | "Returning";
 
@@ -45,7 +46,8 @@ function ex(
   category: ExampleCategory,
   stage: ExampleStage,
   template: string,
-  person: { name: string; location: string; linkedin?: boolean },
+  /** `phone` defaults to an Indian number; international examples pass their own. */
+  person: { name: string; location: string; linkedin?: boolean; phone?: string },
   summary: string,
   jobs: Job[],
   edu: Edu[],
@@ -65,7 +67,7 @@ function ex(
       contact: {
         fullName: person.name,
         email: `${handle}@email.com`,
-        phone: "+91 98XXX XXXXX",
+        phone: person.phone ?? "+91 98XXX XXXXX",
         location: person.location,
         linkedin: person.linkedin === false ? undefined : `linkedin.com/in/${handle.replace(/\./g, "-")}`,
       },
@@ -724,6 +726,176 @@ export const EXAMPLES: ResumeExample[] = [
     ["User research", "Figma", "Prototyping", "Usability testing", "Design systems", "Accessibility"],
     ["Each project ends with a measurable result.", "Research in local languages is a strong differentiator in India.", "Modern layout fits a design role."]
   ),
+
+  // ---------- International (resumes for jobs outside India) ----------
+  ex(
+    "software-engineer-usa",
+    "Software Engineer (USA)",
+    "International",
+    "Mid-level",
+    "technical",
+    { name: "Daniel Reyes", location: "Austin, TX", phone: "+1 (512) 555-0147" },
+    "Backend engineer with 5 years building payment and data services in Go and Python. I care about reliability, clear APIs and shipping small changes often.",
+    [
+      ["Software Engineer II", "Brightpath Payments", "Mar 2022", "Present", ["Cut checkout API latency by 38% by moving hot paths to Go and adding Redis caching", "Led the move from a monolith to 6 services with zero customer-facing downtime", "Mentored 3 new engineers through their first on-call rotation"]],
+      ["Software Engineer", "Northloop Analytics", "Jun 2019", "Feb 2022", ["Built ingestion pipelines processing 2 billion events a day on AWS", "Reduced monthly cloud spend by $18,000 by right-sizing clusters"]],
+    ],
+    [["B.S. Computer Science", "The University of Texas at Austin", "2015", "2019"]],
+    ["Go", "Python", "PostgreSQL", "AWS", "Kubernetes", "Kafka", "gRPC", "Terraform"],
+    [
+      "US style: one page, no photo, no date of birth or marital status - US recruiters expect those left out.",
+      "Every bullet starts with a strong verb and ends with a number (latency, dollars, people).",
+      "City and state only for the address, which is all US employers need.",
+    ],
+    { certs: [["AWS Certified Solutions Architect - Associate", "Amazon Web Services", "2023"]] }
+  ),
+  ex(
+    "data-analyst-uk",
+    "Data Analyst (UK)",
+    "International",
+    "Early career",
+    "classic",
+    { name: "Hannah Clarke", location: "Manchester, UK", phone: "+44 7700 900123" },
+    "Data analyst with 3 years turning messy retail data into decisions. Strong SQL and Power BI, and comfortable presenting to non-technical teams.",
+    [
+      ["Data Analyst", "Harbourline Retail", "Sep 2022", "Present", ["Built a weekly sales dashboard used by 40 store managers, replacing 6 manual spreadsheets", "Found a pricing error worth £120,000 a year through basket analysis", "Automated stock reports in Python, saving the team 10 hours a week"]],
+      ["Graduate Analyst", "Meridian Insurance", "Sep 2021", "Aug 2022", ["Cleaned and merged 3 customer databases ahead of a CRM migration"]],
+    ],
+    [["BSc (Hons) Mathematics, 2:1", "University of Leeds", "2018", "2021"]],
+    ["SQL", "Power BI", "Python (pandas)", "Excel", "Statistics", "Stakeholder communication"],
+    [
+      "UK employers usually say CV; two pages is normal, and a photo is not expected.",
+      "Degree classification (2:1) is shown, as UK recruiters often screen on it.",
+      "Results are in pounds and hours saved, which UK hiring managers can picture.",
+    ],
+    { certs: [["Microsoft Certified: Power BI Data Analyst Associate", "Microsoft", "2023"]] }
+  ),
+  ex(
+    "registered-nurse-uk-nhs",
+    "Registered Nurse (UK, NHS)",
+    "International",
+    "Mid-level",
+    "compact",
+    { name: "Anju Mathew", location: "Birmingham, UK", phone: "+44 7700 900456", linkedin: false },
+    "NMC-registered adult nurse with 6 years in acute medical wards in India and the UK. Calm under pressure, careful with medicines, and focused on patient dignity.",
+    [
+      ["Staff Nurse (Band 5), Acute Medical Unit", "Westfield NHS Foundation Trust", "Jan 2023", "Present", ["Care for up to 8 acute patients per shift on a 28-bed unit", "Completed IV and venepuncture competencies within 3 months of joining", "Support newly qualified nurses through their preceptorship"]],
+      ["Staff Nurse, Medical ICU", "St. Anne's Hospital, Kochi", "Jun 2018", "Dec 2022", ["Cared for ventilated patients in a 14-bed ICU", "Led the unit's hand-hygiene audit, raising compliance from 78% to 96%"]],
+    ],
+    [["B.Sc. Nursing", "Government College of Nursing, Thiruvananthapuram", "2014", "2018"]],
+    ["Acute care", "IV therapy", "Medicines management", "NEWS2", "Wound care", "Electronic patient records"],
+    [
+      "NMC registration and NHS band are near the top, because NHS shortlisting checks them first.",
+      "Experience in India counts - it's listed with the same detail as the UK role.",
+      "Clinical competencies match the wording used in NHS job adverts.",
+    ],
+    { certs: [["NMC Registration (Adult Nursing)", "Nursing and Midwifery Council", "2022"], ["OSCE", "NMC", "2022"], ["IELTS Academic (7.5)", "British Council", "2021"]], languages: ["English", "Malayalam", "Hindi"] }
+  ),
+  ex(
+    "accountant-uae",
+    "Accountant (UAE)",
+    "International",
+    "Mid-level",
+    "modern",
+    { name: "Rohan D'Souza", location: "Dubai, UAE", phone: "+971 50 123 4567" },
+    "Chartered accountant with 6 years in GCC trading and real estate firms. Strong in UAE VAT, IFRS reporting and month-end close. UAE residence visa; available to join with 30 days' notice.",
+    [
+      ["Senior Accountant", "Al Noor Trading LLC", "Feb 2022", "Present", ["Own month-end close for 4 entities, cutting the close from 9 to 5 working days", "Prepare quarterly UAE VAT returns with zero penalties since 2022", "Led the first UAE corporate tax registration and readiness review"]],
+      ["Accountant", "Crescent Properties", "Jul 2019", "Jan 2022", ["Reconciled AED 40 million in tenant receivables each quarter", "Set up approval workflows in Oracle that reduced payment errors by 70%"]],
+    ],
+    [["Chartered Accountant", "ICAI", "2016", "2019"], ["B.Com", "St. Xavier's College, Mumbai", "2013", "2016"]],
+    ["IFRS", "UAE VAT", "UAE corporate tax", "Oracle NetSuite", "Month-end close", "Excel (advanced)"],
+    [
+      "Visa status and notice period are in the summary - Gulf employers ask about both early.",
+      "Amounts are in AED, and local laws (VAT, corporate tax) are named.",
+      "Indian CA qualification is spelled out, as it's well known to Gulf recruiters.",
+    ],
+    { languages: ["English", "Hindi", "Konkani"] }
+  ),
+  ex(
+    "project-manager-canada",
+    "Project Manager (Canada)",
+    "International",
+    "Senior",
+    "timeline",
+    { name: "Maya Chen", location: "Toronto, ON", phone: "+1 (416) 555-0198" },
+    "PMP-certified project manager with 9 years delivering software and infrastructure projects in banking and the public sector. Known for honest status reporting and on-budget delivery.",
+    [
+      ["Senior Project Manager", "Lakeshore Financial Group", "Apr 2021", "Present", ["Delivered a CAD 6.2M core-banking upgrade on time and 4% under budget", "Run a portfolio of 5 projects with 40+ team members across 3 provinces", "Introduced a risk log review that halved late-stage surprises"]],
+      ["Project Manager", "Northern Digital Services", "Jan 2017", "Mar 2021", ["Managed the rollout of an online permits system for 12 municipalities", "Kept 18 vendor contracts on schedule using monthly scorecards"]],
+    ],
+    [["Bachelor of Commerce", "University of British Columbia", "2011", "2015"]],
+    ["Project planning", "Agile and waterfall", "Budget control", "Vendor management", "MS Project", "Jira", "Stakeholder reporting"],
+    [
+      "Canadian style: no photo, no age, no marital status - just skills and results.",
+      "Shows Canadian experience and amounts in CAD, which Canadian recruiters look for.",
+      "PMP is listed clearly, as many project roles require it.",
+    ],
+    { certs: [["Project Management Professional (PMP)", "PMI", "2018"]], languages: ["English", "Mandarin", "French (basic)"] }
+  ),
+  ex(
+    "civil-engineer-australia",
+    "Civil Engineer (Australia)",
+    "International",
+    "Mid-level",
+    "grid",
+    { name: "Liam O'Connor", location: "Melbourne, VIC", phone: "+61 412 345 678" },
+    "Civil engineer with 7 years designing roads and drainage for local councils and private developers. Chartered with Engineers Australia and comfortable leading site teams.",
+    [
+      ["Civil Engineer", "Southbank Infrastructure", "Mar 2020", "Present", ["Designed drainage for a 450-lot subdivision, approved by council on first submission", "Managed AUD 3.5M of road upgrades delivered 3 weeks early", "Introduced 12d Model templates that cut design time by 25%"]],
+      ["Graduate Civil Engineer", "Coastline Consulting", "Feb 2017", "Feb 2020", ["Prepared tender drawings for 15 council road projects"]],
+    ],
+    [["Bachelor of Civil Engineering (Honours)", "Monash University", "2012", "2016"]],
+    ["Road design", "Stormwater drainage", "12d Model", "AutoCAD Civil 3D", "Australian Standards", "Site supervision"],
+    [
+      "Australian employers often expect 2-3 pages, so there's room for project detail.",
+      "Chartered status and Australian Standards are named, as local roles ask for them.",
+      "Mention your work rights if you're on a visa; leave out photo and age.",
+    ],
+    { certs: [["Chartered Professional Engineer (CPEng)", "Engineers Australia", "2022"], ["White Card (construction induction)", "WorkSafe Victoria", "2017"]] }
+  ),
+  ex(
+    "mechanical-engineer-germany",
+    "Mechanical Engineer (Germany)",
+    "International",
+    "Early career",
+    "minimal",
+    { name: "Arjun Menon", location: "Munich, Germany", phone: "+49 151 23456789" },
+    "Mechanical engineer with an M.Sc. from TU Munich and 3 years in automotive testing. Experienced with test benches and CAD, and speaks German at C1 level.",
+    [
+      ["Test Engineer, Powertrain", "Alpenwerk Automotive GmbH", "Oct 2022", "Present", ["Run durability tests on 3 test benches, cutting test setup time by 20%", "Wrote MATLAB scripts that automate test reports for the validation team", "Work with suppliers in German and English"]],
+      ["Working Student (Werkstudent), R&D", "Isar Mobility GmbH", "Apr 2021", "Sep 2022", ["Designed brackets in CATIA V5 for a battery housing prototype"]],
+    ],
+    [["M.Sc. Mechanical Engineering", "Technical University of Munich", "2020", "2022"], ["B.Tech Mechanical Engineering", "NIT Calicut", "2015", "2019"]],
+    ["CATIA V5", "MATLAB", "Test bench operation", "FMEA", "GD&T", "German (C1)"],
+    [
+      "German language level (C1) is in the summary - many German employers check it first.",
+      "Werkstudent work is listed; German recruiters value it as real experience.",
+      "German CVs often add a photo and date of birth, but they're optional - this one leaves them out.",
+    ],
+    { languages: ["English (fluent)", "German (C1)", "Malayalam (native)"] }
+  ),
+  ex(
+    "marketing-manager-singapore",
+    "Marketing Manager (Singapore)",
+    "International",
+    "Senior",
+    "spotlight",
+    { name: "Rachel Tan", location: "Singapore", phone: "+65 9123 4567" },
+    "Marketing manager with 8 years growing B2C brands across Southeast Asia. I run performance and brand campaigns side by side and report on revenue, not just clicks.",
+    [
+      ["Regional Marketing Manager", "Lumen Retail Asia", "Jan 2021", "Present", ["Grew online revenue 64% across Singapore, Malaysia and Indonesia in 2 years", "Manage an SGD 2.4M yearly budget and a team of 6", "Launched a loyalty programme that reached 300,000 members in 9 months"]],
+      ["Senior Marketing Executive", "Harbour & Co.", "Jun 2017", "Dec 2020", ["Cut cost per acquisition by 31% by rebuilding the paid social funnel"]],
+    ],
+    [["Bachelor of Business Administration (Marketing)", "National University of Singapore", "2013", "2017"]],
+    ["Performance marketing", "Brand strategy", "Google Ads", "Meta Ads", "CRM and loyalty", "Team leadership"],
+    [
+      "Regional scope (SG, MY, ID) is clear, which Singapore employers value for APAC roles.",
+      "Budget and revenue figures are in SGD and show seniority without a long list.",
+      "Spotlight layout suits a marketing role while staying easy for hiring software to read.",
+    ],
+    { languages: ["English", "Mandarin", "Malay (conversational)"] }
+  ),
 ];
 
 export const EXAMPLE_CATEGORIES: ExampleCategory[] = [
@@ -736,6 +908,7 @@ export const EXAMPLE_CATEGORIES: ExampleCategory[] = [
   "Operations & support",
   "Education & design",
   "Career changes",
+  "International",
 ];
 
 export function getExample(slug: string) {
