@@ -18,6 +18,9 @@ import {
   LogOut,
   Receipt,
   Sparkles,
+  Menu,
+  X,
+  ArrowLeft,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -36,6 +39,14 @@ const NAV_ITEMS = [
 export function AdminSidebar() {
   const pathname = usePathname();
   const [healthy, setHealthy] = useState<boolean | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Close the phone menu when a link takes you to another page.
+  const [menuPath, setMenuPath] = useState(pathname);
+  if (menuPath !== pathname) {
+    setMenuPath(pathname);
+    setMenuOpen(false);
+  }
 
   useEffect(() => {
     fetch("/api/health")
@@ -43,31 +54,90 @@ export function AdminSidebar() {
       .catch(() => setHealthy(false));
   }, []);
 
+  // While the menu is open: Escape closes it and the page behind doesn't scroll.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = overflow;
+    };
+  }, [menuOpen]);
+
+  const isActive = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
+  const menuItem = (active: boolean) =>
+    `flex items-center gap-3 px-3.5 min-h-11 rounded-xl text-[15px] transition-colors ${
+      active ? "admin-nav-item-active font-bold" : "text-white/70 hover:text-white hover:bg-white/5"
+    }`;
+
   return (
     <>
-    {/* Phones: compact top bar with scrollable section links instead of the 256px sidebar. */}
-    <div className="lg:hidden bg-admin-sidebar text-white/90">
+    {/* Phones and tablets: a slim top bar, with the sections behind the ☰ menu. */}
+    <div className="lg:hidden sticky top-0 z-50 bg-admin-sidebar text-white/90">
       <div className="admin-stripe h-1 w-full" />
-      <div className="px-4 py-3 flex items-center justify-between">
+      <div className="px-4 py-2 flex items-center justify-between">
         <span className="font-brand font-extrabold text-base text-white flex items-center gap-2">
           <ShieldAlert className="w-4 h-4" strokeWidth={2.5} /> Admin
           {healthy !== null && (
-            <span className={`w-1.5 h-1.5 rounded-full ${healthy ? "bg-green-400" : "bg-red-300"}`} />
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${healthy ? "bg-green-400" : "bg-red-300"}`}
+              aria-label={healthy ? "System healthy" : "System problem"}
+            />
           )}
         </span>
-        <Link href="/dashboard" className="min-h-11 inline-flex items-center text-sm text-white/70 hover:text-white">← Dashboard</Link>
+        <button
+          type="button"
+          onClick={() => setMenuOpen((o) => !o)}
+          aria-expanded={menuOpen}
+          aria-controls="admin-menu"
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          className="w-11 h-11 -mr-1.5 flex items-center justify-center rounded-full hover:bg-white/10"
+        >
+          {menuOpen ? <X className="w-6 h-6" strokeWidth={2.25} /> : <Menu className="w-6 h-6" strokeWidth={2.25} />}
+        </button>
       </div>
-      <nav className="flex gap-1 px-2 pb-2 overflow-x-auto whitespace-nowrap">
-        {NAV_ITEMS.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`inline-flex items-center min-h-10 px-3.5 rounded-full text-sm shrink-0 ${pathname === item.href ? "bg-white text-admin-sidebar font-bold" : "text-white/75 bg-white/5"}`}
+
+      {menuOpen && (
+        <>
+          <button
+            type="button"
+            aria-label="Close menu"
+            tabIndex={-1}
+            onClick={() => setMenuOpen(false)}
+            className="fixed inset-0 top-16 bg-ink/50"
+          />
+          <nav
+            id="admin-menu"
+            aria-label="Admin menu"
+            className="absolute inset-x-0 top-full bg-admin-sidebar border-t border-white/10 px-3 pt-2 pb-4 max-h-[calc(100dvh-4rem)] overflow-y-auto shadow-2xl"
           >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              return (
+                <Link key={item.href} href={item.href} className={menuItem(active)} aria-current={active ? "page" : undefined}>
+                  <Icon className="w-[18px] h-[18px]" strokeWidth={2} />
+                  {item.label}
+                </Link>
+              );
+            })}
+            <div className="my-2 border-t border-white/10" />
+            <Link href="/dashboard" className={menuItem(false)}>
+              <ArrowLeft className="w-[18px] h-[18px]" strokeWidth={2} />
+              Back to your dashboard
+            </Link>
+            <button onClick={() => signOut({ callbackUrl: "/" })} className={`w-full ${menuItem(false)}`}>
+              <LogOut className="w-[18px] h-[18px]" strokeWidth={2} />
+              Sign out
+            </button>
+          </nav>
+        </>
+      )}
     </div>
     <aside className="hidden lg:flex w-64 shrink-0 bg-admin-sidebar text-white/90 flex-col min-h-screen sticky top-0 h-screen overflow-y-auto">
       <div className="admin-stripe h-1.5 w-full shrink-0" />
@@ -82,7 +152,7 @@ export function AdminSidebar() {
 
       <nav className="flex-1 px-3 mt-3 space-y-1">
         {NAV_ITEMS.map((item) => {
-          const active = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
+          const active = isActive(item.href);
           const Icon = item.icon;
           return (
             <Link
