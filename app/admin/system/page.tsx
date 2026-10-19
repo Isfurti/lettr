@@ -4,6 +4,7 @@ import pool, { listAdminAuditLog } from "@/lib/db";
 import type { Metadata } from "next";
 import { getIntegrations } from "@/lib/integrations";
 import { formatDateTime } from "@/lib/format-date";
+import { SentryTestButton } from "@/components/SentryTestButton";
 
 export const metadata: Metadata = { title: "System | Lettr Admin" };
 
@@ -63,6 +64,16 @@ export default async function AdminSystemPage() {
             </div>
           ))}
         </div>
+
+        {Boolean(process.env.SENTRY_DSN) && (
+          <div className="bg-white border border-rule rounded-xl p-6 mt-6 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-medium">Error alerts (Sentry)</p>
+              <p className="text-xs text-ink-soft">Send a harmless test error to check alerts reach you.</p>
+            </div>
+            <SentryTestButton />
+          </div>
+        )}
 
         <p className="text-xs text-ink-soft mt-4 mb-8">
           &quot;Configured&quot; only checks that the environment variable is present — it doesn&apos;t verify the
