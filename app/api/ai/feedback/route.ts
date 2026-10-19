@@ -17,8 +17,8 @@ const Schema = z.object({
 
 /**
  * Learning loop: whether an AI suggestion was kept, edited or rejected.
- * Everyone counts towards the totals; the text itself is only kept for
- * users who turned on "Help improve Lettr's AI", with personal details removed.
+ * The text is kept for everyone, with personal details removed, unless the
+ * person asked support to opt out (see the privacy policy).
  */
 export async function POST(req: Request) {
   const session = await auth();
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   const d = parsed.data;
   const user = await getUserById(userId);
-  const keepText = Boolean(user?.ai_improvement_consent);
+  const keepText = Boolean(user) && !user?.ai_improvement_opt_out;
   const known = { names: [...(d.names ?? []), user?.name ?? ""].filter(Boolean), companies: d.companies };
   const clean = (t?: string) => (keepText && t ? anonymize(t, known) : null);
 

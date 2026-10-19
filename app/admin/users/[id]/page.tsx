@@ -64,6 +64,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             currentPlan={user.plan}
             emailVerified={user.email_verified}
             paidPro={hasPaidPro(user)}
+            aiOptOut={user.ai_improvement_opt_out}
             isSelf={isAdminEmail(user.email)}
           />
         </div>

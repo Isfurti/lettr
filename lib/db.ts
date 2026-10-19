@@ -253,6 +253,9 @@ const SCHEMA_SQL = `
       -- AI learning loop: was each AI suggestion kept, edited or rejected?
       -- Text is only stored for users who opted in, with personal details removed.
       ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_improvement_consent BOOLEAN NOT NULL DEFAULT false;
+      -- Examples are now kept for everyone (personal details removed) unless
+      -- the person asked support to stop; then this is true.
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_improvement_opt_out BOOLEAN NOT NULL DEFAULT false;
       CREATE TABLE IF NOT EXISTS ai_feedback_events (
         id BIGSERIAL PRIMARY KEY,
         user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
@@ -348,6 +351,7 @@ export type UserRow = {
   pro_plan: string | null;
   pro_reminder_sent_for: string | Date | null;
   ai_improvement_consent: boolean;
+  ai_improvement_opt_out: boolean;
   created_at: string;
 };
 
@@ -1564,9 +1568,14 @@ export async function deleteInterviewSession(userId: string, id: string) {
 
 // ---------- AI learning loop ----------
 
-export async function setAiImprovementConsent(userId: string, consent: boolean) {
+/**
+ * Stops (or restarts) keeping AI examples for someone who asked support to
+ * opt out. Opting out also deletes the examples already kept from them.
+ */
+export async function setAiImprovementOptOut(userId: string, optOut: boolean) {
   await ensureSchema();
-  await pool.query("UPDATE users SET ai_improvement_consent = $2 WHERE id = $1", [userId, consent]);
+  await pool.query("UPDATE users SET ai_improvement_opt_out = $2 WHERE id = $1", [userId, optOut]);
+  if (optOut) await deleteAiExamplesForUser(userId);
 }
 
 export async function recordAiFeedback(e: {
@@ -1600,7 +1609,7 @@ export async function getAiFeedbackSummary(since: Date): Promise<AiFeedbackSumma
   return res.rows;
 }
 
-/** Turning consent off removes the examples saved from that user. */
+/** Removes the examples saved from that user (on opt-out). */
 export async function deleteAiExamplesForUser(userId: string) {
   await ensureSchema();
   await pool.query(

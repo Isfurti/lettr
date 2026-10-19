@@ -111,8 +111,8 @@ export default async function AdminAiPage() {
 
         <h2 className="font-brand font-extrabold text-lg mb-1">Are suggestions any good?</h2>
         <p className="text-sm text-slate mb-3">
-          What people did with AI rewrites this month. Examples (text) are only kept from users who turned on &quot;Help improve Lettr&apos;s AI&quot;,
-          with personal details removed.
+          What people did with AI rewrites this month. Examples (text) are kept from everyone with personal details removed, except people who
+          asked to opt out (set on their user page).
         </p>
         <div className="bg-white border border-rule rounded-[24px] overflow-x-auto mb-8">
           <table className="w-full text-sm min-w-[560px]">
