@@ -7,7 +7,7 @@ import { EXAMPLES, EXAMPLE_CATEGORIES } from "@/lib/examples";
 export const metadata: Metadata = {
   title: `Resume Examples for ${EXAMPLES.length}+ Jobs (Freshers to Senior) | Lettr`,
   description:
-    "Resume examples for freshers, campus placements, CA, nurses, ITI trades, BPO to analyst and more. See what good looks like, then use any example as your starting point.",
+    "Resume examples for freshers, campus placements, CA, nurses, ITI trades and more, plus jobs in the USA, UK, UAE, Canada, Australia, Germany and Singapore. Use any example as your starting point.",
   alternates: { canonical: "/examples" },
 };
 
@@ -22,8 +22,9 @@ export default function ExamplesPage() {
             See what good looks like.
           </h1>
           <p className="mt-5 text-lg text-slate leading-relaxed">
-            {EXAMPLES.length} example resumes, from campus placements and ITI trades to CAs and product managers. Pick one
-            close to your job, then make it yours in the builder.
+            {EXAMPLES.length} example resumes, from campus placements and ITI trades to CAs and product managers, plus
+            jobs abroad in the USA, UK, UAE, Canada, Australia, Germany and Singapore. Pick one close to your job, then
+            make it yours in the builder.
           </p>
           <p className="mt-3 text-sm text-slate">
             Every example is a made-up person. Swap in your own details and real numbers.
