@@ -112,7 +112,7 @@ export default function AboutPage() {
             Lettr is made in India
             {SELLER ? (
               <>
-                {" "}by <strong className="text-ink">{SELLER.legalName}</strong>, {SELLER.addressLines.join(", ")}
+                {" "}by <strong className="text-ink">{SELLER.legalName}</strong>
               </>
             ) : null}
             . Questions, ideas or problems?{" "}
