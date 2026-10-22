@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage, type LegalSection } from "@/components/LegalPage";
-import { COMPANY, SELLER, operatorName } from "@/lib/company";
+import { COMPANY, SELLER, operatorName, sentenceEnd } from "@/lib/company";
 import { PLAN_LIMITS } from "@/lib/limits";
 
 export const metadata: Metadata = {
@@ -258,7 +258,8 @@ const SECTIONS: LegalSection[] = [
         </p>
         <p>
           Grievance officer: <strong>{COMPANY.grievanceOfficer.name}</strong>
-          {SELLER ? `, ${SELLER.legalName}` : ""}. Contact: {mail}. We acknowledge
+          {SELLER ? `, ${SELLER.legalName}` : ""}
+          {sentenceEnd(SELLER?.legalName)} Contact: {mail}. We acknowledge
           complaints within 48 hours and aim to resolve them within one month.
         </p>
       </>

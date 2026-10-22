@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage, type LegalSection } from "@/components/LegalPage";
-import { COMPANY, SELLER } from "@/lib/company";
+import { COMPANY, SELLER, sentenceEnd } from "@/lib/company";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Lettr",
@@ -291,7 +291,8 @@ const SECTIONS: LegalSection[] = [
       <>
         <p>
           Grievance officer: <strong>{COMPANY.grievanceOfficer.name}</strong>
-          {SELLER ? `, ${SELLER.legalName}` : ""}. Contact: {mail}.
+          {SELLER ? `, ${SELLER.legalName}` : ""}
+          {sentenceEnd(SELLER?.legalName)} Contact: {mail}.
         </p>
         <p>
           We acknowledge complaints within 48 hours and aim to resolve them within one month. You can also reach us through

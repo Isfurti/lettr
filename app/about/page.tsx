@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MarketingPage, WRAP, H2, CtaBand } from "@/components/marketing/MarketingPage";
-import { COMPANY, SELLER } from "@/lib/company";
+import { COMPANY, SELLER, sentenceEnd } from "@/lib/company";
 
 export const metadata: Metadata = {
   title: "About Lettr | AI Resume Builder from India",
@@ -115,7 +115,7 @@ export default function AboutPage() {
                 {" "}by <strong className="text-ink">{SELLER.legalName}</strong>
               </>
             ) : null}
-            . Questions, ideas or problems?{" "}
+            {sentenceEnd(SELLER?.legalName)} Questions, ideas or problems?{" "}
             {COMPANY.contactEmail ? (
               <>
                 Email{" "}
