@@ -78,8 +78,7 @@ export default function SupportPage() {
                   </>
                 ) : (
                   "Use the form on this page. A real person reads every message."
-                )}{" "}
-                Grievance officer: {COMPANY.grievanceOfficer.name}.
+                )}
               </p>
               {SELLER && (
                 <p className="mt-2">
