@@ -39,7 +39,6 @@ export const COMPANY = {
   contactEmail: "support@getlettr.com" as string | null,
   /** Where people reach us when there's no public email. */
   contactUrl: "/support",
-  grievanceOfficer: { name: "Sagar Agarwal" },
   founder: { name: "Sagar Agarwal", title: "Founder" },
   /** Lettr doesn't offer a money-back guarantee for now (see the terms' refund section). */
   moneyBackGuarantee: false,
