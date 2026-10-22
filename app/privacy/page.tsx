@@ -25,7 +25,7 @@ const SECTIONS: LegalSection[] = [
       <p>
         {SELLER ? (
           <>
-            Lettr is run by <strong>{SELLER.legalName}</strong>, {SELLER.addressLines.join(", ")}.
+            Lettr is run by <strong>{SELLER.legalName}</strong>, a company registered in India.
           </>
         ) : (
           <>Lettr is an online resume builder made in India.</>
@@ -291,7 +291,7 @@ const SECTIONS: LegalSection[] = [
       <>
         <p>
           Grievance officer: <strong>{COMPANY.grievanceOfficer.name}</strong>
-          {SELLER ? `, ${SELLER.legalName}, ${SELLER.addressLines.join(", ")}` : ""}. Contact: {mail}.
+          {SELLER ? `, ${SELLER.legalName}` : ""}. Contact: {mail}.
         </p>
         <p>
           We acknowledge complaints within 48 hours and aim to resolve them within one month. You can also reach us through

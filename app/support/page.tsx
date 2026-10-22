@@ -83,7 +83,7 @@ export default function SupportPage() {
               </p>
               {SELLER && (
                 <p className="mt-2">
-                  {SELLER.legalName}, {SELLER.addressLines.join(", ")}.
+                  Lettr is a product of {SELLER.legalName}.
                 </p>
               )}
             </div>

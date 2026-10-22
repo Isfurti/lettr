@@ -75,8 +75,6 @@ export function Footer() {
                 ) : (
                   <span className="font-bold text-ink">{SELLER.legalName}</span>
                 )}
-                , {SELLER.addressLines.join(", ")}.
-                GSTIN {SELLER.gstin}
               </>
             )}
             .
