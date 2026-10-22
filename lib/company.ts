@@ -45,6 +45,11 @@ export const COMPANY = {
   moneyBackGuarantee: false,
 };
 
+/** The full stop to end a sentence after `text`, or nothing when it already ends with one ("Pvt. Ltd."). */
+export function sentenceEnd(text?: string | null): string {
+  return text?.endsWith(".") ? "" : ".";
+}
+
 /** Who's behind Lettr, for one line of text: the company if there is one, otherwise just "Lettr". */
 export function operatorName(seller: Seller | null = SELLER): string {
   return seller?.legalName ?? COMPANY.productName;

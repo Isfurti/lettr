@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
-import { COMPANY, SELLER } from "@/lib/company";
+import { COMPANY, SELLER, sentenceEnd } from "@/lib/company";
 
 const COLUMNS = [
   {
@@ -77,7 +77,7 @@ export function Footer() {
                 )}
               </>
             )}
-            .
+            {sentenceEnd(SELLER?.legalName)}
           </p>
           {COMPANY.contactEmail ? (
             <a href={`mailto:${COMPANY.contactEmail}`} className="inline-flex items-center min-h-10 font-bold hover:text-brand-blue">

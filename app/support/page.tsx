@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Footer } from "@/components/Footer";
 import { PublicNav } from "@/components/PublicNav";
-import { COMPANY, SELLER } from "@/lib/company";
+import { COMPANY, SELLER, sentenceEnd } from "@/lib/company";
 
 export default function SupportPage() {
   const [email, setEmail] = useState("");
@@ -83,7 +83,7 @@ export default function SupportPage() {
               </p>
               {SELLER && (
                 <p className="mt-2">
-                  Lettr is a product of {SELLER.legalName}.
+                  Lettr is a product of {SELLER.legalName}{sentenceEnd(SELLER.legalName)}
                 </p>
               )}
             </div>
