@@ -10,6 +10,7 @@ import { getPaymentsStatus } from "@/lib/integrations";
 import { formatDate } from "@/lib/format-date";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { AdminStatCard, PaymentsWarning } from "@/components/AdminWidgets";
+import { RegionPriceTable } from "@/components/RegionPriceTable";
 
 export const metadata: Metadata = { title: "Subscriptions | Lettr Admin" };
 
@@ -80,6 +81,13 @@ export default async function AdminSubscriptionsPage() {
           </a>
           ; to take Pro away after a refund, use &quot;Remove Pro&quot; on the user&apos;s page. Comped Pro can be given or removed there too.
         </p>
+
+        <h2 className="font-brand font-extrabold text-xl mt-10 mb-1">Prices by country</h2>
+        <p className="text-ink-soft text-sm mb-4">
+          What each country pays for Pro. Signed-out visitors see the USA prices; people who sign in see their own
+          country&apos;s.
+        </p>
+        <RegionPriceTable />
       </main>
     </div>
   );

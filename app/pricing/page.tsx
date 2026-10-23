@@ -6,9 +6,10 @@ import { Footer } from "@/components/Footer";
 import { PublicNav } from "@/components/PublicNav";
 import { auth } from "@/lib/auth";
 import { getUserById } from "@/lib/db";
-import { getCountryFromHeaders, getTierForCountry } from "@/lib/pricing-region";
 import { TEMPLATE_IDS } from "@/lib/templates";
-import { getRegionPrices, savingsPercent, perMonth, type PlanId } from "@/lib/plans";
+import { pricesForViewer, savingsPercent, perMonth, REGION_PRICES, type PlanId } from "@/lib/plans";
+import { isAdminEmail } from "@/lib/admin-auth";
+import { RegionPriceTable } from "@/components/RegionPriceTable";
 import { agentMonthlyCap } from "@/lib/ai-costs";
 import { ProPlanPicker, type PickerPlan } from "@/components/ProPlanPicker";
 import type { CheckoutState } from "@/components/ProCheckoutButton";
@@ -100,15 +101,13 @@ const faqs = (open: boolean) => [
 ];
 
 export default async function PricingPage() {
-  // Everyone sees the price for their region. Signed-in users see their
-  // SAVED tier (what checkout will actually charge); if they don't have one
-  // yet (Google/LinkedIn signups, older accounts) it's detected and saved
-  // now. Logged-out visitors see a live preview for where they're browsing from.
+  // Visitors who aren't signed in see US prices. Signed-in users see their
+  // country's prices from their SAVED tier (what checkout will actually
+  // charge); if they don't have one yet (Google/LinkedIn signups, older
+  // accounts) it's detected and saved now.
   const session = await auth();
   const headersList = await headers();
-  const visitorCountry = getCountryFromHeaders(headersList);
-  let prices = getRegionPrices(visitorCountry);
-  let tier: string = getTierForCountry(visitorCountry);
+  let { prices, tier } = pricesForViewer(null);
   let compedPro = false;
   let proUntil: string | null = null;
 
@@ -117,10 +116,7 @@ export default async function PricingPage() {
     const user = await getUserById(userId);
     if (user) {
       const withRegion = await ensureUserRegion(user, headersList);
-      if (withRegion.country_code || withRegion.pricing_tier) {
-        prices = getRegionPrices(withRegion.country_code, withRegion.pricing_tier);
-        tier = withRegion.pricing_tier ?? getTierForCountry(withRegion.country_code);
-      }
+      ({ prices, tier } = pricesForViewer(withRegion));
       compedPro = withRegion.plan === "pro" && !withRegion.pro_until;
       if (hasPaidPro(withRegion) && withRegion.pro_until) proUntil = formatProDate(withRegion.pro_until);
     }
@@ -136,6 +132,9 @@ export default async function PricingPage() {
     ? "comped"
     : "ready";
   const paymentsOpen = checkout !== "closed";
+  // The admin sees every region's prices, not just their own country's.
+  const isAdmin = isAdminEmail(session?.user?.email);
+  const viewerRegion = Object.keys(REGION_PRICES).find((k) => REGION_PRICES[k] === prices);
 
   const months = { monthly: 1, quarter: 3, yearly: 12 } as const;
   const pickerPlans: PickerPlan[] = (
@@ -170,7 +169,7 @@ export default async function PricingPage() {
       <section className="max-w-3xl mx-auto w-full px-4 sm:px-8 pt-12 sm:pt-20 pb-12 sm:pb-16 text-center rise">
         <p className="inline-flex items-center gap-2 bg-gold-soft text-sm font-bold px-3.5 py-1.5 rounded-full mb-6">
           <span className="w-2 h-2 rounded-full bg-gold-deep" aria-hidden="true" />
-          Priced for your country
+          {session?.user ? "Priced for your country" : "Prices in US dollars · Sign in to see your country's price"}
         </p>
         <h1 className="font-brand font-extrabold text-[40px] sm:text-[60px] leading-[1.02] tracking-tight">
           Start free. Upgrade when it&apos;s worth it.
@@ -213,6 +212,16 @@ export default async function PricingPage() {
             : "Secure payments by Razorpay. GST invoice on your dashboard after paying."}
           {prices.taxNote ? ` ${prices.taxNote}` : ""}
         </p>
+        {isAdmin && (
+          <div className="mt-14">
+            <h2 className="font-brand font-extrabold text-2xl">All prices by country</h2>
+            <p className="mt-1 mb-4 text-sm text-slate">
+              Only you see this, as the admin. Visitors who aren&apos;t signed in see the USA prices; signed-in people see
+              their own country&apos;s row (yours is highlighted).
+            </p>
+            <RegionPriceTable highlight={viewerRegion} />
+          </div>
+        )}
       </section>
 
       <section className="bg-sand border-y border-rule">

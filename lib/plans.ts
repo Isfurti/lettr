@@ -1,4 +1,4 @@
-import { getTierForCountry, type PricingTier } from "./pricing-region";
+import { getTierForCountry, MID_TIER_COUNTRIES, VALUE_TIER_COUNTRIES, type PricingTier } from "./pricing-region";
 
 /**
  * Pro plan prices shown on the pricing page, per price region.
@@ -33,7 +33,7 @@ export const REGION_PRICES: Record<string, RegionPrices> = {
   VALUE: { region: "Regional", currency: "USD", format: fmt("$"), monthly: 6, quarter: 12, yearly: 39 },
 };
 
-const EURO_COUNTRIES = new Set([
+export const EURO_COUNTRIES = new Set([
   "AT", "BE", "CY", "DE", "EE", "ES", "FI", "FR", "GR", "HR", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PT", "SI", "SK",
 ]);
 
@@ -49,6 +49,21 @@ export function getRegionPrices(countryCode: string | null | undefined, savedTie
   if (tier === "value") return REGION_PRICES.VALUE;
   if (tier === "mid") return REGION_PRICES.MID;
   return REGION_PRICES.US;
+}
+
+/**
+ * The prices someone sees on the pricing page. Visitors who aren't signed in
+ * see US prices; once signed in, people see their own country's prices (their
+ * saved country and tier, which is also what checkout charges).
+ */
+export function pricesForViewer(
+  user: { country_code: string | null; pricing_tier: string | null } | null
+): { prices: RegionPrices; tier: PricingTier } {
+  if (!user || (!user.country_code && !user.pricing_tier)) return { prices: REGION_PRICES.US, tier: "full" };
+  const saved = user.pricing_tier;
+  const tier: PricingTier =
+    saved === "full" || saved === "mid" || saved === "value" ? saved : getTierForCountry(user.country_code);
+  return { prices: getRegionPrices(user.country_code, user.pricing_tier), tier };
 }
 
 /** Percentage saved versus paying monthly for the same number of months, rounded down. */
@@ -90,4 +105,40 @@ export function monthlyRevenueLabel(users: { country_code: string | null; pricin
   }
   if (totals.size === 0) return "₹0";
   return [...totals.values()].map((t) => t.format(t.amount)).join(" + ");
+}
+
+export type RegionPriceRow = {
+  /** Key in REGION_PRICES. */
+  id: string;
+  name: string;
+  /** Who gets these prices, in words. */
+  appliesTo: string;
+  prices: RegionPrices;
+};
+
+const countryNames = (codes: Iterable<string>) => {
+  const names = new Intl.DisplayNames(["en"], { type: "region" });
+  return [...codes].map((c) => names.of(c) ?? c).sort().join(", ");
+};
+
+/**
+ * Every price region side by side, for the admin. The order is the one
+ * getRegionPrices checks: named countries first, then the income tiers,
+ * and the US prices for everyone else (also what signed-out visitors see).
+ */
+export function allRegionPriceRows(): RegionPriceRow[] {
+  return [
+    { id: "US", name: "Standard (USA)", appliesTo: "USA and every country not listed below. Also what signed-out visitors see.", prices: REGION_PRICES.US },
+    { id: "IN", name: "India", appliesTo: "India", prices: REGION_PRICES.IN },
+    { id: "GB", name: "United Kingdom", appliesTo: "United Kingdom", prices: REGION_PRICES.GB },
+    { id: "EU", name: "Europe", appliesTo: countryNames(EURO_COUNTRIES), prices: REGION_PRICES.EU },
+    { id: "AU", name: "Australia", appliesTo: "Australia", prices: REGION_PRICES.AU },
+    { id: "MID", name: "Mid-income", appliesTo: countryNames(MID_TIER_COUNTRIES), prices: REGION_PRICES.MID },
+    {
+      id: "VALUE",
+      name: "Lower-income",
+      appliesTo: countryNames([...VALUE_TIER_COUNTRIES].filter((c) => c !== "IN")),
+      prices: REGION_PRICES.VALUE,
+    },
+  ];
 }
