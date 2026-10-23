@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { COMPANY, SELLER, sentenceEnd } from "@/lib/company";
+import { CookieSettingsLink } from "@/components/Analytics";
 
 const COLUMNS = [
   {
@@ -79,15 +80,18 @@ export function Footer() {
             )}
             {sentenceEnd(SELLER?.legalName)}
           </p>
-          {COMPANY.contactEmail ? (
-            <a href={`mailto:${COMPANY.contactEmail}`} className="inline-flex items-center min-h-10 font-bold hover:text-brand-blue">
-              {COMPANY.contactEmail}
-            </a>
-          ) : (
-            <Link href={COMPANY.contactUrl} className="inline-flex items-center min-h-10 font-bold hover:text-brand-blue">
-              Contact us
-            </Link>
-          )}
+          <div className="flex items-center gap-5">
+            <CookieSettingsLink className="inline-flex items-center min-h-10 hover:text-brand-blue" />
+            {COMPANY.contactEmail ? (
+              <a href={`mailto:${COMPANY.contactEmail}`} className="inline-flex items-center min-h-10 font-bold hover:text-brand-blue">
+                {COMPANY.contactEmail}
+              </a>
+            ) : (
+              <Link href={COMPANY.contactUrl} className="inline-flex items-center min-h-10 font-bold hover:text-brand-blue">
+                Contact us
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </footer>

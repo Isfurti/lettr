@@ -9,6 +9,7 @@ import type { ResumeReadReport, ReadCheckStatus } from "@/lib/ats-read";
 import { sectionNameOf } from "@/lib/ats-read";
 import { saveGuestDraft, loadGuestDraft, guestDraftHasContent } from "@/lib/guest-draft";
 import { ScoreStamp } from "@/components/builder/BuilderChrome";
+import { trackAtsCheck } from "@/lib/analytics";
 
 type CheckResult = {
   fileName: string;
@@ -69,6 +70,7 @@ export function ResumeChecker({ initialMode = "file" }: { initialMode?: "file" |
         return;
       }
       setResult(body as CheckResult);
+      trackAtsCheck((body as CheckResult).score?.overall);
       window.setTimeout(() => document.getElementById("checker-results")?.scrollIntoView({ behavior: "smooth" }), 80);
     } catch {
       setError("We couldn't reach Lettr. Check your connection and try again.");

@@ -21,6 +21,7 @@ import { RibbonPreview, SplitPreview, ScholarPreview, FresherPreview, GridPrevie
 import { TEMPLATE_IDS, isTemplateFree } from "@/lib/templates";
 import { FREE_AI_REWRITES } from "@/lib/free-plan";
 import { findBlanks } from "@/lib/blanks";
+import { trackResumeDownload } from "@/lib/analytics";
 const TEMPLATES: readonly string[] = TEMPLATE_IDS;
 
 type EditorTab = "edit" | "score" | "match" | "agent" | "cover-letter" | "resignation-letter";
@@ -235,6 +236,7 @@ export function ResumeEditor({
         return null;
       }
       setPdfFooterNote(res.headers.get("X-Lettr-Footer") === "1");
+      trackResumeDownload("pdf");
       return { blob: await res.blob(), name: `${fileBase}.pdf` };
     } catch {
       setSaveError("Couldn't reach the server to make your PDF. Check your connection and try again.");
@@ -337,6 +339,7 @@ export function ResumeEditor({
         setSaveError(body.error ?? "Couldn't create the Word file. Please try again.");
         return;
       }
+      trackResumeDownload("docx");
       saveBlob(await res.blob(), `${fileBase}.docx`);
     } catch {
       setSaveError("Couldn't reach the server to make your Word file. Check your connection and try again.");
