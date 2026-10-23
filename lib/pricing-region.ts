@@ -17,11 +17,11 @@ export const INDIA_DISPLAY_PRICE = "₹399";
  * not listed here defaults to "full" (see getTierForCountry) rather than
  * silently under-charging for a country nobody explicitly reviewed yet.
  */
-const MID_TIER_COUNTRIES = new Set([
+export const MID_TIER_COUNTRIES = new Set([
   "CN", "BR", "MX", "TR", "MY", "ZA", "RU", "AR", "TH", "CO", "PE", "RO", "BG",
 ]);
 
-const VALUE_TIER_COUNTRIES = new Set([
+export const VALUE_TIER_COUNTRIES = new Set([
   "IN", "ID", "PH", "VN", "EG", "NG", "PK", "BD", "KE", "GH", "NP", "LK",
 ]);
 
