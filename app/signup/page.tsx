@@ -9,6 +9,7 @@ import { AuthShell } from "@/components/AuthShell";
 import { OAuthButtons } from "@/components/OAuthButtons";
 import { completeGuestExport } from "@/lib/guest-draft";
 import { PasswordInput } from "@/components/PasswordInput";
+import { trackSignUp } from "@/lib/analytics";
 
 function SignupForm() {
   const router = useRouter();
@@ -49,6 +50,8 @@ function SignupForm() {
       setLoading(false);
       return;
     }
+
+    trackSignUp("email");
 
     const signInResult = await signIn("credentials", { email: email.trim(), password, redirect: false }).catch(() => undefined);
 

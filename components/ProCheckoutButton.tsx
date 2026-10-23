@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { PlanId } from "@/lib/plans";
+import { trackPurchase } from "@/lib/analytics";
 
 /** What the Pro button can do for this visitor, worked out on the server. */
 export type CheckoutState =
@@ -95,6 +96,12 @@ export function ProCheckoutButton({ plan, state, label }: { plan: PlanId; state:
             });
             const body = await done.json().catch(() => ({}));
             if (!done.ok) throw new Error(body.error ?? "We couldn't confirm the payment.");
+            await trackPurchase({
+              transactionId: r.razorpay_payment_id,
+              amountMinor: Number(order.amount) || 0,
+              currency: String(order.currency ?? ""),
+              plan,
+            }).catch(() => undefined);
             window.location.href = "/dashboard?upgraded=1";
           } catch (err) {
             setError(err instanceof Error ? err.message : "We couldn't confirm the payment.");

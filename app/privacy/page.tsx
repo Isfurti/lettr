@@ -175,7 +175,8 @@ const SECTIONS: LegalSection[] = [
           <li><strong>Razorpay</strong>: taking payments;</li>
           <li><strong>Google</strong> and <strong>LinkedIn</strong>: sign-in, and Google Drive if you connect it;</li>
           <li><strong>Resend</strong>: sending emails;</li>
-          <li><strong>Sentry</strong>: error reports so we can fix bugs.</li>
+          <li><strong>Sentry</strong>: error reports so we can fix bugs;</li>
+          <li><strong>Google</strong> and <strong>Meta</strong>: measuring visits and ads, only if you allow cookies for this.</li>
         </ul>
       </>
     ),
@@ -197,8 +198,15 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          We use a few cookies that are needed to sign you in and keep your account secure. We don&apos;t use advertising
-          or tracking cookies.
+          We use a few cookies that are needed to sign you in and keep your account secure. These are always on.
+        </p>
+        <p>
+          With your permission, we also use cookies from <strong>Google</strong> (Google Analytics and Google Ads) and{" "}
+          <strong>Meta</strong> (the Meta Pixel). They tell us which pages people visit and which ads brought them to
+          Lettr, and whether they went on to sign up, check a resume, download one or buy Pro. These companies see your
+          browser&apos;s activity on Lettr; they don&apos;t see your resume. These cookies stay off unless you choose
+          &ldquo;Allow&rdquo; in the cookie banner, and you can change your choice at any time from &ldquo;Cookie
+          settings&rdquo; at the bottom of any page.
         </p>
         <p>
           On the free plan we also set one cookie with a random code for your browser. Together with a one-way scrambled
@@ -305,7 +313,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      updated="19 October 2026"
+      updated="23 October 2026"
       intro={<p>What we collect, why, who helps us, and the control you have. We&apos;ve kept it as plain as we can.</p>}
       sections={SECTIONS}
     />
