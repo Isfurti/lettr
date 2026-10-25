@@ -22,6 +22,7 @@ import { ResumeSearch } from "@/components/ResumeSearch";
 import { VerifyEmailBanner } from "@/components/VerifyEmailBanner";
 import { GuestDraftRescue } from "@/components/GuestDraftRescue";
 import { DeleteAccountButton } from "@/components/DeleteAccountButton";
+import { ProBadge } from "@/components/ProBadge";
 
 export const metadata: Metadata = { title: "Dashboard | Lettr", robots: { index: false } };
 
@@ -82,6 +83,7 @@ export default async function DashboardPage({
       <AppSidebar
         isAdmin={isAdmin}
         plan={plan}
+        proUntil={proUntil}
         usage={
           allowances
             ? { label: "AI rewrites", used: allowances.rewrites.used, limit: allowances.rewrites.limit }
@@ -110,9 +112,12 @@ export default async function DashboardPage({
 
         <div className="flex flex-wrap items-end justify-between gap-5 mb-8">
           <div className="min-w-0">
-            <h1 className="font-brand font-extrabold text-[34px] sm:text-[44px] leading-[1.05] tracking-tight">
-              Welcome back, {displayName.split(" ")[0]}.
-            </h1>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <h1 className="font-brand font-extrabold text-[34px] sm:text-[44px] leading-[1.05] tracking-tight">
+                Welcome back, {displayName.split(" ")[0]}.
+              </h1>
+              {plan === "pro" && <ProBadge size="md" />}
+            </div>
             <p className="mt-2 text-lg text-slate">
               {resumes.length === 0
                 ? "Let's build your first resume."

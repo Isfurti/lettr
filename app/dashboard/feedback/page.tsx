@@ -5,6 +5,7 @@ import { isAdminEmail } from "@/lib/admin-auth";
 import { getUserById, listReviewsForUser } from "@/lib/db";
 import { formatDate } from "@/lib/format-date";
 import { AppSidebar } from "@/components/AppSidebar";
+import { formatProDate } from "@/lib/pro-pass";
 import { FeedbackForm } from "@/components/FeedbackForm";
 
 export const metadata: Metadata = { title: "Feedback | Lettr", robots: { index: false } };
@@ -21,6 +22,7 @@ export default async function FeedbackPage() {
         eyebrow="Resume workspace"
         isAdmin={isAdminEmail(session.user.email)}
         plan={user?.plan ?? "free"}
+        proUntil={user?.plan === "pro" && user.pro_until ? formatProDate(user.pro_until) : null}
       />
       <main className="flex-1 min-w-0 px-4 sm:px-10 py-6 sm:py-10 max-w-xl w-full">
         <h1 className="font-brand font-extrabold text-[32px] sm:text-[40px] leading-tight tracking-tight mb-2">How&apos;s Lettr working for you?</h1>

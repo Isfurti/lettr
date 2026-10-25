@@ -22,6 +22,7 @@ import { TEMPLATE_IDS, isTemplateFree } from "@/lib/templates";
 import { FREE_AI_REWRITES } from "@/lib/free-plan";
 import { findBlanks } from "@/lib/blanks";
 import { trackResumeDownload } from "@/lib/analytics";
+import { ProBadge } from "@/components/ProBadge";
 const TEMPLATES: readonly string[] = TEMPLATE_IDS;
 
 type EditorTab = "edit" | "score" | "match" | "agent" | "cover-letter" | "resignation-letter";
@@ -430,6 +431,7 @@ export function ResumeEditor({
           >
             L
           </Link>
+          {plan === "pro" && <ProBadge className="hidden sm:inline-flex" />}
           <div className="min-w-0 flex-1">
             <input
               value={title}
