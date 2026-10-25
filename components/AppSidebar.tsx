@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { InstallAppButton } from "@/components/AppInstall";
+import { ProBadge } from "@/components/ProBadge";
 import { signOut } from "next-auth/react";
 import { Home, LayoutTemplate, MessageSquare, LifeBuoy, Crown, LogOut, ShieldAlert, Globe, Briefcase, Mic, Download, Menu, X } from "lucide-react";
 
@@ -23,6 +24,7 @@ export type SidebarUsage = { label: string; used: number; limit: number };
 export function AppSidebar({
   isAdmin = false,
   plan = "free",
+  proUntil,
   usage,
 }: {
   /** Kept for older call sites; the new sidebar always shows the Lettr logo. */
@@ -30,6 +32,8 @@ export function AppSidebar({
   eyebrow?: string;
   isAdmin?: boolean;
   plan?: string;
+  /** When paid Pro ends, already formatted (e.g. "25 Nov 2026"). Empty for Pro given by the Lettr team. */
+  proUntil?: string | null;
   /** Optional free-plan usage to show in the plan card (e.g. PDF downloads). */
   usage?: SidebarUsage;
 }) {
@@ -74,7 +78,10 @@ export function AppSidebar({
       {/* Phones and tablets: a slim top bar, with everything else behind the ☰ menu. */}
       <div className="lg:hidden sticky top-0 z-50 bg-ink text-white">
         <div className="px-4 py-2.5 flex items-center justify-between">
-          <Logo dark href="/" compact />
+          <div className="flex items-center gap-2.5">
+            <Logo dark href="/" compact />
+            {plan === "pro" && <ProBadge />}
+          </div>
           <button
             type="button"
             onClick={() => setMenuOpen((o) => !o)}
@@ -139,8 +146,9 @@ export function AppSidebar({
 
       <aside className="hidden lg:block w-64 shrink-0 bg-ink text-white">
         <div className="sticky top-0 h-screen flex flex-col">
-          <div className="px-6 pt-6 pb-4">
+          <div className="px-6 pt-6 pb-4 flex items-center gap-3">
             <Logo dark href="/" />
+            {plan === "pro" && <ProBadge />}
           </div>
 
           <nav className="flex-1 px-3 mt-2 space-y-1 overflow-y-auto">
@@ -181,6 +189,21 @@ export function AppSidebar({
                   Go Pro
                 </Link>
               </div>
+            )}
+            {plan === "pro" && (
+              <Link
+                href="/pricing"
+                className="mb-3 block rounded-2xl bg-white/[0.07] border border-white/10 p-4 hover:bg-white/10 transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <ProBadge />
+                  <span className="font-extrabold">Lettr Pro</span>
+                </span>
+                <span className="block text-sm text-white/70 mt-1.5">
+                  {proUntil ? `Active until ${proUntil}` : "Active"}
+                </span>
+                {proUntil && <span className="block text-sm font-bold text-gold mt-1">Add more time</span>}
+              </Link>
             )}
             {isAdmin && (
               <Link

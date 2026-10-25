@@ -6,6 +6,7 @@ import { getUserById, listApplications, listResumesForUser } from "@/lib/db";
 import { displayTitle } from "@/lib/resume-title";
 import type { ResumeData } from "@/lib/types";
 import { AppSidebar } from "@/components/AppSidebar";
+import { formatProDate } from "@/lib/pro-pass";
 import { ApplicationsBoard } from "@/components/applications/ApplicationsBoard";
 
 export const metadata: Metadata = { title: "Applications | Lettr", robots: { index: false } };
@@ -21,6 +22,7 @@ export default async function ApplicationsPage() {
       <AppSidebar
         isAdmin={isAdminEmail(session.user.email)}
         plan={user?.plan ?? "free"}
+        proUntil={user?.plan === "pro" && user.pro_until ? formatProDate(user.pro_until) : null}
       />
       <main className="flex-1 min-w-0 px-4 sm:px-8 lg:px-12 py-6 sm:py-10 max-w-[1400px] w-full">
         <h1 className="font-brand font-extrabold text-[32px] sm:text-[44px] leading-tight tracking-tight">Applications</h1>

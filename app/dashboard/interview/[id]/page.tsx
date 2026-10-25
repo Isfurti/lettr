@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-auth";
 import { getInterviewSession, getUserById } from "@/lib/db";
 import { AppSidebar } from "@/components/AppSidebar";
+import { formatProDate } from "@/lib/pro-pass";
 import { InterviewSession } from "@/components/interview/InterviewPractice";
 
 export const metadata: Metadata = { title: "Interview practice | Lettr", robots: { index: false } };
@@ -20,7 +21,7 @@ export default async function InterviewSessionPage({ params }: { params: Promise
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row bg-cream text-ink">
-      <AppSidebar isAdmin={isAdminEmail(session.user.email)} plan={plan} />
+      <AppSidebar isAdmin={isAdminEmail(session.user.email)} plan={plan} proUntil={plan === "pro" && user?.pro_until ? formatProDate(user.pro_until) : null} />
       <main className="flex-1 min-w-0 px-4 sm:px-8 lg:px-12 py-6 sm:py-10 max-w-[1200px] w-full">
         <Link href="/dashboard/interview" className="inline-flex items-center min-h-11 text-sm font-bold text-slate hover:text-ink">
           ← All practice interviews
