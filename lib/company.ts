@@ -63,6 +63,20 @@ export type GstConfig = {
 };
 
 /**
+ * LUT (Letter of Undertaking) acknowledgement numbers by financial year.
+ * Export invoices (buyers outside India) are zero-rated under the LUT, which
+ * is filed again every financial year: add the new ARN here each April.
+ */
+export const LUT_ARNS: Record<string, string> = {
+  "2026-27": "AD0910260431486",
+};
+
+/** The LUT ARN covering an invoice's financial year, or null if none is on record. */
+export function lutArnFor(financialYear: string): string | null {
+  return LUT_ARNS[financialYear] ?? null;
+}
+
+/**
  * GST settings for invoices, or null when invoicing is off: there's no
  * company yet, or it's switched off with COMPANY_GSTIN=off. COMPANY_SAC and
  * INVOICE_PREFIX can be changed with environment variables.
@@ -76,7 +90,7 @@ export function getGstConfig(
   if (raw === "OFF") return null;
   return {
     gstin: raw || seller.gstin,
-    sac: env.COMPANY_SAC?.trim() || "998314",
+    sac: env.COMPANY_SAC?.trim() || "998319",
     invoicePrefix: env.INVOICE_PREFIX?.trim() || "LTR",
   };
 }

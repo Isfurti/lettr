@@ -78,7 +78,7 @@ export const PLACEHOLDER_SELLER: Seller = {
 
 /** A made-up invoice for previewing the layout. Never saved. */
 export function sampleInvoice(kind: "intra" | "inter" | "export" = "intra", seller: Seller = SELLER ?? PLACEHOLDER_SELLER): InvoiceRow {
-  const config = getGstConfig(process.env, seller) ?? { gstin: seller.gstin, sac: "998314", invoicePrefix: "LTR" };
+  const config = getGstConfig(process.env, seller) ?? { gstin: seller.gstin, sac: "998319", invoicePrefix: "LTR" };
   const now = new Date();
   const fy = financialYear(now);
   const country = kind === "export" ? "US" : "IN";
