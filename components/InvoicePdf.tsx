@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
-import { COMPANY, type Seller } from "@/lib/company";
+import { COMPANY, lutArnFor, type Seller } from "@/lib/company";
 import { GST_STATES, formatMoney, rupeesInWords } from "@/lib/gst";
 import { invoicePdfFont } from "@/lib/pdf-fonts";
 import type { InvoiceRow } from "@/lib/db";
@@ -125,7 +125,7 @@ export function InvoicePdf({ invoice, seller, sample = false }: { invoice: Invoi
         )}
         {isExport && (
           <Text style={{ marginTop: 12, color: MUTED }}>
-            Supply meant for export of services under LUT without payment of integrated tax (IGST).
+            Supply meant for export of services under LUT{lutArnFor(invoice.financial_year) ? ` (ARN ${lutArnFor(invoice.financial_year)})` : ""} without payment of integrated tax (IGST).
           </Text>
         )}
 
