@@ -18,6 +18,20 @@ if (!connectionString) {
 const pool = new Pool({
   connectionString,
   ssl: connectionString.includes("localhost") ? false : { rejectUnauthorized: false },
+  // The database (Neon) sleeps after a few idle minutes and cuts open
+  // connections when it does. Close idle ones well before that, and give up
+  // on a connection attempt that hangs instead of making the visitor wait.
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 10_000,
+  keepAlive: true,
+});
+
+// A connection cut while idle (the database going to sleep, a restart)
+// arrives as an "error" event. Without a listener Node treats it as a crash
+// and the whole server instance restarts, so the next visitor waits for a
+// cold start. The pool already drops the dead connection; just log it.
+pool.on("error", (err) => {
+  console.warn("Database connection closed while idle:", err.message);
 });
 
 // Tables and columns the app needs. Every statement is safe to run again.
