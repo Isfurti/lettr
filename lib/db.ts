@@ -396,6 +396,13 @@ export async function getUserByEmail(email: string): Promise<UserRow | undefined
   return withProExpiry(res.rows[0]);
 }
 
+/** Whether an account still exists (it may have been deleted while someone was signed in). */
+export async function userExists(id: string): Promise<boolean> {
+  await ensureSchema();
+  const res = await pool.query("SELECT 1 FROM users WHERE id = $1", [id]);
+  return (res.rowCount ?? 0) > 0;
+}
+
 export async function getUserById(id: string): Promise<UserRow | undefined> {
   await ensureSchema();
   const res = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
@@ -1385,15 +1392,23 @@ export async function getCachedAiResult<T>(key: string, userId: string): Promise
   return res.rows[0] ? (res.rows[0].result as T) : null;
 }
 
+/**
+ * Saves an AI result for reuse. Only a speed-up: if it can't be saved, the
+ * person still gets the result they asked for, so this never throws.
+ */
 export async function saveCachedAiResult(key: string, userId: string, feature: string, result: unknown) {
-  await ensureSchema();
-  await pool.query(
-    `INSERT INTO ai_result_cache (key, user_id, feature, result) VALUES ($1, $2, $3, $4::jsonb)
-     ON CONFLICT (key) DO UPDATE SET result = EXCLUDED.result, created_at = now()`,
-    [key, userId, feature, JSON.stringify(result)]
-  );
-  if (Math.random() < 0.02) {
-    await pool.query("DELETE FROM ai_result_cache WHERE created_at < now() - ($1 || ' days')::interval", [String(AI_RESULT_TTL_DAYS)]);
+  try {
+    await ensureSchema();
+    await pool.query(
+      `INSERT INTO ai_result_cache (key, user_id, feature, result) VALUES ($1, $2, $3, $4::jsonb)
+       ON CONFLICT (key) DO UPDATE SET result = EXCLUDED.result, created_at = now()`,
+      [key, userId, feature, JSON.stringify(result)]
+    );
+    if (Math.random() < 0.02) {
+      await pool.query("DELETE FROM ai_result_cache WHERE created_at < now() - ($1 || ' days')::interval", [String(AI_RESULT_TTL_DAYS)]);
+    }
+  } catch (err) {
+    console.warn("Couldn't save AI result for reuse:", err instanceof Error ? err.message : err);
   }
 }
 

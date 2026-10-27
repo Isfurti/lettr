@@ -4,7 +4,7 @@ import Google from "next-auth/providers/google";
 import LinkedIn from "next-auth/providers/linkedin";
 import type { Provider } from "next-auth/providers";
 import bcrypt from "bcryptjs";
-import { getUserByEmail } from "./db";
+import { getUserByEmail, userExists } from "./db";
 import { findOrCreateOAuthUser } from "./oauth-user";
 import { isRateLimited, recordRateLimitHit } from "./rate-limit";
 
@@ -84,6 +84,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       } else if (user) {
         token.id = user.id;
+      } else if (typeof token.id === "string") {
+        // The account was deleted (by its owner or an admin) while this
+        // browser was still signed in. Sign it out instead of letting it act
+        // as a user that no longer exists. If the database can't be reached,
+        // keep the session: a short outage shouldn't sign everyone out.
+        try {
+          if (!(await userExists(token.id))) return null;
+        } catch {
+          // keep the session
+        }
       }
       return token;
     },

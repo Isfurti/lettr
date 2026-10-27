@@ -22,7 +22,10 @@ export async function POST(req: Request) {
   // Same free-tier resume cap applies to an imported resume as a created
   // one - importing isn't a way around the plan limit.
   const user = await getUserById(userId);
-  const plan = (user?.plan ?? "free") as Plan;
+  if (!user) {
+    return NextResponse.json({ error: "Your account was not found. Please sign in again." }, { status: 401 });
+  }
+  const plan = (user.plan ?? "free") as Plan;
   const currentCount = await countResumesForUser(userId);
   const limitCheck = canCreateResume(plan, currentCount);
   if (!limitCheck.allowed) {
@@ -83,8 +86,11 @@ export async function POST(req: Request) {
       await saveCachedAiResult(cacheKey, userId, "import", resumeData);
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : "AI extraction failed";
-    return NextResponse.json({ error: message }, { status: 502 });
+    console.error("Resume import failed:", err);
+    return NextResponse.json(
+      { error: "We couldn't read your resume just now. Please try again, or start from scratch." },
+      { status: 502 }
+    );
   }
 
   const id = randomUUID();
