@@ -172,7 +172,7 @@ const HELP = [
   },
   {
     q: "How do I cancel Pro?",
-    a: "Open the billing portal from your dashboard. You keep Pro until the end of the period you've paid for.",
+    a: "Pro is a one-time pass, so there's nothing to cancel. It ends on its own on the date shown on your dashboard, and your account moves to the free plan with all your resumes kept.",
   },
   {
     q: "How do I delete my account?",

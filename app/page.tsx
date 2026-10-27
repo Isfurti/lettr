@@ -11,6 +11,7 @@ import { SAMPLE_RESUME } from "@/lib/sample-resume";
 import { getFeaturedReviews } from "@/lib/db";
 import { TEMPLATE_IDS } from "@/lib/templates";
 import { FREE_AI_REWRITES } from "@/lib/free-plan";
+import { FREE_AI_TRY_LINE, FAIR_USE_HREF } from "@/lib/limits";
 import { COMPANY, operatorName } from "@/lib/company";
 
 // Revalidate hourly rather than fetching featured reviews on every single
@@ -417,7 +418,7 @@ export default async function Home() {
             <p className="font-brand font-extrabold text-3xl">Free</p>
             <p className="mt-1 text-slate">Everything you need for one strong resume.</p>
             <ul className="mt-6 flex flex-col gap-3 flex-1">
-              {["1 resume", "Classic and Modern templates", "Live ATS score and resume score", "PDF download", "Try every AI tool once"].map((x) => (
+              {["1 resume", "Classic and Modern templates", "Live ATS score and resume score", "PDF download", FREE_AI_TRY_LINE].map((x) => (
                 <li key={x} className="flex gap-3"><Tick />{x}</li>
               ))}
             </ul>
@@ -430,10 +431,16 @@ export default async function Home() {
             </div>
             <p className="mt-1 text-white/70">For when you&apos;re applying seriously.</p>
             <ul className="mt-6 flex flex-col gap-3 flex-1">
-              {["Unlimited resumes, downloads and AI rewrites", `All ${TEMPLATE_IDS.length} templates`, "Unlimited cover letters and resignation letters", "AI Resume Agent", "Word (DOCX) export"].map((x) => (
+              {["Unlimited resumes and downloads", "Unlimited AI rewrites, cover letters and resignation letters", `All ${TEMPLATE_IDS.length} templates`, "AI Resume Agent", "Word (DOCX) export"].map((x) => (
                 <li key={x} className="flex gap-3"><Tick color="var(--gold)" />{x}</li>
               ))}
             </ul>
+            <p className="mt-4 text-sm text-white/70">
+              AI fair-use limits apply.{" "}
+              <Link href={FAIR_USE_HREF} className="underline underline-offset-2 hover:text-white">
+                See limits
+              </Link>
+            </p>
             <Link href="/pricing" className="btn-press mt-8 self-start inline-flex items-center min-h-12 px-7 rounded-full bg-gold text-ink font-extrabold shadow-[0_5px_0_var(--gold-deep)]">
               See price in your currency
             </Link>
