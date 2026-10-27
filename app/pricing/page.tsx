@@ -16,17 +16,17 @@ import type { CheckoutState } from "@/components/ProCheckoutButton";
 import { currencyAllowed, razorpayConfigured } from "@/lib/razorpay";
 import { formatProDate, hasPaidPro } from "@/lib/pro-pass";
 import { ensureUserRegion } from "@/lib/user-region";
-import { DAILY_LIMITS, PLAN_LIMITS } from "@/lib/limits";
+import { DAILY_LIMITS, PLAN_LIMITS, FREE_AI_TRY_LINE } from "@/lib/limits";
 
 const PLAN_LIMITS_DAILY_PRO = DAILY_LIMITS.pro;
 
 export const metadata: Metadata = {
   title: "Pricing | Lettr — Free AI Resume Builder",
-  description: "Free resume builder with a live ATS score and a free try of every AI tool. Upgrade to Pro for unlimited AI writing, clean PDFs and exports.",
+  description: "Free resume builder with a live ATS score and a free try of the AI. Upgrade to Pro for unlimited AI writing (fair use), clean PDFs and exports.",
   alternates: { canonical: "/pricing" },
   openGraph: {
     title: "Lettr Pricing — Free to start, upgrade anytime",
-    description: "Build and score your resume free, and try every AI tool once. Pro adds unlimited AI writing, clean PDFs, every template and exports. Regional pricing available.",
+    description: "Build and score your resume free, and try the AI free. Pro adds unlimited AI writing (fair use), clean PDFs, every template and exports. Regional pricing available.",
     url: "/pricing",
   },
 };
@@ -42,8 +42,8 @@ const COMPARISON: { feature: string; free: string | boolean; pro: string | boole
   { feature: "Live ATS score", free: true, pro: true },
   { feature: "Missing keywords for a job post", free: `First ${FREE.keywordsShown}`, pro: "All of them" },
   { feature: "Resume quality score", free: "Score + next best fix", pro: "Full breakdown" },
-  { feature: "AI bullet & summary rewriting", free: `${FREE.maxAiWritingAssists} free`, pro: "Unlimited" },
-  { feature: "AI cover letters", free: `${FREE.coverLetters} free`, pro: "Unlimited, best writing model" },
+  { feature: "AI bullet & summary rewriting", free: `${FREE.maxAiWritingAssists} free`, pro: "Unlimited (fair use)" },
+  { feature: "AI cover letters", free: `${FREE.coverLetters} free`, pro: "Unlimited (fair use), best writing model" },
   { feature: "ATS analyst (AI advice and rewrites)", free: `${FREE.atsAnalyst} free`, pro: `${PRO.atsAnalyst} a month` },
   { feature: "Interview practice with AI feedback", free: `${FREE.interviewSets} free interview`, pro: `${PRO.interviewSets} a month` },
   { feature: "AI Resume Agent (chat editing)", free: false, pro: true },
@@ -91,6 +91,7 @@ const faqs = (open: boolean) => [
     a: "There's no money-back guarantee for now, so please try the free plan first. If you're charged twice or by mistake, tell us within 7 days and we'll refund it. Passes don't renew, so you won't be charged again unless you buy another one.",
   },
   {
+    id: "fair-use",
     q: "Is Pro really unlimited?",
     a: `For normal job hunting, yes. To keep AI costs fair, every account has a daily limit, for example ${PLAN_LIMITS_DAILY_PRO.rewrite} AI rewrites, ${PLAN_LIMITS_DAILY_PRO.cover_letter} cover letters and ${PLAN_LIMITS_DAILY_PRO.agent} AI Agent messages a day on Pro. Limits reset at midnight India time.`,
   },
@@ -175,8 +176,8 @@ export default async function PricingPage() {
           Start free. Upgrade when it&apos;s worth it.
         </h1>
         <p className="mt-5 text-slate text-lg max-w-xl mx-auto">
-          Build, score and download one strong resume free, and try every AI tool once. Pro unlocks unlimited AI and clean
-          downloads.
+          Build, score and download one strong resume free, and try the AI free. Pro unlocks unlimited AI (fair use) and
+          clean downloads.
         </p>
       </section>
 
@@ -193,7 +194,7 @@ export default async function PricingPage() {
               <FeatureLine included>1 resume, Classic and Modern templates</FeatureLine>
               <FeatureLine included>Live ATS score and resume score</FeatureLine>
               <FeatureLine included>1 clean PDF, then with a small Lettr line</FeatureLine>
-              <FeatureLine included>Try every AI tool once</FeatureLine>
+              <FeatureLine included>{FREE_AI_TRY_LINE}</FeatureLine>
               <FeatureLine included>Track up to {FREE.trackedJobs} jobs</FeatureLine>
             </ul>
             <Link
@@ -274,7 +275,7 @@ export default async function PricingPage() {
           </Reveal>
           <div className="flex flex-col gap-3">
             {faqs(paymentsOpen).map((f) => (
-              <details key={f.q} className="group bg-white rounded-2xl border border-rule open:border-ink transition-colors">
+              <details key={f.q} id={"id" in f ? f.id : undefined} className="group bg-white rounded-2xl border border-rule open:border-ink transition-colors">
                 <summary className="cursor-pointer list-none flex items-center justify-between gap-4 min-h-14 px-5 py-4 font-bold text-lg [&::-webkit-details-marker]:hidden">
                   {f.q}
                   <span aria-hidden="true" className="shrink-0 w-8 h-8 rounded-full bg-brand-blue-soft text-brand-blue flex items-center justify-center text-xl font-extrabold transition-transform group-open:rotate-45">+</span>

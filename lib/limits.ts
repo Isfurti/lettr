@@ -260,6 +260,17 @@ export type DailyFeature =
   | "interview_feedback"
   | "import";
 
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+/** "Try the AI free: 3 rewrites, 1 cover letter, 1 ATS review and 1 practice interview", from the real free limits. */
+export const FREE_AI_TRY_LINE = (() => {
+  const f = PLAN_LIMITS.free;
+  return `Try the AI free: ${plural(f.maxAiWritingAssists, "rewrite")}, ${plural(f.coverLetters, "cover letter")}, ${plural(f.atsAnalyst, "ATS review")} and ${plural(f.interviewSets, "practice interview")}`;
+})();
+
+/** Where the AI fair-use limits are explained (the pricing FAQ). */
+export const FAIR_USE_HREF = "/pricing#fair-use";
+
 export const DAILY_FEATURE_LABELS: Record<DailyFeature, string> = {
   agent: "AI Agent messages",
   rewrite: "AI rewrites",

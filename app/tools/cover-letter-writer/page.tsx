@@ -20,7 +20,7 @@ const STEPS = [
 const FAQ = [
   { q: "Do I still need a cover letter?", a: "Often, yes. Many recruiters skip them, but for competitive roles, career changes and small companies a short, specific letter can tip the balance. A generic one does nothing, which is why Lettr writes it from your own resume and the actual job post." },
   { q: "How long should a cover letter be?", a: "Under a page: three or four short paragraphs, about 200-320 words." },
-  { q: "Is it free?", a: "A free Lettr account writes your first cover letter free. Pro has no limit and uses our best writing model." },
+  { q: "Is it free?", a: "A free Lettr account writes your first cover letter free. Pro includes unlimited cover letters (fair-use limits apply) and uses our best writing model." },
   { q: "Will it make things up?", a: "No. It only uses achievements that are in your resume. Read it through and add a personal line before you send it." },
 ];
 

@@ -22,7 +22,7 @@ const EXAMPLES = [
 
 const FAQ = [
   { q: "What makes a good resume bullet point?", a: "Start with a strong action verb, say what you did, and finish with the result - ideally with a number (%, ₹, time saved, people, customers). Keep it to one or two lines." },
-  { q: "Is the bullet writer really free?", a: `Yes. You get one free rewrite a day without an account, and a free Lettr account includes ${FREE_AI_REWRITES} more. Pro has unlimited rewrites.` },
+  { q: "Is the bullet writer really free?", a: `Yes. You get one free rewrite a day without an account, and a free Lettr account includes ${FREE_AI_REWRITES} more. Pro has unlimited rewrites (fair-use limits apply).` },
   { q: "Will the AI invent numbers?", a: "No. It only uses the facts you give it. If a number would make the bullet stronger but you didn't give one, it leaves a blank like [X]% for you to fill in with the real figure." },
   { q: "How many bullet points should each job have?", a: "Two to six. Put your most impressive result first. Older or less relevant jobs can have fewer." },
 ];

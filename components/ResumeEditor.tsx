@@ -1773,7 +1773,7 @@ function CoverLetterPanel({
           <Link href="/pricing" className="font-bold text-brand-blue underline">
             Pro
           </Link>{" "}
-          has no limit and uses our best writing model.
+          includes unlimited cover letters (fair-use limits apply) and uses our best writing model.
         </p>
       )}
       <Section title="Target role">
