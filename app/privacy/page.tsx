@@ -176,7 +176,7 @@ const SECTIONS: LegalSection[] = [
           <li><strong>Google</strong> and <strong>LinkedIn</strong>: sign-in, and Google Drive if you connect it;</li>
           <li><strong>Resend</strong>: sending emails;</li>
           <li><strong>Sentry</strong>: error reports so we can fix bugs;</li>
-          <li><strong>Google</strong> and <strong>Meta</strong>: measuring visits and ads, only if you allow cookies for this.</li>
+          <li><strong>Google</strong> and <strong>Meta</strong>: measuring visits and ads (see Cookies below for when these are on).</li>
         </ul>
       </>
     ),
@@ -201,12 +201,13 @@ const SECTIONS: LegalSection[] = [
           We use a few cookies that are needed to sign you in and keep your account secure. These are always on.
         </p>
         <p>
-          With your permission, we also use cookies from <strong>Google</strong> (Google Analytics and Google Ads) and{" "}
+          We also use cookies from <strong>Google</strong> (Google Analytics and Google Ads) and{" "}
           <strong>Meta</strong> (the Meta Pixel). They tell us which pages people visit and which ads brought them to
           Lettr, and whether they went on to sign up, check a resume, download one or buy Pro. These companies see your
-          browser&apos;s activity on Lettr; they don&apos;t see your resume. These cookies stay off unless you choose
-          &ldquo;Allow&rdquo; in the cookie banner, and you can change your choice at any time from &ldquo;Cookie
-          settings&rdquo; at the bottom of any page.
+          browser&apos;s activity on Lettr; they don&apos;t see your resume. If you visit from the European Union, the
+          rest of the EEA, the UK or Switzerland, these cookies stay off unless you choose &ldquo;Allow&rdquo; in the
+          cookie banner. Elsewhere they are on by default. Wherever you are, you can switch them off at any time from
+          &ldquo;Cookie settings&rdquo; at the bottom of any page.
         </p>
         <p>
           On the free plan we also set one cookie with a random code for your browser. Together with a one-way scrambled
@@ -313,7 +314,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      updated="23 October 2026"
+      updated="28 October 2026"
       intro={<p>What we collect, why, who helps us, and the control you have. We&apos;ve kept it as plain as we can.</p>}
       sections={SECTIONS}
     />

@@ -25,16 +25,60 @@ function subscribeConsent(onChange: () => void) {
   };
 }
 
+const REGION_KEY = "lettr-consent-required";
+
+/** Asks the server whether this visitor's country needs an opt-in, remembered for the browser session. */
+async function fetchConsentRequired(): Promise<boolean> {
+  try {
+    const saved = window.sessionStorage.getItem(REGION_KEY);
+    if (saved === "1" || saved === "0") return saved === "1";
+  } catch {
+    // storage blocked: just ask the server
+  }
+  try {
+    const res = await fetch("/api/consent-region", { cache: "no-store" });
+    const body = (await res.json()) as { required?: boolean };
+    const required = body.required !== false;
+    try {
+      window.sessionStorage.setItem(REGION_KEY, required ? "1" : "0");
+    } catch {
+      // fine
+    }
+    return required;
+  } catch {
+    return true; // can't tell where they are: ask, to be safe
+  }
+}
+
 /**
- * Loads Google Analytics, Google Ads and the Meta Pixel, but only after the
- * visitor accepts the cookie banner. Declining (or ignoring the banner)
- * loads nothing. Admin pages are never tracked.
+ * Loads Google Analytics, Google Ads and the Meta Pixel.
+ *
+ * In the EU, EEA, UK and Switzerland they load only after the visitor taps
+ * "Allow" in the cookie banner. Everywhere else they're on by default with no
+ * banner, and "Cookie settings" in the footer lets anyone switch them off.
+ * An explicit choice always wins. Admin pages are never tracked.
  */
 export function Analytics() {
   const pathname = usePathname() ?? "/";
   // "pending" until the browser has read the saved choice (and on the server).
-  const consent = useSyncExternalStore(subscribeConsent, () => readConsent() ?? "unset", () => "pending" as const);
+  const saved = useSyncExternalStore(subscribeConsent, () => readConsent() ?? "unset", () => "pending" as const);
   const [reopened, setReopened] = useState(false);
+  // Only needed when the visitor hasn't chosen yet: null until we know.
+  const [optInRegion, setOptInRegion] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (saved !== "unset" || optInRegion !== null) return;
+    let live = true;
+    fetchConsentRequired().then((required) => {
+      if (live) setOptInRegion(required);
+    });
+    return () => {
+      live = false;
+    };
+  }, [saved, optInRegion]);
+
+  // No choice yet: opt-in regions see the banner ("unset"), others get tracking by default.
+  const consent: Consent | "unset" | "pending" =
+    saved !== "unset" ? saved : optInRegion === null ? "pending" : optInRegion ? "unset" : "granted";
 
   useEffect(() => {
     const reopen = () => setReopened(true);
