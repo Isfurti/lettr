@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { setReviewFeatured, logAdminAction } from "@/lib/db";
@@ -18,6 +19,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!result.ok) {
     return NextResponse.json({ error: result.reason }, { status: 400 });
   }
+
+  // The homepage and /reviews are cached for an hour; refresh them now so a
+  // review shows (or disappears) straight after the admin clicks.
+  revalidatePath("/");
+  revalidatePath("/reviews");
 
   await logAdminAction({
     adminUserId: admin.id,
