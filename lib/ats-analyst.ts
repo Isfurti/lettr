@@ -1,3 +1,4 @@
+import { datePairProblem } from "./resume-dates";
 import { extraSections, type ResumeData } from "./types";
 import { plainResume } from "./rich-text";
 import { ACTION_VERBS, isObjectiveStyle } from "./resume-score";
@@ -560,6 +561,16 @@ export function analyzeAts(
     .concat(r.education.flatMap((e) => [e.startDate, e.endDate]));
   const filled = dates.filter((d) => d?.trim());
   const odd = filled.filter((d) => !DATE_LIKE.test(d.trim()));
+  // An end before its start, or a job that hasn't started yet, makes
+  // systems miscount your experience (and looks careless to a recruiter).
+  const badRole = r.experience.find((e) => datePairProblem(e.startDate, e.endDate));
+  const badSchool = r.education.find((e) => datePairProblem(e.startDate, e.endDate, { endMayBeFuture: true }));
+  const wrongDates = badRole
+    ? `${badRole.role || "A role"}: ${datePairProblem(badRole.startDate, badRole.endDate)}`
+    : badSchool
+      ? `${badSchool.school || "Your education"}: ${datePairProblem(badSchool.startDate, badSchool.endDate, { endMayBeFuture: true })}`
+      : null;
+  const wrongDatesSection = badRole ? "experience" : "education";
   structure.push(
     r.experience.length === 0
       ? {
@@ -579,6 +590,14 @@ export function analyzeAts(
               "Add a start date (month and year) to every role. Systems use them to work out your experience.",
             section: "experience",
           }
+        : wrongDates
+          ? {
+              id: "dates",
+              status: "fail",
+              label: "Dates that don't add up",
+              detail: wrongDates,
+              section: wrongDatesSection,
+            }
         : odd.length
           ? {
               id: "dates",

@@ -23,6 +23,16 @@ import { FREE_AI_REWRITES } from "@/lib/free-plan";
 import { findBlanks } from "@/lib/blanks";
 import { trackResumeDownload } from "@/lib/analytics";
 import { ProBadge } from "@/components/ProBadge";
+import {
+  MONTHS,
+  EXPECTED_YEARS_AHEAD,
+  currentMonthNumber,
+  datePairProblem,
+  endsBeforeStart,
+  monthNumber,
+  toMonthNumber,
+} from "@/lib/resume-dates";
+
 const TEMPLATES: readonly string[] = TEMPLATE_IDS;
 
 type EditorTab = "edit" | "score" | "match" | "agent" | "cover-letter" | "resignation-letter";
@@ -948,9 +958,20 @@ export function EditForm({
               <div className="grid sm:grid-cols-2 gap-2">
                 <Input label="School / college" value={edu.school} onChange={(v) => updateEducation(edu.id, { school: v })} />
                 <Input label="Degree" placeholder="B.Tech, Computer Science" value={edu.degree} onChange={(v) => updateEducation(edu.id, { degree: v })} />
-                <MonthYearInput label="Start" value={edu.startDate} onChange={(v) => updateEducation(edu.id, { startDate: v })} />
-                <MonthYearInput label="End (or expected)" value={edu.endDate} onChange={(v) => updateEducation(edu.id, { endDate: v })} />
+                <MonthYearInput
+                  label="Start"
+                  value={edu.startDate}
+                  onChange={(v) => updateEducation(edu.id, { startDate: v, ...(endsBeforeStart(v, edu.endDate) ? { endDate: "" } : {}) })}
+                />
+                <MonthYearInput
+                  label="End (or expected)"
+                  value={edu.endDate}
+                  min={edu.startDate}
+                  max="expected"
+                  onChange={(v) => updateEducation(edu.id, { endDate: v })}
+                />
               </div>
+              <DateProblem start={edu.startDate} end={edu.endDate} endMayBeFuture />
               <button onClick={() => removeEducation(edu.id)} className="min-h-10 text-sm font-bold text-red-600 hover:underline">
                 Remove
               </button>
@@ -1003,7 +1024,7 @@ export function EditForm({
                   <div className="grid sm:grid-cols-3 gap-2">
                     <Input label="Certification" placeholder="AWS Solutions Architect" value={c.name} onChange={(v) => updateCertification(c.id, { name: v })} />
                     <Input label="Issued by" placeholder="Amazon Web Services" value={c.issuer ?? ""} onChange={(v) => updateCertification(c.id, { issuer: v })} />
-                    <MonthYearInput label="Date" value={c.date ?? ""} onChange={(v) => updateCertification(c.id, { date: v })} />
+                    <MonthYearInput label="Date" value={c.date ?? ""} onChange={(v) => updateCertification(c.id, { date: v })} max="now" />
                   </div>
                   <button onClick={() => removeCertification(c.id)} className="min-h-10 text-sm font-bold text-red-600 hover:underline">Remove</button>
                 </div>
@@ -1363,9 +1384,14 @@ function ExperienceCard({
       <div className="grid sm:grid-cols-2 gap-2">
         <Input label="Job title" placeholder="Marketing Manager" value={exp.role} onChange={(v) => onChange({ role: v })} />
         <Input label="Company" value={exp.company} onChange={(v) => onChange({ company: v })} />
-        <MonthYearInput label="Start" value={exp.startDate} onChange={(v) => onChange({ startDate: v })} />
-        <MonthYearInput label="End" value={exp.endDate} onChange={(v) => onChange({ endDate: v })} allowPresent />
+        <MonthYearInput
+          label="Start"
+          value={exp.startDate}
+          onChange={(v) => onChange({ startDate: v, ...(endsBeforeStart(v, exp.endDate) ? { endDate: "" } : {}) })}
+        />
+        <MonthYearInput label="End" value={exp.endDate} min={exp.startDate} onChange={(v) => onChange({ endDate: v })} allowPresent />
       </div>
+      <DateProblem start={exp.startDate} end={exp.endDate} />
       <p className="text-xs text-ink-soft">
         Bullets: what you did + the result, with a number if you can (&ldquo;Cut onboarding time 30%&rdquo;).
       </p>
@@ -2873,7 +2899,16 @@ function Input({
   );
 }
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** A red note under a start/end pair whose dates don't fit the calendar (e.g. saved before the pickers checked). */
+function DateProblem({ start, end, endMayBeFuture = false }: { start: string; end: string; endMayBeFuture?: boolean }) {
+  const problem = datePairProblem(start, end, { endMayBeFuture });
+  if (!problem) return null;
+  return (
+    <p role="alert" className="text-sm font-bold text-red-600">
+      {problem}
+    </p>
+  );
+}
 
 /** Parses the formats people actually type ("Jan 2022", "January 2022", "01/2022", "2022-01", "2022"). */
 function parseMonthYear(value: string): { month: string; year: string } | null {
@@ -2904,17 +2939,35 @@ function MonthYearInput({
   value,
   onChange,
   allowPresent = false,
+  min,
+  max = "now",
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   allowPresent?: boolean;
+  /** The start date, for an end date: nothing earlier can be picked. */
+  min?: string;
+  /** "now": up to this month. "expected": allows a future end, like an expected graduation. */
+  max?: "now" | "expected";
 }) {
   const isPresent = allowPresent && value.trim().toLowerCase() === "present";
   const parsed = isPresent ? { month: "", year: "" } : parseMonthYear(value);
   const [freeText, setFreeText] = useState(parsed === null);
   const thisYear = new Date().getFullYear();
-  const years = Array.from({ length: 60 }, (_, i) => String(thisYear + 5 - i));
+  // Only dates that make sense on the calendar: nothing before the start
+  // date, and nothing after this month unless it's an expected end date.
+  const maxN = max === "expected" ? monthNumber(thisYear + EXPECTED_YEARS_AHEAD, 11) : currentMonthNumber();
+  const floorN = monthNumber(thisYear - 59, 0);
+  const minN = Math.min(Math.max(toMonthNumber(min, "start") ?? floorN, floorN), maxN);
+  const inRange = (y: number, mIdx: number) => {
+    const n = monthNumber(y, mIdx);
+    return n >= minN && n <= maxN;
+  };
+  const years: string[] = [];
+  for (let y = Math.floor(maxN / 12); y >= Math.floor(minN / 12); y--) years.push(String(y));
+  // Keep showing a saved year that's now out of range, so it's never silently dropped.
+  if (parsed?.year && !years.includes(parsed.year)) years.push(parsed.year);
   const selectCls =
     "border-2 border-rule rounded-xl px-2 min-h-11 text-[15px] bg-white focus:outline-none focus:border-brand-blue disabled:opacity-50";
 
@@ -2937,6 +2990,20 @@ function MonthYearInput({
   const month = parsed?.month ?? "";
   const year = parsed?.year ?? "";
   const emit = (m: string, y: string) => onChange(y ? (m ? `${m} ${y}` : y) : "");
+  // Picking a year keeps the month if it fits, otherwise moves it to the nearest month that does.
+  const pickYear = (y: string) => {
+    if (!y || !month) return emit(month, y);
+    const mIdx = MONTHS.indexOf(month);
+    const n = monthNumber(+y, mIdx);
+    if (n < minN) return emit(MONTHS[minN % 12], y);
+    if (n > maxN) return emit(MONTHS[maxN % 12], y);
+    emit(month, y);
+  };
+  const defaultYear = String(Math.min(Math.max(thisYear, Math.floor(minN / 12)), Math.floor(maxN / 12)));
+  // Grey out months only for a year that can be picked; an old out-of-range
+  // year (saved before these checks) shouldn't lock every month.
+  const shownYear = year ? +year : +defaultYear;
+  const yearInRange = shownYear >= Math.floor(minN / 12) && shownYear <= Math.floor(maxN / 12);
 
   return (
     <div>
@@ -2946,19 +3013,21 @@ function MonthYearInput({
           aria-label={`${label} month`}
           value={month}
           disabled={isPresent}
-          onChange={(e) => emit(e.target.value, year || String(thisYear))}
+          onChange={(e) => emit(e.target.value, year || defaultYear)}
           className={`${selectCls} flex-1 min-w-0`}
         >
           <option value="">Month</option>
-          {MONTHS.map((m) => (
-            <option key={m} value={m}>{m}</option>
+          {MONTHS.map((m, i) => (
+            <option key={m} value={m} disabled={yearInRange && !inRange(shownYear, i) && m !== month}>
+              {m}
+            </option>
           ))}
         </select>
         <select
           aria-label={`${label} year`}
           value={year}
           disabled={isPresent}
-          onChange={(e) => emit(month, e.target.value)}
+          onChange={(e) => pickYear(e.target.value)}
           className={`${selectCls} flex-1 min-w-0`}
         >
           <option value="">Year</option>
