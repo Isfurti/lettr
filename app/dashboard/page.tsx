@@ -152,8 +152,8 @@ export default async function DashboardPage({
         </div>
 
         {showStartCard && (
-          <div className="mb-8 bg-white border-2 border-ink rounded-[28px] shadow-[6px_6px_0_var(--ink)] p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-5">
-            <div>
+          <div className="mb-8 bg-white border-2 border-ink rounded-[28px] shadow-[6px_6px_0_var(--ink)] p-6 sm:p-8 flex flex-col gap-5">
+            <div className="max-w-2xl">
               <p className="font-brand font-extrabold text-2xl">
                 {wantsImport ? "Upload your current resume" : "Start with the resume you already have"}
               </p>
@@ -162,7 +162,7 @@ export default async function DashboardPage({
                 Or start from a blank, guided form.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <div className="flex flex-wrap items-center gap-3">
               <ImportResumeButton />
               <Link
                 href="/resume-checker?from=linkedin"
