@@ -1,3 +1,4 @@
+import { OG_IMAGE } from "@/lib/og";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
@@ -25,6 +26,7 @@ export const metadata: Metadata = {
   description: "Free resume builder with a live ATS score and a free try of the AI. Upgrade to Pro for unlimited AI writing (fair use), clean PDFs and exports.",
   alternates: { canonical: "/pricing" },
   openGraph: {
+    images: [OG_IMAGE],
     title: "Lettr Pricing — Free to start, upgrade anytime",
     description: "Build and score your resume free, and try the AI free. Pro adds unlimited AI writing (fair use), clean PDFs, every template and exports. Regional pricing available.",
     url: "/pricing",

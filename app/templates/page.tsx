@@ -1,3 +1,4 @@
+import { OG_IMAGE } from "@/lib/og";
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { PublicNav } from "@/components/PublicNav";
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
     "16 ATS-friendly resume templates — 2 free (Classic, Modern), 14 more with Pro. Customize colors and fonts, then export to PDF or Word.",
   alternates: { canonical: "/templates" },
   openGraph: {
+    images: [OG_IMAGE],
     title: "Resume Templates | Lettr",
     description: "16 ATS-friendly resume templates. 2 free to start, the rest with Pro.",
     url: "/templates",

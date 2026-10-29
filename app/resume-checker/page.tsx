@@ -1,3 +1,4 @@
+import { OG_IMAGE } from "@/lib/og";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicNav } from "@/components/PublicNav";
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
     "Upload your resume or LinkedIn PDF and see exactly what hiring software reads from it, plus a free score and fixes. No account needed.",
   alternates: { canonical: "/resume-checker" },
   openGraph: {
+    images: [OG_IMAGE],
     title: "Free Resume Checker | Lettr",
     description: "See what job sites read from your resume, get a free score and the fixes that matter. No signup.",
     url: "/resume-checker",

@@ -1,3 +1,4 @@
+import { OG_IMAGE } from "@/lib/og";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MarketingPage, WRAP, H2, Faq, faqJsonLd, CtaBand, BTN_BLUE, BTN_OUTLINE } from "@/components/marketing/MarketingPage";
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
     "Make your first resume in minutes: fresher resume format, ATS-friendly templates, a live ATS score and examples for campus placements, MBA, B.Com, engineering and more. Free to start.",
   alternates: { canonical: "/resume-builder-for-freshers" },
   openGraph: {
+    images: [OG_IMAGE],
     title: "Free Resume Builder for Freshers",
     description: "Your first resume, done right: fresher format, ATS-friendly templates and a live score. Free to start.",
     url: "/resume-builder-for-freshers",
