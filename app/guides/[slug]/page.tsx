@@ -1,3 +1,4 @@
+import { OG_IMAGE } from "@/lib/og";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -21,6 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     description: g.description,
     alternates: { canonical: `/guides/${g.slug}` },
     openGraph: {
+    images: [OG_IMAGE],
       type: "article",
       title: g.title,
       description: g.description,

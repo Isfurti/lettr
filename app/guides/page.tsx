@@ -1,3 +1,4 @@
+import { OG_IMAGE } from "@/lib/og";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MarketingPage, WRAP, CtaBand } from "@/components/marketing/MarketingPage";
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
     "Free, practical guides: resume format for freshers, how to make a resume for Naukri, ATS-friendly resumes and cover letter format, with examples.",
   alternates: { canonical: "/guides" },
   openGraph: {
+    images: [OG_IMAGE],
     title: "Resume & Job Search Guides",
     description: "Practical, India-focused guides to resumes, ATS and cover letters.",
     url: "/guides",

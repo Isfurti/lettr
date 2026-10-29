@@ -1,3 +1,4 @@
+import { OG_IMAGE } from "@/lib/og";
 import type { Metadata } from "next";
 import { MarketingPage, WRAP, H2, Faq, faqJsonLd, CtaBand } from "@/components/marketing/MarketingPage";
 import { BulletWriterTool } from "@/components/marketing/BulletWriterTool";
@@ -8,7 +9,8 @@ export const metadata: Metadata = {
   description:
     "Turn rough notes into strong, achievement-focused resume bullet points in seconds. Free, no account needed. Examples for sales, marketing, tech, finance and freshers.",
   alternates: { canonical: "/tools/bullet-writer" },
-  openGraph: { title: "Free AI Resume Bullet Point Writer", description: "Rough notes in, strong resume bullets out. Free.", url: "/tools/bullet-writer" },
+  openGraph: {
+    images: [OG_IMAGE], title: "Free AI Resume Bullet Point Writer", description: "Rough notes in, strong resume bullets out. Free.", url: "/tools/bullet-writer" },
 };
 
 const EXAMPLES = [

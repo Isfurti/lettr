@@ -1,3 +1,4 @@
+import { OG_IMAGE } from "@/lib/og";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MarketingPage, WRAP, H2, Faq, faqJsonLd, CtaBand, BTN_BLUE, BTN_OUTLINE } from "@/components/marketing/MarketingPage";
@@ -7,7 +8,8 @@ export const metadata: Metadata = {
   description:
     "Write a tailored cover letter from your resume and the job post in under a minute. Your first one is free, no card needed. Includes a cover letter format guide and example.",
   alternates: { canonical: "/tools/cover-letter-writer" },
-  openGraph: { title: "Free AI Cover Letter Writer", description: "Your resume + the job post = a tailored cover letter. Your first one is free.", url: "/tools/cover-letter-writer" },
+  openGraph: {
+    images: [OG_IMAGE], title: "Free AI Cover Letter Writer", description: "Your resume + the job post = a tailored cover letter. Your first one is free.", url: "/tools/cover-letter-writer" },
 };
 
 const STEPS = [
