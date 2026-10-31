@@ -18,6 +18,7 @@ import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { ServiceWorkerRegister } from "@/components/AppInstall";
 import { Analytics } from "@/components/Analytics";
+import { ReviewPrompt } from "@/components/ReviewPrompt";
 import { siteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = {
@@ -45,7 +46,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-paper text-ink font-sans">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <ReviewPrompt />
+        </Providers>
         <ServiceWorkerRegister />
         <Analytics />
       </body>
