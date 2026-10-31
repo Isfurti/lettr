@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { auth } from "@/lib/auth";
-import { createReview, logActivity } from "@/lib/db";
+import { createReview, logActivity, listReviewsForUser } from "@/lib/db";
 import { analyzeReview } from "@/lib/ai";
 import { sendReviewReplyEmail } from "@/lib/email";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
@@ -89,4 +89,13 @@ export async function POST(req: Request) {
   await logActivity(userId, "review_submitted", `${parsed.data.rating}★`);
 
   return NextResponse.json({ reply: held ? null : analysis.reply, queued: held }, { status: 201 });
+}
+
+/** Whether the signed-in user has already left feedback (the in-app prompt only asks once). */
+export async function GET() {
+  const session = await auth();
+  if (!session?.user) return NextResponse.json({ reviewed: false }, { status: 401 });
+  const userId = (session.user as { id: string }).id;
+  const reviews = await listReviewsForUser(userId, 1).catch(() => []);
+  return NextResponse.json({ reviewed: reviews.length > 0 }, { headers: { "Cache-Control": "private, no-store" } });
 }

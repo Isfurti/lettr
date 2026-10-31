@@ -69,6 +69,8 @@ export function trackAtsCheck(score?: number) {
 
 export function trackResumeDownload(fileType: "pdf" | "docx") {
   gtag("event", "resume_download", { file_type: fileType });
+  // The in-app feedback prompt listens for this: a download is a good moment to ask.
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("lettr:download"));
   fbq("trackCustom", "ResumeDownload", { file_type: fileType });
 }
 
