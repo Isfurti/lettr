@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { loadGuestDraft, clearGuestDraft, guestDraftHasContent, completeGuestExport } from "@/lib/guest-draft";
 
 /**
@@ -11,6 +11,8 @@ import { loadGuestDraft, clearGuestDraft, guestDraftHasContent, completeGuestExp
  */
 export function GuestDraftRescue() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const autoSave = searchParams.get("draft") === "save";
   const [visible, setVisible] = useState(false);
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -23,8 +25,17 @@ export function GuestDraftRescue() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(draft.data.contact.fullName || "");
       setVisible(true);
+      // Came straight from "Sign up free" on the checker or builder: save it
+      // without asking, and open it in the editor.
+      if (autoSave) {
+        setSaving(true);
+        completeGuestExport((path) => router.push(path)).then((ok) => {
+          setSaving(false);
+          if (!ok) setError("Couldn't save it - your plan may be at its resume limit. Delete a resume or upgrade, then try again.");
+        });
+      }
     }
-  }, []);
+  }, [autoSave, router]);
 
   if (!visible) return null;
 

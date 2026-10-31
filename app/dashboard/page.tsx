@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
@@ -93,7 +94,9 @@ export default async function DashboardPage({
 
       <main className="flex-1 min-w-0 px-4 sm:px-8 lg:px-12 py-6 sm:py-10 max-w-[1200px] w-full">
         {user && !user.email_verified && <VerifyEmailBanner />}
-        <GuestDraftRescue />
+        <Suspense fallback={null}>
+          <GuestDraftRescue />
+        </Suspense>
         {upgraded && plan === "pro" && (
           <div className="mb-6 bg-gold-soft text-ink font-bold rounded-2xl px-5 py-4">
             Welcome to Pro! Every Pro feature is unlocked{proUntil ? ` until ${proUntil}` : ""}. Your invoice is below.

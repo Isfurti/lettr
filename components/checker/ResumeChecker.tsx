@@ -9,7 +9,7 @@ import type { ResumeReadReport, ReadCheckStatus } from "@/lib/ats-read";
 import { sectionNameOf } from "@/lib/ats-read";
 import { saveGuestDraft, loadGuestDraft, guestDraftHasContent } from "@/lib/guest-draft";
 import { ScoreStamp } from "@/components/builder/BuilderChrome";
-import { trackAtsCheck } from "@/lib/analytics";
+import { trackAtsCheck, trackCheckerSignupClick } from "@/lib/analytics";
 
 type CheckResult = {
   fileName: string;
@@ -80,6 +80,14 @@ export function ResumeChecker({ initialMode = "file" }: { initialMode?: "file" |
     }
   }
 
+  // Guests: keep the resume on this device, then sign up and it's saved to
+  // the new account and opened in the editor (see afterSignIn / GuestDraftRescue).
+  function signUpToSave(path: "/signup" | "/login") {
+    if (result?.data) saveGuestDraft({ data: result.data, template: "classic" });
+    trackCheckerSignupClick(path === "/signup" ? "signup" : "login");
+    router.push(result?.data ? `${path}?continue=builder` : path);
+  }
+
   async function openInBuilder() {
     if (!result?.data) return;
     setOpenError(null);
@@ -121,6 +129,7 @@ export function ResumeChecker({ initialMode = "file" }: { initialMode?: "file" |
 
   const replacesDraft =
     authStatus !== "authenticated" && typeof window !== "undefined" && guestDraftHasContent(loadGuestDraft());
+  const guest = authStatus === "unauthenticated";
   const passCount = result?.read.checks.filter((c) => c.status === "pass").length ?? 0;
 
   return (
@@ -260,7 +269,7 @@ export function ResumeChecker({ initialMode = "file" }: { initialMode?: "file" |
                   </ul>
                   {result.score.tips.length > 3 && (
                     <p className="mt-3 text-sm text-slate">
-                      {result.score.tips.length - 3} more in the builder.
+                      {result.score.tips.length - 3} more {result.score.tips.length - 3 === 1 ? "fix" : "fixes"} when you open it in Lettr.
                     </p>
                   )}
                 </div>
@@ -272,14 +281,44 @@ export function ResumeChecker({ initialMode = "file" }: { initialMode?: "file" |
                 </p>
               )}
 
+              {guest && (
+                <div className="bg-brand-blue-soft rounded-3xl p-5 flex flex-col gap-3">
+                  <p className="font-brand font-extrabold text-xl leading-tight">Save your score and fix it</p>
+                  <p className="text-[15px] text-slate leading-snug">
+                    {result.data
+                      ? "Create a free account and this resume opens in the editor with every fix listed. No card needed."
+                      : "Create a free account to build an ATS-friendly version with AI help. No card needed."}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      onClick={() => signUpToSave("/signup")}
+                      className="btn-press inline-flex items-center min-h-12 px-6 rounded-full bg-brand-blue text-white font-bold shadow-[0_5px_0_var(--brand-blue-deep)]"
+                    >
+                      Sign up free
+                    </button>
+                    <button onClick={() => signUpToSave("/login")} className="min-h-11 px-2 font-bold text-brand-blue underline">
+                      I have an account
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-wrap gap-3 mt-auto">
-                {result.data && (
+                {result.data && !guest && (
                   <button
                     onClick={openInBuilder}
                     disabled={opening}
                     className="btn-press inline-flex items-center min-h-12 px-6 rounded-full bg-brand-blue text-white font-bold shadow-[0_5px_0_var(--brand-blue-deep)] disabled:opacity-60"
                   >
                     {opening ? "Opening…" : "Fix it in Lettr"}
+                  </button>
+                )}
+                {result.data && guest && (
+                  <button
+                    onClick={openInBuilder}
+                    className="btn-press inline-flex items-center min-h-12 px-6 rounded-full bg-white border-2 border-ink font-bold"
+                  >
+                    Try it without an account
                   </button>
                 )}
                 <button

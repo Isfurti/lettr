@@ -93,3 +93,8 @@ export async function trackPurchase(p: { transactionId: string; amountMinor: num
   fbq("track", "Purchase", { value, currency, content_ids: [`pro_${p.plan}`], content_type: "product" }, { eventID: p.transactionId });
   await new Promise((r) => setTimeout(r, 500));
 }
+
+/** A guest clicked "Sign up free" / "I have an account" under their free ATS score. */
+export function trackCheckerSignupClick(kind: "signup" | "login") {
+  gtag("event", "checker_signup_click", { kind });
+}
