@@ -6,5 +6,8 @@
 export function afterSignIn(next: string | null | undefined): string {
   if (next === "import") return "/dashboard?import=1";
   if (next === "pricing") return "/pricing";
+  // Google/LinkedIn sign-in can't run code on the way back, so the dashboard
+  // saves the guest's resume (e.g. from the free checker) when it sees this.
+  if (next === "builder" || next === "export") return "/dashboard?draft=save";
   return "/dashboard";
 }
