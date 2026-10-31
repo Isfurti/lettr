@@ -459,6 +459,13 @@ export async function deleteResume(id: string, userId: string) {
   await pool.query("DELETE FROM resumes WHERE id = $1 AND user_id = $2", [id, userId]);
 }
 
+/** Latest review a user left, for deciding whether to ask again. */
+export async function lastReviewAtForUser(userId: string): Promise<Date | null> {
+  await ensureSchema();
+  const res = await pool.query("SELECT MAX(created_at) AS at FROM reviews WHERE user_id = $1", [userId]);
+  return res.rows[0]?.at ? new Date(res.rows[0].at) : null;
+}
+
 export async function countResumesForUser(userId: string): Promise<number> {
   await ensureSchema();
   const res = await pool.query("SELECT COUNT(*)::int AS count FROM resumes WHERE user_id = $1", [userId]);
