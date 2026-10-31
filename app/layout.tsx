@@ -16,6 +16,7 @@ import "@fontsource/inter/500.css";
 import "@fontsource/inter/600.css";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
+import { ReviewPrompt } from "@/components/ReviewPrompt";
 import { ServiceWorkerRegister } from "@/components/AppInstall";
 import { Analytics } from "@/components/Analytics";
 import { siteUrl } from "@/lib/site-url";
@@ -45,7 +46,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-paper text-ink font-sans">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <ReviewPrompt />
+        </Providers>
         <ServiceWorkerRegister />
         <Analytics />
       </body>
