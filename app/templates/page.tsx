@@ -12,14 +12,14 @@ import { getUserById } from "@/lib/db";
 import type { Plan } from "@/lib/limits";
 
 export const metadata: Metadata = {
-  title: "Resume Templates | Lettr — 16 Templates, 2 Free",
+  title: "ATS-Friendly Resume & CV Templates | Lettr",
   description:
-    "16 ATS-friendly resume templates — 2 free (Classic, Modern), 14 more with Pro. Customize colors and fonts, then export to PDF or Word.",
+    "16 ATS-friendly resume and CV templates, from classic to modern. Choose A4 or US Letter, customise colours and fonts, then download as PDF or Word.",
   alternates: { canonical: "/templates" },
   openGraph: {
     images: [OG_IMAGE],
-    title: "Resume Templates | Lettr",
-    description: "16 ATS-friendly resume templates. 2 free to start, the rest with Pro.",
+    title: "ATS-Friendly Resume & CV Templates | Lettr",
+    description: "16 ATS-friendly resume and CV templates. A4 or US Letter, PDF or Word.",
     url: "/templates",
   },
 };
