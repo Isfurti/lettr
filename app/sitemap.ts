@@ -15,6 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/examples`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     ...EXAMPLES.map((e) => ({ url: `${baseUrl}/examples/${e.slug}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.7 })),
     { url: `${baseUrl}/resume-builder-for-freshers`, lastModified: now, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${baseUrl}/cv-builder`, lastModified: now, changeFrequency: "monthly", priority: 0.9 },
     { url: `${baseUrl}/guides`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     ...GUIDES.map((g) => ({ url: `${baseUrl}/guides/${g.slug}`, lastModified: new Date(g.updated ?? g.published), changeFrequency: "monthly" as const, priority: 0.7 })),
     { url: `${baseUrl}/tools/bullet-writer`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },

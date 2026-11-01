@@ -20,21 +20,21 @@ import { COMPANY, operatorName } from "@/lib/company";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Lettr — AI Resume Builder with ATS Score & Cover Letters",
+  title: "Lettr: AI Resume & CV Builder with ATS Score Checker",
   description:
-    "Build an ATS-optimized resume with AI. Get an instant match score against any job description, AI-rewritten bullet points, and a tailored cover letter — free to start.",
+    "Free AI resume builder and CV maker. Check your ATS score against any job, rewrite bullet points with AI and write a tailored cover letter.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Lettr — AI Resume Builder with ATS Score & Cover Letters",
-    description: "Build an ATS-optimized resume with AI. Instant match scoring, AI bullet rewriting, tailored cover letters.",
+    title: "Lettr: AI Resume & CV Builder with ATS Score Checker",
+    description: "Build an ATS-friendly resume or CV with AI. Instant ATS score, AI bullet rewrites, tailored cover letters.",
     url: "/",
     siteName: "Lettr",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lettr — AI Resume Builder",
-    description: "Build an ATS-optimized resume with AI — free to start.",
+    title: "Lettr: AI Resume & CV Builder",
+    description: "Build an ATS-friendly resume or CV with AI. Free to start.",
   },
 };
 

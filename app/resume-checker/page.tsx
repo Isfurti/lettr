@@ -6,14 +6,14 @@ import { Footer } from "@/components/Footer";
 import { ResumeChecker } from "@/components/checker/ResumeChecker";
 
 export const metadata: Metadata = {
-  title: "Free ATS Resume Checker: See What Job Sites Read | Lettr",
+  title: "Free ATS Resume & CV Checker: Get Your ATS Score | Lettr",
   description:
-    "Upload your resume or LinkedIn PDF and see exactly what hiring software reads from it, plus a free score and fixes. No account needed.",
+    "Free ATS resume and CV checker. Upload your resume, CV or LinkedIn PDF to see what hiring software reads and get your ATS score with fixes. No sign-up.",
   alternates: { canonical: "/resume-checker" },
   openGraph: {
     images: [OG_IMAGE],
-    title: "Free Resume Checker | Lettr",
-    description: "See what job sites read from your resume, get a free score and the fixes that matter. No signup.",
+    title: "Free ATS Resume & CV Checker | Lettr",
+    description: "See what job sites read from your resume or CV, get a free ATS score and the fixes that matter. No signup.",
     url: "/resume-checker",
   },
 };
@@ -46,13 +46,13 @@ export default async function ResumeCheckerPage({ searchParams }: { searchParams
         <div className="max-w-2xl mb-10 rise">
           <p className="inline-flex items-center gap-2 bg-gold-soft text-sm font-bold px-3.5 py-1.5 rounded-full mb-5">
             <span className="w-2 h-2 rounded-full bg-gold-deep" aria-hidden="true" />
-            Free · No account needed
+            Free ATS resume &amp; CV checker · No account needed
           </p>
           <h1 className="font-brand font-extrabold text-[40px] sm:text-[58px] leading-[1.02] tracking-tight">
             See what job sites see.
           </h1>
           <p className="mt-5 text-lg text-slate leading-relaxed">
-            Upload your resume or LinkedIn PDF. Lettr shows you the text hiring software actually reads, checks it for
+            Upload your resume, CV or LinkedIn PDF. Lettr shows you the text hiring software actually reads, checks it for
             common problems, and gives you a score with the fixes that matter.
           </p>
         </div>

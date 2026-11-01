@@ -24,10 +24,10 @@ import { siteUrl } from "@/lib/site-url";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: {
-    default: "Lettr — AI Resume Builder",
+    default: "Lettr: AI Resume & CV Builder",
     template: "%s",
   },
-  description: "AI-assisted resume builder with ATS scoring and tailored cover letters.",
+  description: "AI resume and CV builder with an ATS score checker and tailored cover letters.",
   robots: { index: true, follow: true },
   applicationName: "Lettr",
   appleWebApp: { capable: true, title: "Lettr", statusBarStyle: "default" },
