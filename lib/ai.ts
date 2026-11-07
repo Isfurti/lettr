@@ -435,8 +435,6 @@ function parseJsonArraySafely(text: string): string[] {  const cleaned = text.re
 
 // ---------- Interview practice ----------
 
-export const INTERVIEW_MODEL = MODEL_FAST;
-
 export type GeneratedQuestion = { question: string; kind: "behavioural" | "role" | "resume" };
 
 /** Six practice questions for a role: two behavioural, three about the job itself, one about the candidate's own resume. */

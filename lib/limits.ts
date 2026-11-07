@@ -96,12 +96,6 @@ export const PLAN_LIMITS: Record<LimitTier, Limits> = {
 
 export type LimitCheck = { allowed: true } | { allowed: false; reason: string };
 
-/** "1 free" / "3 a month" style wording for an allowance. */
-export function allowanceLabel(n: number, period: UsagePeriod): string {
-  if (!Number.isFinite(n)) return "Unlimited";
-  return period === "lifetime" ? `${n} free` : `${n} a month`;
-}
-
 /** The end of a "you've used it" message: when more arrive, or how to get more. */
 function moreLine(tier: LimitTier, now: Date): string {
   if (tier === "free") return "Upgrade to Pro to keep going.";
