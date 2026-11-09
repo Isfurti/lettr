@@ -2,6 +2,7 @@ import { datePairProblem } from "./resume-dates";
 import { extraSections, type ResumeData } from "./types";
 import { plainResume } from "./rich-text";
 import { ACTION_VERBS, isObjectiveStyle } from "./resume-score";
+import { MARKETS, marketOf } from "./market";
 import { keywordInText, scoreResumeAgainstJob, type AtsResult } from "./ats-score";
 
 /**
@@ -117,6 +118,7 @@ export function analyzeAts(
     ...extra.projects.map((p) => p.description),
     ...extra.achievements,
   ].join(" ");
+  const market = marketOf(input.customization);
   const words =
     allText.split(/\s+/).filter(Boolean).length +
     r.experience.length * 6 +
@@ -198,7 +200,11 @@ export function analyzeAts(
           status: "warn",
           label: "No phone number",
           detail:
-            "Most Indian recruiters call first. Add a phone number with country code.",
+            market === "IN"
+              ? "Most Indian recruiters call first. Add a phone number with country code."
+              : market === "US"
+                ? "US recruiters often call or text to set up a first chat. Add a phone number."
+                : "Recruiters and application forms expect a phone number. Add one with the country code.",
           section: "contact",
         }
       : !PHONE.test(c.phone.trim())
@@ -206,7 +212,7 @@ export function analyzeAts(
             id: "phone",
             status: "warn",
             label: "Phone number looks unusual",
-            detail: "Write it like +91 98765 43210 so systems recognise it.",
+            detail: `Write it like ${MARKETS[market ?? "IN"].phoneExample} so systems recognise it.`,
             section: "contact",
           }
         : {
@@ -216,23 +222,60 @@ export function analyzeAts(
             detail: "Written in a format systems recognise.",
           },
   );
+  const hasPhoto = Boolean(input.customization?.showPhoto && input.customization?.photoDataUrl);
   readable.push(
-    input.customization?.showPhoto && input.customization?.photoDataUrl
+    hasPhoto && (market === "US" || market === "UK")
       ? {
           id: "photo",
           status: "warn",
           label: "Photo on the resume",
-          detail:
-            "Fine for many Indian and Gulf employers, but US, UK and many global companies prefer no photo, and systems ignore it.",
+          detail: `Employers in ${MARKETS[market].label} expect no photo, and some reject resumes that have one. Systems ignore it anyway.`,
           section: "design",
         }
-      : {
-          id: "photo",
-          status: "pass",
-          label: "No photo",
-          detail: "Nothing for systems to stumble on.",
-        },
+      : hasPhoto && (market === "IN" || market === "GULF" || market === "EU")
+        ? {
+            id: "photo",
+            status: "pass",
+            label: "Photo is acceptable here",
+            detail: `A professional photo is acceptable for ${MARKETS[market].label}. It is optional, and systems ignore it.`,
+          }
+        : hasPhoto
+          ? {
+              id: "photo",
+              status: "warn",
+              label: "Photo on the resume",
+              detail:
+                "Fine for many Indian and Gulf employers, but US, UK and many global companies prefer no photo, and systems ignore it. Pick where you're applying in the Design tab for exact advice.",
+              section: "design",
+            }
+          : {
+              id: "photo",
+              status: "pass",
+              label: "No photo",
+              detail: "Nothing for systems to stumble on.",
+            },
   );
+  if (market === "US" || market === "UK" || market === "EU") {
+    const personal = /\b(date of birth|d\.?o\.?b\.?|marital status|nationality|religion|father'?s name|gender)\b/i.test(
+      [allText, r.contact.location ?? "", ...r.languages ?? []].join(" "),
+    );
+    readable.push(
+      personal
+        ? {
+            id: "personal",
+            status: "warn",
+            label: "Personal details",
+            detail: `Remove date of birth, marital status, nationality or religion. Employers in ${MARKETS[market].label} don't expect them and often can't consider them.`,
+            section: "contact",
+          }
+        : {
+            id: "personal",
+            status: "pass",
+            label: "No personal details",
+            detail: `No age, marital status or similar details, which suits ${MARKETS[market].label}.`,
+          },
+    );
+  }
   readable.push(
     ODD_CHARS.test(allText)
       ? {

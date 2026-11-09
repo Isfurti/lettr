@@ -1,3 +1,4 @@
+import { MARKET_IDS } from "@/lib/market";
 import { NextResponse } from "next/server";
 import { checkDailyAiCap } from "@/lib/daily-caps";
 import { z } from "zod";
@@ -13,6 +14,7 @@ const Schema = z.object({
   roughBullet: z.string().min(3).max(1000),
   role: z.string().min(1).max(200),
   targetJobDescription: z.string().max(5000).optional(),
+  market: z.enum(MARKET_IDS).optional(),
 });
 
 export async function POST(req: Request) {

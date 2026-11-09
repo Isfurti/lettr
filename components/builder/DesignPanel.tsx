@@ -20,6 +20,7 @@ import {
   sectionOrder,
   type SectionKey,
 } from "@/lib/layout";
+import { MarketPicker } from "@/components/builder/MarketPicker";
 import { PhotoUpload } from "@/components/PhotoUpload";
 import { TemplateThumbnail } from "@/components/TemplateThumbnail";
 
@@ -219,6 +220,8 @@ export function DesignPanel({
             Tip: select words in your summary or bullets and press <b>B</b>, <i>I</i> or <u>U</u> to make them bold, italic or underlined.
           </p>
         </section>
+
+        <MarketPicker data={data} setData={setData} />
 
         <section>
           <p className={label}>Page size</p>

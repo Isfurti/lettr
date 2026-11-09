@@ -1,3 +1,4 @@
+import { marketGuidance, marketOf } from "./market";
 import Anthropic from "@anthropic-ai/sdk";
 import type { ResumeData, ExperienceEntry, EducationEntry } from "./types";
 import { MODELS, NO_USAGE, addUsage, usageFromApi, withCacheBreakpoint, type TokenUsage } from "./ai-costs";
@@ -267,7 +268,7 @@ help but isn't given, write a blank like [X]% or [number] for the user to fill i
 Don't upgrade what the person did: if they "worked on" or "helped with" something, don't make it "led",
 "designed" or "owned" unless they tell you so - pick an honest strong verb (Ran, Analysed, Built, Supported)
 or ask. Don't add purposes or outcomes they didn't state ("to drive product decisions").
-Keep the resume's own spelling style (British "analysed" or American "analyzed").
+Keep the resume's own spelling style (British "analysed" or American "analyzed"), unless a Market note in the user message names one for new text.
 You can edit contact details, the summary, experience and its bullets, education and skills. Projects,
 certifications, languages and achievements are edited in the form, so point the user there for those.
 Keep replies brief and conversational, in plain text with no markdown (no ** or #) - the resume UI shows
@@ -297,7 +298,7 @@ export async function runAgentTurn(
     ...history.map((m) => ({ role: m.role, content: m.content }) as Anthropic.MessageParam),
     {
       role: "user",
-      content: `Current resume data (JSON): ${JSON.stringify(workingResume)}\n\nUser request: ${params.userMessage}`,
+      content: `Current resume data (JSON): ${JSON.stringify(workingResume)}\n\n${marketGuidance(marketOf(workingResume.customization)) ? `${marketGuidance(marketOf(workingResume.customization))} Apply this to every suggestion and edit.\n\n` : ""}User request: ${params.userMessage}`,
     },
   ];
 
