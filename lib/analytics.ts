@@ -100,3 +100,8 @@ export async function trackPurchase(p: { transactionId: string; amountMinor: num
 export function trackCheckerSignupClick(kind: "signup" | "login") {
   gtag("event", "checker_signup_click", { kind });
 }
+
+/** A click on one of the sign-up buttons on the free checker's landing page, before any file is checked. */
+export function trackLandingCta(where: "hero_check" | "hero_build" | "nofile_build" | "sticky_signup") {
+  gtag("event", "landing_cta_click", { where });
+}
