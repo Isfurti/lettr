@@ -1,3 +1,4 @@
+import { MARKET_IDS } from "@/lib/market";
 import { NextResponse } from "next/server";
 import { checkDailyAiCap } from "@/lib/daily-caps";
 import { z } from "zod";
@@ -13,6 +14,7 @@ const Schema = z.object({
   experience: z.array(z.any()).default([]),
   skills: z.array(z.string()).default([]),
   targetRole: z.string().max(200).optional(),
+  market: z.enum(MARKET_IDS).optional(),
 });
 
 export async function POST(req: Request) {

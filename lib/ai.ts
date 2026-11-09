@@ -1,3 +1,4 @@
+import { marketGuidance, marketOf, type Market } from "./market";
 import Anthropic from "@anthropic-ai/sdk";
 import type { ResumeData } from "./types";
 import { MODELS, addUsage, usageFromApi, type ModelId, type TokenUsage } from "./ai-costs";
@@ -78,12 +79,14 @@ export async function polishBullet(params: {
   roughBullet: string;
   role: string;
   targetJobDescription?: string;
+  market?: Market;
 }): Promise<AiResult<string[]>> {
   params = { ...params, roughBullet: stripRich(params.roughBullet) };
   const prompt = `You are an expert resume writer. Rewrite the rough work point below into 3 distinct
 resume bullet options for a "${params.role}" role.
 
 ${HONESTY_RULES}
+${marketGuidance(params.market)}
 
 How to write each bullet:
 - Start with a plain action verb.
@@ -131,6 +134,8 @@ Skills: ${resume.skills.join(", ")}
 for the candidate below, tailored to the target job description.
 ${companyName ? `The target company is "${companyName}".` : ""}
 Do not invent achievements, numbers, employers or skills that aren't in the resume summary below. Professional but warm tone.
+${marketGuidance(marketOf(params.resume.customization))}
+Follow the market's conventions for spelling and for how the letter is addressed and closed.
 Output plain text only, no markdown, no placeholders like [Company Name] left unfilled if the company is known.
 
 CANDIDATE RESUME SUMMARY:
@@ -161,11 +166,12 @@ export async function generateResignationLetter(params: {
   phone?: string;
   /** The letter's date line. Defaults to today in India time. */
   today?: string;
+  market?: Market;
 }): Promise<AiResult<string>> {
   const { employeeName, companyName, jobTitle, lastDay, reason, tone = "neutral", managerName, email, phone } = params;
   const today =
     params.today ??
-    new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" });
+    new Date().toLocaleDateString(params.market === "US" ? "en-US" : "en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" });
   const contactLine = [email, phone].filter(Boolean).join(" · ");
 
   const prompt = `Write a professional resignation letter with these details:
@@ -178,6 +184,8 @@ ${managerName ? `- Addressed to: ${managerName}` : ""}
 ${reason ? `- Reason to briefly mention (optional, keep it graceful): ${reason}` : ""}
 
 Tone: ${tone === "warm" ? "warm and appreciative, express gratitude for the opportunity" : tone === "brief" ? "brief and to the point, 3-4 sentences total" : "professional and neutral"}.
+
+${params.market === "US" ? "Use American spelling." : params.market === "UK" ? "Use British spelling." : ""}
 
 Layout, exactly in this order:
 1. The date line: ${today}
@@ -203,6 +211,7 @@ export async function generateSummary(params: {
   experience: ResumeData["experience"];
   skills: string[];
   targetRole?: string;
+  market?: Market;
 }): Promise<AiResult<string[]>> {
   const { skills, targetRole } = params;
   const experience = params.experience.map((e) => ({ ...e, bullets: e.bullets.map(stripRich) }));
@@ -222,6 +231,7 @@ ${years ? `Total experience: about ${years} years (from the dates above).` : ""}
 Skills: ${skills.join(", ") || "(none listed)"}
 
 ${HONESTY_RULES}
+${marketGuidance(params.market)}
 
 How to write each summary:
 - Resume style: no "I" and no third person (start like "Sales executive who...").
@@ -445,6 +455,7 @@ export async function generateInterviewQuestions(params: {
   company?: string;
   jobPost?: string;
   resume?: ResumeData | null;
+  market?: Market;
 }): Promise<AiResult<GeneratedQuestion[]>> {
   const r = params.resume ? plainResume(params.resume) : null;
   const background = r
@@ -453,9 +464,11 @@ Summary: ${r.summary}
 Experience: ${r.experience.map((e) => `${e.role} at ${e.company}: ${e.bullets.slice(0, 3).join("; ")}`).join("\n")}
 Skills: ${r.skills.join(", ")}`
     : "No resume given.";
+  const interviewMarket = params.market ?? marketOf(params.resume?.customization);
   const prompt = `You are an experienced interviewer. Write 6 realistic interview questions for a "${params.role}" role${
     params.company ? ` at ${params.company}` : ""
   }.
+${interviewMarket ? `${marketGuidance(interviewMarket)} Ask the way interviewers in that market do.` : ""}
 
 - 2 behavioural questions (teamwork, conflict, failure, ownership) - kind "behavioural"
 - 3 questions about the actual skills and situations of this role - kind "role"
@@ -550,6 +563,8 @@ Problems the checker found:
 ${params.issues.map((i) => `- ${i}`).join("\n") || "- none"}
 ${params.missingKeywords.length ? `Job keywords missing from the resume: ${params.missingKeywords.slice(0, 15).join(", ")}` : ""}
 
+${marketGuidance(marketOf(params.resume.customization))}
+
 RESUME:
 ${resumeText.slice(0, 6000)}
 ${params.jobPost ? `\nJOB POST:\n${params.jobPost.slice(0, 3500)}` : ""}
@@ -564,7 +579,8 @@ Rules:
 - Never invent employers, numbers, skills, tools, duties, teams, people or outcomes. An example may only rephrase facts already in the resume; where a number or detail would help, write [your number] or [your detail] instead.
 - Only suggest keywords the resume suggests they genuinely have, or tell them to add a keyword only if it's true for them.
 - Ignore the hiring company's own name and generic words when talking about keywords.
-- Match the resume's spelling style (British "analysed" or American "analyzed").
+- Match the resume's spelling style (British "analysed" or American "analyzed"), unless the Market note above names one.
+- If a Market note is given, make the fixes fit that market's norms (photo, personal details, length, wording).
 - Plain English, no jargon, no markdown.`;
   const { text, usage } = await complete(MODEL_FAST, 1200, prompt);
   // Same backstop as the rewrite tools: a figure the resume doesn't contain becomes a blank.

@@ -1,3 +1,4 @@
+import { MARKET_IDS } from "@/lib/market";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
@@ -8,10 +9,11 @@ import { checkAndRecordRateLimit, refundRateLimit } from "@/lib/rate-limit";
 import { FREE_AI_REWRITES } from "@/lib/free-plan";
 
 const Schema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("bullet"), text: z.string().trim().min(3).max(1000), role: z.string().max(200).optional() }),
+  z.object({ kind: z.literal("bullet"), text: z.string().trim().min(3).max(1000), role: z.string().max(200).optional(), market: z.enum(MARKET_IDS).optional() }),
   z.object({
     kind: z.literal("summary"),
     role: z.string().max(200).optional(),
+    market: z.enum(MARKET_IDS).optional(),
     experience: z
       .array(z.object({ role: z.string().max(200), company: z.string().max(200), startDate: z.string().max(50), endDate: z.string().max(50), bullets: z.array(z.string().max(1000)).max(20) }))
       .max(15),
@@ -45,11 +47,12 @@ export async function POST(req: Request) {
     const d = parsed.data;
     const result =
       d.kind === "bullet"
-        ? await polishBullet({ roughBullet: d.text, role: d.role || "professional" })
+        ? await polishBullet({ roughBullet: d.text, role: d.role || "professional", market: d.market })
         : await generateSummary({
             experience: d.experience.map((e, i) => ({ ...e, id: String(i) })),
             skills: d.skills,
             targetRole: d.role,
+            market: d.market,
           });
     await trackAiUsage({ userId: null, feature: d.kind === "bullet" ? "bullets" : "summary", model: result.model, usage: result.usage });
     return NextResponse.json({ options: result.value });

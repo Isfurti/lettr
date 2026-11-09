@@ -1,3 +1,4 @@
+import { MARKET_IDS } from "@/lib/market";
 import { NextResponse } from "next/server";
 import { checkDailyAiCap } from "@/lib/daily-caps";
 import { z } from "zod";
@@ -18,6 +19,7 @@ const Schema = z.object({
   managerName: z.string().max(200).optional(),
   email: z.string().max(200).optional(),
   phone: z.string().max(60).optional(),
+  market: z.enum(MARKET_IDS).optional(),
 });
 
 export async function POST(req: Request) {

@@ -1,5 +1,6 @@
 "use client";
 
+import { MarketPicker } from "@/components/builder/MarketPicker";
 import { Ordered, Sec } from "@/components/templates/Ordered";
 import { Rich } from "@/components/templates/Rich";
 import { applyLayout, layoutScale, photoShape } from "@/lib/layout";
@@ -9,7 +10,7 @@ import { AtsPanel } from "@/components/builder/AtsPanel";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { extraSections, type ResumeData, type ExperienceEntry, type EducationEntry, type ProjectEntry, type CertificationEntry } from "@/lib/types";
+import { extraSections, type ResumeCustomization, type ResumeData, type ExperienceEntry, type EducationEntry, type ProjectEntry, type CertificationEntry } from "@/lib/types";
 import { scoreResumeQuality, resumeScoreLevel } from "@/lib/resume-score";
 import type { Plan } from "@/lib/limits";
 import type { Allowance, PlanAllowances } from "@/lib/free-usage";
@@ -911,6 +912,7 @@ export function EditForm({
           )}
         </div>
       )}
+      <MarketPicker data={data} setData={setData} />
       <ProgressChecklist data={data} />
 
       <DesignPanel data={data} setData={setData} template={template} setTemplate={setTemplate} plan={guest ? undefined : plan} />
@@ -941,6 +943,7 @@ export function EditForm({
               exp={exp}
               role={exp.role}
               guest={guest}
+              market={data.customization?.market}
               onChange={(patch) => updateExperience(exp.id, patch)}
               onRemove={() => removeExperience(exp.id)}
             />
@@ -1214,6 +1217,7 @@ function SummaryField({
         role: data.experience[0]?.role,
         experience: data.experience.map((e) => ({ role: e.role, company: e.company, startDate: e.startDate, endDate: e.endDate, bullets: e.bullets })),
         skills: data.skills,
+        market: data.customization?.market,
       });
       setLoading(false);
       if ("options" in out) setOptions(out.options);
@@ -1226,7 +1230,7 @@ function SummaryField({
       const res = await fetch("/api/ai/generate-summary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ experience: data.experience, skills: data.skills, targetRole: data.experience[0]?.role }),
+        body: JSON.stringify({ experience: data.experience, skills: data.skills, targetRole: data.experience[0]?.role, market: data.customization?.market }),
       });
       const body = await res.json().catch(() => ({}));
       if (res.ok) setOptions(body.options);
@@ -1309,12 +1313,14 @@ function ExperienceCard({
   exp,
   role,
   guest = false,
+  market,
   onChange,
   onRemove,
 }: {
   exp: ExperienceEntry;
   role: string;
   guest?: boolean;
+  market?: ResumeCustomization["market"];
   onChange: (patch: Partial<ExperienceEntry>) => void;
   onRemove: () => void;
 }) {
@@ -1355,7 +1361,7 @@ function ExperienceCard({
         return;
       }
       setLoadingBullet(index);
-      const out = await guestRewrite({ kind: "bullet", text: bullet, role: role || undefined });
+      const out = await guestRewrite({ kind: "bullet", text: bullet, role: role || undefined, market });
       setLoadingBullet(null);
       if ("options" in out) setAiOptions((o) => ({ ...o, [index]: out.options }));
       else setSignInHintFor(index);
@@ -1367,7 +1373,7 @@ function ExperienceCard({
       const res = await fetch("/api/ai/generate-bullets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roughBullet: bullet, role: role || "professional" }),
+        body: JSON.stringify({ roughBullet: bullet, role: role || "professional", market }),
       });
       const body = await res.json();
       if (res.ok) setAiOptions((o) => ({ ...o, [index]: body.options }));
@@ -1903,6 +1909,7 @@ function ResignationLetterPanel({ data }: { data: ResumeData }) {
           jobTitle: jobTitle.trim(),
           lastDay: formatLastDay(lastDay),
           managerName: managerName.trim() || undefined,
+          market: data.customization?.market,
           email: data.contact.email?.trim() || undefined,
           phone: data.contact.phone?.trim() || undefined,
           tone,

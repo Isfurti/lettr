@@ -48,6 +48,7 @@ export type ResumeCustomization = {
   hiddenSections?: string[]; // section keys left off the resume
   dateStyle?: "short" | "long" | "numeric" | "year"; // how dates print - defaults to "Jan 2024"
   photoShape?: "circle" | "rounded" | "square";
+  market?: "IN" | "US" | "UK" | "EU" | "GULF"; // "Applying in" - tunes AI and ATS advice (see lib/market.ts)
 };
 
 export type ResumeData = {
