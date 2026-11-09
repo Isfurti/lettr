@@ -276,6 +276,259 @@ export const GUIDES: Guide[] = [
     cta: { label: "Write my cover letter, free", href: "/tools/cover-letter-writer" },
     relatedExamples: ["accountant", "chartered-accountant", "brand-manager", "product-manager"],
   },
+  {
+    slug: "ats-resume-example",
+    title: "ATS resume example: a sample you can copy (2026)",
+    description:
+      "See what an ATS-friendly resume looks like, section by section, with sample wording you can adapt. Plain format, real keywords and bullets that show results.",
+    published: "2026-11-09",
+    readMinutes: 6,
+    intro:
+      "Most ATS advice tells you what to avoid. This guide shows what a good one looks like: the layout, the wording of each section and a before-and-after for the bullets that matter most. Adapt it to your own facts, and never copy details that aren't yours.",
+    sections: [
+      {
+        heading: "The layout of an ATS resume, top to bottom",
+        ordered: true,
+        list: [
+          "Name in large plain text, then phone, email, city and LinkedIn on one or two lines.",
+          "Summary: two or three lines with your job title, years of experience and your strongest skills.",
+          "Experience: job title, company, dates, then three to five bullets for each role, most recent first.",
+          "Education: degree, college or university, year.",
+          "Skills: a plain list of tools and skills, using the same words as the job post.",
+          "Optional: certifications, projects, languages.",
+        ],
+      },
+      {
+        heading: "Sample summary",
+        paragraphs: [
+          "Data analyst with 3 years of experience in SQL, Excel and Power BI. Builds weekly sales dashboards and cleans messy data so teams can make decisions faster. Looking for an analyst role in e-commerce or retail.",
+          "Notice what it does: it names the role, the tools and the work. Replace the example with your own title, years and tools.",
+        ],
+      },
+      {
+        heading: "Sample bullets: before and after",
+        list: [
+          "Before: Responsible for reports. After: Built weekly sales reports in Excel and Power BI for 4 regional managers.",
+          "Before: Helped the marketing team. After: Ran email campaigns in Mailchimp and tracked open and click rates each week.",
+          "Before: Worked on customer queries. After: Resolved customer queries by phone and email, and logged each case in the CRM.",
+        ],
+        paragraphs: [
+          "Start each bullet with a verb, name the tool or method, and add a number when you honestly have one. If you don't have a number, describe the scale: how many people, how often, how big.",
+        ],
+      },
+      {
+        heading: "Sample skills section",
+        paragraphs: [
+          "SQL, Advanced Excel, Power BI, Python (pandas), Data cleaning, Dashboards, Stakeholder reporting.",
+          "Only list what you can talk about in an interview. Use the exact spelling the job post uses, such as \"Power BI\" and not \"PowerBI\".",
+        ],
+      },
+      {
+        heading: "What makes this format ATS-friendly",
+        list: [
+          "One column, so the software reads it in the right order",
+          "Standard headings: Summary, Experience, Education, Skills",
+          "No tables, text boxes, icons or skill bars",
+          "Real, selectable text in a PDF or Word file",
+          "Consistent dates, for example Jun 2023 – Present",
+        ],
+      },
+      {
+        heading: "Check yours",
+        paragraphs: [
+          "Upload your resume to Lettr's free ATS checker to see the exact text hiring software reads, your score and the fixes that matter. No account needed.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["data-analyst", "business-analyst", "digital-marketing-executive"],
+  },
+  {
+    slug: "ats-resume-checklist",
+    title: "ATS resume checklist: 15 checks before you apply",
+    description:
+      "A simple 15-point ATS checklist: format, keywords, contact details and file type. Run through it before every application to avoid getting filtered out.",
+    published: "2026-11-09",
+    readMinutes: 5,
+    intro:
+      "Use this checklist before you send any application. Each point takes a few seconds to check, and together they catch most of the problems that make an ATS misread a resume.",
+    sections: [
+      {
+        heading: "Format checks",
+        ordered: true,
+        list: [
+          "One column, no tables or text boxes.",
+          "Standard headings: Summary, Experience, Education, Skills.",
+          "No photo, icons, charts, skill bars or star ratings.",
+          "A common font, 10 to 12 points.",
+          "Normal round bullet points, not special symbols or emoji.",
+        ],
+      },
+      {
+        heading: "Content checks",
+        ordered: true,
+        list: [
+          "Your job title matches or is close to the title in the job post.",
+          "The main skills and tools in the job post appear in your resume, if you really have them.",
+          "Each role has dates in the same format.",
+          "Bullets start with a verb and show what you did, not only your duties.",
+          "Numbers are used where you honestly have them.",
+        ],
+      },
+      {
+        heading: "Contact and file checks",
+        ordered: true,
+        list: [
+          "Name, phone, email and city are in plain text in the main body.",
+          "Your email looks professional.",
+          "The file is a PDF or Word document, unless the job says otherwise.",
+          "You can select and copy all the text in the PDF. If you can't, it's an image.",
+          "The file name includes your name, for example Priya-Sharma-Resume.pdf.",
+        ],
+      },
+      {
+        heading: "If you fail a check",
+        paragraphs: [
+          "Fix the format problems first, since they can stop the system from reading anything at all. Then work on keywords and bullets. A resume that reads cleanly and matches the job beats a fancy one every time.",
+        ],
+      },
+      {
+        heading: "Let a tool run the checks",
+        paragraphs: [
+          "Lettr's free ATS checker runs these checks for you. Upload your file and you'll see the plain text the software reads, a score and the fixes in order of importance.",
+        ],
+      },
+    ],
+    cta: { label: "Run the free ATS check", href: "/resume-checker" },
+    relatedExamples: ["hr-executive", "accountant", "product-manager"],
+  },
+  {
+    slug: "fresher-resume-examples",
+    title: "Fresher resume examples: what to write with no experience",
+    description:
+      "Sample wording for a fresher resume: objective, projects, internships, skills and achievements. Real examples you can adapt for your degree, with no work experience needed.",
+    published: "2026-11-09",
+    readMinutes: 6,
+    intro:
+      "The hardest part of a first resume is knowing what to write when you haven't had a job. These examples show how to describe projects, internships and skills so a recruiter sees what you can do. Replace every detail with your own.",
+    sections: [
+      {
+        heading: "Career objective examples",
+        list: [
+          "Computer science graduate with project experience in Java and SQL, looking for a software developer role where I can build and test real features.",
+          "B.Com graduate with strong Excel and Tally skills, looking for an accounts executive role to apply my knowledge of bookkeeping and GST.",
+          "MBA marketing graduate with an internship in social media, looking for a digital marketing role to run campaigns and track results.",
+        ],
+        paragraphs: ["Keep it to two or three lines. Name the role, one or two skills and what you want to do."],
+      },
+      {
+        heading: "How to describe a project",
+        paragraphs: [
+          "Give the project a title, one line on what it does, and two or three bullets on what you built and the tools you used.",
+        ],
+        list: [
+          "Attendance tracker (Python, SQLite): built a command-line app that records daily attendance and prints monthly summaries.",
+          "College fest budget sheet (Excel): tracked income and expenses for a 3-day event and shared a weekly summary with the team.",
+          "Instagram page for a local shop: wrote posts and tracked likes and reach every week for 2 months.",
+        ],
+      },
+      {
+        heading: "How to describe an internship",
+        list: [
+          "Wrote and scheduled 12 social media posts a month for a small clothing brand.",
+          "Entered and checked purchase invoices in Tally under the supervision of the accounts manager.",
+          "Tested new app screens and reported bugs to the development team in Jira.",
+        ],
+        paragraphs: ["Say only what you actually did. Small, true details beat big claims."],
+      },
+      {
+        heading: "Skills a fresher can list",
+        paragraphs: [
+          "Pick skills you could be tested on. Examples: MS Excel, Tally, Python, SQL, Canva, Google Analytics, public speaking, English and Hindi.",
+        ],
+      },
+      {
+        heading: "Achievements and extras",
+        list: [
+          "College competitions, hackathons or paper presentations",
+          "Leadership roles in clubs, NSS or NCC",
+          "Online certificates from Coursera, NPTEL or Google",
+          "Volunteering and part-time work",
+        ],
+      },
+      {
+        heading: "Build yours with help",
+        paragraphs: [
+          "Lettr's resume builder has fresher templates and an AI helper that turns rough notes into clear bullets without inventing facts. It's free to start.",
+        ],
+      },
+    ],
+    cta: { label: "Build my fresher resume", href: "/resume-builder-for-freshers" },
+    relatedExamples: ["data-analyst", "digital-marketing-executive", "accountant"],
+  },
+  {
+    slug: "bcom-llb-resume-example",
+    title: "B.Com LLB resume example for law and corporate freshers",
+    description:
+      "How to write a resume with a B.Com LLB degree: what to include, how to present internships, moot courts and papers, and sample wording for law firms and corporate roles.",
+    published: "2026-11-09",
+    readMinutes: 5,
+    intro:
+      "A B.Com LLB degree opens doors in law firms, company legal teams, compliance, taxation and finance. Your resume should show both sides: the law you studied and the commerce skills that set you apart. Here's how to lay it out.",
+    sections: [
+      {
+        heading: "What to include, in order",
+        ordered: true,
+        list: [
+          "Contact details: name, phone, professional email, city and LinkedIn.",
+          "Profile: two lines on your degree, your interest area and one or two strengths.",
+          "Education: B.Com LLB, college, university, years and CGPA or percentage. Add the bar enrolment status if you have it.",
+          "Internships: law firms, courts, companies or chambers, with what you worked on.",
+          "Moot courts, research papers and publications.",
+          "Skills and certifications.",
+          "Positions of responsibility and achievements.",
+        ],
+      },
+      {
+        heading: "Sample profile",
+        paragraphs: [
+          "B.Com LLB graduate with internship experience in corporate and tax law. Comfortable with legal drafting, research and basic accounting. Looking for an associate role at a law firm or a legal executive role in a company.",
+        ],
+      },
+      {
+        heading: "How to describe internships",
+        list: [
+          "Drafted a first version of a rental agreement and a legal notice under the supervision of the senior associate.",
+          "Researched case law on GST disputes and prepared a short summary note for the team.",
+          "Assisted with company incorporation paperwork and filed forms on the MCA portal.",
+          "Observed hearings at the district court and maintained case files.",
+        ],
+        paragraphs: ["Use only what you really did, and describe your part clearly, not the whole matter."],
+      },
+      {
+        heading: "Show the commerce edge",
+        paragraphs: [
+          "Many law graduates can draft. Fewer can read a balance sheet. If you know Tally, Excel, GST or basic financial analysis, list them in your skills and mention where you used them.",
+        ],
+      },
+      {
+        heading: "Moot courts, papers and certifications",
+        list: [
+          "Moot court: name the competition, your role (speaker or researcher) and how far your team went.",
+          "Research papers: title, journal or conference and year.",
+          "Certificates: contract drafting, GST, company law, IPR or arbitration courses.",
+        ],
+      },
+      {
+        heading: "Keep it to one page",
+        paragraphs: [
+          "As a fresher, one page is enough. Use clear headings and plain formatting so that both a partner at a law firm and an ATS can read it quickly.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["accountant", "chartered-accountant", "hr-executive"],
+  },
 ];
 
 export function getGuide(slug: string) {

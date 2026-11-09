@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PublicNav } from "@/components/PublicNav";
 import { Footer } from "@/components/Footer";
 import { ResumeChecker } from "@/components/checker/ResumeChecker";
+import { HeroCtas, NoFileStrip, StickySignup } from "@/components/checker/LandingCtas";
 
 export const metadata: Metadata = {
   title: "Free ATS Resume & CV Checker: Get Your ATS Score | Lettr",
@@ -55,9 +56,14 @@ export default async function ResumeCheckerPage({ searchParams }: { searchParams
             Upload your resume, CV or LinkedIn PDF. Lettr shows you the text hiring software actually reads, checks it for
             common problems, and gives you a score with the fixes that matter.
           </p>
+          <HeroCtas />
+          <p className="mt-4 text-sm text-slate">Free · No card · Takes about a minute</p>
         </div>
 
-        <ResumeChecker initialMode={from === "linkedin" ? "linkedin" : "file"} />
+        <div id="checker" className="scroll-mt-6">
+          <ResumeChecker initialMode={from === "linkedin" ? "linkedin" : "file"} />
+        </div>
+        <NoFileStrip />
 
         <section className="mt-16 sm:mt-20 grid lg:grid-cols-[1fr_1.6fr] gap-10">
           <div>
@@ -84,6 +90,7 @@ export default async function ResumeCheckerPage({ searchParams }: { searchParams
         </section>
       </main>
       <Footer />
+      <StickySignup />
     </div>
   );
 }
