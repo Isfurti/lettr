@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { EXAMPLES } from "@/lib/examples";
 import { GUIDES } from "@/lib/guides";
+import { COUNTRIES } from "@/lib/countries";
 import { siteUrl } from "@/lib/site-url";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -16,6 +17,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...EXAMPLES.map((e) => ({ url: `${baseUrl}/examples/${e.slug}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.7 })),
     { url: `${baseUrl}/resume-builder-for-freshers`, lastModified: now, changeFrequency: "monthly", priority: 0.9 },
     { url: `${baseUrl}/cv-builder`, lastModified: now, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${baseUrl}/resume-builder`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+    ...COUNTRIES.map((c) => ({ url: `${baseUrl}/resume-builder/${c.slug}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.8 })),
     { url: `${baseUrl}/guides`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     ...GUIDES.map((g) => ({ url: `${baseUrl}/guides/${g.slug}`, lastModified: new Date(g.updated ?? g.published), changeFrequency: "monthly" as const, priority: 0.7 })),
     { url: `${baseUrl}/tools/bullet-writer`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },

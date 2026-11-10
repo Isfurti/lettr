@@ -11,6 +11,7 @@ const COLUMNS = [
       { href: "/resume-checker", label: "Free ATS checker" },
       { href: "/resume-builder-for-freshers", label: "Resume builder for freshers" },
       { href: "/cv-builder", label: "CV builder (UK & Europe)" },
+      { href: "/resume-builder", label: "Resume builder by country" },
       { href: "/templates", label: "Templates" },
       { href: "/examples", label: "Resume examples" },
       { href: "/tools/bullet-writer", label: "Bullet point writer" },
