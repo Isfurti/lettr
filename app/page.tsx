@@ -13,6 +13,27 @@ import { TEMPLATE_IDS } from "@/lib/templates";
 import { FREE_AI_REWRITES } from "@/lib/free-plan";
 import { FREE_AI_TRY_LINE, FAIR_USE_HREF } from "@/lib/limits";
 import { COMPANY, operatorName } from "@/lib/company";
+import { getExample, type ResumeExample } from "@/lib/examples";
+
+// Text links from the homepage to individual examples, so Google finds and
+// crawls them sooner. Includes pages Search Console showed as not yet crawled.
+const POPULAR_EXAMPLES = [
+  "campus-placement-software-engineer",
+  "mechanical-engineer-fresher",
+  "bcom-fresher-accounts",
+  "hotel-management-fresher",
+  "data-analyst",
+  "product-manager",
+  "chartered-accountant",
+  "bank-relationship-manager",
+  "staff-nurse",
+  "hvac-technician",
+  "civil-engineer-australia",
+  "mechanical-engineer-germany",
+  "marketing-manager-singapore",
+]
+  .map(getExample)
+  .filter((e): e is ResumeExample => Boolean(e));
 
 // Revalidate hourly rather than fetching featured reviews on every single
 // page load - this is the highest-traffic page, no reason to hit the
@@ -378,6 +399,21 @@ export default async function Home() {
               </Link>
             </Reveal>
           ))}
+        </div>
+        <div className="mt-12">
+          <p className="font-extrabold mb-4">Popular resume examples</p>
+          <ul className="flex flex-wrap gap-2">
+            {POPULAR_EXAMPLES.map((e) => (
+              <li key={e.slug}>
+                <Link
+                  href={`/examples/${e.slug}`}
+                  className="inline-flex items-center min-h-10 px-4 rounded-full bg-white border border-rule text-sm font-bold hover:border-ink hover:text-brand-blue transition-colors"
+                >
+                  {e.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
