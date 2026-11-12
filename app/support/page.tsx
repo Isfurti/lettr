@@ -172,7 +172,7 @@ const HELP = [
   },
   {
     q: "How do I cancel Pro?",
-    a: "Pro is a one-time pass, so there's nothing to cancel. It ends on its own on the date shown on your dashboard, and your account moves to the free plan with all your resumes kept.",
+    a: "If your plan renews automatically, cancel it from your dashboard: you won't be charged again, and Pro runs until the end of the time you've paid for. One-time passes don't renew, so there's nothing to cancel; they end on the date shown on your dashboard. Either way your resumes stay saved on the free plan.",
   },
   {
     q: "How do I delete my account?",

@@ -50,10 +50,16 @@ export function formatProDate(date: string | Date): string {
   });
 }
 
-/* ---------- Auto-renewing monthly Pro ---------- */
+/* ---------- Auto-renewing plans ---------- */
 
 /**
- * Days of Pro kept after the paid month ends. Razorpay retries a failed
+ * Once Razorpay Subscriptions is switched on, every plan renews automatically
+ * at the end of its period (1, 3 or 12 months) until cancelled. People who
+ * bought a one-time pass before that keep it as it is.
+ */
+
+/**
+ * Days of Pro kept after the paid period ends. Razorpay retries a failed
  * renewal on the next three days, so Pro shouldn't switch off in between.
  */
 export const AUTO_RENEW_GRACE_DAYS = 3;
@@ -61,17 +67,33 @@ export const AUTO_RENEW_GRACE_DAYS = 3;
 /** Days before a renewal that the "renews soon" email goes out. */
 export const RENEWAL_REMINDER_DAYS = 3;
 
-export const AUTO_RENEW_DESCRIPTION = "Lettr Pro - monthly, renews automatically";
+/** How often each plan renews, in words: "every month", "every 3 months", "every year". */
+export const RENEWAL_PERIOD: Record<PlanId, string> = {
+  monthly: "every month",
+  quarter: "every 3 months",
+  yearly: "every year",
+};
 
-/** The auto-renew price for this region in minor units, or null if the region has no auto-renew offer. */
-export function autoRenewAmountMinor(prices: RegionPrices): number | null {
-  if (prices.currency === "INR" || !prices.autoMonthly) return null;
-  return Math.round(prices.autoMonthly * 100);
+/** What the invoice and Razorpay call a renewing plan, e.g. "Lettr Pro - 3 months, renews automatically". */
+export function renewingDescription(plan: PlanId): string {
+  const name = plan === "monthly" ? "monthly" : plan === "quarter" ? "3 months" : "yearly";
+  return `Lettr Pro - ${name}, renews automatically`;
 }
 
-/** When Pro should end for a subscription whose paid month ends at `currentEnd` (unix seconds). */
-export function autoRenewProUntil(currentEnd: number | null, now: Date = new Date()): Date {
-  const base = currentEnd ? new Date(currentEnd * 1000) : addMonths(now, 1);
+/** Razorpay plan settings for each Lettr plan. */
+export function razorpayPeriod(plan: PlanId): { period: "monthly" | "yearly"; interval: number } {
+  if (plan === "yearly") return { period: "yearly", interval: 1 };
+  return { period: "monthly", interval: plan === "quarter" ? 3 : 1 };
+}
+
+/** The renewing price in minor units: the same as the plan's listed price. */
+export function renewingAmountMinor(prices: RegionPrices, plan: PlanId): number {
+  return passAmountMinor(prices, plan);
+}
+
+/** When Pro should end for a subscription whose paid period ends at `currentEnd` (unix seconds). */
+export function autoRenewProUntil(currentEnd: number | null, months = 1, now: Date = new Date()): Date {
+  const base = currentEnd ? new Date(currentEnd * 1000) : addMonths(now, months);
   return new Date(base.getTime() + AUTO_RENEW_GRACE_DAYS * 86_400_000);
 }
 
@@ -81,7 +103,7 @@ function addMonths(d: Date, months: number): Date {
   return out;
 }
 
-/** The Razorpay plan cache key, so each price gets one plan, e.g. "USD_1900". */
-export function autoRenewPlanKey(currency: string, amountMinor: number): string {
-  return `${currency.toUpperCase()}_${amountMinor}`;
+/** The Razorpay plan cache key, so each plan and price gets one Razorpay plan, e.g. "quarter_USD_4900". */
+export function renewingPlanKey(plan: PlanId, currency: string, amountMinor: number): string {
+  return `${plan}_${currency.toUpperCase()}_${amountMinor}`;
 }

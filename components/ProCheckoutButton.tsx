@@ -14,8 +14,10 @@ export type CheckoutState =
   | "signed-out"
   /** Has Pro from the Lettr team, nothing to buy. */
   | "comped"
-  /** Already on the auto-renewing monthly plan. */
+  /** Already on a renewing plan. */
   | "subscribed"
+  /** Has paid Pro time still running (e.g. a one-time pass); can pick a plan after it ends. */
+  | "has-pro"
   | "ready";
 
 type RazorpayResponse = {
@@ -53,8 +55,8 @@ const BUTTON =
 const MUTED = "flex items-center justify-center w-full min-h-12 rounded-full font-extrabold cursor-not-allowed bg-gold/90 text-ink";
 
 /**
- * `mode="auto"` starts the auto-renewing monthly plan (a Razorpay
- * subscription) instead of a one-time pass.
+ * `mode="auto"` starts a renewing plan (a Razorpay subscription) instead of a
+ * one-time pass.
  */
 export function ProCheckoutButton({
   plan,
@@ -73,7 +75,8 @@ export function ProCheckoutButton({
   if (state === "closed") return <button type="button" disabled className={MUTED}>Opens at launch</button>;
   if (state === "unavailable") return <button type="button" disabled className={MUTED}>Coming soon in your country</button>;
   if (state === "comped") return <button type="button" disabled className={MUTED}>You have Pro</button>;
-  if (state === "subscribed") return <button type="button" disabled className={MUTED}>You&apos;re on auto-renew</button>;
+  if (state === "subscribed") return <button type="button" disabled className={MUTED}>You&apos;re on Pro</button>;
+  if (state === "has-pro") return <button type="button" disabled className={MUTED}>You have Pro</button>;
   if (state === "signed-out") {
     return (
       <Link href="/signup?continue=pricing" className={BUTTON}>

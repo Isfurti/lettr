@@ -3,6 +3,10 @@ import Link from "next/link";
 import { LegalPage, type LegalSection } from "@/components/LegalPage";
 import { COMPANY, SELLER, operatorName } from "@/lib/company";
 import { PLAN_LIMITS } from "@/lib/limits";
+import { subscriptionsEnabled } from "@/lib/razorpay";
+
+/** Once Razorpay Subscriptions is on, every plan renews automatically. */
+const RENEWING = subscriptionsEnabled();
 
 export const metadata: Metadata = {
   title: "Terms of Service | Lettr",
@@ -117,27 +121,34 @@ const SECTIONS: LegalSection[] = [
           The Free plan includes {PLAN_LIMITS.free.maxResumes} resume, the Classic and Modern templates, the ATS score and a
           one-time free try of the AI features ({PLAN_LIMITS.free.maxAiWritingAssists} AI rewrites, 1 cover letter, 1 ATS
           analyst review and 1 practice interview). Your first PDF is free of any Lettr branding; later free PDFs carry a small
-          &quot;Made with Lettr&quot; line. Pro unlocks the rest. Pro is sold as one-time passes for 1, 3 or 12 months, with
-          prices shown on our <Link href="/pricing">pricing page</Link>.
+          &quot;Made with Lettr&quot; line. Pro unlocks the rest.{" "}
+          {RENEWING
+            ? "Pro is sold as plans that renew automatically every month, every 3 months or every year"
+            : "Pro is sold as one-time passes for 1, 3 or 12 months"}
+          , with prices shown on our <Link href="/pricing">pricing page</Link>.
         </p>
         <p>
           The free allowances are once per person, not per account. Creating extra accounts to get more free use isn&apos;t
           allowed; we may match accounts by email address and browser to apply this. Free accounts created before 7 October
           2026 keep the monthly allowances they signed up with.
         </p>
-        <p>
-          Prices are set for your country. Prices in Indian rupees include GST. Each pass is a single payment and does not
-          renew automatically: Pro ends at the end of the time you paid for, and we email you a few days before. If you buy
-          another pass while Pro is still running, the new time is added after your current end date. Pro is switched on
-          straight after payment.
-        </p>
-        <p>
-          In some countries we may also offer a monthly plan that renews automatically. If you choose it, your card is charged
-          the monthly price shown at checkout once a month until you cancel. We email you 3 days before each renewal. You
-          can cancel any time from your dashboard; you won&apos;t be charged again and Pro runs until the end of the month
-          you&apos;ve paid for. If a renewal can&apos;t be charged, Razorpay retries it over the next few days, and Pro ends if
-          it still fails.
-        </p>
+        {RENEWING ? (
+          <p>
+            Prices are set for your country. Prices in Indian rupees include GST. Your plan renews automatically: you&apos;re
+            charged the price shown at checkout at the start of each period (every month, every 3 months or every year)
+            until you cancel, and we email you 3 days before each renewal. You can cancel any time from your dashboard;
+            you won&apos;t be charged again and Pro runs until the end of the time you&apos;ve paid for. If a renewal
+            can&apos;t be charged, Razorpay retries it over the next few days, and Pro ends if it still fails. One-time
+            passes bought earlier run until their end date as before. Pro is switched on straight after payment.
+          </p>
+        ) : (
+          <p>
+            Prices are set for your country. Prices in Indian rupees include GST. Each pass is a single payment and does not
+            renew automatically: Pro ends at the end of the time you paid for, and we email you a few days before. If you
+            buy another pass while Pro is still running, the new time is added after your current end date. Pro is switched
+            on straight after payment.
+          </p>
+        )}
         <p>
           Payments are handled by Razorpay; we don&apos;t see or store your full card, UPI or bank
           details.

@@ -83,11 +83,12 @@ export function verifyWebhookSignature(rawBody: string, signature: string | null
   return safeEqualHex(expected, signature);
 }
 
-/* ---------- Subscriptions (auto-renewing monthly Pro, outside India) ---------- */
+/* ---------- Subscriptions (every plan renews automatically) ---------- */
 
 /**
- * The auto-renewing monthly plan is hidden until Subscriptions is switched on
- * in the Razorpay dashboard. Then set RAZORPAY_SUBSCRIPTIONS=on in Vercel.
+ * Plans stay one-time passes until Subscriptions is switched on in the
+ * Razorpay dashboard. Then set RAZORPAY_SUBSCRIPTIONS=on in Vercel and every
+ * plan renews automatically.
  */
 export function subscriptionsEnabled(env: Record<string, string | undefined> = process.env): boolean {
   return env.RAZORPAY_SUBSCRIPTIONS?.trim().toLowerCase() === "on";
@@ -120,15 +121,21 @@ export type RazorpaySubscription = {
   notes?: Record<string, string>;
 };
 
-/** A monthly Razorpay plan for one price, e.g. $19 a month. */
-export async function createMonthlyPlan(params: { name: string; amount: number; currency: string }): Promise<{ id: string }> {
+/** A Razorpay plan for one price and period, e.g. $49 every 3 months. */
+export async function createRazorpayPlan(params: {
+  name: string;
+  amount: number;
+  currency: string;
+  period: "monthly" | "yearly";
+  interval: number;
+}): Promise<{ id: string }> {
   return rzp<{ id: string }>(
     "/plans",
     {
       method: "POST",
       body: {
-        period: "monthly",
-        interval: 1,
+        period: params.period,
+        interval: params.interval,
         item: { name: params.name, amount: params.amount, currency: params.currency.toUpperCase() },
       },
     },
@@ -137,11 +144,15 @@ export async function createMonthlyPlan(params: { name: string; amount: number; 
 }
 
 /** Starts a subscription on a plan. The first charge happens when the buyer pays in Checkout. */
-export async function createSubscription(params: { planId: string; notes: Record<string, string> }): Promise<RazorpaySubscription> {
+export async function createSubscription(params: {
+  planId: string;
+  /** How many charges at most (Razorpay needs a limit); the buyer can cancel any time before that. */
+  totalCount: number;
+  notes: Record<string, string>;
+}): Promise<RazorpaySubscription> {
   return rzp<RazorpaySubscription>(
     "/subscriptions",
-    // 60 monthly charges at most; the buyer can cancel any time before that.
-    { method: "POST", body: { plan_id: params.planId, total_count: 60, quantity: 1, customer_notify: 1, notes: params.notes } },
+    { method: "POST", body: { plan_id: params.planId, total_count: params.totalCount, quantity: 1, customer_notify: 1, notes: params.notes } },
     "create the subscription"
   );
 }
@@ -150,7 +161,7 @@ export async function fetchSubscription(id: string): Promise<RazorpaySubscriptio
   return rzp<RazorpaySubscription>(`/subscriptions/${encodeURIComponent(id)}`, { method: "GET" }, "load the subscription");
 }
 
-/** Stops future charges. Pro keeps running until the end of the month already paid for. */
+/** Stops future charges. Pro keeps running until the end of the period already paid for. */
 export async function cancelSubscriptionAtCycleEnd(id: string): Promise<RazorpaySubscription> {
   return rzp<RazorpaySubscription>(
     `/subscriptions/${encodeURIComponent(id)}/cancel`,

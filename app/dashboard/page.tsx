@@ -18,9 +18,10 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { ScoreRing } from "@/components/ScoreRing";
 import { NewResumeButton } from "@/components/NewResumeButton";
 import { ImportResumeButton } from "@/components/ImportResumeButton";
-import { formatProDate, hasPaidPro, isPlanId, PRO_PASSES } from "@/lib/pro-pass";
+import { formatProDate, hasPaidPro, isPlanId, PRO_PASSES, RENEWAL_PERIOD } from "@/lib/pro-pass";
 import { formatMinor } from "@/lib/pro-payments";
 import { CancelAutoRenewButton } from "@/components/CancelAutoRenewButton";
+import { subscriptionsEnabled } from "@/lib/razorpay";
 import { ResumeSearch } from "@/components/ResumeSearch";
 import { VerifyEmailBanner } from "@/components/VerifyEmailBanner";
 import { GuestDraftRescue } from "@/components/GuestDraftRescue";
@@ -359,13 +360,13 @@ export default async function DashboardPage({
                 <>
                   <p className="font-bold">
                     {autoSub.cancel_at_cycle_end
-                      ? `You're on Pro until ${proUntil}. Auto-renew is off.`
-                      : `You're on Pro, renewing monthly at ${formatMinor(autoSub.amount, autoSub.currency)}.`}
+                      ? `You're on Pro until ${proUntil}. It won't renew.`
+                      : `You're on Pro, renewing ${RENEWAL_PERIOD[isPlanId(autoSub.plan_id) ? autoSub.plan_id : "monthly"]} at ${formatMinor(autoSub.amount, autoSub.currency)}.`}
                   </p>
                   <p className="text-sm text-slate mt-1">
                     {autoSub.cancel_at_cycle_end
                       ? "You won't be charged again. Your resumes stay saved after Pro ends."
-                      : `Next renewal ${renewsOn ? `on ${renewsOn}` : "in about a month"}. We email you 3 days before.`}
+                      : `Next renewal ${renewsOn ? `on ${renewsOn}` : "soon"}. We email you 3 days before.`}
                   </p>
                 </>
               ) : (
@@ -373,12 +374,18 @@ export default async function DashboardPage({
                   <p className="font-bold">
                     {isPaidPro ? `You're on Pro (${passName}) until ${proUntil}.` : "You're on Pro (added by the Lettr team)."}
                   </p>
-                  {isPaidPro && <p className="text-sm text-slate mt-1">It won&apos;t renew on its own, so you&apos;re never charged again unless you buy more time.</p>}
+                  {isPaidPro && (
+                    <p className="text-sm text-slate mt-1">
+                      {subscriptionsEnabled()
+                        ? "It won't renew on its own. You can pick a plan after it ends."
+                        : "It won't renew on its own, so you're never charged again unless you buy more time."}
+                    </p>
+                  )}
                 </>
               )}
             </div>
-            {autoSub && !autoSub.cancel_at_cycle_end && <CancelAutoRenewButton proUntil={renewsOn ?? proUntil ?? "the end of this month"} />}
-            {isPaidPro && !autoSub && (
+            {autoSub && !autoSub.cancel_at_cycle_end && <CancelAutoRenewButton proUntil={renewsOn ?? proUntil ?? "the end of the time you've paid for"} />}
+            {isPaidPro && !autoSub && !subscriptionsEnabled() && (
               <Link href="/pricing" className="inline-flex items-center min-h-11 font-bold text-brand-blue hover:underline">
                 Add more time →
               </Link>

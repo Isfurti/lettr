@@ -12,7 +12,7 @@ import { pricesForViewer, savingsPercent, perMonth, REGION_PRICES, type PlanId }
 import { isAdminEmail } from "@/lib/admin-auth";
 import { RegionPriceTable } from "@/components/RegionPriceTable";
 import { agentMonthlyCap } from "@/lib/ai-costs";
-import { ProPlanPicker, type AutoRenewOffer, type PickerPlan } from "@/components/ProPlanPicker";
+import { ProPlanPicker, type PickerPlan } from "@/components/ProPlanPicker";
 import type { CheckoutState } from "@/components/ProCheckoutButton";
 import { currencyAllowed, razorpayConfigured, subscriptionsEnabled } from "@/lib/razorpay";
 import { formatProDate, hasPaidPro } from "@/lib/pro-pass";
@@ -54,11 +54,11 @@ const COMPARISON: { feature: string; free: string | boolean; pro: string | boole
   { feature: "Any accent colour", free: "8 preset colours", pro: "Any colour" },
 ];
 
-const faqs = (open: boolean, autoRenew: boolean) => [
-  autoRenew
+const faqs = (open: boolean, renewing: boolean) => [
+  renewing
     ? {
         q: "Does Pro renew automatically?",
-        a: "Only if you choose it. The monthly plan can renew automatically at a lower price, and you can cancel any time from your dashboard; Pro then runs until the end of the month you've paid for. We email you 3 days before each renewal. The 1, 3 and 12-month passes are one-time payments that never renew.",
+        a: "Yes. Every plan renews automatically at the end of its period (every month, every 3 months or every year) until you cancel. We email you 3 days before each renewal. Cancel any time from your dashboard and Pro keeps running until the end of the time you've paid for.",
       }
     : {
         q: "Does Pro renew automatically?",
@@ -74,7 +74,9 @@ const faqs = (open: boolean, autoRenew: boolean) => [
   },
   {
     q: "What's the difference between the Pro plans?",
-    a: "Nothing in what you get: Monthly, the 3-month pass and Yearly all unlock every Pro feature. The longer plans just cost less per month.",
+    a: renewing
+      ? "Nothing in what you get: Monthly, 3 months and Yearly all unlock every Pro feature. The longer plans just cost less per month."
+      : "Nothing in what you get: Monthly, the 3-month pass and Yearly all unlock every Pro feature. The longer plans just cost less per month.",
   },
   open
     ? {
@@ -95,7 +97,9 @@ const faqs = (open: boolean, autoRenew: boolean) => [
   },
   {
     q: "Do you offer refunds?",
-    a: "There's no money-back guarantee for now, so please try the free plan first. If you're charged twice or by mistake, tell us within 7 days and we'll refund it. Passes don't renew, so you won't be charged again unless you buy another one.",
+    a: renewing
+      ? "There's no money-back guarantee for now, so please try the free plan first. If you're charged twice or by mistake, tell us within 7 days and we'll refund it. To stop future charges, cancel from your dashboard before your next renewal."
+      : "There's no money-back guarantee for now, so please try the free plan first. If you're charged twice or by mistake, tell us within 7 days and we'll refund it. Passes don't renew, so you won't be charged again unless you buy another one.",
   },
   {
     id: "fair-use",
@@ -116,6 +120,8 @@ export default async function PricingPage() {
   const session = await auth();
   const headersList = await headers();
   let { prices, tier } = pricesForViewer(null);
+  // Once Razorpay Subscriptions is on, every plan renews automatically.
+  const renewing = subscriptionsEnabled();
   let compedPro = false;
   let subscribed = false;
   let proUntil: string | null = null;
@@ -143,23 +149,9 @@ export default async function PricingPage() {
     ? "comped"
     : subscribed
     ? "subscribed"
+    : renewing && proUntil
+    ? "has-pro"
     : "ready";
-  // The auto-renewing monthly plan: outside India, once switched on, and not
-  // while a one-time pass is still running.
-  const autoRenew: AutoRenewOffer | null =
-    subscriptionsEnabled() &&
-    prices.currency !== "INR" &&
-    prices.autoMonthly &&
-    (checkout === "ready" || checkout === "signed-out") &&
-    !proUntil
-      ? {
-          price: prices.format(prices.autoMonthly),
-          note:
-            prices.monthly > prices.autoMonthly
-              ? `${prices.format(prices.monthly - prices.autoMonthly)} less than a one-time month`
-              : "",
-        }
-      : null;
   const paymentsOpen = checkout !== "closed";
   // The admin sees every region's prices, not just their own country's.
   const isAdmin = isAdminEmail(session?.user?.email);
@@ -168,9 +160,9 @@ export default async function PricingPage() {
   const months = { monthly: 1, quarter: 3, yearly: 12 } as const;
   const pickerPlans: PickerPlan[] = (
     [
-      { id: "monthly", tab: "Monthly", name: "1 month", blurb: "A quick push. Pay once, no renewal.", amount: prices.monthly, period: "for 1 month", addLabel: "Add 1 month" },
-      { id: "quarter", tab: "3 months", name: "3 months", blurb: "Made for one focused job search.", amount: prices.quarter, period: "for 3 months", addLabel: "Add 3 months" },
-      { id: "yearly", tab: "Yearly", name: "12 months", blurb: "For your whole career year.", amount: prices.yearly, period: "for 12 months", addLabel: "Add 12 months" },
+      { id: "monthly", tab: "Monthly", name: "1 month", blurb: renewing ? "A quick push. Cancel any time." : "A quick push. Pay once, no renewal.", amount: prices.monthly, period: renewing ? "a month" : "for 1 month", addLabel: "Add 1 month" },
+      { id: "quarter", tab: "3 months", name: "3 months", blurb: "Made for one focused job search.", amount: prices.quarter, period: renewing ? "every 3 months" : "for 3 months", addLabel: "Add 3 months" },
+      { id: "yearly", tab: "Yearly", name: "12 months", blurb: "For your whole career year.", amount: prices.yearly, period: renewing ? "a year" : "for 12 months", addLabel: "Add 12 months" },
     ] as const
   ).map((p) => {
     const saved = prices.monthly * months[p.id] - p.amount;
@@ -215,7 +207,8 @@ export default async function PricingPage() {
           templateCount={TEMPLATE_IDS.length}
           checkout={checkout}
           proUntil={subscribed ? null : proUntil}
-          autoRenew={autoRenew}
+          renewing={renewing}
+          india={prices.currency === "INR"}
         >
           <Reveal className="bg-white border-2 border-rule rounded-[32px] p-7 flex flex-col h-full">
             <h2 className="font-brand font-extrabold text-2xl">Free</h2>
@@ -308,7 +301,7 @@ export default async function PricingPage() {
             </p>
           </Reveal>
           <div className="flex flex-col gap-3">
-            {faqs(paymentsOpen, Boolean(autoRenew)).map((f) => (
+            {faqs(paymentsOpen, renewing).map((f) => (
               <details key={f.q} id={"id" in f ? f.id : undefined} className="group bg-white rounded-2xl border border-rule open:border-ink transition-colors">
                 <summary className="cursor-pointer list-none flex items-center justify-between gap-4 min-h-14 px-5 py-4 font-bold text-lg [&::-webkit-details-marker]:hidden">
                   {f.q}

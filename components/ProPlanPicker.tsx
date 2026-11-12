@@ -28,25 +28,19 @@ const FEATURES = (templateCount: number) => [
   "All missing keywords, unlimited job tracking",
 ];
 
-/** The auto-renewing monthly option, offered outside India once it's switched on. */
-export type AutoRenewOffer = {
-  /** e.g. "$19" */
-  price: string;
-  /** e.g. "$5 less than a one-time month", or "" */
-  note: string;
-};
-
 /**
  * The Monthly / 3 months / Yearly switch above the plan cards, and the one Pro
  * card it controls. Starts on the 3-month pass. `children` is the Free card.
- * Every plan is a one-time payment; buying while on Pro adds the time.
+ * Plans are one-time passes until `renewing` is on; then every plan renews
+ * automatically. With passes, buying while on Pro adds the time.
  */
 export function ProPlanPicker({
   plans,
   templateCount,
   checkout,
   proUntil = null,
-  autoRenew = null,
+  renewing = false,
+  india = false,
   children,
 }: {
   plans: PickerPlan[];
@@ -54,14 +48,14 @@ export function ProPlanPicker({
   checkout: CheckoutState;
   /** End date of the Pro pass this person already has, e.g. "17 Jan 2027". */
   proUntil?: string | null;
-  /** Shown as a choice on the Monthly tab; null when it isn't offered to this person. */
-  autoRenew?: AutoRenewOffer | null;
+  /** True once Razorpay Subscriptions is on: every plan renews automatically. */
+  renewing?: boolean;
+  /** Prices in rupees, so UPI and netbanking are offered too. */
+  india?: boolean;
   children: React.ReactNode;
 }) {
   const [selected, setSelected] = useState<PickerPlan["id"]>("quarter");
-  const [renew, setRenew] = useState(true);
   const plan = plans.find((p) => p.id === selected) ?? plans[0];
-  const auto = Boolean(autoRenew && plan.id === "monthly" && renew);
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -113,42 +107,20 @@ export function ProPlanPicker({
           <h2 className="font-brand font-extrabold text-2xl">
             Pro <span className="text-gold">· {plan.name}</span>
           </h2>
-          <p className="mt-1 text-white/70">{auto ? "Renews every month. Cancel any time." : plan.blurb}</p>
-          {autoRenew && plan.id === "monthly" && (
-            <div role="radiogroup" aria-label="Monthly billing" className="mt-4 grid grid-cols-2 gap-2">
-              {[
-                { on: true, title: "Auto-renew", sub: `${autoRenew.price}/month` },
-                { on: false, title: "One month", sub: `${plan.price}, no renewal` },
-              ].map((o) => (
-                <button
-                  key={o.title}
-                  type="button"
-                  role="radio"
-                  aria-checked={renew === o.on}
-                  onClick={() => setRenew(o.on)}
-                  className={`min-h-14 px-3 py-2 rounded-2xl text-left border-2 ${
-                    renew === o.on ? "border-gold bg-white/10" : "border-white/20 hover:border-white/40"
-                  }`}
-                >
-                  <span className="block text-sm font-extrabold">{o.title}</span>
-                  <span className="block text-xs text-white/70">{o.sub}</span>
-                </button>
-              ))}
-            </div>
-          )}
+          <p className="mt-1 text-white/70">{plan.blurb}</p>
           <div
             className="mt-4 flex flex-wrap items-baseline gap-x-1.5"
             aria-live="polite"
           >
             <span className="font-brand font-extrabold text-[44px] leading-none">
-              {auto && autoRenew ? autoRenew.price : plan.price}
+              {plan.price}
             </span>
             <span className="text-sm font-bold whitespace-nowrap text-white/70">
-              {auto ? "a month" : plan.period}
+              {plan.period}
             </span>
           </div>
           <p className="mt-2 mb-6 text-sm font-bold min-h-5 text-gold">
-            {auto && autoRenew ? autoRenew.note : plan.note}
+            {plan.note}
           </p>
           <ul className="space-y-3 mb-8 flex-1">
             {FEATURES(templateCount).map((f) => (
@@ -171,23 +143,26 @@ export function ProPlanPicker({
               </li>
             ))}
           </ul>
+          {proUntil && checkout === "has-pro" && (
+            <p className="mb-3 text-sm text-white/80">
+              You&apos;re on Pro until {proUntil}. You can pick a plan after that.
+            </p>
+          )}
           {proUntil && checkout === "ready" && (
             <p className="mb-3 text-sm text-white/80">
               You&apos;re on Pro until {proUntil}. Buying now adds the time after that.
             </p>
           )}
           <ProCheckoutButton
-            key={`${plan.id}-${auto ? "auto" : "pass"}`}
+            key={plan.id}
             plan={plan.id}
             state={checkout}
-            mode={auto ? "auto" : "pass"}
+            mode={renewing ? "auto" : "pass"}
             label={proUntil ? plan.addLabel : "Get Pro"}
           />
           <p className="mt-3 text-center text-xs text-white/60">
-            {auto
-              ? "Renews monthly · Cancel any time from your dashboard · Cards"
-              : autoRenew
-              ? "One-time payment · No auto-renewal"
+            {renewing
+              ? `Renews automatically · Cancel any time · ${india ? "UPI Autopay, cards & netbanking" : "Cards"}`
               : "One-time payment · No auto-renewal · UPI, cards & netbanking"}
           </p>
         </div>
