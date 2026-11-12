@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { createPaymentRecord, getUserById } from "@/lib/db";
+import { createPaymentRecord, getActiveSubscriptionForUser, getUserById } from "@/lib/db";
 import { ensureUserRegion } from "@/lib/user-region";
 import { getRegionPrices } from "@/lib/plans";
 import { isPlanId, passAmountMinor, passDescription, PRO_PASSES } from "@/lib/pro-pass";
@@ -27,6 +27,13 @@ export async function POST(req: Request) {
 
   if (user.plan === "pro" && !user.pro_until) {
     return NextResponse.json({ error: "You already have Pro from the Lettr team." }, { status: 400 });
+  }
+  const sub = await getActiveSubscriptionForUser(user.id);
+  if (sub && !sub.cancel_at_cycle_end) {
+    return NextResponse.json(
+      { error: "You're on the auto-renewing plan, so Pro already continues each month. Cancel it from your dashboard first if you'd rather buy a pass." },
+      { status: 400 }
+    );
   }
   if (!razorpayConfigured()) {
     console.error("Checkout attempted but Razorpay keys are not set");

@@ -1,8 +1,8 @@
 import * as Sentry from "@sentry/nextjs";
-import { markPaymentPaid } from "./db";
+import { markPaymentPaid, recordSubscriptionCharge } from "./db";
 import { issueGstInvoice } from "./invoices";
-import { sendProConfirmationEmail } from "./email";
-import { formatProDate, isPlanId, PRO_PASSES, passDescription } from "./pro-pass";
+import { sendAutoRenewStartedEmail, sendProConfirmationEmail, sendRenewalReceiptEmail } from "./email";
+import { AUTO_RENEW_DESCRIPTION, autoRenewProUntil, formatProDate, isPlanId, PRO_PASSES, passDescription } from "./pro-pass";
 
 /**
  * Records a successful Pro pass payment: adds the months of Pro, makes the
@@ -41,4 +41,62 @@ export async function fulfilProPayment(orderId: string, paymentId: string): Prom
     }).catch((err) => Sentry.captureException(err));
   }
   return true;
+}
+
+/**
+ * Records one auto-renew charge (first month or a renewal): moves Pro's end
+ * date, makes the invoice and emails the buyer. Called by the checkout and by
+ * the Razorpay webhook; whichever arrives second does nothing.
+ */
+export async function fulfilSubscriptionCharge(p: {
+  subscriptionId: string;
+  paymentId: string;
+  amount: number;
+  currency: string;
+  /** Unix seconds: end of the month just paid for, if Razorpay told us. */
+  currentEnd: number | null;
+}): Promise<boolean> {
+  const currentEnd = p.currentEnd ? new Date(p.currentEnd * 1000) : null;
+  const result = await recordSubscriptionCharge({
+    subscriptionId: p.subscriptionId,
+    paymentId: p.paymentId,
+    amount: p.amount,
+    currency: p.currency,
+    currentEnd,
+    proUntil: autoRenewProUntil(p.currentEnd),
+  });
+  if (!result) return false;
+  const { user, first } = result;
+
+  try {
+    await issueGstInvoice({
+      userId: user?.id ?? null,
+      buyerName: user?.name ?? null,
+      buyerEmail: user?.email ?? "unknown",
+      buyerCountry: user?.country_code ?? "US",
+      description: AUTO_RENEW_DESCRIPTION,
+      currency: p.currency,
+      total: p.amount,
+      paymentRef: `razorpay:${p.paymentId}`,
+    });
+  } catch (err) {
+    Sentry.captureException(err, { extra: { subscriptionId: p.subscriptionId, paymentId: p.paymentId } });
+  }
+  if (user?.email) {
+    const price = formatMinor(p.amount, p.currency);
+    const renewsOn = formatProDate(currentEnd ?? autoRenewProUntil(null));
+    const send = first ? sendAutoRenewStartedEmail : sendRenewalReceiptEmail;
+    await send({ email: user.email, price, renewsOn }).catch((err) => Sentry.captureException(err));
+  }
+  return true;
+}
+
+/** e.g. 1900 USD → "$19". */
+export function formatMinor(amount: number, currency: string): string {
+  const value = amount / 100;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
+  }).format(value);
 }

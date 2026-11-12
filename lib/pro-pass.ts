@@ -49,3 +49,39 @@ export function formatProDate(date: string | Date): string {
     timeZone: "Asia/Kolkata",
   });
 }
+
+/* ---------- Auto-renewing monthly Pro ---------- */
+
+/**
+ * Days of Pro kept after the paid month ends. Razorpay retries a failed
+ * renewal on the next three days, so Pro shouldn't switch off in between.
+ */
+export const AUTO_RENEW_GRACE_DAYS = 3;
+
+/** Days before a renewal that the "renews soon" email goes out. */
+export const RENEWAL_REMINDER_DAYS = 3;
+
+export const AUTO_RENEW_DESCRIPTION = "Lettr Pro - monthly, renews automatically";
+
+/** The auto-renew price for this region in minor units, or null if the region has no auto-renew offer. */
+export function autoRenewAmountMinor(prices: RegionPrices): number | null {
+  if (prices.currency === "INR" || !prices.autoMonthly) return null;
+  return Math.round(prices.autoMonthly * 100);
+}
+
+/** When Pro should end for a subscription whose paid month ends at `currentEnd` (unix seconds). */
+export function autoRenewProUntil(currentEnd: number | null, now: Date = new Date()): Date {
+  const base = currentEnd ? new Date(currentEnd * 1000) : addMonths(now, 1);
+  return new Date(base.getTime() + AUTO_RENEW_GRACE_DAYS * 86_400_000);
+}
+
+function addMonths(d: Date, months: number): Date {
+  const out = new Date(d);
+  out.setUTCMonth(out.getUTCMonth() + months);
+  return out;
+}
+
+/** The Razorpay plan cache key, so each price gets one plan, e.g. "USD_1900". */
+export function autoRenewPlanKey(currency: string, amountMinor: number): string {
+  return `${currency.toUpperCase()}_${amountMinor}`;
+}

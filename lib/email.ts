@@ -95,3 +95,46 @@ export async function sendProEndingSoonEmail(params: { email: string; proUntil: 
       `To keep Pro, buy another pass before then and the new time is added after your current end date:\n${getAppUrl()}/pricing\n\n— The Lettr team`,
   });
 }
+
+/* ---------- Auto-renewing monthly Pro ---------- */
+
+export async function sendAutoRenewStartedEmail(params: { email: string; price: string; renewsOn: string }): Promise<{ sent: boolean; reason?: string }> {
+  return sendEmail({
+    to: params.email,
+    subject: "You're on Lettr Pro",
+    text:
+      `Thanks for joining Lettr Pro. Every Pro feature is now unlocked.\n\n` +
+      `Your plan renews automatically at ${params.price} a month. The next renewal is on ${params.renewsOn}, and we'll email you 3 days before each one.\n\n` +
+      `Cancel any time from your dashboard and Pro keeps running until the end of the month you've paid for:\n${getAppUrl()}/dashboard\n\n— The Lettr team`,
+  });
+}
+
+export async function sendRenewalReceiptEmail(params: { email: string; price: string; renewsOn: string }): Promise<{ sent: boolean; reason?: string }> {
+  return sendEmail({
+    to: params.email,
+    subject: "Your Lettr Pro renewed",
+    text:
+      `Your Lettr Pro renewed for another month (${params.price}). The next renewal is on ${params.renewsOn}.\n\n` +
+      `Your invoice is on your dashboard, where you can also cancel any time:\n${getAppUrl()}/dashboard\n\n— The Lettr team`,
+  });
+}
+
+export async function sendRenewalReminderEmail(params: { email: string; price: string; renewsOn: string }): Promise<{ sent: boolean; reason?: string }> {
+  return sendEmail({
+    to: params.email,
+    subject: "Your Lettr Pro renews in 3 days",
+    text:
+      `Just a heads-up: your Lettr Pro renews on ${params.renewsOn} at ${params.price}.\n\n` +
+      `Nothing to do if you want to keep it. To stop it, cancel from your dashboard before then. Pro keeps running until the end of the month you've paid for:\n${getAppUrl()}/dashboard\n\n— The Lettr team`,
+  });
+}
+
+export async function sendAutoRenewCancelledEmail(params: { email: string; proUntil: string }): Promise<{ sent: boolean; reason?: string }> {
+  return sendEmail({
+    to: params.email,
+    subject: "Your Lettr Pro won't renew",
+    text:
+      `You've cancelled auto-renew, so you won't be charged again. Pro keeps running until ${params.proUntil}, then your account moves to the free plan. All your resumes stay saved.\n\n` +
+      `You can come back any time from ${getAppUrl()}/pricing\n\n— The Lettr team`,
+  });
+}

@@ -86,6 +86,29 @@ const SCHEMA_SQL = `
       );
       CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id);
 
+      -- Auto-renewing monthly Pro (Razorpay Subscriptions, outside India).
+      -- Each successful charge is also a row in payments (order_id "sub_<payment id>").
+      CREATE TABLE IF NOT EXISTS pro_subscriptions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        razorpay_plan_id TEXT NOT NULL,
+        amount INTEGER NOT NULL,
+        currency TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'created',
+        cancel_at_cycle_end BOOLEAN NOT NULL DEFAULT false,
+        current_end TIMESTAMPTZ,
+        reminder_sent_for TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_pro_subscriptions_user ON pro_subscriptions(user_id);
+      -- One Razorpay plan per price (e.g. USD_1900), made the first time someone picks it.
+      CREATE TABLE IF NOT EXISTS razorpay_plans (
+        key TEXT PRIMARY KEY,
+        plan_id TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+
       CREATE TABLE IF NOT EXISTS support_messages (
         id TEXT PRIMARY KEY,
         user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
@@ -605,7 +628,12 @@ export async function listProEndingSoon(days: number): Promise<UserRow[]> {
     `SELECT * FROM users
      WHERE plan = 'pro' AND pro_until IS NOT NULL
        AND pro_until > now() AND pro_until <= now() + make_interval(days => $1)
-       AND (pro_reminder_sent_for IS NULL OR pro_reminder_sent_for <> pro_until)`,
+       AND (pro_reminder_sent_for IS NULL OR pro_reminder_sent_for <> pro_until)
+       -- Auto-renewing Pro gets a "renews soon" email instead.
+       AND NOT EXISTS (
+         SELECT 1 FROM pro_subscriptions s
+         WHERE s.user_id = users.id AND s.status = 'active' AND NOT s.cancel_at_cycle_end
+       )`,
     [days]
   );
   return res.rows;
@@ -1645,4 +1673,158 @@ export async function deleteAiExamplesForUser(userId: string) {
     "UPDATE ai_feedback_events SET input_text = NULL, suggestion_text = NULL, final_text = NULL WHERE user_id = $1",
     [userId]
   );
+}
+
+
+/* ---------- Auto-renewing monthly Pro ---------- */
+
+export type ProSubscriptionRow = {
+  id: string;
+  user_id: string | null;
+  razorpay_plan_id: string;
+  amount: number;
+  currency: string;
+  /** created → active → cancelled / halted / completed */
+  status: string;
+  cancel_at_cycle_end: boolean;
+  current_end: string | Date | null;
+  reminder_sent_for: string | Date | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function getRazorpayPlanId(key: string): Promise<string | undefined> {
+  await ensureSchema();
+  const res = await pool.query("SELECT plan_id FROM razorpay_plans WHERE key = $1", [key]);
+  return res.rows[0]?.plan_id;
+}
+
+export async function saveRazorpayPlanId(key: string, planId: string): Promise<string> {
+  await ensureSchema();
+  // If two people raced to make the same plan, keep the first one saved.
+  const res = await pool.query(
+    "INSERT INTO razorpay_plans (key, plan_id) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET key = EXCLUDED.key RETURNING plan_id",
+    [key, planId]
+  );
+  return res.rows[0].plan_id;
+}
+
+export async function createProSubscription(p: { id: string; userId: string; planId: string; amount: number; currency: string }) {
+  await ensureSchema();
+  await pool.query(
+    "INSERT INTO pro_subscriptions (id, user_id, razorpay_plan_id, amount, currency) VALUES ($1, $2, $3, $4, $5)",
+    [p.id, p.userId, p.planId, p.amount, p.currency]
+  );
+}
+
+export async function getProSubscription(id: string): Promise<ProSubscriptionRow | undefined> {
+  await ensureSchema();
+  const res = await pool.query("SELECT * FROM pro_subscriptions WHERE id = $1", [id]);
+  return res.rows[0];
+}
+
+/** The person's running auto-renew subscription (active, including one set to stop at the end of the month). */
+export async function getActiveSubscriptionForUser(userId: string): Promise<ProSubscriptionRow | undefined> {
+  await ensureSchema();
+  const res = await pool.query(
+    "SELECT * FROM pro_subscriptions WHERE user_id = $1 AND status = 'active' ORDER BY created_at DESC LIMIT 1",
+    [userId]
+  );
+  return res.rows[0];
+}
+
+export async function setSubscriptionStatus(id: string, status: string, currentEnd?: Date | null) {
+  await ensureSchema();
+  await pool.query(
+    `UPDATE pro_subscriptions SET status = $2, current_end = COALESCE($3, current_end), updated_at = now()
+     WHERE id = $1`,
+    [id, status, currentEnd ?? null]
+  );
+}
+
+export async function markSubscriptionCancelling(id: string) {
+  await ensureSchema();
+  await pool.query("UPDATE pro_subscriptions SET cancel_at_cycle_end = true, updated_at = now() WHERE id = $1", [id]);
+}
+
+/**
+ * Records one successful subscription charge and moves Pro's end date to the
+ * end of the newly paid month (plus a few days' grace). Razorpay reports the
+ * same charge through the checkout and the webhook, so a charge already
+ * recorded is skipped and null is returned. Never shortens Pro time someone
+ * already has.
+ */
+export async function recordSubscriptionCharge(p: {
+  subscriptionId: string;
+  paymentId: string;
+  amount: number;
+  currency: string;
+  currentEnd: Date | null;
+  proUntil: Date;
+}): Promise<{ user: UserRow | undefined; first: boolean } | null> {
+  await ensureSchema();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const subRes = await client.query("SELECT * FROM pro_subscriptions WHERE id = $1 FOR UPDATE", [p.subscriptionId]);
+    const sub: ProSubscriptionRow | undefined = subRes.rows[0];
+    if (!sub) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+    const inserted = await client.query(
+      `INSERT INTO payments (order_id, user_id, plan_id, months, amount, currency, status, payment_id, paid_at)
+       VALUES ($1, $2, 'auto_monthly', 1, $3, $4, 'paid', $5, now())
+       ON CONFLICT DO NOTHING RETURNING order_id`,
+      [`sub_${p.paymentId}`, sub.user_id, p.amount, p.currency, p.paymentId]
+    );
+    if (!inserted.rows[0]) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+    const prior = await client.query(
+      // Earlier charges on this subscription: none means this is the first month.
+      "SELECT COUNT(*)::int AS n FROM payments WHERE plan_id = 'auto_monthly' AND order_id <> $1 AND user_id IS NOT DISTINCT FROM $2 AND paid_at >= $3",
+      [`sub_${p.paymentId}`, sub.user_id, sub.created_at]
+    );
+    await client.query(
+      "UPDATE pro_subscriptions SET status = 'active', current_end = COALESCE($2, current_end), updated_at = now() WHERE id = $1",
+      [p.subscriptionId, p.currentEnd]
+    );
+    let user: UserRow | undefined;
+    if (sub.user_id) {
+      const res = await client.query(
+        `UPDATE users SET plan = 'pro', pro_plan = 'auto_monthly',
+           pro_until = GREATEST(COALESCE(pro_until, now()), $2)
+         WHERE id = $1 RETURNING *`,
+        [sub.user_id, p.proUntil]
+      );
+      user = res.rows[0];
+    }
+    await client.query("COMMIT");
+    return { user, first: (prior.rows[0]?.n ?? 0) === 0 };
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** Active auto-renew subscriptions renewing within `days` days that haven't had a reminder for this renewal. */
+export async function listSubscriptionsRenewingSoon(days: number): Promise<(ProSubscriptionRow & { email: string })[]> {
+  await ensureSchema();
+  const res = await pool.query(
+    `SELECT s.*, u.email FROM pro_subscriptions s JOIN users u ON u.id = s.user_id
+     WHERE s.status = 'active' AND NOT s.cancel_at_cycle_end AND s.current_end IS NOT NULL
+       AND s.current_end > now() AND s.current_end <= now() + make_interval(days => $1)
+       AND (s.reminder_sent_for IS NULL OR s.reminder_sent_for <> s.current_end)`,
+    [days]
+  );
+  return res.rows;
+}
+
+export async function markSubscriptionReminderSent(id: string, currentEnd: string | Date) {
+  await ensureSchema();
+  await pool.query("UPDATE pro_subscriptions SET reminder_sent_for = $2 WHERE id = $1", [id, currentEnd]);
 }

@@ -18,6 +18,11 @@ export type RegionPrices = {
   monthly: number;
   quarter: number;
   yearly: number;
+  /**
+   * Monthly price when it renews automatically (cards only, outside India).
+   * A little lower than the one-time month. Unset means no auto-renew offer.
+   */
+  autoMonthly?: number;
   taxNote?: string;
 };
 
@@ -25,12 +30,12 @@ const fmt = (symbol: string, locale = "en-US") => (n: number) => `${symbol}${n.t
 
 export const REGION_PRICES: Record<string, RegionPrices> = {
   IN: { region: "India", currency: "INR", format: fmt("₹", "en-IN"), monthly: 599, quarter: 1499, yearly: 4999, taxNote: "Prices include GST." },
-  US: { region: "Standard", currency: "USD", format: fmt("$"), monthly: 24, quarter: 49, yearly: 149 },
-  GB: { region: "United Kingdom", currency: "GBP", format: fmt("£"), monthly: 19, quarter: 39, yearly: 119 },
-  EU: { region: "Europe", currency: "EUR", format: fmt("€"), monthly: 22, quarter: 45, yearly: 139 },
-  AU: { region: "Australia", currency: "AUD", format: fmt("A$"), monthly: 35, quarter: 72, yearly: 219 },
-  MID: { region: "Regional", currency: "USD", format: fmt("$"), monthly: 12, quarter: 25, yearly: 75 },
-  VALUE: { region: "Regional", currency: "USD", format: fmt("$"), monthly: 6, quarter: 12, yearly: 39 },
+  US: { region: "Standard", currency: "USD", format: fmt("$"), monthly: 24, quarter: 49, yearly: 149, autoMonthly: 19 },
+  GB: { region: "United Kingdom", currency: "GBP", format: fmt("£"), monthly: 19, quarter: 39, yearly: 119, autoMonthly: 15 },
+  EU: { region: "Europe", currency: "EUR", format: fmt("€"), monthly: 22, quarter: 45, yearly: 139, autoMonthly: 18 },
+  AU: { region: "Australia", currency: "AUD", format: fmt("A$"), monthly: 35, quarter: 72, yearly: 219, autoMonthly: 28 },
+  MID: { region: "Regional", currency: "USD", format: fmt("$"), monthly: 12, quarter: 25, yearly: 75, autoMonthly: 9 },
+  VALUE: { region: "Regional", currency: "USD", format: fmt("$"), monthly: 6, quarter: 12, yearly: 39, autoMonthly: 5 },
 };
 
 export const EURO_COUNTRIES = new Set([

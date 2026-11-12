@@ -6,15 +6,15 @@ import { Reveal } from "@/components/Reveal";
 import { Footer } from "@/components/Footer";
 import { PublicNav } from "@/components/PublicNav";
 import { auth } from "@/lib/auth";
-import { getUserById } from "@/lib/db";
+import { getActiveSubscriptionForUser, getUserById } from "@/lib/db";
 import { TEMPLATE_IDS } from "@/lib/templates";
 import { pricesForViewer, savingsPercent, perMonth, REGION_PRICES, type PlanId } from "@/lib/plans";
 import { isAdminEmail } from "@/lib/admin-auth";
 import { RegionPriceTable } from "@/components/RegionPriceTable";
 import { agentMonthlyCap } from "@/lib/ai-costs";
-import { ProPlanPicker, type PickerPlan } from "@/components/ProPlanPicker";
+import { ProPlanPicker, type AutoRenewOffer, type PickerPlan } from "@/components/ProPlanPicker";
 import type { CheckoutState } from "@/components/ProCheckoutButton";
-import { currencyAllowed, razorpayConfigured } from "@/lib/razorpay";
+import { currencyAllowed, razorpayConfigured, subscriptionsEnabled } from "@/lib/razorpay";
 import { formatProDate, hasPaidPro } from "@/lib/pro-pass";
 import { ensureUserRegion } from "@/lib/user-region";
 import { DAILY_LIMITS, PLAN_LIMITS, FREE_AI_TRY_LINE } from "@/lib/limits";
@@ -54,11 +54,16 @@ const COMPARISON: { feature: string; free: string | boolean; pro: string | boole
   { feature: "Any accent colour", free: "8 preset colours", pro: "Any colour" },
 ];
 
-const faqs = (open: boolean) => [
-  {
-    q: "Does Pro renew automatically?",
-    a: "No. Every plan is a one-time payment for 1, 3 or 12 months, so there's nothing to cancel and you're never charged again by surprise. We email you a few days before Pro ends. Buy another pass any time and the new months are added after the time you have left.",
-  },
+const faqs = (open: boolean, autoRenew: boolean) => [
+  autoRenew
+    ? {
+        q: "Does Pro renew automatically?",
+        a: "Only if you choose it. The monthly plan can renew automatically at a lower price, and you can cancel any time from your dashboard; Pro then runs until the end of the month you've paid for. We email you 3 days before each renewal. The 1, 3 and 12-month passes are one-time payments that never renew.",
+      }
+    : {
+        q: "Does Pro renew automatically?",
+        a: "No. Every plan is a one-time payment for 1, 3 or 12 months, so there's nothing to cancel and you're never charged again by surprise. We email you a few days before Pro ends. Buy another pass any time and the new months are added after the time you have left.",
+      },
   {
     q: "How does the resume score work?",
     a: "It's a real, deterministic check of your resume's structure — contact completeness, summary quality, whether your bullets use strong action verbs and quantified results, education, and skill count. It's not a black box: the Score tab tells you exactly what to fix next.",
@@ -112,6 +117,7 @@ export default async function PricingPage() {
   const headersList = await headers();
   let { prices, tier } = pricesForViewer(null);
   let compedPro = false;
+  let subscribed = false;
   let proUntil: string | null = null;
 
   if (session?.user) {
@@ -122,6 +128,8 @@ export default async function PricingPage() {
       ({ prices, tier } = pricesForViewer(withRegion));
       compedPro = withRegion.plan === "pro" && !withRegion.pro_until;
       if (hasPaidPro(withRegion) && withRegion.pro_until) proUntil = formatProDate(withRegion.pro_until);
+      const sub = await getActiveSubscriptionForUser(withRegion.id);
+      subscribed = Boolean(sub && !sub.cancel_at_cycle_end);
     }
   }
 
@@ -133,7 +141,25 @@ export default async function PricingPage() {
     ? "signed-out"
     : compedPro
     ? "comped"
+    : subscribed
+    ? "subscribed"
     : "ready";
+  // The auto-renewing monthly plan: outside India, once switched on, and not
+  // while a one-time pass is still running.
+  const autoRenew: AutoRenewOffer | null =
+    subscriptionsEnabled() &&
+    prices.currency !== "INR" &&
+    prices.autoMonthly &&
+    (checkout === "ready" || checkout === "signed-out") &&
+    !proUntil
+      ? {
+          price: prices.format(prices.autoMonthly),
+          note:
+            prices.monthly > prices.autoMonthly
+              ? `${prices.format(prices.monthly - prices.autoMonthly)} less than a one-time month`
+              : "",
+        }
+      : null;
   const paymentsOpen = checkout !== "closed";
   // The admin sees every region's prices, not just their own country's.
   const isAdmin = isAdminEmail(session?.user?.email);
@@ -184,7 +210,13 @@ export default async function PricingPage() {
       </section>
 
       <section className="max-w-[1280px] mx-auto w-full px-4 sm:px-8 lg:px-14 pb-20 sm:pb-24">
-        <ProPlanPicker plans={pickerPlans} templateCount={TEMPLATE_IDS.length} checkout={checkout} proUntil={proUntil}>
+        <ProPlanPicker
+          plans={pickerPlans}
+          templateCount={TEMPLATE_IDS.length}
+          checkout={checkout}
+          proUntil={subscribed ? null : proUntil}
+          autoRenew={autoRenew}
+        >
           <Reveal className="bg-white border-2 border-rule rounded-[32px] p-7 flex flex-col h-full">
             <h2 className="font-brand font-extrabold text-2xl">Free</h2>
             <p className="mt-1 text-slate">For one strong resume.</p>
@@ -276,7 +308,7 @@ export default async function PricingPage() {
             </p>
           </Reveal>
           <div className="flex flex-col gap-3">
-            {faqs(paymentsOpen).map((f) => (
+            {faqs(paymentsOpen, Boolean(autoRenew)).map((f) => (
               <details key={f.q} id={"id" in f ? f.id : undefined} className="group bg-white rounded-2xl border border-rule open:border-ink transition-colors">
                 <summary className="cursor-pointer list-none flex items-center justify-between gap-4 min-h-14 px-5 py-4 font-bold text-lg [&::-webkit-details-marker]:hidden">
                   {f.q}
