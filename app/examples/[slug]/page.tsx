@@ -28,7 +28,14 @@ export default async function ExamplePage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const e = getExample(slug);
   if (!e) notFound();
-  const related = EXAMPLES.filter((x) => x.category === e.category && x.slug !== e.slug).slice(0, 4);
+  // Take the next examples in the category, wrapping around, so every example
+  // is linked from its neighbours (a plain "first 4" left the rest unlinked).
+  const sameCategory = EXAMPLES.filter((x) => x.category === e.category);
+  const at = sameCategory.findIndex((x) => x.slug === e.slug);
+  const related = Array.from(
+    { length: Math.min(4, sameCategory.length - 1) },
+    (_, i) => sameCategory[(at + 1 + i) % sameCategory.length]
+  );
   const templateName = e.template[0].toUpperCase() + e.template.slice(1);
 
   return (
