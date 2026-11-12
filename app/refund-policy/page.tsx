@@ -33,7 +33,7 @@ const SECTIONS: LegalSection[] = [
     title: "Auto-renewing monthly plan",
     body: (
       <p>
-        In some countries you can instead choose a monthly plan that renews automatically. We email you 3 days before each
+        Where it's offered, you can instead choose a monthly plan that renews automatically. We email you 3 days before each
         renewal, and you can cancel any time from your dashboard, after which you won&apos;t be charged again and Pro runs
         until the end of the month already paid for. If you&apos;re charged twice or by mistake, tell us within 7 days and
         we&apos;ll refund it.

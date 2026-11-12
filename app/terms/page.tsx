@@ -132,7 +132,7 @@ const SECTIONS: LegalSection[] = [
           straight after payment.
         </p>
         <p>
-          In some countries we also offer a monthly plan that renews automatically. If you choose it, your card is charged
+          In some countries we may also offer a monthly plan that renews automatically. If you choose it, your card is charged
           the monthly price shown at checkout once a month until you cancel. We email you 3 days before each renewal. You
           can cancel any time from your dashboard; you won&apos;t be charged again and Pro runs until the end of the month
           you&apos;ve paid for. If a renewal can&apos;t be charged, Razorpay retries it over the next few days, and Pro ends if
