@@ -84,7 +84,9 @@ const SECTIONS: LegalSection[] = [
         </li>
         <li>
           <strong>Payment details:</strong> handled by our payment provider. We keep your plan, payment status and invoices,
-          never your full card or bank details.
+          never your full card or bank details. For plans that renew automatically, Razorpay keeps a secure authorisation
+          (a saved card token or UPI Autopay / bank mandate) so it can charge each renewal; we only keep the subscription
+          reference and its status. Cancelling stops all future charges.
         </li>
         <li>
           <strong>Google Drive:</strong> if you connect it, we store a permission token so we can save files Lettr creates
@@ -314,7 +316,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      updated="28 October 2026"
+      updated="12 November 2026"
       intro={<p>What we collect, why, who helps us, and the control you have. We&apos;ve kept it as plain as we can.</p>}
       sections={SECTIONS}
     />

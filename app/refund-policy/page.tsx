@@ -9,7 +9,7 @@ const RENEWING = subscriptionsEnabled();
 
 export const metadata: Metadata = {
   title: "Cancellation & Refund Policy | Lettr",
-  description: "How Lettr Pro passes, cancellations and refunds work.",
+  description: "How Lettr Pro plans, renewals, cancellations and refunds work.",
   alternates: { canonical: "/refund-policy" },
   robots: { index: true, follow: true },
 };
@@ -86,7 +86,7 @@ export default function RefundPolicyPage() {
   return (
     <LegalPage
       title="Cancellation & Refund Policy"
-      updated="17 October 2026"
+      updated="12 November 2026"
       intro={<p>Short and plain: what you pay for, when it ends, and when you get money back.</p>}
       sections={SECTIONS}
     />

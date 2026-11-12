@@ -289,7 +289,7 @@ export default function TermsPage() {
   return (
     <LegalPage
       title="Terms of Service"
-      updated="17 October 2026"
+      updated="12 November 2026"
       intro={<p>The rules for using Lettr, in plain language. Please read them before you sign up or pay.</p>}
       sections={SECTIONS}
     />
