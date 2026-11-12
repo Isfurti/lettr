@@ -112,7 +112,7 @@ const FAQ = [
   },
   {
     q: "Does Pro renew automatically?",
-    a: "No. Pro is a one-time payment for 1, 3 or 12 months, so there's nothing to cancel and no surprise charges. Buy more time whenever you like.",
+    a: "Only if you choose it. Pro passes for 1, 3 or 12 months are one-time payments with nothing to cancel. In some countries there's also a monthly plan that renews automatically, which you can cancel any time from your dashboard.",
   },
 ];
 

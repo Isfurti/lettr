@@ -14,9 +14,16 @@ export type CheckoutState =
   | "signed-out"
   /** Has Pro from the Lettr team, nothing to buy. */
   | "comped"
+  /** Already on the auto-renewing monthly plan. */
+  | "subscribed"
   | "ready";
 
-type RazorpayResponse = { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string };
+type RazorpayResponse = {
+  razorpay_payment_id: string;
+  razorpay_order_id?: string;
+  razorpay_subscription_id?: string;
+  razorpay_signature: string;
+};
 type RazorpayInstance = { open: () => void; on: (event: string, cb: (r: { error?: { description?: string } }) => void) => void };
 declare global {
   interface Window {
@@ -45,13 +52,28 @@ const BUTTON =
   "btn-press flex items-center justify-center w-full min-h-12 rounded-full font-extrabold bg-gold text-ink shadow-[0_5px_0_var(--gold-deep)] disabled:opacity-60";
 const MUTED = "flex items-center justify-center w-full min-h-12 rounded-full font-extrabold cursor-not-allowed bg-gold/90 text-ink";
 
-export function ProCheckoutButton({ plan, state, label }: { plan: PlanId; state: CheckoutState; label: string }) {
+/**
+ * `mode="auto"` starts the auto-renewing monthly plan (a Razorpay
+ * subscription) instead of a one-time pass.
+ */
+export function ProCheckoutButton({
+  plan,
+  state,
+  label,
+  mode = "pass",
+}: {
+  plan: PlanId;
+  state: CheckoutState;
+  label: string;
+  mode?: "pass" | "auto";
+}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (state === "closed") return <button type="button" disabled className={MUTED}>Opens at launch</button>;
   if (state === "unavailable") return <button type="button" disabled className={MUTED}>Coming soon in your country</button>;
   if (state === "comped") return <button type="button" disabled className={MUTED}>You have Pro</button>;
+  if (state === "subscribed") return <button type="button" disabled className={MUTED}>You&apos;re on auto-renew</button>;
   if (state === "signed-out") {
     return (
       <Link href="/signup?continue=pricing" className={BUTTON}>
@@ -66,7 +88,7 @@ export function ProCheckoutButton({ plan, state, label }: { plan: PlanId; state:
     try {
       const [loaded, res] = await Promise.all([
         loadRazorpay(),
-        fetch("/api/billing/checkout", {
+        fetch(mode === "auto" ? "/api/billing/subscribe" : "/api/billing/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ plan }),
@@ -78,9 +100,9 @@ export function ProCheckoutButton({ plan, state, label }: { plan: PlanId; state:
 
       const rzp = new window.Razorpay({
         key: order.keyId,
-        order_id: order.orderId,
-        amount: order.amount,
-        currency: order.currency,
+        ...(mode === "auto"
+          ? { subscription_id: order.subscriptionId }
+          : { order_id: order.orderId, amount: order.amount, currency: order.currency }),
         name: "Lettr",
         description: order.description,
         image: `${window.location.origin}/icons/icon-512.png`,
@@ -89,7 +111,7 @@ export function ProCheckoutButton({ plan, state, label }: { plan: PlanId; state:
         modal: { ondismiss: () => setBusy(false) },
         handler: async (r: RazorpayResponse) => {
           try {
-            const done = await fetch("/api/billing/verify", {
+            const done = await fetch(mode === "auto" ? "/api/billing/subscribe/verify" : "/api/billing/verify", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(r),

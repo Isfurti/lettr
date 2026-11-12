@@ -129,7 +129,17 @@ const SECTIONS: LegalSection[] = [
           Prices are set for your country. Prices in Indian rupees include GST. Each pass is a single payment and does not
           renew automatically: Pro ends at the end of the time you paid for, and we email you a few days before. If you buy
           another pass while Pro is still running, the new time is added after your current end date. Pro is switched on
-          straight after payment. Payments are handled by Razorpay; we don&apos;t see or store your full card, UPI or bank
+          straight after payment.
+        </p>
+        <p>
+          In some countries we also offer a monthly plan that renews automatically. If you choose it, your card is charged
+          the monthly price shown at checkout once a month until you cancel. We email you 3 days before each renewal. You
+          can cancel any time from your dashboard; you won&apos;t be charged again and Pro runs until the end of the month
+          you&apos;ve paid for. If a renewal can&apos;t be charged, Razorpay retries it over the next few days, and Pro ends if
+          it still fails.
+        </p>
+        <p>
+          Payments are handled by Razorpay; we don&apos;t see or store your full card, UPI or bank
           details.
         </p>
         <p>

@@ -6,7 +6,7 @@ import { ensureUserRegion } from "@/lib/user-region";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-auth";
-import { listResumesForUser, getUserById, listRecentActivity, listInvoicesForUser, listApplications } from "@/lib/db";
+import { getActiveSubscriptionForUser, listResumesForUser, getUserById, listRecentActivity, listInvoicesForUser, listApplications } from "@/lib/db";
 import { formatMoney } from "@/lib/gst";
 import { PLAN_LIMITS, type Plan } from "@/lib/limits";
 import { planAllowances } from "@/lib/free-usage";
@@ -19,6 +19,8 @@ import { ScoreRing } from "@/components/ScoreRing";
 import { NewResumeButton } from "@/components/NewResumeButton";
 import { ImportResumeButton } from "@/components/ImportResumeButton";
 import { formatProDate, hasPaidPro, isPlanId, PRO_PASSES } from "@/lib/pro-pass";
+import { formatMinor } from "@/lib/pro-payments";
+import { CancelAutoRenewButton } from "@/components/CancelAutoRenewButton";
 import { ResumeSearch } from "@/components/ResumeSearch";
 import { VerifyEmailBanner } from "@/components/VerifyEmailBanner";
 import { GuestDraftRescue } from "@/components/GuestDraftRescue";
@@ -66,6 +68,8 @@ export default async function DashboardPage({
   const isPaidPro = Boolean(user && hasPaidPro(user));
   const proUntil = isPaidPro && user?.pro_until ? formatProDate(user.pro_until) : null;
   const passName = user && isPlanId(user.pro_plan) ? PRO_PASSES[user.pro_plan].name : "Pro pass";
+  const autoSub = user ? await getActiveSubscriptionForUser(user.id) : undefined;
+  const renewsOn = autoSub?.current_end ? formatProDate(autoSub.current_end) : null;
 
   const rawName = session.user.name || session.user.email?.split("@")[0] || "there";
   // Names typed in lowercase ("sagar agarwal") read better capitalised.
@@ -351,12 +355,30 @@ export default async function DashboardPage({
         {plan === "pro" ? (
           <section className="mt-5 bg-white rounded-[28px] border border-rule p-6 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="font-bold">
-                {isPaidPro ? `You're on Pro (${passName}) until ${proUntil}.` : "You're on Pro (added by the Lettr team)."}
-              </p>
-              {isPaidPro && <p className="text-sm text-slate mt-1">It won&apos;t renew on its own, so you&apos;re never charged again unless you buy more time.</p>}
+              {autoSub ? (
+                <>
+                  <p className="font-bold">
+                    {autoSub.cancel_at_cycle_end
+                      ? `You're on Pro until ${proUntil}. Auto-renew is off.`
+                      : `You're on Pro, renewing monthly at ${formatMinor(autoSub.amount, autoSub.currency)}.`}
+                  </p>
+                  <p className="text-sm text-slate mt-1">
+                    {autoSub.cancel_at_cycle_end
+                      ? "You won't be charged again. Your resumes stay saved after Pro ends."
+                      : `Next renewal ${renewsOn ? `on ${renewsOn}` : "in about a month"}. We email you 3 days before.`}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-bold">
+                    {isPaidPro ? `You're on Pro (${passName}) until ${proUntil}.` : "You're on Pro (added by the Lettr team)."}
+                  </p>
+                  {isPaidPro && <p className="text-sm text-slate mt-1">It won&apos;t renew on its own, so you&apos;re never charged again unless you buy more time.</p>}
+                </>
+              )}
             </div>
-            {isPaidPro && (
+            {autoSub && !autoSub.cancel_at_cycle_end && <CancelAutoRenewButton proUntil={renewsOn ?? proUntil ?? "the end of this month"} />}
+            {isPaidPro && !autoSub && (
               <Link href="/pricing" className="inline-flex items-center min-h-11 font-bold text-brand-blue hover:underline">
                 Add more time →
               </Link>
