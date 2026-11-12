@@ -86,7 +86,7 @@ const SCHEMA_SQL = `
       );
       CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id);
 
-      -- Auto-renewing monthly Pro (Razorpay Subscriptions, outside India).
+      -- Auto-renewing Pro plans (Razorpay Subscriptions).
       -- Each successful charge is also a row in payments (order_id "sub_<payment id>").
       CREATE TABLE IF NOT EXISTS pro_subscriptions (
         id TEXT PRIMARY KEY,
@@ -102,6 +102,8 @@ const SCHEMA_SQL = `
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
       CREATE INDEX IF NOT EXISTS idx_pro_subscriptions_user ON pro_subscriptions(user_id);
+      -- Which Lettr plan it is: monthly, quarter or yearly.
+      ALTER TABLE pro_subscriptions ADD COLUMN IF NOT EXISTS plan_id TEXT NOT NULL DEFAULT 'monthly';
       -- One Razorpay plan per price (e.g. USD_1900), made the first time someone picks it.
       CREATE TABLE IF NOT EXISTS razorpay_plans (
         key TEXT PRIMARY KEY,
@@ -1676,11 +1678,17 @@ export async function deleteAiExamplesForUser(userId: string) {
 }
 
 
-/* ---------- Auto-renewing monthly Pro ---------- */
+/* ---------- Auto-renewing Pro plans ---------- */
+
+function monthsForPlan(plan: string): number {
+  return plan === "yearly" ? 12 : plan === "quarter" ? 3 : 1;
+}
 
 export type ProSubscriptionRow = {
   id: string;
   user_id: string | null;
+  /** monthly, quarter or yearly */
+  plan_id: string;
   razorpay_plan_id: string;
   amount: number;
   currency: string;
@@ -1709,11 +1717,19 @@ export async function saveRazorpayPlanId(key: string, planId: string): Promise<s
   return res.rows[0].plan_id;
 }
 
-export async function createProSubscription(p: { id: string; userId: string; planId: string; amount: number; currency: string }) {
+export async function createProSubscription(p: {
+  id: string;
+  userId: string;
+  /** monthly, quarter or yearly */
+  plan: string;
+  razorpayPlanId: string;
+  amount: number;
+  currency: string;
+}) {
   await ensureSchema();
   await pool.query(
-    "INSERT INTO pro_subscriptions (id, user_id, razorpay_plan_id, amount, currency) VALUES ($1, $2, $3, $4, $5)",
-    [p.id, p.userId, p.planId, p.amount, p.currency]
+    "INSERT INTO pro_subscriptions (id, user_id, plan_id, razorpay_plan_id, amount, currency) VALUES ($1, $2, $3, $4, $5, $6)",
+    [p.id, p.userId, p.plan, p.razorpayPlanId, p.amount, p.currency]
   );
 }
 
@@ -1761,7 +1777,7 @@ export async function recordSubscriptionCharge(p: {
   currency: string;
   currentEnd: Date | null;
   proUntil: Date;
-}): Promise<{ user: UserRow | undefined; first: boolean } | null> {
+}): Promise<{ user: UserRow | undefined; first: boolean; sub: ProSubscriptionRow } | null> {
   await ensureSchema();
   const client = await pool.connect();
   try {
@@ -1774,9 +1790,9 @@ export async function recordSubscriptionCharge(p: {
     }
     const inserted = await client.query(
       `INSERT INTO payments (order_id, user_id, plan_id, months, amount, currency, status, payment_id, paid_at)
-       VALUES ($1, $2, 'auto_monthly', 1, $3, $4, 'paid', $5, now())
+       VALUES ($1, $2, $3, $4, $5, $6, 'paid', $7, now())
        ON CONFLICT DO NOTHING RETURNING order_id`,
-      [`sub_${p.paymentId}`, sub.user_id, p.amount, p.currency, p.paymentId]
+      [`sub_${p.paymentId}`, sub.user_id, `auto_${sub.plan_id}`, monthsForPlan(sub.plan_id), p.amount, p.currency, p.paymentId]
     );
     if (!inserted.rows[0]) {
       await client.query("ROLLBACK");
@@ -1784,7 +1800,7 @@ export async function recordSubscriptionCharge(p: {
     }
     const prior = await client.query(
       // Earlier charges on this subscription: none means this is the first month.
-      "SELECT COUNT(*)::int AS n FROM payments WHERE plan_id = 'auto_monthly' AND order_id <> $1 AND user_id IS NOT DISTINCT FROM $2 AND paid_at >= $3",
+      "SELECT COUNT(*)::int AS n FROM payments WHERE plan_id LIKE 'auto_%' AND order_id LIKE 'sub_%' AND order_id <> $1 AND user_id IS NOT DISTINCT FROM $2 AND paid_at >= $3",
       [`sub_${p.paymentId}`, sub.user_id, sub.created_at]
     );
     await client.query(
@@ -1794,15 +1810,15 @@ export async function recordSubscriptionCharge(p: {
     let user: UserRow | undefined;
     if (sub.user_id) {
       const res = await client.query(
-        `UPDATE users SET plan = 'pro', pro_plan = 'auto_monthly',
+        `UPDATE users SET plan = 'pro', pro_plan = $3,
            pro_until = GREATEST(COALESCE(pro_until, now()), $2)
          WHERE id = $1 RETURNING *`,
-        [sub.user_id, p.proUntil]
+        [sub.user_id, p.proUntil, sub.plan_id]
       );
       user = res.rows[0];
     }
     await client.query("COMMIT");
-    return { user, first: (prior.rows[0]?.n ?? 0) === 0 };
+    return { user, first: (prior.rows[0]?.n ?? 0) === 0, sub };
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;

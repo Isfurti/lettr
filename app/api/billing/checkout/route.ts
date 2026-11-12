@@ -4,7 +4,7 @@ import { createPaymentRecord, getActiveSubscriptionForUser, getUserById } from "
 import { ensureUserRegion } from "@/lib/user-region";
 import { getRegionPrices } from "@/lib/plans";
 import { isPlanId, passAmountMinor, passDescription, PRO_PASSES } from "@/lib/pro-pass";
-import { createOrder, currencyAllowed, razorpayConfigured } from "@/lib/razorpay";
+import { createOrder, currencyAllowed, razorpayConfigured, subscriptionsEnabled } from "@/lib/razorpay";
 
 /**
  * Starts buying a Pro pass: makes a Razorpay order for the price shown to
@@ -14,6 +14,11 @@ import { createOrder, currencyAllowed, razorpayConfigured } from "@/lib/razorpay
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Please sign in to buy Pro." }, { status: 401 });
+
+  // Once Subscriptions is on, every plan renews automatically (see /api/billing/subscribe).
+  if (subscriptionsEnabled()) {
+    return NextResponse.json({ error: "Please refresh the pricing page and try again." }, { status: 410 });
+  }
 
   const body = await req.json().catch(() => ({}));
   const plan: unknown = body?.plan;

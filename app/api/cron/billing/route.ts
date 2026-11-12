@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { expireLapsedPro, listProEndingSoon, listSubscriptionsRenewingSoon, markProReminderSent, markSubscriptionReminderSent } from "@/lib/db";
 import { sendProEndingSoonEmail, sendRenewalReminderEmail } from "@/lib/email";
-import { formatProDate, PRO_REMINDER_DAYS, RENEWAL_REMINDER_DAYS } from "@/lib/pro-pass";
+import { formatProDate, isPlanId, PRO_REMINDER_DAYS, RENEWAL_PERIOD, RENEWAL_REMINDER_DAYS } from "@/lib/pro-pass";
 import { formatMinor } from "@/lib/pro-payments";
 
 export const runtime = "nodejs";
@@ -38,6 +38,7 @@ export async function GET(req: Request) {
       const { sent } = await sendRenewalReminderEmail({
         email: sub.email,
         price: formatMinor(sub.amount, sub.currency),
+        period: RENEWAL_PERIOD[isPlanId(sub.plan_id) ? sub.plan_id : "monthly"],
         renewsOn: formatProDate(sub.current_end),
       });
       if (sent) {

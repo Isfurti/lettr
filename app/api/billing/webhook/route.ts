@@ -68,7 +68,8 @@ async function handleSubscriptionEvent(event: {
 }) {
   const sub = event.payload?.subscription?.entity;
   // Subscriptions made outside Lettr aren't ours to handle.
-  if (!sub?.id || !(await getProSubscription(sub.id))) return NextResponse.json({ received: true });
+  const ours = sub?.id ? await getProSubscription(sub.id) : undefined;
+  if (!sub?.id || !ours) return NextResponse.json({ received: true });
   try {
     if (event.event === "subscription.charged") {
       const payment = event.payload?.payment?.entity;
@@ -79,11 +80,12 @@ async function handleSubscriptionEvent(event: {
           amount: payment.amount,
           currency: payment.currency,
           currentEnd: sub.current_end ?? null,
+          plan: ours.plan_id,
         });
       }
     } else if (event.event && STATUS_FOR_EVENT[event.event]) {
       // Halted or cancelled just stops future charges: Pro runs out on its own
-      // at the end of the paid month (plus grace) through the daily job.
+      // at the end of the paid period (plus grace) through the daily job.
       const end = sub.current_end ? new Date(sub.current_end * 1000) : null;
       await setSubscriptionStatus(sub.id, STATUS_FOR_EVENT[event.event], end);
     }

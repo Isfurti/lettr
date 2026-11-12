@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-/** Stops auto-renew after a confirm step. Pro keeps running to the end of the paid month. */
+/** Stops auto-renew after a confirm step. Pro keeps running to the end of the paid period. */
 export function CancelAutoRenewButton({ proUntil }: { proUntil: string }) {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);

@@ -6,7 +6,7 @@ import { fetchSubscription, verifySubscriptionSignature } from "@/lib/razorpay";
 import { fulfilSubscriptionCharge } from "@/lib/pro-payments";
 
 /**
- * Called by the browser right after the first auto-renew payment. The
+ * Called by the browser right after the first payment on a renewing plan. The
  * signature proves Razorpay took it, so Pro switches on at once instead of
  * waiting for the webhook.
  */
@@ -36,6 +36,7 @@ export async function POST(req: Request) {
       amount: sub.amount,
       currency: sub.currency,
       currentEnd: live?.current_end ?? null,
+      plan: sub.plan_id,
     });
   } catch (err) {
     Sentry.captureException(err, { extra: { subscriptionId, paymentId } });
