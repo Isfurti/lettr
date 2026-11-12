@@ -34,7 +34,7 @@ const SECTIONS: LegalSection[] = [
       <p>
         Pro switches on as soon as your payment goes through, usually within seconds. You get a confirmation email, and the
         GST invoice is on your dashboard. Your resumes and downloads are available straight away, on any device you sign in
-        on.
+        on. When your plan renews, Pro carries on without a break and the new invoice appears on your dashboard.
       </p>
     ),
   },
@@ -54,7 +54,7 @@ export default function DeliveryPolicyPage() {
   return (
     <LegalPage
       title="Delivery Policy"
-      updated="17 October 2026"
+      updated="12 November 2026"
       intro={<p>How Lettr Pro reaches you after you pay.</p>}
       sections={SECTIONS}
     />
