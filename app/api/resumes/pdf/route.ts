@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   const userId = (session.user as { id: string }).id;
   const user = await getUserById(userId);
   const ctx = await usageContext(user ?? { id: userId, email: session.user.email });
-  // PDFs never stop on the free plan: after the clean ones they carry a small "Made with Lettr" line.
+  // Every plan gets unlimited clean PDFs; the footer only applies if a plan's clean-PDF limit is ever finite.
   const footer = pdfNeedsFooter(ctx.tier, await cleanPdfsUsed(ctx, user?.pdf_download_count ?? 0));
 
   const body = await req.json().catch(() => null);

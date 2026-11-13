@@ -27,6 +27,7 @@ export function AtsPanel({
   analyst,
   jobPost,
   onJobPostChange,
+  onAddSkill,
 }: {
   data: ResumeData;
   template: string;
@@ -40,6 +41,8 @@ export function AtsPanel({
   /** The job post, when the builder shares it with other tabs. Leave out to keep it here. */
   jobPost?: string;
   onJobPostChange?: (v: string) => void;
+  /** Adds a missing job keyword to the skills list in one click. */
+  onAddSkill?: (keyword: string) => void;
 }) {
   const [ownJd, setOwnJd] = useState("");
   const controlled = jobPost !== undefined && onJobPostChange !== undefined;
@@ -63,7 +66,33 @@ export function AtsPanel({
     }
   }, [controlled]);
 
-  const report = useMemo(() => analyzeAts(data, template, jd), [data, template, jd]);
+  // Pages the PDF prints to, measured on the server a moment after edits stop.
+  const [pages, setPages] = useState<number | null>(null);
+  const measureKey = useMemo(() => JSON.stringify({ data, template }), [data, template]);
+  useEffect(() => {
+    const ctrl = new AbortController();
+    const t = window.setTimeout(async () => {
+      try {
+        const res = await fetch("/api/resumes/fit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ resume: data, template, measure: true }),
+          signal: ctrl.signal,
+        });
+        const body = await res.json().catch(() => ({}));
+        if (res.ok && typeof body.pages === "number") setPages(body.pages);
+      } catch {
+        // offline or cancelled: keep the last count
+      }
+    }, 1500);
+    return () => {
+      window.clearTimeout(t);
+      ctrl.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- measureKey stands for data + template
+  }, [measureKey]);
+
+  const report = useMemo(() => analyzeAts(data, template, jd, pages), [data, template, jd, pages]);
 
   async function askAnalyst() {
     if (guest) {
@@ -121,7 +150,10 @@ export function AtsPanel({
             >
               <span className="flex items-start justify-between gap-2 text-sm font-bold leading-snug">
                 <span className="min-w-0">{cat.label}</span>
-                <span className="shrink-0">{cat.score}</span>
+                <span className="shrink-0 whitespace-nowrap">
+                  {Math.round((cat.score * cat.weight) / 100)}
+                  <span className="text-slate font-semibold">/{cat.weight}</span>
+                </span>
               </span>
               <span className="block h-1.5 bg-sand rounded-full mt-1.5 overflow-hidden">
                 <span
@@ -132,6 +164,9 @@ export function AtsPanel({
             </button>
           ))}
         </div>
+        <p className="text-xs text-slate mt-2">
+          Points per part add up to 100{report.heldBackBy ? ", then serious problems cap the total" : ""}. Tap a part to see its checks.
+        </p>
         {open && (
           <ul className="mt-4 space-y-3">
             {report.categories
@@ -172,13 +207,27 @@ export function AtsPanel({
             </p>
             {report.keywords.missingKeywords.length > 0 && (
               <>
-                <p className="text-xs text-slate mt-2 mb-1.5">Missing. Add the ones that are true for you to your skills, summary or bullets:</p>
+                <p className="text-xs text-slate mt-2 mb-1.5">
+                  Missing. Add the ones that are true for you{onAddSkill ? " (tap to add to your skills)" : " to your skills, summary or bullets"}:
+                </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {report.keywords.missingKeywords.slice(0, keywordsShown).map((k) => (
-                    <span key={k} className="text-xs font-bold bg-red-50 text-red-700 px-2 py-1 rounded-xl">
-                      {k}
-                    </span>
-                  ))}
+                  {report.keywords.missingKeywords.slice(0, keywordsShown).map((k) =>
+                    onAddSkill ? (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => onAddSkill(k)}
+                        aria-label={`Add ${k} to skills`}
+                        className="text-xs font-bold bg-red-50 text-red-700 px-2 py-1 rounded-xl min-h-8 hover:bg-red-100"
+                      >
+                        + {k}
+                      </button>
+                    ) : (
+                      <span key={k} className="text-xs font-bold bg-red-50 text-red-700 px-2 py-1 rounded-xl">
+                        {k}
+                      </span>
+                    ),
+                  )}
                   {/* Hidden ones are drawn as blurred blanks: the words themselves never reach the page. */}
                   {report.keywords.missingKeywords.slice(keywordsShown).map((k, i) => (
                     <span

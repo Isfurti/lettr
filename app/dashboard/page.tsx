@@ -324,7 +324,6 @@ export default async function DashboardPage({
               <div className="space-y-5">
                 {[
                   { label: "Resumes", used: resumes.length, limit: resumeLimit },
-                  { label: "Clean PDF downloads (no Lettr line)", ...allowances.cleanPdfs },
                   { label: "AI rewrites", ...allowances.rewrites },
                   { label: allowances.period === "month" ? "Cover letters this month" : "AI cover letter", ...allowances.coverLetters },
                   { label: allowances.period === "month" ? "ATS analyst reviews this month" : "ATS analyst review", ...allowances.atsAnalyst },

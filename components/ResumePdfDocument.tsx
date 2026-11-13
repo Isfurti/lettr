@@ -9,14 +9,14 @@ import { extraSections, type ResumeData } from "@/lib/types";
 import { pdfFonts } from "@/lib/pdf-fonts";
 import { resolveAccent, darkenHex, softenHex } from "@/lib/customization";
 import { RibbonPdf, SplitPdf, ScholarPdf, FresherPdf, GridPdf, SpotlightPdf } from "@/components/templates/NewPdfs";
+import { contactParts } from "@/lib/contact";
 
 const INK = "#1b2a4a";
 const MUTED = "#5b6472";
 const PAPER = "#faf7f0";
 
 function contactLine(resume: ResumeData): string {
-  return [resume.contact.email, resume.contact.phone, resume.contact.location, resume.contact.linkedin, resume.contact.website]
-    .filter(Boolean)
+  return contactParts(resume.contact)
     .join("  •  ");
 }
 
@@ -350,7 +350,7 @@ function SidebarPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
         <View style={s.sidebar}>
           {photo && <Image src={photo} style={s.photo} />}
           <Text style={s.name}>{resume.contact.fullName || "Your Name"}</Text>
-          {[resume.contact.email, resume.contact.phone, resume.contact.location, resume.contact.linkedin, resume.contact.website]
+          {contactParts(resume.contact)
             .filter(Boolean)
             .map((line, i) => <Text key={i} style={s.contactLine}>{line}</Text>)}
           <Ordered c={resume.customization}>

@@ -3,6 +3,7 @@ import { Ordered, Sec } from "@/components/templates/Ordered";
 import { Rich } from "@/components/templates/Rich";
 import type { ResumeData, ExperienceEntry } from "@/lib/types";
 import { ExtraSectionsPreview } from "@/components/ResumeEditor";
+import { contactParts } from "@/lib/contact";
 
 /**
  * Templates added in the Oct 2026 batch: Ribbon, Split, Scholar, Fresher,
@@ -20,7 +21,7 @@ const flags = (d: ResumeData) => ({
 });
 
 const contactItems = (d: ResumeData) =>
-  [d.contact.email, d.contact.phone, d.contact.location, d.contact.linkedin, d.contact.website].filter(Boolean) as string[];
+  contactParts(d.contact);
 
 const initials = (name: string) =>
   name

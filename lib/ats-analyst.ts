@@ -4,6 +4,7 @@ import { plainResume } from "./rich-text";
 import { ACTION_VERBS, isObjectiveStyle } from "./resume-score";
 import { MARKETS, marketOf } from "./market";
 import { keywordInText, scoreResumeAgainstJob, type AtsResult } from "./ats-score";
+import { pageTarget } from "./guidance";
 
 /**
  * The ATS score analyst: how well a resume will get through applicant
@@ -104,6 +105,8 @@ export function analyzeAts(
   input: ResumeData,
   template: string,
   jobPost?: string,
+  /** Pages the PDF actually prints to, when measured. Adds the page-length check. */
+  pages?: number | null,
 ): AtsReport {
   const r = plainResume(input);
   const c = r.contact;
@@ -256,9 +259,11 @@ export function analyzeAts(
             },
   );
   if (market === "US" || market === "UK" || market === "EU") {
-    const personal = /\b(date of birth|d\.?o\.?b\.?|marital status|nationality|religion|father'?s name|gender)\b/i.test(
-      [allText, r.contact.location ?? "", ...r.languages ?? []].join(" "),
-    );
+    const personal =
+      Boolean(r.contact.dateOfBirth?.trim() || r.contact.nationality?.trim()) ||
+      /\b(date of birth|d\.?o\.?b\.?|marital status|nationality|religion|father'?s name|gender)\b/i.test(
+        [allText, r.contact.location ?? "", ...r.languages ?? []].join(" "),
+      );
     readable.push(
       personal
         ? {
@@ -614,6 +619,29 @@ export function analyzeAts(
       ? `${badSchool.school || "Your education"}: ${datePairProblem(badSchool.startDate, badSchool.endDate, { endMayBeFuture: true })}`
       : null;
   const wrongDatesSection = badRole ? "experience" : "education";
+  // Page length against what employers in the chosen market expect.
+  if (typeof pages === "number" && pages > 0) {
+    const target = pageTarget(market, input);
+    const where = market ? MARKETS[market].label : "most countries";
+    const pageWord = (n: number) => `${n} page${n === 1 ? "" : "s"}`;
+    structure.push(
+      pages <= target
+        ? {
+            id: "pages",
+            status: "pass",
+            label: `${pageWord(pages)}, right for ${where}`,
+            detail: `Employers in ${where} expect up to ${pageWord(target)} for your experience.`,
+          }
+        : {
+            id: "pages",
+            status: pages - target >= 2 ? "fail" : "warn",
+            label: `${pageWord(pages)}: longer than ${where} expects`,
+            detail: `Aim for ${pageWord(target)}. Trim older bullets, or use "Fit to one page" in Design.`,
+            section: "design",
+            weight: 2,
+          },
+    );
+  }
   structure.push(
     r.experience.length === 0
       ? {

@@ -35,13 +35,10 @@ describe("canCreateResume", () => {
 });
 
 describe("PDF downloads", () => {
-  it("gives a new free user one clean PDF, then adds the Made with Lettr line", () => {
+  it("gives every free user unlimited clean PDFs", () => {
     expect(pdfNeedsFooter("free", 0)).toBe(false);
-    expect(pdfNeedsFooter("free", 1)).toBe(true);
-  });
-  it("keeps 3 clean PDFs for older free accounts", () => {
-    expect(pdfNeedsFooter("free_legacy", 2)).toBe(false);
-    expect(pdfNeedsFooter("free_legacy", 3)).toBe(true);
+    expect(pdfNeedsFooter("free", 500)).toBe(false);
+    expect(pdfNeedsFooter("free_legacy", 500)).toBe(false);
   });
   it("never adds the line for Pro", () => {
     expect(pdfNeedsFooter("pro", 100000)).toBe(false);

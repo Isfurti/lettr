@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import { anonymousClientKey } from "@/lib/client-key";
-import { fitToOnePage } from "@/lib/pdf-fit";
+import { fitToOnePage, measurePages } from "@/lib/pdf-fit";
 import { TEMPLATE_IDS } from "@/lib/templates";
 import type { ResumeData } from "@/lib/types";
 
@@ -10,14 +10,19 @@ export const runtime = "nodejs";
 
 /**
  * "Fit to one page" in the Design panel: renders the PDF at a few sizes and
- * returns the largest spacing that fits on one page. Nothing is saved or
+ * returns the largest spacing that fits on one page. With `measure: true` it
+ * only counts the pages (for the ATS page-length check). Nothing is saved or
  * counted as a download. Works for guests too (rate-limited).
  */
 export async function POST(req: Request) {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   const key = userId ?? anonymousClientKey(req.headers);
-  const limit = await checkAndRecordRateLimit(key, "resume-fit", userId ? 30 : 15, 10);
+  const body = await req.json().catch(() => null);
+  const measureOnly = body?.measure === true;
+  const limit = measureOnly
+    ? await checkAndRecordRateLimit(key, "resume-pages", userId ? 120 : 40, 10)
+    : await checkAndRecordRateLimit(key, "resume-fit", userId ? 30 : 15, 10);
   if (!limit.allowed) {
     return NextResponse.json(
       { error: `Please wait ${limit.retryAfterSeconds}s and try again.` },
@@ -25,7 +30,6 @@ export async function POST(req: Request) {
     );
   }
 
-  const body = await req.json().catch(() => null);
   const resume = body?.resume as ResumeData | undefined;
   const template = typeof body?.template === "string" && (TEMPLATE_IDS as readonly string[]).includes(body.template) ? body.template : "classic";
   if (!resume || typeof resume !== "object" || !resume.contact || !Array.isArray(resume.experience)) {
@@ -36,6 +40,7 @@ export async function POST(req: Request) {
   }
 
   try {
+    if (measureOnly) return NextResponse.json({ pages: await measurePages(resume, template) });
     return NextResponse.json(await fitToOnePage(resume, template));
   } catch {
     return NextResponse.json({ error: "Couldn't measure the pages. Try again." }, { status: 500 });

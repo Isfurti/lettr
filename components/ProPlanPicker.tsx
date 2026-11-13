@@ -20,7 +20,7 @@ export type PickerPlan = {
 
 const FEATURES = (templateCount: number) => [
   "Everything in Free",
-  "Unlimited resumes, clean PDFs, Word & Drive",
+  "Unlimited resumes, Word & Drive",
   `All ${templateCount} templates, any colour`,
   "Unlimited AI rewrites & cover letters (fair use)",
   "AI Resume Agent",

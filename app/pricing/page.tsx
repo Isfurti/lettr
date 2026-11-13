@@ -18,17 +18,18 @@ import { currencyAllowed, razorpayConfigured, subscriptionsEnabled } from "@/lib
 import { formatProDate, hasPaidPro } from "@/lib/pro-pass";
 import { ensureUserRegion } from "@/lib/user-region";
 import { DAILY_LIMITS, PLAN_LIMITS, FREE_AI_TRY_LINE } from "@/lib/limits";
+import { PrivacyNote } from "@/components/PrivacyNote";
 
 const PLAN_LIMITS_DAILY_PRO = DAILY_LIMITS.pro;
 
 export const metadata: Metadata = {
   title: "Pricing | Lettr — Free AI Resume Builder",
-  description: "Free resume builder with a live ATS score and a free try of the AI. Upgrade to Pro for unlimited AI writing (fair use), clean PDFs and exports.",
+  description: "Free resume builder with a live ATS score, unlimited clean PDFs and a free try of the AI. Upgrade to Pro for unlimited AI writing (fair use) and exports.",
   alternates: { canonical: "/pricing" },
   openGraph: {
     images: [OG_IMAGE],
     title: "Lettr Pricing — Free to start, upgrade anytime",
-    description: "Build and score your resume free, and try the AI free. Pro adds unlimited AI writing (fair use), clean PDFs, every template and exports. Regional pricing available.",
+    description: "Build and score your resume free, download unlimited clean PDFs, and try the AI free. Pro adds unlimited AI writing (fair use), every template and exports. Regional pricing available.",
     url: "/pricing",
   },
 };
@@ -89,7 +90,7 @@ const faqs = (open: boolean, renewing: boolean) => [
       },
   {
     q: "Is there a free plan?",
-    a: `Yes. 1 resume, 2 templates, the live ATS score, a clean PDF download, and a free try of every AI tool: ${FREE.maxAiWritingAssists} rewrites, a cover letter, an ATS analyst review and a practice interview. No credit card needed.`,
+    a: `Yes. 1 resume, 2 templates, the live ATS score, unlimited clean PDF downloads, and a free try of every AI tool: ${FREE.maxAiWritingAssists} rewrites, a cover letter, an ATS analyst review and a practice interview. No credit card needed.`,
   },
   {
     q: "What does \"free once\" mean?",
@@ -108,7 +109,7 @@ const faqs = (open: boolean, renewing: boolean) => [
   },
   {
     q: "Can I keep downloading PDFs on the free plan?",
-    a: "Yes. Your first PDF is clean. After that, free PDFs have a small \"Made with Lettr\" line at the bottom of the page. Pro removes it.",
+    a: "Yes, as many as you like. PDFs are clean on every plan, with no watermark or Lettr branding.",
   },
 ];
 
@@ -220,7 +221,7 @@ export default async function PricingPage() {
             <ul className="space-y-3 mb-8 flex-1">
               <FeatureLine included>1 resume, Classic and Modern templates</FeatureLine>
               <FeatureLine included>Live ATS score and resume score</FeatureLine>
-              <FeatureLine included>1 clean PDF, then with a small Lettr line</FeatureLine>
+              <FeatureLine included>Unlimited clean PDF downloads, no watermark</FeatureLine>
               <FeatureLine included>{FREE_AI_TRY_LINE}</FeatureLine>
               <FeatureLine included>Track up to {FREE.trackedJobs} jobs</FeatureLine>
             </ul>
@@ -240,6 +241,7 @@ export default async function PricingPage() {
             : "Secure payments by Razorpay. GST invoice on your dashboard after paying."}
           {prices.taxNote ? ` ${prices.taxNote}` : ""}
         </p>
+        <PrivacyNote className="mt-3 text-center max-w-2xl mx-auto" />
         {isAdmin && (
           <div className="mt-14">
             <h2 className="font-brand font-extrabold text-2xl">All prices by country</h2>
