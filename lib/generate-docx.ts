@@ -3,6 +3,7 @@ import { extraSections, type ResumeData } from "./types";
 import { DEFAULT_ACCENT_COLOR } from "./customization";
 import { applyLayout, layoutScale, pageSize, sectionOrder, type SectionKey } from "./layout";
 import { parseRich } from "./rich-text";
+import { contactParts } from "./contact";
 
 /** Word runs for text that may contain <b>, <i> or <u>. */
 function richRuns(text: string, size: number): TextRun[] {
@@ -15,8 +16,7 @@ const INK = "1B2A4A";
 const MUTED = "5B6472";
 
 function contactLine(resume: ResumeData): string {
-  return [resume.contact.email, resume.contact.phone, resume.contact.location, resume.contact.linkedin, resume.contact.website]
-    .filter(Boolean)
+  return contactParts(resume.contact)
     .join("   •   ");
 }
 

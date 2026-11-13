@@ -4,6 +4,7 @@ import type { ResumeData, ExperienceEntry } from "@/lib/types";
 import { extraSections } from "@/lib/types";
 import { pdfFonts } from "@/lib/pdf-fonts";
 import { ExtraSectionsPdf } from "@/components/ResumePdfDocument";
+import { contactParts } from "@/lib/contact";
 
 /**
  * PDF versions of the Ribbon, Split, Scholar, Fresher, Grid and Spotlight
@@ -23,7 +24,7 @@ const flags = (r: ResumeData) => ({
 });
 
 const contactItems = (r: ResumeData) =>
-  [r.contact.email, r.contact.phone, r.contact.location, r.contact.linkedin, r.contact.website].filter(Boolean) as string[];
+  contactParts(r.contact);
 
 const initials = (name: string) =>
   name

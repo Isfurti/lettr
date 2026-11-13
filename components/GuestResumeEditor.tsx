@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { EditForm, ScorePanel, ResumePreview } from "@/components/ResumeEditor";
 import { AtsPanel } from "@/components/builder/AtsPanel";
+import { addSkill } from "@/lib/contact";
 import { BuilderTabs, MobileViewToggle, LettrNotes, ScoreStamp, getLettrNotes, goToSection } from "@/components/builder/BuilderChrome";
 import { Logo } from "@/components/Logo";
 import { emptyResume, type ResumeData } from "@/lib/types";
@@ -210,7 +211,15 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
           )}
           {tab === "edit" && <EditForm data={data} setData={setData} guest template={template} setTemplate={setTemplate} />}
           {tab === "score" && <ScorePanel data={data} plan="free" />}
-          {tab === "match" && <AtsPanel data={data} template={template} guest onFix={goFix} />}
+          {tab === "match" && (
+            <AtsPanel
+              data={data}
+              template={template}
+              guest
+              onFix={goFix}
+              onAddSkill={(k) => setData((d) => ({ ...d, skills: addSkill(d.skills, k) }))}
+            />
+          )}
         </div>
         <div
           className={`bg-sand border-l border-rule px-4 sm:px-8 py-6 sm:py-8 lg:sticky lg:top-0 lg:self-start lg:h-screen lg:overflow-y-auto ${

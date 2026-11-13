@@ -33,6 +33,12 @@ import {
   monthNumber,
   toMonthNumber,
 } from "@/lib/resume-dates";
+import { addSkill, contactParts } from "@/lib/contact";
+import { bulletsGuide, skillsGuide, summaryGuide } from "@/lib/guidance";
+import { GuideCount } from "@/components/builder/GuideCount";
+import { PersonalDetails } from "@/components/builder/PersonalDetails";
+import { LanguageLevels } from "@/components/builder/LanguageLevels";
+import { PrivacyNote } from "@/components/PrivacyNote";
 
 const TEMPLATES: readonly string[] = TEMPLATE_IDS;
 
@@ -712,6 +718,7 @@ export function ResumeEditor({
                 onFix={goFix}
                 jobPost={jobPost}
                 onJobPostChange={setJobPost}
+                onAddSkill={(k) => setData((d) => ({ ...d, skills: addSkill(d.skills, k) }))}
                 keywordsShown={allowances?.keywordsShown}
                 analyst={allowances ? { ...allowances.atsAnalyst, period: allowances.period } : undefined}
               />
@@ -926,6 +933,7 @@ export function EditForm({
           <Input label="LinkedIn" type="url" placeholder="linkedin.com/in/yourname" value={data.contact.linkedin ?? ""} onChange={(v) => updateContact("linkedin", v)} />
           <Input label="Website" type="url" autoComplete="url" placeholder="yourname.com" value={data.contact.website ?? ""} onChange={(v) => updateContact("website", v)} />
         </div>
+        <PersonalDetails data={data} setData={setData} />
       </Section>
 
       <Section title="Summary" id="section-summary">
@@ -990,6 +998,7 @@ export function EditForm({
           label="Skills"
           placeholder="Comma-separated, e.g. Python, Excel, Project management"
         />
+        <GuideCount guide={skillsGuide(data.skills)} />
       </Section>
 
       <div className="pt-2 border-t border-rule">
@@ -1051,9 +1060,11 @@ export function EditForm({
               label="Languages"
               placeholder="e.g. English (fluent), Hindi (native), German (basic)"
             />
+            <LanguageLevels data={data} setData={setData} />
           </Section>
         </div>
       </div>
+      <PrivacyNote className="pt-2 border-t border-rule" />
 
     </div>
   );
@@ -1268,6 +1279,7 @@ function SummaryField({
           {loading ? "…" : "✦ AI"}
         </button>
       </div>
+      <GuideCount guide={summaryGuide(data.summary)} />
       {showSignInHint && <AiSignInHint />}
       {error && (
         <p className="text-xs text-red-600 mt-1">
@@ -1480,9 +1492,12 @@ function ExperienceCard({
             )}
           </div>
         ))}
-        <button onClick={addBullet} className="min-h-10 text-sm font-bold text-brand-blue hover:underline">
-          + Add bullet
-        </button>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <button onClick={addBullet} className="min-h-10 text-sm font-bold text-brand-blue hover:underline">
+            + Add bullet
+          </button>
+          <GuideCount guide={bulletsGuide(exp.bullets)} className="mt-0" />
+        </div>
       </div>
 
       <button onClick={onRemove} className="min-h-10 text-sm font-bold text-red-600 hover:underline">
@@ -2076,7 +2091,7 @@ export function ResumePreview({ data: raw, template }: { data: ResumeData; templ
 }
 
 const contactLine = (data: ResumeData) =>
-  [data.contact.email, data.contact.phone, data.contact.location, data.contact.linkedin, data.contact.website]
+  contactParts(data.contact)
     .filter(Boolean)
     .join("  •  ");
 
@@ -2365,7 +2380,7 @@ function SidebarPreview({ data }: { data: ResumeData }) {
         )}
         <h2 className="font-display font-bold text-xl leading-tight mb-4">{data.contact.fullName || "Your Name"}</h2>
         <div className="space-y-1 text-xs opacity-90 mb-6">
-          {[data.contact.email, data.contact.phone, data.contact.location, data.contact.linkedin, data.contact.website]
+          {contactParts(data.contact)
             .filter(Boolean)
             .map((line, i) => (
               <p key={i} className="break-words">{line}</p>

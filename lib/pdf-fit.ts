@@ -14,6 +14,12 @@ async function pagesAt(resume: ResumeData, template: string, scale: number): Pro
   return countPdfPages(await renderToBuffer(ResumePdfDocument({ resume: r, template })));
 }
 
+/** Pages the resume prints to at its current spacing (one render). */
+export async function measurePages(resume: ResumeData, template: string): Promise<number> {
+  const current = Math.min(MAX_SCALE, Math.max(MIN_SCALE, resume.customization?.scale ?? 1));
+  return pagesAt(resume, template, current);
+}
+
 export type FitResult = {
   /** Pages at the resume's current spacing. */
   pages: number;

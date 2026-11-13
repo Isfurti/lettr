@@ -59,6 +59,10 @@ export type ResumeData = {
     location?: string;
     linkedin?: string;
     website?: string;
+    // Optional personal details, offered for markets that expect them (see lib/contact.ts).
+    nationality?: string;
+    visaStatus?: string;
+    dateOfBirth?: string;
   };
   summary: string;
   experience: ExperienceEntry[];

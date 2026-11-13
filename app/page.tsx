@@ -14,6 +14,7 @@ import { TEMPLATE_IDS } from "@/lib/templates";
 import { FREE_AI_REWRITES } from "@/lib/free-plan";
 import { FREE_AI_TRY_LINE, FAIR_USE_HREF } from "@/lib/limits";
 import { COMPANY, operatorName } from "@/lib/company";
+import { PrivacyNote } from "@/components/PrivacyNote";
 
 // Revalidate hourly rather than fetching featured reviews on every single
 // page load - this is the highest-traffic page, no reason to hit the
@@ -461,6 +462,7 @@ export default async function Home() {
               Something else?{" "}
               <Link href="/support" className="font-bold text-brand-blue hover:underline">Ask us</Link>.
             </p>
+            <PrivacyNote className="mt-6 max-w-sm" />
           </Reveal>
           <div className="flex flex-col gap-3">
             {FAQ.map((f) => (

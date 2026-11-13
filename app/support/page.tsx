@@ -156,7 +156,7 @@ export default function SupportPage() {
 const HELP = [
   {
     q: "How do I download my resume?",
-    a: "Open your resume in the builder and press Download PDF. Your first PDF on the free plan is clean; later free PDFs have a small \"Made with Lettr\" line at the bottom. Pro removes it and adds Word (.docx) and Google Drive.",
+    a: "Open your resume in the builder and press Download PDF. PDFs are unlimited and clean on every plan, with no watermark. Pro adds Word (.docx) and Google Drive.",
   },
   {
     q: "Can I import the resume I already have?",

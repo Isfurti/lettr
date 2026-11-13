@@ -26,7 +26,7 @@ export type UsagePeriod = "lifetime" | "month";
 type Limits = {
   period: UsagePeriod;
   maxResumes: number;
-  /** PDFs without the small "Made with Lettr" line. After that, PDFs still download, with the line. */
+  /** PDFs without the small "Made with Lettr" line. Every plan now gets unlimited clean PDFs. */
   cleanPdfDownloads: number;
   maxAiWritingAssists: number; // always lifetime - see incrementAiWritingAssistCount
   aiAgent: boolean;
@@ -46,7 +46,7 @@ export const PLAN_LIMITS: Record<LimitTier, Limits> = {
   free: {
     period: "lifetime",
     maxResumes: 1,
-    cleanPdfDownloads: 1,
+    cleanPdfDownloads: Infinity,
     maxAiWritingAssists: FREE_AI_REWRITES,
     aiAgent: false,
     coverLetters: 1,
@@ -62,7 +62,7 @@ export const PLAN_LIMITS: Record<LimitTier, Limits> = {
   free_legacy: {
     period: "month",
     maxResumes: 1,
-    cleanPdfDownloads: 3,
+    cleanPdfDownloads: Infinity,
     maxAiWritingAssists: 5,
     aiAgent: false,
     coverLetters: 3,
@@ -118,7 +118,7 @@ export function canCreateResume(tier: LimitTier, currentResumeCount: number): Li
   };
 }
 
-/** Free PDFs never stop: the first ones are clean, the rest carry a small "Made with Lettr" line. */
+/** Whether a PDF gets the "Made with Lettr" line. All plans have unlimited clean PDFs, so this is false today. */
 export function pdfNeedsFooter(tier: LimitTier, downloadsSoFar: number): boolean {
   return downloadsSoFar >= PLAN_LIMITS[tier].cleanPdfDownloads;
 }

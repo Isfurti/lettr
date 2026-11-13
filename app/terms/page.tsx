@@ -120,8 +120,8 @@ const SECTIONS: LegalSection[] = [
         <p>
           The Free plan includes {PLAN_LIMITS.free.maxResumes} resume, the Classic and Modern templates, the ATS score and a
           one-time free try of the AI features ({PLAN_LIMITS.free.maxAiWritingAssists} AI rewrites, 1 cover letter, 1 ATS
-          analyst review and 1 practice interview). Your first PDF is free of any Lettr branding; later free PDFs carry a small
-          &quot;Made with Lettr&quot; line. Pro unlocks the rest.{" "}
+          analyst review and 1 practice interview). PDF downloads are unlimited and free of any Lettr branding. Pro unlocks the
+          rest.{" "}
           {RENEWING
             ? "Pro is sold as plans that renew automatically every month, every 3 months or every year"
             : "Pro is sold as one-time passes for 1, 3 or 12 months"}
