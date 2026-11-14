@@ -148,7 +148,10 @@ export default async function Home() {
       {/* Hero */}
       <section className={`${WRAP} pt-10 sm:pt-16 pb-16 sm:pb-24 grid lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center`}>
         <div className="rise">
-          <p className="font-brand font-bold text-gold-deep text-lg sm:text-xl mb-3">{TAGLINE}</p>
+          <p className="inline-block -rotate-[1.5deg] bg-ink text-gold font-brand font-extrabold text-xl sm:text-2xl px-5 py-2.5 rounded-xl shadow-[0_4px_0_var(--gold-deep)] mb-5">
+            {TAGLINE}
+          </p>
+          <br />
           <p className="inline-flex items-center gap-2 bg-gold-soft text-ink text-sm font-bold px-3.5 py-1.5 rounded-full mb-6">
             <span className="w-2 h-2 rounded-full bg-gold-deep" aria-hidden="true" />
             Free to start · No card needed
