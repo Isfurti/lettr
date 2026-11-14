@@ -5,6 +5,7 @@ import { ACTION_VERBS, isObjectiveStyle } from "./resume-score";
 import { MARKETS, marketOf } from "./market";
 import { keywordInText, scoreResumeAgainstJob, type AtsResult } from "./ats-score";
 import { pageTarget } from "./guidance";
+import { projectBullets } from "./resume-sections";
 
 /**
  * The ATS score analyst: how well a resume will get through applicant
@@ -118,7 +119,7 @@ export function analyzeAts(
     r.summary,
     ...bullets,
     ...r.skills,
-    ...extra.projects.map((p) => p.description),
+    ...extra.projects.flatMap((p) => [p.description, p.tech ?? "", ...projectBullets(p)]),
     ...extra.achievements,
   ].join(" ");
   const market = marketOf(input.customization);

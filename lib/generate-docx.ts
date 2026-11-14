@@ -4,6 +4,7 @@ import { DEFAULT_ACCENT_COLOR } from "./customization";
 import { applyLayout, layoutScale, pageSize, sectionOrder, type SectionKey } from "./layout";
 import { parseRich } from "./rich-text";
 import { contactParts } from "./contact";
+import { earlierRoleLine, earlierRoles, projectBullets } from "./resume-sections";
 
 /** Word runs for text that may contain <b>, <i> or <u>. */
 function richRuns(text: string, size: number): TextRun[] {
@@ -73,6 +74,9 @@ export async function generateResumeDocx(input: ResumeData): Promise<Buffer> {
           ],
         })
       );
+      for (const r of earlierRoles(exp)) {
+        add(new Paragraph({ children: [new TextRun({ text: earlierRoleLine(r), size: sz(18), color: MUTED })] }));
+      }
       for (const bullet of exp.bullets.filter(Boolean)) {
         add(
           new Paragraph({
@@ -105,7 +109,11 @@ export async function generateResumeDocx(input: ResumeData): Promise<Buffer> {
   section = "skills";
   if (resume.skills.length > 0) {
     add(sectionHeading("Skills", seal));
-    add(new Paragraph({ children: [new TextRun({ text: resume.skills.join("  •  "), size: sz(20) })] }));
+    if (resume.skillsGrouped) {
+      for (const line of resume.skills) add(new Paragraph({ children: [new TextRun({ text: line, size: sz(20) })] }));
+    } else {
+      add(new Paragraph({ children: [new TextRun({ text: resume.skills.join("  •  "), size: sz(20) })] }));
+    }
   }
 
   const extra = extraSections(resume);
@@ -122,8 +130,14 @@ export async function generateResumeDocx(input: ResumeData): Promise<Buffer> {
           ],
         })
       );
+      if (p.tech?.trim()) {
+        add(new Paragraph({ children: [new TextRun({ text: p.tech.trim(), size: sz(18), color: MUTED })] }));
+      }
       if (p.description) {
         add(new Paragraph({ spacing: { after: 60 }, children: richRuns(p.description, sz(20)) }));
+      }
+      for (const b of projectBullets(p)) {
+        add(new Paragraph({ bullet: { level: 0 }, spacing: { after: 40 }, children: richRuns(b, sz(20)) }));
       }
     }
   }

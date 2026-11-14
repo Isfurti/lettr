@@ -5,6 +5,8 @@ import { extraSections } from "@/lib/types";
 import { pdfFonts } from "@/lib/pdf-fonts";
 import { ExtraSectionsPdf } from "@/components/ResumePdfDocument";
 import { contactParts } from "@/lib/contact";
+import { joinSkills } from "@/lib/resume-sections";
+import { EarlierRolesPdf } from "@/components/templates/EarlierRolesPdf";
 
 /**
  * PDF versions of the Ribbon, Split, Scholar, Fresher, Grid and Spotlight
@@ -64,6 +66,7 @@ function Jobs({
             </Text>
           </View>
           {stacked && e.company ? <Text style={{ fontSize: 9, color: MUTED }}>{e.company}</Text> : null}
+          <EarlierRolesPdf exp={e} />
           {e.bullets.filter(Boolean).map((b, i) => (
             <Text key={i} style={{ marginLeft: indent ? 10 : 0, marginTop: 2, lineHeight: 1.35, fontSize: 9.5 }}>
               <Text style={{ color: seal }}>• </Text>
@@ -149,7 +152,7 @@ export function RibbonPdf({ resume, seal }: { resume: ResumeData } & Colors) {
         <Sec k="skills">{resume.skills.length > 0 && (
           <>
             <Text style={s.label}>Skills</Text>
-            <Text>{resume.skills.join("  ·  ")}</Text>
+            <Text>{joinSkills(resume, "  ·  ")}</Text>
           </>
         )}</Sec>
         <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.label} only={["projects"]} /></Sec>
@@ -296,7 +299,7 @@ export function ScholarPdf({ resume, seal }: { resume: ResumeData } & Colors) {
         <Sec k="skills">{resume.skills.length > 0 && (
           <>
             <Text style={s.title}>Skills</Text>
-            <Text style={{ textAlign: "center" }}>{resume.skills.join("  ·  ")}</Text>
+            <Text style={{ textAlign: "center" }}>{joinSkills(resume, "  ·  ")}</Text>
           </>
         )}</Sec>
         <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.title} align="center" only={["languages"]} /></Sec>
@@ -432,7 +435,7 @@ export function GridPdf({ resume, seal }: { resume: ResumeData } & Colors) {
         )}</Sec>
         <Sec k="skills">{resume.skills.length > 0 && (
           <GridRow seal={seal} title="Skills">
-            <Text>{resume.skills.join(", ")}</Text>
+            <Text>{joinSkills(resume, ", ")}</Text>
           </GridRow>
         )}</Sec>
         </Ordered>

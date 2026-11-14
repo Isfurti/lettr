@@ -1,4 +1,5 @@
 import type { ResumeCustomization, ResumeData } from "./types";
+import { degreeWithGrade, schoolWithLocation, skillLines } from "./resume-sections";
 
 /**
  * Layout choices from the builder's Design panel that apply to every
@@ -152,11 +153,26 @@ export function applyLayout(data: ResumeData): ResumeData {
     summary: hidden.has("summary") ? "" : data.summary,
     experience: hidden.has("experience")
       ? []
-      : data.experience.map((e) => ({ ...e, startDate: d(e.startDate), endDate: d(e.endDate) })),
+      : data.experience.map((e) => ({
+          ...e,
+          startDate: d(e.startDate),
+          endDate: d(e.endDate),
+          earlierRoles: e.earlierRoles?.map((r) => ({ ...r, startDate: d(r.startDate), endDate: d(r.endDate) })),
+        })),
+    // Location and grade are folded into the school and degree text, so every
+    // template shows them without its own code.
     education: hidden.has("education")
       ? []
-      : data.education.map((e) => ({ ...e, startDate: d(e.startDate), endDate: d(e.endDate) })),
-    skills: hidden.has("skills") ? [] : data.skills,
+      : data.education.map((e) => ({
+          ...e,
+          school: schoolWithLocation(e),
+          degree: degreeWithGrade(e),
+          startDate: d(e.startDate),
+          endDate: d(e.endDate),
+        })),
+    // Grouped skills become one "Label: a, b" line each; templates print them on separate lines.
+    skills: hidden.has("skills") ? [] : skillLines(data) ?? data.skills,
+    skillsGrouped: !hidden.has("skills") && skillLines(data) !== null,
     projects: hidden.has("projects") ? [] : data.projects,
     certifications: hidden.has("certifications")
       ? []

@@ -6,6 +6,22 @@ export type ExperienceEntry = {
   startDate: string;
   endDate: string; // "Present" allowed
   bullets: string[];
+  /** Earlier job titles at the same company (promotions), newest first. role/startDate/endDate above are the current title. */
+  earlierRoles?: EarlierRole[];
+};
+
+export type EarlierRole = {
+  id: string;
+  role: string;
+  startDate: string;
+  endDate: string;
+};
+
+/** A labelled group of skills, e.g. "Frontend: React, Next.js". */
+export type SkillGroup = {
+  id: string;
+  name: string;
+  skills: string[];
 };
 
 export type EducationEntry = {
@@ -14,6 +30,9 @@ export type EducationEntry = {
   degree: string;
   startDate: string;
   endDate: string;
+  /** e.g. "CGPA 8.4/10" or "First Class, 72%". */
+  grade?: string;
+  location?: string;
 };
 
 export type ProjectEntry = {
@@ -21,6 +40,9 @@ export type ProjectEntry = {
   name: string;
   link?: string;
   description: string;
+  /** Tools and tech used, e.g. "Next.js · PostgreSQL · AWS S3". */
+  tech?: string;
+  bullets?: string[];
 };
 
 export type CertificationEntry = {
@@ -68,6 +90,14 @@ export type ResumeData = {
   experience: ExperienceEntry[];
   education: EducationEntry[];
   skills: string[];
+  /**
+   * Skills sorted into labelled groups. When present, `skills` still holds every
+   * skill (groups first, then any not in a group), so ATS and AI code can keep
+   * reading the flat list.
+   */
+  skillGroups?: SkillGroup[];
+  /** Set by applyLayout only (never saved): `skills` holds one "Label: a, b" line per group. */
+  skillsGrouped?: boolean;
   // Optional sections - older saved resumes won't have these, so every
   // reader must treat them as possibly undefined (use the helpers below).
   projects?: ProjectEntry[];
@@ -80,7 +110,7 @@ export type ResumeData = {
 /** Safe accessors for the optional sections, so render code never has to null-check. */
 export function extraSections(data: ResumeData) {
   return {
-    projects: (data.projects ?? []).filter((p) => p.name.trim() || p.description.trim()),
+    projects: (data.projects ?? []).filter((p) => p.name.trim() || p.description.trim() || (p.bullets ?? []).some((b) => b.trim())),
     certifications: (data.certifications ?? []).filter((c) => c.name.trim()),
     languages: (data.languages ?? []).filter((l) => l.trim()),
     achievements: (data.achievements ?? []).filter((a) => a.trim()),

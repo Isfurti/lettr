@@ -10,7 +10,7 @@ import { AtsPanel } from "@/components/builder/AtsPanel";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { extraSections, type ResumeCustomization, type ResumeData, type ExperienceEntry, type EducationEntry, type ProjectEntry, type CertificationEntry } from "@/lib/types";
+import { extraSections, type ResumeCustomization, type ResumeData, type ExperienceEntry, type EducationEntry, type ProjectEntry, type CertificationEntry, type EarlierRole, type SkillGroup } from "@/lib/types";
 import { scoreResumeQuality, resumeScoreLevel } from "@/lib/resume-score";
 import type { Plan } from "@/lib/limits";
 import type { Allowance, PlanAllowances } from "@/lib/free-usage";
@@ -40,6 +40,8 @@ import { PersonalDetails } from "@/components/builder/PersonalDetails";
 import { LanguageLevels } from "@/components/builder/LanguageLevels";
 import { PrivacyNote } from "@/components/PrivacyNote";
 import { LetterDesigns } from "@/components/builder/LetterDesigns";
+import { EarlierRoles } from "@/components/templates/EarlierRoles";
+import { joinSkills, projectBullets, withSkillGroups, filledSkillGroups } from "@/lib/resume-sections";
 
 const TEMPLATES: readonly string[] = TEMPLATE_IDS;
 
@@ -970,6 +972,8 @@ export function EditForm({
               <div className="grid sm:grid-cols-2 gap-2">
                 <Input label="School / college" value={edu.school} onChange={(v) => updateEducation(edu.id, { school: v })} />
                 <Input label="Degree" placeholder="B.Tech, Computer Science" value={edu.degree} onChange={(v) => updateEducation(edu.id, { degree: v })} />
+                <Input label="Grade (optional)" placeholder="CGPA 8.4/10 or 72%" value={edu.grade ?? ""} onChange={(v) => updateEducation(edu.id, { grade: v })} />
+                <Input label="Location (optional)" placeholder="Pune, India" value={edu.location ?? ""} onChange={(v) => updateEducation(edu.id, { location: v })} />
                 <MonthYearInput
                   label="Start"
                   value={edu.startDate}
@@ -993,13 +997,41 @@ export function EditForm({
       </Section>
 
       <Section title="Skills" id="section-skills">
-        <CommaListInput
-          value={data.skills}
-          onChange={(skills) => setData((d) => ({ ...d, skills }))}
-          label="Skills"
-          placeholder="Comma-separated, e.g. Python, Excel, Project management"
-        />
+        {(data.skillGroups ?? []).length > 0 ? (
+          <SkillGroupsEditor data={data} setData={setData} />
+        ) : (
+          <CommaListInput
+            value={data.skills}
+            onChange={(skills) => setData((d) => ({ ...d, skills }))}
+            label="Skills"
+            placeholder="Comma-separated, e.g. Python, Excel, Project management"
+          />
+        )}
         <GuideCount guide={skillsGuide(data.skills)} />
+        {(data.skillGroups ?? []).length > 0 ? (
+          <button
+            type="button"
+            onClick={() => setData((d) => ({ ...d, skillGroups: undefined }))}
+            className="min-h-10 text-sm font-bold text-slate hover:text-ink hover:underline"
+          >
+            Stop grouping (keep all skills in one list)
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() =>
+              setData((d) =>
+                withSkillGroups(d, [
+                  { id: crypto.randomUUID(), name: "", skills: d.skills },
+                  { id: crypto.randomUUID(), name: "", skills: [] },
+                ])
+              )
+            }
+            className="min-h-10 text-sm font-bold text-brand-blue hover:underline"
+          >
+            + Group skills by type (e.g. Frontend: React, Next.js)
+          </button>
+        )}
       </Section>
 
       <div className="pt-2 border-t border-rule">
@@ -1015,8 +1047,9 @@ export function EditForm({
                     <Input label="Project name" value={p.name} onChange={(v) => updateProject(p.id, { name: v })} />
                     <Input label="Link (optional)" type="url" placeholder="github.com/you/project" value={p.link ?? ""} onChange={(v) => updateProject(p.id, { link: v })} />
                   </div>
+                  <Input label="Tech used (optional)" placeholder="Next.js · PostgreSQL · AWS S3" value={p.tech ?? ""} onChange={(v) => updateProject(p.id, { tech: v })} />
                   <label className="block">
-                    <span className="text-sm font-bold text-slate">What you did and the result</span>
+                    <span className="text-sm font-bold text-slate">Short description (optional)</span>
                     <RichTextarea
                       value={p.description}
                       onChange={(v) => updateProject(p.id, { description: v })}
@@ -1024,6 +1057,12 @@ export function EditForm({
                       className="mt-1 w-full border-2 border-rule rounded-xl px-3 py-2.5 text-[15px] bg-white focus:outline-none focus:border-brand-blue"
                     />
                   </label>
+                  <LineListInput
+                    value={p.bullets ?? []}
+                    onChange={(bullets) => updateProject(p.id, { bullets })}
+                    label="Bullet points (optional)"
+                    placeholder={"One per line: what you built and the result, e.g.\nBuilt a search tool that answers in under 2 seconds"}
+                  />
                   <button onClick={() => removeProject(p.id)} className="min-h-10 text-sm font-bold text-red-600 hover:underline">Remove</button>
                 </div>
               ))}
@@ -1067,6 +1106,98 @@ export function EditForm({
       </div>
       <PrivacyNote className="pt-2 border-t border-rule" />
 
+    </div>
+  );
+}
+
+// ---------- Promotions and skill groups ----------
+
+/** Earlier titles at the same company, so promotions don't repeat the company. */
+function EarlierRolesEditor({ exp, onChange }: { exp: ExperienceEntry; onChange: (patch: Partial<ExperienceEntry>) => void }) {
+  const roles = exp.earlierRoles ?? [];
+  const set = (next: EarlierRole[]) => onChange({ earlierRoles: next.length ? next : undefined });
+  const patch = (id: string, p: Partial<EarlierRole>) => set(roles.map((r) => (r.id === id ? { ...r, ...p } : r)));
+  return (
+    <div className="space-y-2">
+      {roles.length > 0 && (
+        <p className="text-xs text-ink-soft">Earlier titles at this company. The bullets below cover your whole time here.</p>
+      )}
+      {roles.map((r) => (
+        <div key={r.id} className="bg-cream border border-rule rounded-xl p-3 space-y-2">
+          <div className="grid sm:grid-cols-2 gap-2">
+            <div className="sm:col-span-2">
+              <Input label="Earlier job title" placeholder="Project Manager" value={r.role} onChange={(v) => patch(r.id, { role: v })} />
+            </div>
+            <MonthYearInput
+              label="Start"
+              value={r.startDate}
+              onChange={(v) => patch(r.id, { startDate: v, ...(endsBeforeStart(v, r.endDate) ? { endDate: "" } : {}) })}
+            />
+            <MonthYearInput label="End" value={r.endDate} min={r.startDate} onChange={(v) => patch(r.id, { endDate: v })} />
+          </div>
+          <DateProblem start={r.startDate} end={r.endDate} />
+          <button type="button" onClick={() => set(roles.filter((x) => x.id !== r.id))} className="min-h-10 text-sm font-bold text-red-600 hover:underline">
+            Remove this title
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => set([...roles, { id: crypto.randomUUID(), role: "", startDate: "", endDate: roles.at(-1)?.startDate || exp.startDate }])}
+        className="min-h-10 text-sm font-bold text-brand-blue hover:underline"
+      >
+        + Promoted here? Add an earlier title
+      </button>
+    </div>
+  );
+}
+
+/** Skills in labelled groups. The flat skills list stays in step (see withSkillGroups). */
+function SkillGroupsEditor({ data, setData }: { data: ResumeData; setData: React.Dispatch<React.SetStateAction<ResumeData>> }) {
+  const groups = data.skillGroups ?? [];
+  const save = (next: SkillGroup[]) => setData((d) => withSkillGroups(d, next));
+  const inGroups = new Set(filledSkillGroups(data).flatMap((g) => g.skills.map((s) => s.trim().toLowerCase())));
+  const ungrouped = data.skills.filter((s) => !inGroups.has(s.trim().toLowerCase()));
+  return (
+    <div className="space-y-3">
+      {groups.map((g, i) => (
+        <div key={g.id} className="bg-white border border-rule rounded-xl p-3 space-y-2">
+          <Input
+            label={`Group ${i + 1} name`}
+            placeholder={["Frontend", "Databases", "Tools"][i % 3]}
+            value={g.name}
+            onChange={(v) => save(groups.map((x) => (x.id === g.id ? { ...x, name: v } : x)))}
+          />
+          <CommaListInput
+            value={g.skills}
+            onChange={(skills) => save(groups.map((x) => (x.id === g.id ? { ...x, skills } : x)))}
+            label="Skills in this group"
+            placeholder="Comma-separated, e.g. React, Next.js, Tailwind CSS"
+          />
+          <button type="button" onClick={() => save(groups.filter((x) => x.id !== g.id))} className="min-h-10 text-sm font-bold text-red-600 hover:underline">
+            Remove group
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => save([...groups, { id: crypto.randomUUID(), name: "", skills: [] }])}
+        className="min-h-10 text-sm font-bold text-brand-blue hover:underline"
+      >
+        + Add group
+      </button>
+      {ungrouped.length > 0 && (
+        <p className="text-xs text-ink-soft">
+          Not in a group yet, shown as &ldquo;Other&rdquo;: {ungrouped.join(", ")}.{" "}
+          <button
+            type="button"
+            onClick={() => setData((d) => ({ ...d, skills: d.skills.filter((s) => inGroups.has(s.trim().toLowerCase())) }))}
+            className="font-bold text-red-600 hover:underline"
+          >
+            Remove these
+          </button>
+        </p>
+      )}
     </div>
   );
 }
@@ -1411,6 +1542,7 @@ function ExperienceCard({
         <MonthYearInput label="End" value={exp.endDate} min={exp.startDate} onChange={(v) => onChange({ endDate: v })} allowPresent />
       </div>
       <DateProblem start={exp.startDate} end={exp.endDate} />
+      <EarlierRolesEditor exp={exp} onChange={onChange} />
       <p className="text-xs text-ink-soft">
         Bullets: what you did + the result, with a number if you can (&ldquo;Cut onboarding time 30%&rdquo;).
       </p>
@@ -2161,6 +2293,7 @@ function ClassicPreview({ data, dense }: { data: ResumeData; dense: boolean }) {
                   {exp.startDate} – {exp.endDate}
                 </span>
               </div>
+              <EarlierRoles exp={exp} />
               <ul className="mt-1 space-y-0.5">
                 {exp.bullets.filter(Boolean).map((b, i) => (
                   <li
@@ -2196,7 +2329,7 @@ function ClassicPreview({ data, dense }: { data: ResumeData; dense: boolean }) {
       <Sec k="skills">{data.skills.length > 0 && (
         <>
           <h3 className={heading}>Skills</h3>
-          <p className="text-sm">{data.skills.join(" • ")}</p>
+          <p className="text-sm whitespace-pre-line">{joinSkills(data, " • ")}</p>
         </>
       )}</Sec>
       <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName={heading} only={["projects"]} /></Sec>
@@ -2246,6 +2379,7 @@ function ModernPreview({ data }: { data: ResumeData }) {
                   </span>
                 </div>
                 <p className="text-xs text-ink-soft mb-1">{exp.company}</p>
+                <EarlierRoles exp={exp} />
                 <ul className="space-y-0.5">
                   {exp.bullets.filter(Boolean).map((b, i) => (
                     <li
@@ -2343,6 +2477,7 @@ function BoldPreview({ data }: { data: ResumeData }) {
                   {exp.startDate} – {exp.endDate}
                 </span>
               </div>
+              <EarlierRoles exp={exp} />
               <ul className="mt-1 space-y-0.5">
                 {exp.bullets.filter(Boolean).map((b, i) => (
                   <li
@@ -2378,7 +2513,7 @@ function BoldPreview({ data }: { data: ResumeData }) {
       <Sec k="skills">{data.skills.length > 0 && (
         <>
           <h3 className={boldHeading}>Skills</h3>
-          <p className="text-sm font-medium">{data.skills.join("  /  ")}</p>
+          <p className="text-sm font-medium whitespace-pre-line">{joinSkills(data, "  /  ")}</p>
         </>
       )}</Sec>
       <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName={boldHeading} only={["projects"]} /></Sec>
@@ -2454,6 +2589,7 @@ function SidebarPreview({ data }: { data: ResumeData }) {
                   <span className="text-xs text-ink-soft font-mono">{exp.startDate} – {exp.endDate}</span>
                 </div>
                 <p className="text-xs text-ink-soft mb-1">{exp.company}</p>
+                <EarlierRoles exp={exp} />
                 <ul className="space-y-0.5">
                   {exp.bullets.filter(Boolean).map((b, i) => (
                     <li
@@ -2511,6 +2647,7 @@ function MinimalPreview({ data }: { data: ResumeData }) {
             <div key={exp.id} className="mt-2">
               <p className="text-sm font-bold">{exp.role || "Role"}, {exp.company}</p>
               <p className="text-xs">{exp.startDate} - {exp.endDate}</p>
+              <EarlierRoles exp={exp} />
               <ul className="mt-1">
                 {exp.bullets.filter(Boolean).map((b, i) => (
                   <li key={i} className={indent ? "text-sm pl-3" : "text-sm"}>- <Rich t={b} /></li>
@@ -2531,7 +2668,7 @@ function MinimalPreview({ data }: { data: ResumeData }) {
       <Sec k="skills">{data.skills.length > 0 && (
         <>
           <h3 className={minimalHeading}>Skills</h3>
-          <p className="text-sm">{data.skills.join(", ")}</p>
+          <p className="text-sm whitespace-pre-line">{joinSkills(data, ", ")}</p>
         </>
       )}</Sec>
       <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName={minimalHeading} only={["projects"]} /></Sec>
@@ -2568,6 +2705,7 @@ function ExecutivePreview({ data }: { data: ResumeData }) {
             <div key={exp.id} className="mt-4 text-center">
               <p className="font-display text-base">{exp.role || "Role"}</p>
               <p className="text-xs text-ink-soft mb-1">{exp.company} · {exp.startDate} – {exp.endDate}</p>
+              <EarlierRoles exp={exp} />
               <ul className="text-sm max-w-md mx-auto text-left mt-2 space-y-0.5">
                 {exp.bullets.filter(Boolean).map((b, i) => (
                   <li
@@ -2592,7 +2730,7 @@ function ExecutivePreview({ data }: { data: ResumeData }) {
         </>
       )}</Sec>
       <Sec k="skills">{data.skills.length > 0 && (
-        <p className="text-sm text-center mt-8 text-ink-soft">{data.skills.join(" · ")}</p>
+        <p className="text-sm text-center mt-8 text-ink-soft whitespace-pre-line">{joinSkills(data, " · ")}</p>
       )}</Sec>
       <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-[0.2em] text-seal text-center mt-8 mb-3" variant="center" only={["projects"]} /></Sec>
       <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-[0.2em] text-seal text-center mt-8 mb-3" variant="center" only={["certifications"]} /></Sec>
@@ -2633,6 +2771,7 @@ function TechnicalPreview({ data }: { data: ResumeData }) {
             <div key={exp.id} className={`mt-3 ${showDividers ? "border-l-2 border-seal pl-3" : ""}`}>
               <p className="font-mono text-sm font-semibold">{exp.role || "role"}<span className="text-seal">()</span> <span className="text-ink-soft font-normal">@ {exp.company}</span></p>
               <p className="font-mono text-[10px] text-ink-soft">{exp.startDate} – {exp.endDate}</p>
+              <EarlierRoles exp={exp} />
               <ul className="mt-1 space-y-0.5">
                 {exp.bullets.filter(Boolean).map((b, i) => (
                   <li
@@ -2707,6 +2846,7 @@ function TimelinePreview({ data }: { data: ResumeData }) {
                   <span className="text-xs text-ink-soft font-mono">{exp.startDate} – {exp.endDate}</span>
                 </div>
                 <p className="text-xs text-ink-soft mb-1">{exp.company}</p>
+                <EarlierRoles exp={exp} />
                 <ul className="space-y-0.5">
                   {exp.bullets.filter(Boolean).map((b, i) => (
                     <li
@@ -2732,7 +2872,7 @@ function TimelinePreview({ data }: { data: ResumeData }) {
         </>
       )}</Sec>
       <Sec k="skills">{data.skills.length > 0 && (
-        <p className="text-sm mt-6 text-ink-soft">{data.skills.join(" • ")}</p>
+        <p className="text-sm mt-6 text-ink-soft whitespace-pre-line">{joinSkills(data, " • ")}</p>
       )}</Sec>
       <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-6 mb-2" only={["projects"]} /></Sec>
       <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-6 mb-2" only={["certifications"]} /></Sec>
@@ -2769,6 +2909,7 @@ function ElegantPreview({ data }: { data: ResumeData }) {
                 <span className="text-sm italic">{exp.role || "Role"}, {exp.company}</span>
                 <span className="text-xs text-ink-soft">{exp.startDate} – {exp.endDate}</span>
               </div>
+              <EarlierRoles exp={exp} />
               <ul className="mt-1 space-y-0.5">
                 {exp.bullets.filter(Boolean).map((b, i) => (
                   <li
@@ -2793,7 +2934,7 @@ function ElegantPreview({ data }: { data: ResumeData }) {
         </>
       )}</Sec>
       <Sec k="skills">{data.skills.length > 0 && (
-        <p className="text-sm mt-6 text-ink-soft">{data.skills.join("  ·  ")}</p>
+        <p className="text-sm mt-6 text-ink-soft whitespace-pre-line">{joinSkills(data, "  ·  ")}</p>
       )}</Sec>
       <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2" only={["projects"]} /></Sec>
       <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2" only={["certifications"]} /></Sec>
@@ -2843,7 +2984,17 @@ export function ExtraSectionsPreview({
                 {p.name}
                 {p.link && <span className="text-xs text-ink-soft font-normal"> · {p.link}</span>}
               </p>
+              {p.tech?.trim() && <p className="text-xs text-ink-soft">{p.tech.trim()}</p>}
               {p.description && <p className="text-sm text-ink-soft leading-relaxed"><Rich t={p.description} /></p>}
+              {projectBullets(p).length > 0 && (
+                <ul className={`mt-0.5 space-y-0.5 ${center ? "" : "list-disc pl-4"}`}>
+                  {projectBullets(p).map((b, i) => (
+                    <li key={i} className="text-sm leading-relaxed">
+                      <Rich t={b} />
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           ))}
         </>

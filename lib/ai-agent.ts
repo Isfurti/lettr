@@ -234,7 +234,8 @@ export function executeTool(
 
     case "update_skills": {
       const skills = Array.isArray(input.skills) ? input.skills.map(String) : [];
-      return { resume: { ...resume, skills }, description: "Updated skills list" };
+      // A full replacement replaces any skill groups too, so the result is exactly the new list.
+      return { resume: { ...resume, skills, skillGroups: undefined }, description: "Updated skills list" };
     }
 
     default:

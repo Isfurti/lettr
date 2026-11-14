@@ -1,5 +1,6 @@
 import { extraSections, type ResumeData } from "./types";
 import { plainResume } from "./rich-text";
+import { allRoleTitles, projectBullets } from "./resume-sections";
 
 /**
  * Job-post keyword matching, in plain code (no AI), so it's instant, free
@@ -279,13 +280,13 @@ export function extractKeywords(jobDescription: string, limit = MAX_KEYWORDS): s
 function resumeSegments(resume: ResumeData): string[] {
   const parts: string[] = [resume.summary, ...resume.skills];
   for (const exp of resume.experience) {
-    parts.push(exp.role, exp.company, ...exp.bullets);
+    parts.push(...allRoleTitles(exp), exp.company, ...exp.bullets);
   }
   for (const edu of resume.education) {
     parts.push(edu.degree, edu.school);
   }
   const extra = extraSections(resume);
-  for (const p of extra.projects) parts.push(p.name, p.description);
+  for (const p of extra.projects) parts.push(p.name, p.description, p.tech ?? "", ...projectBullets(p));
   for (const c of extra.certifications) parts.push(c.name, c.issuer ?? "");
   parts.push(...extra.languages, ...extra.achievements);
   return parts.filter((p) => p && p.trim());
