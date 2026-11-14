@@ -1,5 +1,6 @@
 import { siteUrl } from "./site-url";
 import { COMPANY } from "./company";
+import { EMAIL_SIGN_OFF } from "./tagline";
 
 /**
  * Base email sender via Resend. Returns whether it was actually sent -
@@ -50,7 +51,7 @@ export async function sendVerificationEmail(email: string, token: string): Promi
   return sendEmail({
     to: email,
     subject: "Verify your Lettr email",
-    text: `Welcome to Lettr! Verify your email to finish setting up your account:\n\n${link}\n\nThis link expires in 24 hours.`,
+    text: `Welcome to Lettr! Verify your email to finish setting up your account:\n\n${link}\n\nThis link expires in 24 hours.\n\n${EMAIL_SIGN_OFF}`,
   });
 }
 
@@ -59,7 +60,7 @@ export async function sendPasswordResetEmail(email: string, token: string): Prom
   return sendEmail({
     to: email,
     subject: "Reset your Lettr password",
-    text: `Someone requested a password reset for this Lettr account. If that was you, set a new password here:\n\n${link}\n\nThis link expires in 1 hour. If you didn't request this, you can safely ignore this email.`,
+    text: `Someone requested a password reset for this Lettr account. If that was you, set a new password here:\n\n${link}\n\nThis link expires in 1 hour. If you didn't request this, you can safely ignore this email.\n\n${EMAIL_SIGN_OFF}`,
   });
 }
 
@@ -67,7 +68,7 @@ export async function sendReviewReplyEmail(email: string, reply: string): Promis
   return sendEmail({
     to: email,
     subject: "Thanks for your feedback on Lettr",
-    text: `${reply}\n\n— The Lettr team`,
+    text: `${reply}\n\n${EMAIL_SIGN_OFF}`,
   });
 }
 
@@ -82,7 +83,7 @@ export async function sendProConfirmationEmail(params: {
     text:
       `Thanks for buying the Lettr Pro ${params.passName}. Every Pro feature is now unlocked.\n\n` +
       `Your Pro runs until ${params.proUntil}. It won't renew on its own, so you'll never be charged again unless you buy another pass.\n\n` +
-      `Your invoice is on your dashboard: ${getAppUrl()}/dashboard\n\n— The Lettr team`,
+      `Your invoice is on your dashboard: ${getAppUrl()}/dashboard\n\n${EMAIL_SIGN_OFF}`,
   });
 }
 
@@ -93,8 +94,8 @@ export async function sendProEndingSoonEmail(params: { email: string; proUntil: 
     text:
       `Your Lettr Pro ends on ${params.proUntil}. After that your account moves to the free plan, and all your resumes stay saved.\n\n` +
       (process.env.RAZORPAY_SUBSCRIPTIONS?.trim().toLowerCase() === "on"
-        ? `To keep Pro, pick a plan once it ends:\n${getAppUrl()}/pricing\n\n— The Lettr team`
-        : `To keep Pro, buy another pass before then and the new time is added after your current end date:\n${getAppUrl()}/pricing\n\n— The Lettr team`),
+        ? `To keep Pro, pick a plan once it ends:\n${getAppUrl()}/pricing\n\n${EMAIL_SIGN_OFF}`
+        : `To keep Pro, buy another pass before then and the new time is added after your current end date:\n${getAppUrl()}/pricing\n\n${EMAIL_SIGN_OFF}`),
   });
 }
 
@@ -109,7 +110,7 @@ export async function sendAutoRenewStartedEmail(p: RenewalDetails): Promise<{ se
     text:
       `Thanks for joining Lettr Pro. Every Pro feature is now unlocked.\n\n` +
       `Your plan renews automatically at ${p.price} ${p.period}. The next renewal is on ${p.renewsOn}, and we'll email you 3 days before each one.\n\n` +
-      `Cancel any time from your dashboard and Pro keeps running until the end of the time you've paid for:\n${getAppUrl()}/dashboard\n\n— The Lettr team`,
+      `Cancel any time from your dashboard and Pro keeps running until the end of the time you've paid for:\n${getAppUrl()}/dashboard\n\n${EMAIL_SIGN_OFF}`,
   });
 }
 
@@ -119,7 +120,7 @@ export async function sendRenewalReceiptEmail(p: RenewalDetails): Promise<{ sent
     subject: "Your Lettr Pro renewed",
     text:
       `Your Lettr Pro renewed (${p.price}). The next renewal is on ${p.renewsOn}.\n\n` +
-      `Your invoice is on your dashboard, where you can also cancel any time:\n${getAppUrl()}/dashboard\n\n— The Lettr team`,
+      `Your invoice is on your dashboard, where you can also cancel any time:\n${getAppUrl()}/dashboard\n\n${EMAIL_SIGN_OFF}`,
   });
 }
 
@@ -129,7 +130,7 @@ export async function sendRenewalReminderEmail(p: RenewalDetails): Promise<{ sen
     subject: "Your Lettr Pro renews in 3 days",
     text:
       `Just a heads-up: your Lettr Pro renews on ${p.renewsOn} at ${p.price}.\n\n` +
-      `Nothing to do if you want to keep it. To stop it, cancel from your dashboard before then. Pro keeps running until the end of the time you've paid for:\n${getAppUrl()}/dashboard\n\n— The Lettr team`,
+      `Nothing to do if you want to keep it. To stop it, cancel from your dashboard before then. Pro keeps running until the end of the time you've paid for:\n${getAppUrl()}/dashboard\n\n${EMAIL_SIGN_OFF}`,
   });
 }
 
@@ -139,6 +140,6 @@ export async function sendAutoRenewCancelledEmail(params: { email: string; proUn
     subject: "Your Lettr Pro won't renew",
     text:
       `You've cancelled your Pro plan, so you won't be charged again. Pro keeps running until ${params.proUntil}, then your account moves to the free plan. All your resumes stay saved.\n\n` +
-      `You can come back any time from ${getAppUrl()}/pricing\n\n— The Lettr team`,
+      `You can come back any time from ${getAppUrl()}/pricing\n\n${EMAIL_SIGN_OFF}`,
   });
 }

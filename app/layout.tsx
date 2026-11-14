@@ -20,11 +20,12 @@ import { ReviewPrompt } from "@/components/ReviewPrompt";
 import { ServiceWorkerRegister } from "@/components/AppInstall";
 import { Analytics } from "@/components/Analytics";
 import { siteUrl } from "@/lib/site-url";
+import { TAGLINE } from "@/lib/tagline";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: {
-    default: "Lettr: AI Resume & CV Builder",
+    default: `Lettr: ${TAGLINE.replace(/\.$/, "")}`,
     template: "%s",
   },
   description: "AI resume and CV builder with an ATS score checker and tailored cover letters.",

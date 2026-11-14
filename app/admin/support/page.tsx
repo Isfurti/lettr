@@ -4,6 +4,7 @@ import { isAdminEmail } from "@/lib/admin-auth";
 import { listSupportMessages } from "@/lib/db";
 import { ResolveButton } from "@/components/ResolveButton";
 import { formatDateTime } from "@/lib/format-date";
+import { EMAIL_SIGN_OFF } from "@/lib/tagline";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Support inbox | Lettr Admin" };
@@ -11,7 +12,7 @@ export const metadata: Metadata = { title: "Support inbox | Lettr Admin" };
 /** Opens the admin's email app with a reply already addressed and quoted. */
 function replyHref(m: { email: string; subject: string; message: string }) {
   const quoted = m.message.split("\n").map((l) => `> ${l}`).join("\n");
-  const body = `Hi,\n\nThanks for getting in touch.\n\n\n\n— The Lettr team\n\n${quoted}`;
+  const body = `Hi,\n\nThanks for getting in touch.\n\n\n\n${EMAIL_SIGN_OFF}\n\n${quoted}`;
   return `mailto:${m.email}?subject=${encodeURIComponent(`Re: ${m.subject}`)}&body=${encodeURIComponent(body)}`;
 }
 import { AdminSidebar } from "@/components/AdminSidebar";

@@ -15,6 +15,7 @@ import { FREE_AI_REWRITES } from "@/lib/free-plan";
 import { FREE_AI_TRY_LINE, FAIR_USE_HREF } from "@/lib/limits";
 import { COMPANY, operatorName } from "@/lib/company";
 import { PrivacyNote } from "@/components/PrivacyNote";
+import { TAGLINE } from "@/lib/tagline";
 
 // Revalidate hourly rather than fetching featured reviews on every single
 // page load - this is the highest-traffic page, no reason to hit the
@@ -22,12 +23,12 @@ import { PrivacyNote } from "@/components/PrivacyNote";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Lettr: AI Resume & CV Builder with ATS Score Checker",
+  title: `${TAGLINE.replace(/\.$/, "")} | Lettr AI Resume & CV Builder`,
   description:
     "Free AI resume builder and CV maker. Check your ATS score against any job, rewrite bullet points with AI and write a tailored cover letter.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Lettr: AI Resume & CV Builder with ATS Score Checker",
+    title: `${TAGLINE.replace(/\.$/, "")} | Lettr AI Resume & CV Builder`,
     description: "Build an ATS-friendly resume or CV with AI. Instant ATS score, AI bullet rewrites, tailored cover letters.",
     url: "/",
     siteName: "Lettr",
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lettr: AI Resume & CV Builder",
+    title: `${TAGLINE} Lettr AI Resume & CV Builder`,
     description: "Build an ATS-friendly resume or CV with AI. Free to start.",
   },
 };
@@ -147,6 +148,7 @@ export default async function Home() {
       {/* Hero */}
       <section className={`${WRAP} pt-10 sm:pt-16 pb-16 sm:pb-24 grid lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center`}>
         <div className="rise">
+          <p className="font-brand font-bold text-gold-deep text-lg sm:text-xl mb-3">{TAGLINE}</p>
           <p className="inline-flex items-center gap-2 bg-gold-soft text-ink text-sm font-bold px-3.5 py-1.5 rounded-full mb-6">
             <span className="w-2 h-2 rounded-full bg-gold-deep" aria-hidden="true" />
             Free to start · No card needed
