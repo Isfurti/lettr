@@ -529,6 +529,73 @@ export const GUIDES: Guide[] = [
     cta: { label: "Check my resume for free", href: "/resume-checker" },
     relatedExamples: ["accountant", "chartered-accountant", "hr-executive"],
   },
+  {
+    slug: "how-to-write-llb-in-resume",
+    title: "How to write LLB in a resume (with examples)",
+    description:
+      "The right way to write LLB, B.A. LL.B. or B.Com LL.B. on your resume: spelling, where it goes, how to show a degree you're still studying, bar enrolment and applying abroad.",
+    published: "2026-11-14",
+    readMinutes: 4,
+    intro:
+      "LLB is short for Bachelor of Laws. It looks simple, but law resumes often get it slightly wrong: \"L.L.B.\", the five-year degree split into two lines, or \"Advocate\" written before enrolment. Here's how to write it correctly, with examples you can copy.",
+    sections: [
+      {
+        heading: "The correct way to write it",
+        paragraphs: [
+          "Write LL.B. or LLB. Both are correct; just use the same form everywhere on your resume. Avoid \"L.L.B.\" and \"Llb\", which are common mistakes and look careless to a law firm.",
+          "For a five-year integrated degree, write it as one degree with the full name: B.A. LL.B., BBA LL.B. or B.Com LL.B., and add (Hons.) if your degree is an honours degree.",
+        ],
+      },
+      {
+        heading: "Where it goes and what to include",
+        paragraphs: ["Put it at the top of your Education section, with:"],
+        list: [
+          "The degree name, exactly as it appears on your marksheet",
+          "Your college and university",
+          "Start and end years",
+          "CGPA or percentage, if it's good",
+        ],
+      },
+      {
+        heading: "Examples you can copy",
+        list: [
+          "B.Com LL.B. (Hons.), [College], [University] | 2020 - 2025 | CGPA 7.8",
+          "LL.B. (3 years), [College], [University] | 2022 - 2025",
+          "B.A. LL.B. (Hons.), [College], [University] | 4th year, expected to graduate in 2027 | CGPA 8.1",
+        ],
+        paragraphs: [
+          "If you did a three-year LLB after another degree, list both: the LLB first, then your earlier degree below it.",
+        ],
+      },
+      {
+        heading: "Still studying? Show the expected year",
+        paragraphs: [
+          "Write your current year and when you expect to graduate, like the third example above. Recruiters hiring interns and freshers expect this, so don't leave the end date blank.",
+        ],
+      },
+      {
+        heading: "Bar enrolment",
+        paragraphs: [
+          "Once you're enrolled with a State Bar Council, add a line such as \"Enrolled with the Bar Council of Delhi, 2025\". If you've cleared the All India Bar Examination (AIBE), add that too, with the year.",
+          "Only call yourself an \"Advocate\" after you're enrolled. Before that, \"Law graduate\" or \"LL.B. student\" is accurate.",
+        ],
+      },
+      {
+        heading: "Use it in your profile line too",
+        paragraphs: [
+          "Mention the degree in the two-line profile at the top, so it's the first thing a recruiter reads: \"B.Com LL.B. graduate with internships in corporate and tax law, looking for an associate role.\"",
+        ],
+      },
+      {
+        heading: "Applying abroad",
+        paragraphs: [
+          "Outside India, write the full name and the country: \"Bachelor of Laws (LL.B.), [University], India\". Don't describe it as a J.D. or as a qualification to practise in that country. Let the employer judge how it compares.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["law-graduate", "accountant", "chartered-accountant"],
+  },
 ];
 
 export function getGuide(slug: string) {
