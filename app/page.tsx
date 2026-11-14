@@ -16,6 +16,7 @@ import { FREE_AI_TRY_LINE, FAIR_USE_HREF } from "@/lib/limits";
 import { COMPANY, operatorName } from "@/lib/company";
 import { PrivacyNote } from "@/components/PrivacyNote";
 import { TAGLINE } from "@/lib/tagline";
+import { TaglineStamp } from "@/components/TaglineStamp";
 
 // Revalidate hourly rather than fetching featured reviews on every single
 // page load - this is the highest-traffic page, no reason to hit the
@@ -25,11 +26,11 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: `${TAGLINE.replace(/\.$/, "")} | Lettr AI Resume & CV Builder`,
   description:
-    "Free AI resume builder and CV maker. Check your ATS score against any job, rewrite bullet points with AI and write a tailored cover letter.",
+    `${TAGLINE} Free AI resume builder and CV maker. Check your ATS score against any job, rewrite bullet points with AI and write a tailored cover letter.`,
   alternates: { canonical: "/" },
   openGraph: {
     title: `${TAGLINE.replace(/\.$/, "")} | Lettr AI Resume & CV Builder`,
-    description: "Build an ATS-friendly resume or CV with AI. Instant ATS score, AI bullet rewrites, tailored cover letters.",
+    description: `${TAGLINE} Build an ATS-friendly resume or CV with AI. Instant ATS score, AI bullet rewrites, tailored cover letters.`,
     url: "/",
     siteName: "Lettr",
     type: "website",
@@ -37,7 +38,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: `${TAGLINE} Lettr AI Resume & CV Builder`,
-    description: "Build an ATS-friendly resume or CV with AI. Free to start.",
+    description: `${TAGLINE} Build an ATS-friendly resume or CV with AI. Free to start.`,
   },
 };
 
@@ -130,7 +131,8 @@ export default async function Home() {
     name: "Lettr",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
-    description: "AI-assisted resume builder with ATS scoring, AI bullet rewriting, and tailored cover letters.",
+    slogan: TAGLINE,
+    description: `${TAGLINE} AI-assisted resume builder with ATS scoring, AI bullet rewriting, and tailored cover letters.`,
     offers: {
       "@type": "Offer",
       price: "0",
@@ -148,9 +150,7 @@ export default async function Home() {
       {/* Hero */}
       <section className={`${WRAP} pt-10 sm:pt-16 pb-16 sm:pb-24 grid lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center`}>
         <div className="rise">
-          <p className="inline-block -rotate-[1.5deg] bg-ink text-gold font-brand font-extrabold text-xl sm:text-2xl px-5 py-2.5 rounded-xl shadow-[0_4px_0_var(--gold-deep)] mb-5">
-            {TAGLINE}
-          </p>
+          <TaglineStamp className="mb-5" />
           <br />
           <p className="inline-flex items-center gap-2 bg-gold-soft text-ink text-sm font-bold px-3.5 py-1.5 rounded-full mb-6">
             <span className="w-2 h-2 rounded-full bg-gold-deep" aria-hidden="true" />
