@@ -3,10 +3,10 @@ import { auth } from "@/lib/auth";
 import { getUserById, logActivity } from "@/lib/db";
 import { canExportDocx, type Plan } from "@/lib/limits";
 import { generateLetterDocx } from "@/lib/generate-letter-docx";
-import { isLetterTemplateId, letterFileName } from "@/lib/letter-templates";
+import { isLetterTemplateId, letterFileName, letterRequest } from "@/lib/letter-templates";
 import type { ResumeData } from "@/lib/types";
 
-/** Cover letter as an editable Word file (Pro, like resume Word export). */
+/** Cover letter or resignation letter as an editable Word file (Pro, like resume Word export). */
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -17,18 +17,25 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => null);
   const resume = body?.resume as ResumeData | undefined;
-  const letter = typeof body?.letter === "string" ? body.letter.slice(0, 8000) : "";
-  const design = body?.design;
-  const company = typeof body?.company === "string" ? body.company.slice(0, 120) : "";
-  if (!resume?.contact || !letter.trim()) return NextResponse.json({ error: "Write the cover letter first." }, { status: 400 });
-  if (!isLetterTemplateId(design)) return NextResponse.json({ error: "Pick a letter design." }, { status: 400 });
+  const r = letterRequest(body);
+  if (!resume?.contact || !r.letter.trim()) return NextResponse.json({ error: "Write the letter first." }, { status: 400 });
+  if (!isLetterTemplateId(r.design)) return NextResponse.json({ error: "Pick a letter design." }, { status: 400 });
 
-  const buffer = await generateLetterDocx({ resume, letter, design, company });
-  await logActivity(userId, "letter_docx_exported", design);
+  const buffer = await generateLetterDocx({
+    resume,
+    letter: r.letter,
+    design: r.design,
+    company: r.company,
+    kind: r.kind,
+    manager: r.manager,
+    name: r.name,
+    headline: r.headline,
+  });
+  await logActivity(userId, r.kind === "resignation" ? "resignation_docx_exported" : "letter_docx_exported", r.design);
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "Content-Disposition": `attachment; filename="${letterFileName(resume, "docx")}"`,
+      "Content-Disposition": `attachment; filename="${letterFileName(resume, "docx", r.kind, r.name)}"`,
     },
   });
 }

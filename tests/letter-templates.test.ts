@@ -11,6 +11,8 @@ import {
   letterFileName,
   letterHeadline,
   letterParagraphs,
+  letterRecipient,
+  letterRequest,
 } from "@/lib/letter-templates";
 import type { ResumeData } from "@/lib/types";
 
@@ -48,6 +50,24 @@ describe("letter designs", () => {
     expect(letterHeadline(resume)).toBe("Marketing Executive");
     expect(initials("Asha Rao")).toBe("AR");
     expect(letterFileName(resume, "pdf")).toBe("Asha_Rao_Cover_Letter.pdf");
+  });
+
+  it("addresses resignation letters to the manager and names the file", () => {
+    expect(letterRecipient("resignation", "Brightline", "Anita Rao")).toBe("Anita Rao\nBrightline");
+    expect(letterRecipient("resignation", "Brightline", "")).toBe("Brightline");
+    expect(letterRecipient("cover", "Sunrise", "")).toBe("Hiring Team\nSunrise");
+    expect(letterFileName(resume, "docx", "resignation", "Asha R Rao")).toBe("Asha_R_Rao_Resignation_Letter.docx");
+    expect(letterRequest({ kind: "resignation", letter: "x" }).kind).toBe("resignation");
+    expect(letterRequest({ kind: "weird" }).kind).toBe("cover");
+  });
+
+  it("renders a resignation letter in a Pro design", async () => {
+    const pdf = await renderToBuffer(
+      CoverLetterPdf({ resume, letter, design: "executive", company: "Brightline", kind: "resignation", manager: "Anita Rao", name: "Asha Rao", headline: "Marketing Executive" }),
+    );
+    expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
+    const docx = await generateLetterDocx({ resume, letter, design: "executive", company: "Brightline", kind: "resignation", manager: "Anita Rao" });
+    expect(docx.subarray(0, 2).toString()).toBe("PK");
   });
 
   it("renders every design as a PDF and a Word file", async () => {
