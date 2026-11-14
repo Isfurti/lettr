@@ -39,6 +39,7 @@ import { GuideCount } from "@/components/builder/GuideCount";
 import { PersonalDetails } from "@/components/builder/PersonalDetails";
 import { LanguageLevels } from "@/components/builder/LanguageLevels";
 import { PrivacyNote } from "@/components/PrivacyNote";
+import { LetterDesigns } from "@/components/builder/LetterDesigns";
 
 const TEMPLATES: readonly string[] = TEMPLATE_IDS;
 
@@ -1881,6 +1882,7 @@ function CoverLetterPanel({
           <p className="whitespace-pre-wrap text-sm leading-relaxed">{letter}</p>
         </div>
       )}
+      {letter && <LetterDesigns data={data} letter={letter} company={company} plan={plan} />}
     </div>
   );
 }

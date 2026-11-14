@@ -122,3 +122,12 @@ export function pdfFonts(resume: ResumeData): { display: PdfFontFamily; body: Pd
 export function invoicePdfFont(): PdfFontFamily {
   return registerOnce() ? ["Manrope", "ManropeExt"] : "Helvetica";
 }
+
+/** Fonts for a cover letter design: "serif" (Source Serif + Manrope), "display" (Playfair + Inter), "sans" (Inter), "classic" (built-ins). */
+export function letterPdfFonts(kind: "serif" | "display" | "sans" | "classic"): { display: PdfFontFamily; body: PdfFontFamily } {
+  if (!registerOnce()) return BUILT_IN_ONLY;
+  if (kind === "serif") return PAIRS.editorial;
+  if (kind === "display") return PAIRS.elegant;
+  if (kind === "sans") return { display: ["Inter", "InterExt"], body: ["Inter", "InterExt"] };
+  return PAIRS.classic;
+}
