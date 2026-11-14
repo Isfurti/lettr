@@ -2028,18 +2028,17 @@ function ResignationLetterPanel({ data, plan }: { data: ResumeData; plan: Plan }
           <p className="whitespace-pre-wrap text-sm leading-relaxed">{letter}</p>
         </div>
       )}
-      {letter && (
-        <LetterDesigns
-          data={data}
-          letter={letter}
-          company={companyName}
-          plan={plan}
-          kind="resignation"
-          manager={managerName}
-          name={employeeName}
-          headline={jobTitle}
-        />
-      )}
+      {/* Shown before a letter exists too, so people can see the designs; the buttons wait for a letter. */}
+      <LetterDesigns
+        data={data}
+        letter={letter}
+        company={companyName}
+        plan={plan}
+        kind="resignation"
+        manager={managerName}
+        name={employeeName}
+        headline={jobTitle}
+      />
     </div>
   );
 }
