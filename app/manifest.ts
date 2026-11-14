@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next";
+import { TAGLINE } from "@/lib/tagline";
 
 /** Lets people add Lettr to their phone's home screen and open it like an app. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Lettr: AI Resume Builder",
     short_name: "Lettr",
-    description: "Build a job-ready resume, check your match, practise interviews and track applications.",
+    description: `${TAGLINE} Build a job-ready resume, check your match, practise interviews and track applications.`,
     start_url: "/dashboard?source=app",
     scope: "/",
     display: "standalone",
