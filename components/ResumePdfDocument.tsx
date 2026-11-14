@@ -10,6 +10,8 @@ import { pdfFonts } from "@/lib/pdf-fonts";
 import { resolveAccent, darkenHex, softenHex } from "@/lib/customization";
 import { RibbonPdf, SplitPdf, ScholarPdf, FresherPdf, GridPdf, SpotlightPdf } from "@/components/templates/NewPdfs";
 import { contactParts } from "@/lib/contact";
+import { joinSkills, projectBullets } from "@/lib/resume-sections";
+import { EarlierRolesPdf } from "@/components/templates/EarlierRolesPdf";
 
 const INK = "#1b2a4a";
 const MUTED = "#5b6472";
@@ -136,6 +138,7 @@ function ClassicPdf({ resume, seal, dense }: { resume: ResumeData; seal: string;
                   <Text style={s.entryTitle}>{exp.role} — {exp.company}</Text>
                   <Text style={s.entryMeta}>{exp.startDate} – {exp.endDate}</Text>
                 </View>
+                <EarlierRolesPdf exp={exp} />
                 {exp.bullets.map((b, i) => <Text key={i} style={s.bullet}>• {b}</Text>)}
               </View>
             ))}
@@ -152,7 +155,7 @@ function ClassicPdf({ resume, seal, dense }: { resume: ResumeData; seal: string;
             ))}
           </>
         )}</Sec>
-        <Sec k="skills">{resume.skills.length > 0 && (<><Text style={s.sectionTitle}>Skills</Text><Text>{resume.skills.join(" • ")}</Text></>)}</Sec>
+        <Sec k="skills">{resume.skills.length > 0 && (<><Text style={s.sectionTitle}>Skills</Text><Text>{joinSkills(resume, " • ")}</Text></>)}</Sec>
         <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["projects"]} /></Sec>
         <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
@@ -210,6 +213,7 @@ function ModernPdf({ resume, seal, sealSoft }: { resume: ResumeData; seal: strin
                     <Text style={s.entryMeta}>{exp.startDate} – {exp.endDate}</Text>
                   </View>
                   <Text style={s.entryCompany}>{exp.company}</Text>
+                  <EarlierRolesPdf exp={exp} />
                   {exp.bullets.map((b, i) => <Text key={i} style={s.bullet}>— {b}</Text>)}
                 </View>
               ))}
@@ -289,6 +293,7 @@ function BoldPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
                   <Text style={s.entryMeta}>{exp.startDate} – {exp.endDate}</Text>
                 </View>
                 {/* "›", not "▸": none of the PDF fonts has ▸, so it printed as a stray squiggle. */}
+                <EarlierRolesPdf exp={exp} />
                 {exp.bullets.map((b, i) => (
                   <Text key={i} style={s.bullet}>
                     <Text style={{ color: seal, fontWeight: 700 }}>›</Text> {b}
@@ -309,7 +314,7 @@ function BoldPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
             ))}
           </>
         )}</Sec>
-        <Sec k="skills">{resume.skills.length > 0 && (<><Text style={s.sectionTitle}>Skills</Text><Text style={{ fontWeight: 700 }}>{resume.skills.join("  /  ")}</Text></>)}</Sec>
+        <Sec k="skills">{resume.skills.length > 0 && (<><Text style={s.sectionTitle}>Skills</Text><Text style={{ fontWeight: 700 }}>{joinSkills(resume, "  /  ")}</Text></>)}</Sec>
         <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["projects"]} /></Sec>
         <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
@@ -386,6 +391,7 @@ function SidebarPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
                     <Text style={s.entryMeta}>{exp.startDate} – {exp.endDate}</Text>
                   </View>
                   <Text style={s.entryCompany}>{exp.company}</Text>
+                  <EarlierRolesPdf exp={exp} />
                   {exp.bullets.map((b, i) => <Text key={i} style={s.bullet}>• {b}</Text>)}
                 </View>
               ))}
@@ -440,6 +446,7 @@ function MinimalPdf({ resume }: { resume: ResumeData }) {
               <View key={exp.id} wrap={false} style={{ marginTop: 4 }}>
                 <Text style={s.entryTitle}>{exp.role}, {exp.company}</Text>
                 <Text style={s.entryMeta}>{exp.startDate} - {exp.endDate}</Text>
+                <EarlierRolesPdf exp={exp} />
                 {exp.bullets.map((b, i) => <Text key={i} style={s.bullet}>- {b}</Text>)}
               </View>
             ))}
@@ -453,7 +460,7 @@ function MinimalPdf({ resume }: { resume: ResumeData }) {
             ))}
           </>
         )}</Sec>
-        <Sec k="skills">{resume.skills.length > 0 && (<><Text style={s.sectionTitle}>Skills</Text><Text style={{ fontSize: 9.5 }}>{resume.skills.join(", ")}</Text></>)}</Sec>
+        <Sec k="skills">{resume.skills.length > 0 && (<><Text style={s.sectionTitle}>Skills</Text><Text style={{ fontSize: 9.5 }}>{joinSkills(resume, ", ")}</Text></>)}</Sec>
         <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["projects"]} /></Sec>
         <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
@@ -497,6 +504,7 @@ function ExecutivePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
               <View key={exp.id} wrap={false} style={{ marginBottom: 8 }}>
                 <Text style={s.entryTitle}>{exp.role}</Text>
                 <Text style={s.entryMeta}>{exp.company} · {exp.startDate} – {exp.endDate}</Text>
+                <EarlierRolesPdf exp={exp} />
                 {exp.bullets.map((b, i) => <Text key={i} style={s.bullet}>— {b}</Text>)}
               </View>
             ))}
@@ -508,7 +516,7 @@ function ExecutivePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
             {resume.education.map((edu) => <Text key={edu.id} style={{ fontSize: 9.5 }}>{edu.degree} — {edu.school}</Text>)}
           </>
         )}</Sec>
-        <Sec k="skills">{resume.skills.length > 0 && <Text style={{ fontSize: 9.5, color: MUTED, marginTop: 12 }}>{resume.skills.join(" · ")}</Text>}</Sec>
+        <Sec k="skills">{resume.skills.length > 0 && <Text style={{ fontSize: 9.5, color: MUTED, marginTop: 12 }}>{joinSkills(resume, " · ")}</Text>}</Sec>
         <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} align="center" only={["projects"]} /></Sec>
         <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} align="center" only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} align="center" only={["achievements"]} /></Sec>
@@ -559,6 +567,7 @@ function TechnicalPdf({ resume, seal, sealSoft, sealDeep }: { resume: ResumeData
               <View key={exp.id} wrap={false} style={entryStyle}>
                 <Text style={s.entryTitle}>{exp.role}() @ {exp.company}</Text>
                 <Text style={s.entryMeta}>{exp.startDate} – {exp.endDate}</Text>
+                <EarlierRolesPdf exp={exp} />
                 {exp.bullets.map((b, i) => <Text key={i} style={{ ...s.bullet, fontFamily: f.body }}>&gt; {b}</Text>)}
               </View>
             ))}
@@ -635,6 +644,7 @@ function TimelinePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
                     <Text style={s.entryMeta}>{exp.startDate} – {exp.endDate}</Text>
                   </View>
                   <Text style={s.entryMeta}>{exp.company}</Text>
+                  <EarlierRolesPdf exp={exp} />
                   {exp.bullets.map((b, i) => <Text key={i} style={s.bullet}>• {b}</Text>)}
                 </View>
               </View>
@@ -647,7 +657,7 @@ function TimelinePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
             {resume.education.map((edu) => <Text key={edu.id} style={{ fontSize: 9.5 }}>{edu.degree} — {edu.school}</Text>)}
           </>
         )}</Sec>
-        <Sec k="skills">{resume.skills.length > 0 && <Text style={{ fontSize: 9.5, color: MUTED, marginTop: 8 }}>{resume.skills.join(" • ")}</Text>}</Sec>
+        <Sec k="skills">{resume.skills.length > 0 && <Text style={{ fontSize: 9.5, color: MUTED, marginTop: 8 }}>{joinSkills(resume, " • ")}</Text>}</Sec>
         <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["projects"]} /></Sec>
         <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
@@ -700,6 +710,7 @@ function ElegantPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
                   <Text style={s.entryTitle}>{exp.role}, {exp.company}</Text>
                   <Text style={s.entryMeta}>{exp.startDate} – {exp.endDate}</Text>
                 </View>
+                <EarlierRolesPdf exp={exp} />
                 {exp.bullets.map((b, i) => <Text key={i} style={s.bullet}>· {b}</Text>)}
               </View>
             ))}
@@ -711,7 +722,7 @@ function ElegantPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
             {resume.education.map((edu) => <Text key={edu.id} style={{ fontSize: 9.5, fontStyle: "italic" }}>{edu.degree}, {edu.school}</Text>)}
           </>
         )}</Sec>
-        <Sec k="skills">{resume.skills.length > 0 && <Text style={{ fontSize: 9.5, color: MUTED, marginTop: 10 }}>{resume.skills.join("  ·  ")}</Text>}</Sec>
+        <Sec k="skills">{resume.skills.length > 0 && <Text style={{ fontSize: 9.5, color: MUTED, marginTop: 10 }}>{joinSkills(resume, "  ·  ")}</Text>}</Sec>
         <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["projects"]} /></Sec>
         <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
@@ -752,15 +763,19 @@ export function ExtraSectionsPdf({
   return (
     <>
       {projects.length > 0 && (
-        <View wrap={false}>
-          {!hideTitle && <Text style={titleStyle}>{title("Projects")}</Text>}
+        <View>
+          {!hideTitle && <Text style={titleStyle} minPresenceAhead={40}>{title("Projects")}</Text>}
           {projects.map((p) => (
-            <View key={p.id} style={{ marginBottom: 4 }}>
+            <View key={p.id} style={{ marginBottom: 4 }} wrap={false}>
               <Text style={{ ...text, fontWeight: 700 }}>
                 {p.name}
                 {p.link ? <Text style={{ fontWeight: 400, color: MUTED }}>{`  ·  ${p.link}`}</Text> : null}
               </Text>
+              {p.tech?.trim() ? <Text style={{ ...text, fontSize: 8.5, color: MUTED }}>{p.tech.trim()}</Text> : null}
               {p.description ? <Text style={{ ...text, color: MUTED }}>{p.description}</Text> : null}
+              {projectBullets(p).map((b, i) => (
+                <Text key={i} style={{ ...text, marginTop: 1 }}>• {b}</Text>
+              ))}
             </View>
           ))}
         </View>

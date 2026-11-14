@@ -4,6 +4,8 @@ import { Rich } from "@/components/templates/Rich";
 import type { ResumeData, ExperienceEntry } from "@/lib/types";
 import { ExtraSectionsPreview } from "@/components/ResumeEditor";
 import { contactParts } from "@/lib/contact";
+import { joinSkills } from "@/lib/resume-sections";
+import { EarlierRoles } from "@/components/templates/EarlierRoles";
 
 /**
  * Templates added in the Oct 2026 batch: Ribbon, Split, Scholar, Fresher,
@@ -59,6 +61,7 @@ function Job({ exp, indent, stacked = false }: { exp: ExperienceEntry; indent: b
         </span>
       </div>
       {stacked && exp.company && <p className="text-xs text-ink-soft">{exp.company}</p>}
+      <EarlierRoles exp={exp} />
       <Bullets items={exp.bullets} indent={indent} />
     </div>
   );
@@ -106,7 +109,7 @@ export function RibbonPreview({ data }: { data: ResumeData }) {
       <Sec k="skills">{data.skills.length > 0 && (
         <>
           <h3 className={label}>Skills</h3>
-          <p className="text-sm">{data.skills.join("  ·  ")}</p>
+          <p className="text-sm whitespace-pre-line">{joinSkills(data, "  ·  ")}</p>
         </>
       )}</Sec>
       <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName={label + " block w-fit"} only={["projects"]} /></Sec>
@@ -230,7 +233,7 @@ export function ScholarPreview({ data }: { data: ResumeData }) {
       <Sec k="skills">{data.skills.length > 0 && (
         <>
           <h3 className={heading}>Skills</h3>
-          <p className="text-sm text-center">{data.skills.join("  ·  ")}</p>
+          <p className="text-sm text-center whitespace-pre-line">{joinSkills(data, "  ·  ")}</p>
         </>
       )}</Sec>
       <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName={heading} variant="center" only={["languages"]} /></Sec>
@@ -335,7 +338,7 @@ export function GridPreview({ data }: { data: ResumeData }) {
           ))}
         </Row>
       )}</Sec>
-      <Sec k="skills">{data.skills.length > 0 && <Row label="Skills"><p className="text-sm">{data.skills.join(", ")}</p></Row>}</Sec>
+      <Sec k="skills">{data.skills.length > 0 && <Row label="Skills"><p className="text-sm whitespace-pre-line">{joinSkills(data, ", ")}</p></Row>}</Sec>
       </Ordered>
       <div className="[&_h3]:hidden">
         {(["projects", "certifications", "achievements", "languages"] as const).map((k) => {

@@ -84,7 +84,7 @@ export function toggleMark(
 type WithRichFields = {
   summary: string;
   experience: { bullets: string[] }[];
-  projects?: { description: string }[];
+  projects?: { description: string; bullets?: string[] }[];
   achievements?: string[];
 };
 
@@ -94,7 +94,7 @@ export function plainResume<T extends WithRichFields>(r: T): T {
     ...r,
     summary: stripRich(r.summary ?? ""),
     experience: r.experience.map((e) => ({ ...e, bullets: e.bullets.map(stripRich) })),
-    projects: r.projects?.map((p) => ({ ...p, description: stripRich(p.description ?? "") })),
+    projects: r.projects?.map((p) => ({ ...p, description: stripRich(p.description ?? ""), ...(p.bullets ? { bullets: p.bullets.map(stripRich) } : {}) })),
     achievements: r.achievements?.map(stripRich),
   };
 }

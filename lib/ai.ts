@@ -4,6 +4,7 @@ import type { ResumeData } from "./types";
 import { MODELS, addUsage, usageFromApi, type ModelId, type TokenUsage } from "./ai-costs";
 import { plainResume, stripRich } from "./rich-text";
 import { HONESTY_RULES, blankInventedNumbers, guardRewrites, numbersIn, retryReminder, yearsOfExperience } from "./ai-honesty";
+import { roleLabel } from "./resume-sections";
 
 function getClient() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -125,7 +126,7 @@ export function buildCoverLetterPrompt(params: { resume: ResumeData; jobDescript
 Name: ${resume.contact.fullName}
 Summary: ${resume.summary}
 Experience: ${resume.experience
-    .map((e) => `${e.role} at ${e.company} (${e.startDate}–${e.endDate}): ${e.bullets.join("; ")}`)
+    .map((e) => `${roleLabel(e)} at ${e.company} (${e.startDate}–${e.endDate}): ${e.bullets.join("; ")}`)
     .join("\n")}
 Skills: ${resume.skills.join(", ")}
 `.trim();
@@ -217,7 +218,7 @@ export async function generateSummary(params: {
   const experience = params.experience.map((e) => ({ ...e, bullets: e.bullets.map(stripRich) }));
 
   const experienceText = experience
-    .map((e) => `${e.role} at ${e.company} (${e.startDate}–${e.endDate}): ${e.bullets.join("; ")}`)
+    .map((e) => `${roleLabel(e)} at ${e.company} (${e.startDate}–${e.endDate}): ${e.bullets.join("; ")}`)
     .join("\n");
   const years = yearsOfExperience(experience);
 
@@ -280,15 +281,18 @@ Respond ONLY with a JSON object matching this exact shape, no preamble, no markd
 {
   "contact": { "fullName": string, "email": string, "phone": string, "location": string, "linkedin": string, "website": string },
   "summary": string,
-  "experience": [{ "role": string, "company": string, "startDate": string, "endDate": string, "bullets": string[] }],
-  "education": [{ "school": string, "degree": string, "startDate": string, "endDate": string }],
+  "experience": [{ "role": string, "company": string, "startDate": string, "endDate": string, "bullets": string[], "earlierRoles": [{ "role": string, "startDate": string, "endDate": string }] }],
+  "education": [{ "school": string, "degree": string, "startDate": string, "endDate": string, "grade": string, "location": string }],
   "skills": string[],
-  "projects": [{ "name": string, "link": string, "description": string }],
+  "projects": [{ "name": string, "link": string, "description": string, "tech": string, "bullets": string[] }],
   "certifications": [{ "name": string, "issuer": string, "date": string }],
   "languages": string[],
   "achievements": string[]
 }
-Use empty arrays for projects, certifications, languages or achievements if the resume has none.`;
+Use empty arrays for projects, certifications, languages or achievements if the resume has none.
+If someone held several titles at one company (promotions), make one experience entry: "role" and its dates are the latest title, and "earlierRoles" lists the older titles, newest first. Otherwise use an empty array.
+"grade" is a CGPA, percentage or class if shown; "location" is the school's city. Use "" when not shown.
+For projects, put the tools or tech used in "tech" and any bullet points in "bullets".`;
 
   const { text, usage } = await complete(MODEL_FAST, 4000, prompt);
 
@@ -329,6 +333,14 @@ export function normalizeExtractedResume(raw: unknown): ResumeData {
         startDate: String(exp.startDate ?? ""),
         endDate: String(exp.endDate ?? ""),
         bullets: Array.isArray(exp.bullets) ? exp.bullets.map(String) : [],
+        ...(Array.isArray(exp.earlierRoles) && exp.earlierRoles.length
+          ? {
+              earlierRoles: exp.earlierRoles.map((x) => {
+                const er = x as Record<string, unknown>;
+                return { id: crypto.randomUUID(), role: String(er.role ?? ""), startDate: String(er.startDate ?? ""), endDate: String(er.endDate ?? "") };
+              }),
+            }
+          : {}),
       };
     }),
     education: education.map((e) => {
@@ -339,6 +351,8 @@ export function normalizeExtractedResume(raw: unknown): ResumeData {
         degree: String(edu.degree ?? ""),
         startDate: String(edu.startDate ?? ""),
         endDate: String(edu.endDate ?? ""),
+        ...(edu.grade ? { grade: String(edu.grade) } : {}),
+        ...(edu.location ? { location: String(edu.location) } : {}),
       };
     }),
     skills: Array.isArray(r.skills) ? r.skills.map(String) : [],
@@ -349,6 +363,8 @@ export function normalizeExtractedResume(raw: unknown): ResumeData {
         name: String(proj.name ?? ""),
         link: proj.link ? String(proj.link) : "",
         description: String(proj.description ?? ""),
+        ...(proj.tech ? { tech: String(proj.tech) } : {}),
+        ...(Array.isArray(proj.bullets) && proj.bullets.length ? { bullets: proj.bullets.map(String) } : {}),
       };
     }),
     certifications: (Array.isArray(r.certifications) ? r.certifications : []).map((c) => {
@@ -554,7 +570,7 @@ export async function atsAnalystAdvice(params: {
   const r = plainResume(params.resume);
   const resumeText = `Summary: ${r.summary}
 Experience:
-${r.experience.map((e) => `- ${e.role} at ${e.company} (${e.startDate}–${e.endDate})\n${e.bullets.map((b) => `  • ${b}`).join("\n")}`).join("\n")}
+${r.experience.map((e) => `- ${roleLabel(e)} at ${e.company} (${e.startDate}–${e.endDate})\n${e.bullets.map((b) => `  • ${b}`).join("\n")}`).join("\n")}
 Education: ${r.education.map((e) => `${e.degree}, ${e.school}`).join("; ")}
 Skills: ${r.skills.join(", ")}`;
   const prompt = `You are an ATS (applicant tracking system) and recruiting expert reviewing a resume. Its automatic ATS score is ${params.score}/100.
