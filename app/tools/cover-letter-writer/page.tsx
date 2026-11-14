@@ -1,6 +1,10 @@
 import { OG_IMAGE } from "@/lib/og";
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
+import { auth } from "@/lib/auth";
+import { getUserById } from "@/lib/db";
+import { LETTER_TEMPLATES } from "@/lib/letter-templates";
 import { MarketingPage, WRAP, H2, Faq, faqJsonLd, CtaBand, BTN_BLUE, BTN_OUTLINE } from "@/components/marketing/MarketingPage";
 
 export const metadata: Metadata = {
@@ -26,21 +30,75 @@ const FAQ = [
   { q: "Will it make things up?", a: "No. It only uses achievements that are in your resume. Read it through and add a personal line before you send it." },
 ];
 
-export default function CoverLetterWriterPage() {
+/** Signed-in people go straight to the Cover letter tab of their latest resume. */
+const WRITER_HREF = "/builder/new?tab=cover-letter";
+
+export default async function CoverLetterWriterPage() {
+  const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  const user = userId ? await getUserById(userId) : undefined;
+  const signedIn = Boolean(user);
+  const pro = user?.plan === "pro";
+
   return (
     <MarketingPage
       eyebrow="Free tool"
       title="Cover letter writer"
-      intro={<p>Paste the job post. Lettr writes a short, specific cover letter from your own resume, ready to edit and send. Your first one is free.</p>}
+      intro={
+        <p>
+          Paste the job post. Lettr writes a short, specific cover letter from your own resume, ready to edit and send.
+          {!pro && " Your first one is free."}
+        </p>
+      }
       jsonLd={faqJsonLd(FAQ)}
     >
       <section className={`${WRAP} pb-14 flex flex-wrap gap-3`}>
-        <Link href="/signup" className={BTN_BLUE}>
-          Write my cover letter, free
-        </Link>
-        <Link href="/builder/new" className={BTN_OUTLINE}>
-          Build my resume first
-        </Link>
+        {signedIn ? (
+          <Link href={WRITER_HREF} className={BTN_BLUE}>
+            Open cover letter writer
+          </Link>
+        ) : (
+          <>
+            <Link href="/signup" className={BTN_BLUE}>
+              Write my cover letter, free
+            </Link>
+            <Link href="/builder/new" className={BTN_OUTLINE}>
+              Build my resume first
+            </Link>
+          </>
+        )}
+      </section>
+
+      <section className={`${WRAP} pb-14`}>
+        <h2 className={H2}>10 letter designs</h2>
+        <p className="mt-2 text-slate max-w-2xl">
+          Every design uses your name, contact details and accent colour.{" "}
+          {pro ? "All 10 come with your Pro plan." : "Classic and Modern are free; the other 8 come with Pro."}
+        </p>
+        <ul className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          {LETTER_TEMPLATES.map((t) => (
+            <li key={t.id} className="relative">
+              <Image
+                src={`/letter-designs/${t.id}.jpg`}
+                alt={`${t.name} cover letter design`}
+                width={447}
+                height={632}
+                className="w-full h-auto rounded-lg border border-rule bg-white shadow-sm"
+              />
+              {!pro && (
+                <span
+                  className={`absolute top-2 right-2 text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
+                    t.free ? "bg-gold text-ink" : "bg-ink text-gold"
+                  }`}
+                >
+                  {t.free ? "FREE" : "PRO"}
+                </span>
+              )}
+              <p className="font-bold mt-2">{t.name}</p>
+              <p className="text-sm text-slate">{t.blurb}</p>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="bg-white border-y border-rule">
@@ -85,7 +143,12 @@ export default function CoverLetterWriterPage() {
         <Faq items={FAQ} />
       </section>
 
-      <CtaBand title="One resume, a tailored letter for every job" text="Lettr writes each cover letter from your resume and the job post, then checks your ATS score for that job." href="/signup" label="Create a free account" />
+      <CtaBand
+        title="One resume, a tailored letter for every job"
+        text="Lettr writes each cover letter from your resume and the job post, then checks your ATS score for that job."
+        href={signedIn ? WRITER_HREF : "/signup"}
+        label={signedIn ? "Open cover letter writer" : "Create a free account"}
+      />
     </MarketingPage>
   );
 }

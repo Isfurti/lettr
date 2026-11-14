@@ -1882,7 +1882,8 @@ function CoverLetterPanel({
           <p className="whitespace-pre-wrap text-sm leading-relaxed">{letter}</p>
         </div>
       )}
-      {letter && <LetterDesigns data={data} letter={letter} company={company} plan={plan} />}
+      {/* Shown before a letter exists too, so people can see the designs; the buttons wait for a letter. */}
+      <LetterDesigns data={data} letter={letter} company={company} plan={plan} />
     </div>
   );
 }

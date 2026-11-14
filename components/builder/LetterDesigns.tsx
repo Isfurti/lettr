@@ -39,6 +39,8 @@ export function LetterDesigns({
   const [upgrade, setUpgrade] = useState(false);
   const chosen = LETTER_TEMPLATES.find((t) => t.id === design)!;
   const locked = plan !== "pro" && !chosen.free;
+  // No letter yet: the designs can be browsed, but there's nothing to preview or download.
+  const waiting = !letter.trim();
 
   // A preview belongs to one design and one version of the letter; it hides
   // itself when either changes.
@@ -129,61 +131,67 @@ export function LetterDesigns({
         <span className="font-bold text-ink">{chosen.name}:</span> {chosen.blurb}. Thumbnails show a sample letter.
       </p>
 
-      <div className="flex flex-wrap gap-2 mt-4">
-        <button
-          type="button"
-          onClick={() => void request("preview")}
-          disabled={busy !== null}
-          className="inline-flex items-center min-h-11 px-4 rounded-full border-2 border-ink text-sm font-bold disabled:opacity-60"
-        >
-          {busy === "preview" ? "Making preview…" : "Preview with my letter"}
-        </button>
-        <button
-          type="button"
-          onClick={() => void request("pdf")}
-          disabled={busy !== null || locked}
-          className="btn-press inline-flex items-center min-h-11 px-4 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_4px_0_var(--brand-blue-deep)] disabled:opacity-60"
-        >
-          {busy === "pdf" ? "Preparing…" : "Download PDF"}
-        </button>
-        <button
-          type="button"
-          onClick={() => void request("docx")}
-          disabled={busy !== null || locked}
-          className="inline-flex items-center min-h-11 px-4 rounded-full border-2 border-rule text-sm font-bold hover:border-ink disabled:opacity-60"
-        >
-          {busy === "docx" ? "Preparing…" : `Word${plan !== "pro" ? " (Pro)" : ""}`}
-        </button>
-      </div>
-      {locked && (
-        <p className="text-sm mt-2">
-          {chosen.name} is a Pro design. You can preview it, or pick Classic or Modern to download free.{" "}
-          <Link href="/pricing" className="font-bold text-brand-blue underline">
-            See Pro
-          </Link>
-        </p>
-      )}
-      {error && (
-        <p className="text-sm text-red-600 mt-2" role="alert">
-          {error}{" "}
-          {upgrade && (
-            <Link href="/pricing" className="font-bold underline">
+      {waiting ? (
+        <p className="text-sm font-bold mt-4">Generate a letter to use these.</p>
+      ) : (
+        <>
+        <div className="flex flex-wrap gap-2 mt-4">
+          <button
+            type="button"
+            onClick={() => void request("preview")}
+            disabled={busy !== null}
+            className="inline-flex items-center min-h-11 px-4 rounded-full border-2 border-ink text-sm font-bold disabled:opacity-60"
+          >
+            {busy === "preview" ? "Making preview…" : "Preview with my letter"}
+          </button>
+          <button
+            type="button"
+            onClick={() => void request("pdf")}
+            disabled={busy !== null || locked}
+            className="btn-press inline-flex items-center min-h-11 px-4 rounded-full bg-brand-blue text-white text-sm font-bold shadow-[0_4px_0_var(--brand-blue-deep)] disabled:opacity-60"
+          >
+            {busy === "pdf" ? "Preparing…" : "Download PDF"}
+          </button>
+          <button
+            type="button"
+            onClick={() => void request("docx")}
+            disabled={busy !== null || locked}
+            className="inline-flex items-center min-h-11 px-4 rounded-full border-2 border-rule text-sm font-bold hover:border-ink disabled:opacity-60"
+          >
+            {busy === "docx" ? "Preparing…" : `Word${plan !== "pro" ? " (Pro)" : ""}`}
+          </button>
+        </div>
+        {locked && (
+          <p className="text-sm mt-2">
+            {chosen.name} is a Pro design. You can preview it, or pick Classic or Modern to download free.{" "}
+            <Link href="/pricing" className="font-bold text-brand-blue underline">
               See Pro
             </Link>
-          )}
-        </p>
-      )}
-      {previewUrl && (
-        <div className="mt-4">
-          <iframe src={previewUrl} title={`${chosen.name} ${letterKind === "resignation" ? "resignation" : "cover"} letter preview`} className="w-full h-[640px] rounded-lg border border-rule bg-white" />
-          <p className="text-xs text-ink-soft mt-1">
-            Preview not showing?{" "}
-            <a href={previewUrl} target="_blank" rel="noopener" className="font-bold text-brand-blue underline">
-              Open it in a new tab
-            </a>
-            .
           </p>
-        </div>
+        )}
+        {error && (
+          <p className="text-sm text-red-600 mt-2" role="alert">
+            {error}{" "}
+            {upgrade && (
+              <Link href="/pricing" className="font-bold underline">
+                See Pro
+              </Link>
+            )}
+          </p>
+        )}
+        {previewUrl && (
+          <div className="mt-4">
+            <iframe src={previewUrl} title={`${chosen.name} ${letterKind === "resignation" ? "resignation" : "cover"} letter preview`} className="w-full h-[640px] rounded-lg border border-rule bg-white" />
+            <p className="text-xs text-ink-soft mt-1">
+              Preview not showing?{" "}
+              <a href={previewUrl} target="_blank" rel="noopener" className="font-bold text-brand-blue underline">
+                Open it in a new tab
+              </a>
+              .
+            </p>
+          </div>
+        )}
+        </>
       )}
     </div>
   );

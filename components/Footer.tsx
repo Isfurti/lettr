@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { COMPANY, SELLER, sentenceEnd } from "@/lib/company";
 import { CookieSettingsLink } from "@/components/Analytics";
+import { TAGLINE } from "@/lib/tagline";
 
 const COLUMNS = [
   {
@@ -49,7 +50,7 @@ export function Footer() {
       <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-8 lg:px-14 py-12 grid grid-cols-2 sm:grid-cols-4 gap-8">
         <div className="col-span-2 sm:col-span-1 flex flex-col gap-3">
           <Logo />
-          <p className="text-sm text-slate">Made in India for job seekers everywhere.</p>
+          <p className="text-sm text-slate">{TAGLINE}</p>
         </div>
         {COLUMNS.map((col) => (
           <div key={col.title}>
