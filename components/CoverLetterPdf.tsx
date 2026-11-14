@@ -11,6 +11,8 @@ import {
   letterDate,
   letterHeadline,
   letterParagraphs,
+  letterRecipient,
+  type LetterKind,
   type LetterTemplateId,
 } from "@/lib/letter-templates";
 
@@ -33,37 +35,47 @@ type Parts = {
 };
 
 /**
- * A cover letter PDF in one of ten designs. The letter text already has its
- * greeting and sign-off (the AI writes them), so the designs only add the
- * header, the date and who it's for.
+ * A cover letter or resignation letter PDF in one of ten designs. The letter
+ * text already has its greeting and sign-off (the AI writes them), so the
+ * designs only add the header, the date and who it's for.
  */
 export function CoverLetterPdf({
   resume,
   letter,
   design,
   company,
+  kind = "cover",
+  manager,
+  name,
+  headline,
   now = new Date(),
 }: {
   resume: ResumeData;
   letter: string;
   design: LetterTemplateId;
   company?: string;
+  kind?: LetterKind;
+  /** Resignation letters: the manager it's addressed to. */
+  manager?: string;
+  /** Overrides for the name and job title in the header (the resignation form can differ from the resume). */
+  name?: string;
+  headline?: string;
   now?: Date;
 }) {
   const accent = resolveAccent(resume.customization?.accentColor);
   const p: Parts = {
-    name: resume.contact.fullName?.trim() || "Your Name",
-    headline: letterHeadline(resume),
+    name: name?.trim() || resume.contact.fullName?.trim() || "Your Name",
+    headline: headline?.trim() || letterHeadline(resume),
     contact: contactParts(resume.contact),
     date: letterDate(marketOf(resume.customization), now),
-    recipient: company?.trim() ? `Hiring Team\n${company.trim()}` : "",
+    recipient: letterRecipient(kind, company, manager),
     paragraphs: letterParagraphs(letter),
     accent,
     soft: softenHex(accent),
     deep: darkenHex(accent),
   };
   return (
-    <Document title={`${p.name} – Cover letter`} author={p.name}>
+    <Document title={`${p.name} – ${kind === "resignation" ? "Resignation letter" : "Cover letter"}`} author={p.name}>
       <Page size={pageSize(resume.customization)} style={{ backgroundColor: "#ffffff" }}>
         <Design design={design} p={p} />
       </Page>

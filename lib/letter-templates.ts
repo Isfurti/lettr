@@ -3,7 +3,7 @@ import type { Market } from "./market";
 import type { ResumeData } from "./types";
 
 /**
- * Cover letter designs, separate from the resume templates. Two are free,
+ * Letter designs for cover letters and resignation letters, separate from the resume templates. Two are free,
  * the rest are Pro, the same split as resume templates. Every design uses
  * the resume's name, contact details and accent colour.
  */
@@ -63,7 +63,34 @@ export function initials(name: string): string {
   return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
 }
 
-export function letterFileName(resume: ResumeData, ext: "pdf" | "docx"): string {
-  const base = (resume.contact.fullName || "cover_letter").replace(/[^\p{L}\p{N}]+/gu, "_").replace(/^_|_$/g, "");
-  return `${base || "cover_letter"}_Cover_Letter.${ext}`;
+export type LetterKind = "cover" | "resignation";
+
+export function letterFileName(resume: ResumeData, ext: "pdf" | "docx", kind: LetterKind = "cover", name?: string): string {
+  const base = (name || resume.contact.fullName || "").replace(/[^\p{L}\p{N}]+/gu, "_").replace(/^_|_$/g, "");
+  const suffix = kind === "resignation" ? "Resignation_Letter" : "Cover_Letter";
+  return `${base ? `${base}_` : ""}${suffix}.${ext}`;
+}
+
+/** Who the letter is addressed to, under the date. Cover letters: the hiring team; resignations: the manager. */
+export function letterRecipient(kind: LetterKind, company?: string, manager?: string): string {
+  const c = company?.trim() ?? "";
+  if (kind === "resignation") return [manager?.trim(), c].filter(Boolean).join("\n");
+  return c ? `Hiring Team\n${c}` : "";
+}
+
+/** Reads the shared letter fields from a request body, with safe lengths. */
+export function letterRequest(body: unknown) {
+  const b = (body ?? {}) as Record<string, unknown>;
+  const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : "");
+  const kind: LetterKind = b.kind === "resignation" ? "resignation" : "cover";
+  return {
+    kind,
+    letter: str(b.letter, 8000),
+    design: b.design,
+    company: str(b.company, 120),
+    manager: str(b.manager, 120),
+    name: str(b.name, 120),
+    headline: str(b.headline, 120),
+    inline: b.inline === true,
+  };
 }

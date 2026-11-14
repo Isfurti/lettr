@@ -742,7 +742,7 @@ export function ResumeEditor({
           {openedTabs.includes("resignation-letter") && (
             <div hidden={tab !== "resignation-letter"}>
               <UpgradeGate locked={plan === "free"} feature="The resignation letter builder">
-                <ResignationLetterPanel data={data} />
+                <ResignationLetterPanel data={data} plan={plan} />
               </UpgradeGate>
             </div>
           )}
@@ -1889,7 +1889,7 @@ function CoverLetterPanel({
 
 // ---------- Resignation letter panel ----------
 
-function ResignationLetterPanel({ data }: { data: ResumeData }) {
+function ResignationLetterPanel({ data, plan }: { data: ResumeData; plan: Plan }) {
   // Start from the current job on the resume, if there is one.
   const current = data.experience.find((e) => /present|current|now/i.test(e.endDate)) ?? data.experience[0];
   const [employeeName, setEmployeeName] = useState(data.contact.fullName);
@@ -2015,6 +2015,18 @@ function ResignationLetterPanel({ data }: { data: ResumeData }) {
           </div>
           <p className="whitespace-pre-wrap text-sm leading-relaxed">{letter}</p>
         </div>
+      )}
+      {letter && (
+        <LetterDesigns
+          data={data}
+          letter={letter}
+          company={companyName}
+          plan={plan}
+          kind="resignation"
+          manager={managerName}
+          name={employeeName}
+          headline={jobTitle}
+        />
       )}
     </div>
   );

@@ -4,7 +4,7 @@ import { contactParts } from "./contact";
 import { resolveAccent } from "./customization";
 import { pageSize } from "./layout";
 import { marketOf } from "./market";
-import { letterDate, letterHeadline, letterParagraphs, type LetterTemplateId } from "./letter-templates";
+import { letterDate, letterHeadline, letterParagraphs, letterRecipient, type LetterKind, type LetterTemplateId } from "./letter-templates";
 
 const INK = "041632";
 const MUTED = "4A5568";
@@ -32,13 +32,17 @@ export async function generateLetterDocx(params: {
   letter: string;
   design: LetterTemplateId;
   company?: string;
+  kind?: LetterKind;
+  manager?: string;
+  name?: string;
+  headline?: string;
   now?: Date;
 }): Promise<Buffer> {
-  const { resume, letter, design, company } = params;
+  const { resume, letter, design, company, kind = "cover", manager } = params;
   const accent = resolveAccent(resume.customization?.accentColor).replace("#", "");
   const fonts = WORD_FONTS[design];
-  const name = resume.contact.fullName?.trim() || "Your Name";
-  const headline = letterHeadline(resume);
+  const name = params.name?.trim() || resume.contact.fullName?.trim() || "Your Name";
+  const headline = params.headline?.trim() || letterHeadline(resume);
   const contact = contactParts(resume.contact).join("  ·  ");
   const centred = design === "classic" || design === "elegant";
   const banded = design === "bold" || design === "sidebar";
@@ -91,12 +95,15 @@ export async function generateLetterDocx(params: {
       children: [new TextRun({ text: letterDate(marketOf(resume.customization), params.now), size: 20, color: MUTED, font: fonts.body })],
     }),
   );
-  if (company?.trim()) {
+  const recipient = letterRecipient(kind, company, manager).split("\n").filter(Boolean);
+  recipient.forEach((line, i) =>
     children.push(
-      new Paragraph({ children: [new TextRun({ text: "Hiring Team", size: 21, font: fonts.body, color: INK })] }),
-      new Paragraph({ spacing: { after: 240 }, children: [new TextRun({ text: company.trim(), size: 21, font: fonts.body, color: INK })] }),
-    );
-  }
+      new Paragraph({
+        spacing: { after: i === recipient.length - 1 ? 240 : 0 },
+        children: [new TextRun({ text: line, size: 21, font: fonts.body, color: INK })],
+      }),
+    ),
+  );
   for (const para of letterParagraphs(letter)) {
     const lines = para.split("\n");
     children.push(
@@ -110,7 +117,7 @@ export async function generateLetterDocx(params: {
   const letterSize = pageSize(resume.customization) === "LETTER";
   const doc = new Document({
     creator: name,
-    title: `${name} – Cover letter`,
+    title: `${name} – ${kind === "resignation" ? "Resignation letter" : "Cover letter"}`,
     sections: [
       {
         properties: {

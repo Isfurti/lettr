@@ -5,10 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ResumeData } from "@/lib/types";
 import type { Plan } from "@/lib/limits";
-import { LETTER_TEMPLATES, letterFileName, type LetterTemplateId } from "@/lib/letter-templates";
+import { LETTER_TEMPLATES, letterFileName, type LetterKind, type LetterTemplateId } from "@/lib/letter-templates";
 
 /**
- * Pick one of ten cover letter designs, preview it with your own letter, and
+ * Pick one of ten letter designs (cover or resignation), preview it with your own letter, and
  * download it as a PDF (or Word on Pro). Pro designs can be previewed on the
  * free plan but not downloaded.
  */
@@ -17,11 +17,20 @@ export function LetterDesigns({
   letter,
   company,
   plan,
+  kind = "cover",
+  manager = "",
+  name = "",
+  headline = "",
 }: {
   data: ResumeData;
   letter: string;
   company: string;
   plan: Plan;
+  kind?: LetterKind;
+  /** Resignation letters: the manager it's addressed to, and the name and job title from the form. */
+  manager?: string;
+  name?: string;
+  headline?: string;
 }) {
   const [design, setDesign] = useState<LetterTemplateId>("classic");
   const [preview, setPreview] = useState<{ url: string; key: string } | null>(null);
@@ -33,7 +42,7 @@ export function LetterDesigns({
 
   // A preview belongs to one design and one version of the letter; it hides
   // itself when either changes.
-  const currentKey = `${design}|${company}|${letter}`;
+  const currentKey = `${design}|${company}|${manager}|${name}|${headline}|${letter}`;
   const previewUrl = preview && preview.key === currentKey ? preview.url : null;
   useEffect(() => {
     return () => {
@@ -41,6 +50,7 @@ export function LetterDesigns({
     };
   }, [preview]);
 
+  const letterKind = kind;
   async function request(kind: "preview" | "pdf" | "docx") {
     setBusy(kind);
     setError(null);
@@ -49,7 +59,7 @@ export function LetterDesigns({
       const res = await fetch(kind === "docx" ? "/api/letters/docx" : "/api/letters/pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resume: data, letter, design, company, inline: kind === "preview" }),
+        body: JSON.stringify({ resume: data, letter, design, company, kind: letterKind, manager, name, headline, inline: kind === "preview" }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -65,7 +75,7 @@ export function LetterDesigns({
       }
       const a = document.createElement("a");
       a.href = url;
-      a.download = letterFileName(data, kind);
+      a.download = letterFileName(data, kind, letterKind, name);
       a.rel = "noopener";
       document.body.appendChild(a);
       a.click();
@@ -165,7 +175,7 @@ export function LetterDesigns({
       )}
       {previewUrl && (
         <div className="mt-4">
-          <iframe src={previewUrl} title={`${chosen.name} cover letter preview`} className="w-full h-[640px] rounded-lg border border-rule bg-white" />
+          <iframe src={previewUrl} title={`${chosen.name} ${letterKind === "resignation" ? "resignation" : "cover"} letter preview`} className="w-full h-[640px] rounded-lg border border-rule bg-white" />
           <p className="text-xs text-ink-soft mt-1">
             Preview not showing?{" "}
             <a href={previewUrl} target="_blank" rel="noopener" className="font-bold text-brand-blue underline">
