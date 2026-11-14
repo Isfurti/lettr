@@ -1764,6 +1764,8 @@ function CoverLetterPanel({
   setCompany: (v: string) => void;
 }) {
   const [letter, setLetter] = useState("");
+  // Stays true once a letter is written, so the box doesn't vanish if someone clears the text while editing.
+  const [hasLetter, setHasLetter] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [upgrade, setUpgrade] = useState(false);
@@ -1788,6 +1790,7 @@ function CoverLetterPanel({
       const body = await res.json().catch(() => ({}));
       if (res.ok) {
         setLetter(body.letter);
+        setHasLetter(true);
         setReused(Boolean(body.reused));
         setRemaining(typeof body.remaining === "number" ? body.remaining : null);
       } else {
@@ -1856,7 +1859,7 @@ function CoverLetterPanel({
         )}
       </Section>
 
-      {letter && (
+      {hasLetter && (
         <div className="bg-white border border-rule rounded-xl p-5" aria-live="polite">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <p className="text-xs text-ink-soft">
@@ -1879,7 +1882,15 @@ function CoverLetterPanel({
               </button>
             </div>
           </div>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed">{letter}</p>
+          <label className="block">
+            <span className="text-xs font-bold text-slate">Edit anything you like. Copy, PDF and Word use your edited version.</span>
+            <textarea
+              value={letter}
+              onChange={(e) => setLetter(e.target.value)}
+              rows={Math.max(12, letter.split("\n").length + 2)}
+              className="mt-1 w-full border-2 border-rule rounded-xl px-3 py-2.5 text-sm leading-relaxed bg-white focus:outline-none focus:border-brand-blue"
+            />
+          </label>
         </div>
       )}
       {/* Shown before a letter exists too, so people can see the designs; the buttons wait for a letter. */}
