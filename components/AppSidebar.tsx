@@ -8,6 +8,7 @@ import { InstallAppButton } from "@/components/AppInstall";
 import { ProBadge } from "@/components/ProBadge";
 import { signOut } from "next-auth/react";
 import { Home, LayoutTemplate, MessageSquare, LifeBuoy, Crown, LogOut, ShieldAlert, Globe, Briefcase, Mic, Download, Menu, X } from "lucide-react";
+import { TAGLINE } from "@/lib/tagline";
 
 const BASE_NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
@@ -150,6 +151,7 @@ export function AppSidebar({
             <Logo dark href="/" />
             {plan === "pro" && <ProBadge />}
           </div>
+          <p className="px-6 -mt-1 pb-3 text-xs font-extrabold text-gold">{TAGLINE}</p>
 
           <nav className="flex-1 px-3 mt-2 space-y-1 overflow-y-auto">
             {NAV_ITEMS.map((item) => {

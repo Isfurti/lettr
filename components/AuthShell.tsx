@@ -2,6 +2,7 @@ import { PublicNav } from "@/components/PublicNav";
 import { Footer } from "@/components/Footer";
 import { ResumeShot } from "@/components/home/ResumeShot";
 import { HERO_EXAMPLE } from "@/lib/home-examples";
+import { TaglineStamp } from "@/components/TaglineStamp";
 
 const PERKS = [
   "Free to start. No card needed.",
@@ -47,6 +48,7 @@ export function AuthShell({
               <span className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-brand-blue/40" />
               <span className="absolute -left-10 -bottom-12 w-48 h-48 rounded-full bg-gold/20" />
               <div className="relative">
+                <TaglineStamp tone="gold" className="mb-6" />
                 <p className="font-brand font-extrabold text-[34px] leading-[1.05] tracking-tight">
                   Make your resume impossible to skip.
                 </p>

@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     default: `Lettr: ${TAGLINE.replace(/\.$/, "")}`,
     template: "%s",
   },
-  description: "AI resume and CV builder with an ATS score checker and tailored cover letters.",
+  description: `${TAGLINE} AI resume and CV builder with an ATS score checker and tailored cover letters.`,
   robots: { index: true, follow: true },
   applicationName: "Lettr",
   appleWebApp: { capable: true, title: "Lettr", statusBarStyle: "default" },

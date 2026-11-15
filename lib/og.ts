@@ -7,5 +7,5 @@ export const OG_IMAGE = {
   url: "/og-image.png",
   width: 1200,
   height: 630,
-  alt: "Lettr, the AI resume builder: make your resume impossible to skip.",
+  alt: "Lettr, the AI resume builder. From Lettr to your offer letter: make your resume impossible to skip.",
 };
