@@ -1,6 +1,7 @@
 import { Pool } from "pg";
 import { createHash, randomUUID } from "node:crypto";
 import { hashToken } from "./token-hash";
+import { encryptSecret } from "./secret-box";
 import type { ApplicationStatus } from "./application-status";
 import { proHasLapsed } from "./pro-pass";
 
@@ -683,14 +684,14 @@ export async function setGoogleTokens(params: {
   if (params.refreshToken) {
     await pool.query(
       "UPDATE users SET google_access_token = $1, google_refresh_token = $2, google_token_expiry = $3 WHERE id = $4",
-      [params.accessToken, params.refreshToken, params.expiryDate.toISOString(), params.userId]
+      [encryptSecret(params.accessToken), encryptSecret(params.refreshToken), params.expiryDate.toISOString(), params.userId]
     );
   } else {
     // Google only returns a refresh_token on the FIRST consent - subsequent
     // token refreshes must not overwrite the existing one with null.
     await pool.query(
       "UPDATE users SET google_access_token = $1, google_token_expiry = $2 WHERE id = $3",
-      [params.accessToken, params.expiryDate.toISOString(), params.userId]
+      [encryptSecret(params.accessToken), params.expiryDate.toISOString(), params.userId]
     );
   }
 }

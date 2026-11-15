@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { getUserById, setGoogleTokens } from "./db";
+import { decryptSecret, isEncrypted } from "./secret-box";
 import { siteUrl } from "./site-url";
 
 const SCOPES = ["https://www.googleapis.com/auth/drive.file"];
@@ -57,10 +58,11 @@ export async function getValidGoogleAccessToken(userId: string): Promise<string>
 
   const expiry = user.google_token_expiry ? new Date(user.google_token_expiry).getTime() : 0;
   const stillValid = user.google_access_token && expiry - Date.now() > 60_000; // 60s buffer
-  if (stillValid) return user.google_access_token as string;
+  if (stillValid) return decryptSecret(user.google_access_token as string);
 
+  const refreshToken = decryptSecret(user.google_refresh_token);
   const client = getOAuthClient();
-  client.setCredentials({ refresh_token: user.google_refresh_token });
+  client.setCredentials({ refresh_token: refreshToken });
   const { credentials } = await client.refreshAccessToken();
 
   if (!credentials.access_token) {
@@ -70,6 +72,8 @@ export async function getValidGoogleAccessToken(userId: string): Promise<string>
   await setGoogleTokens({
     userId,
     accessToken: credentials.access_token,
+    // An older plain-text refresh token gets stored encrypted the first time it is used.
+    refreshToken: isEncrypted(user.google_refresh_token) ? null : refreshToken,
     expiryDate: new Date(credentials.expiry_date ?? Date.now() + 3500 * 1000),
   });
 
