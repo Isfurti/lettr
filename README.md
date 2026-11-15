@@ -45,11 +45,13 @@ immediately.
 
 ## Billing setup (Razorpay)
 
-Pro is sold as one-time passes (1, 3 or 12 months, prices in `lib/plans.ts`). No auto-renewal: buying again while on Pro adds the time after the current end date, a daily job (`/api/cron/billing`) moves lapsed passes back to Free and emails a reminder 3 days before the end.
+Pro has three plans: monthly, 3-month and yearly (prices per region in `lib/plans.ts`). With `RAZORPAY_SUBSCRIPTIONS=on` every plan auto-renews through Razorpay Subscriptions and people can cancel from their account. Without it, plans are one-time passes (1, 3 or 12 months); buying again while on Pro adds the time after the current end date. A daily job (`/api/cron/billing`) moves lapsed Pro back to Free and emails a reminder before the end or the renewal.
 
 1. In Razorpay, go to **Account & Settings → API Keys** and copy the key id and secret into `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`.
-2. Add a webhook at **Account & Settings → Webhooks** pointing at `https://your-domain.com/api/billing/webhook`, events `order.paid` and `payment.captured`. Copy its secret into `RAZORPAY_WEBHOOK_SECRET`.
+2. Add a webhook at **Account & Settings → Webhooks** pointing at `https://your-domain.com/api/billing/webhook`, events `order.paid` and `payment.captured`, plus the `subscription.*` events if you use auto-renewal. Copy its secret into `RAZORPAY_WEBHOOK_SECRET`.
 3. Prices outside India are charged in USD/GBP/EUR/AUD, which Razorpay only accepts once international payments are approved. Until then only India can buy; set `RAZORPAY_INTERNATIONAL=on` after approval.
+4. GST invoices: set `COMPANY_GSTIN` and `COMPANY_ADDRESS` (see `.env.local.example`). Without `COMPANY_GSTIN` no invoice is issued.
+5. Set `CRON_SECRET` so only Vercel's scheduler can call the cron routes.
 
 Without keys everything else works, and the Pro button says "Opens at launch".
 
@@ -113,9 +115,9 @@ Three separate concerns, set up separately:
 - Set `ADMIN_EMAIL` to your own account's email — that unlocks `/admin/support`, a private inbox only you can see (returns a 404, not a login prompt, to anyone else)
 - Optional: set `RESEND_API_KEY` + `RESEND_FROM_EMAIL` (free tier at resend.com) to also get an email the moment someone submits a message. Without it, messages still save fine, you just have to check `/admin/support` yourself.
 
-### Failed payments → Stripe dashboard + Sentry
-- The webhook handler now captures `invoice.payment_failed` to Sentry as a warning (with the customer/amount) so you see it alongside other errors — it does not auto-downgrade the user, since Stripe's own retry schedule handles that
-- For truly instant alerts, also turn on Stripe's own **Email notifications** for failed payments: Stripe Dashboard → **Settings** → **Notifications**
+### Failed payments → Razorpay dashboard + Sentry
+- Errors while handling a payment or subscription webhook are sent to Sentry with the Razorpay event and order or subscription id.
+- Failed payments themselves are not handled in code yet (the webhook ignores `payment.failed`). Watch them in the Razorpay Dashboard and turn on its email notifications under **Account & Settings**.
 
 ### Uptime → an external pinger (this can't be code in the app)
 An uptime monitor has to run independently of your app — if the app is down, code running inside it can't report that. Use a free service:
@@ -394,11 +396,7 @@ API errors with the same inline message pattern.
 
 ## Regional pricing
 
-Pro is priced in 3 tiers based on World Bank income classification (see
-`lib/pricing-region.ts`): **full** ($19, US/UK/EU/etc.), **mid** ($9,
-Brazil/Mexico/China/etc.), **value** ($5, or ₹399 for India specifically,
-since that's the planned Razorpay market — Indonesia/Philippines/etc. show
-the USD figure).
+Prices are set per region in `lib/plans.ts` (India in INR including GST; US, UK, Europe, Australia; and two cheaper regional tiers in USD). The tier for other countries comes from the World Bank income classification in `lib/pricing-region.ts`. Signed-out visitors see US prices; signed-in users see their own country's prices, and checkout charges the same amount.
 
 **Detection**: Vercel's `x-vercel-ip-country` header, set at the edge from
 real IP geolocation — free, no third-party geo service needed, and not
@@ -410,13 +408,7 @@ and everyone gets the default "full" tier.
 logged-in user's price stays stable even if they later browse from a
 different location, rather than shifting under them.
 
-**Billing**: `STRIPE_PRO_PRICE_ID_FULL` / `_MID` / `_VALUE` — create 3
-separate Prices in Stripe, one per tier. The old single
-`STRIPE_PRO_PRICE_ID` still works as a fallback for the full tier if you
-haven't set up regional pricing in Stripe yet. **This only affects what
-gets displayed and which Stripe Price gets used at checkout — it doesn't
-make billing "live."** Stripe/Razorpay integration itself is still pending,
-per the existing pre-launch checklist.
+**Billing**: checkout uses the prices from `lib/plans.ts` directly (Razorpay orders and subscription plans are created from them), so there are no price ids to set up in the dashboard.
 
 **Admin visibility**: `/admin/users` and `/admin/subscriptions` show each
 user's detected country/tier, and estimated MRR is computed per-subscriber
@@ -526,27 +518,16 @@ reduction couldn't be measured directly - Anthropic's real usage dashboard
    resistance (`vercel deploy` after `vercel login`, or connect the GitHub
    repo in the Vercel dashboard). Railway/Render/Fly.io also work with a
    Dockerfile if you'd rather not use Vercel.
-5. **Payments**: there's no billing wired up yet. If you want a free/pro plan
-   split, Stripe Checkout + a webhook that flips `users.plan` in the DB is the
-   standard pattern — say the word and I'll wire it in.
-6. **Rate limiting**: the AI endpoints call a paid API per request — add rate
-   limiting (e.g. per-user daily cap) before opening this to the public, or
-   costs can run away.
+5. **Payments**: see "Billing setup (Razorpay)" above. Set `CRON_SECRET`, `COMPANY_GSTIN`, `COMPANY_ADDRESS` and `TOKEN_ENCRYPTION_KEY` (encrypts Google tokens) in the host's environment variables.
+6. **Rate limiting**: already in place (see "Rate limiting" above and daily AI caps in `lib/daily-caps.ts`).
 
-## Known limitations (MVP scope)
+## Known limitations
 
-- No AI Interview practice, Job Search tool, LinkedIn optimizer, or resume
-  upload/parsing yet — all real Rezi features, but each is a substantial
-  standalone feature, not a quick addition
-- No email verification on signup
-- The "Job Match" tab measures JD-keyword overlap; the separate "Score" tab
-  covers Rezi's resume-quality scoring (formatting/content strength) —
-  together they cover what Rezi Score + Keyword Targeting do
-- The AI Agent (`lib/ai-agent.ts`) supports 9 tools covering contact,
-  summary, experience, education, and skills edits. It does not yet call
-  the ATS scorer or cover-letter generator as tools within the same
-  conversation - those stay on their own tabs.
-- No Privacy Policy or Terms of Service pages yet — needed before real launch
+- Not built yet: LinkedIn optimizer, user profiles, job board, chat and the other community features in `Lettr_Product_Roadmap.pdf`, and a mobile app.
+- The "Job Match" tab measures job-description keyword overlap; the separate "Score" tab covers resume quality (formatting and content strength).
+- The AI Agent (`lib/ai-agent.ts`) edits contact, summary, experience, education and skills. It does not call the ATS scorer or cover-letter generator inside the same conversation; those stay on their own tabs.
+- Database tables are created at runtime by `ensureSchema()` in `lib/db.ts`, not by versioned migrations.
+- Design docs and the security audit are in `docs/`.
 
 ## Design system
 
