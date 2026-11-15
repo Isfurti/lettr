@@ -68,9 +68,15 @@ describe("amounts", () => {
 
 describe("GST config", () => {
   const seller = { ...PLACEHOLDER_SELLER, gstin: "09AAAAA0000A1Z5" };
-  it("uses Noonscope's GSTIN by default, and is off with no company", () => {
-    expect(getGstConfig({})).toMatchObject({ gstin: "09AALCN4402B1ZS", invoicePrefix: "LTR" });
+  it("is off with no company, and off when no GSTIN is configured", () => {
     expect(getGstConfig({}, null)).toBeNull();
+    expect(getGstConfig({}, { ...PLACEHOLDER_SELLER, gstin: "" })).toBeNull();
+  });
+  it("takes the GSTIN from COMPANY_GSTIN when the company has none", () => {
+    expect(getGstConfig({ COMPANY_GSTIN: "09AAAAA0000A1Z5" }, { ...PLACEHOLDER_SELLER, gstin: "" })).toMatchObject({
+      gstin: "09AAAAA0000A1Z5",
+      invoicePrefix: "LTR",
+    });
   });
   it("uses the company's GSTIN once there is one, and can be switched off", () => {
     expect(getGstConfig({}, seller)).toMatchObject({ gstin: "09AAAAA0000A1Z5", invoicePrefix: "LTR" });

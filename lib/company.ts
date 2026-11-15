@@ -20,14 +20,34 @@ export type Seller = {
   website?: string;
 };
 
+/**
+ * The company's GSTIN and street address come from environment variables, not
+ * the code, because this repository is public. Set them in Vercel (and in
+ * .env.local for local runs):
+ *   COMPANY_GSTIN     the 15-character GSTIN; "off" switches GST invoices off
+ *   COMPANY_ADDRESS   address lines separated by "|", e.g. "Line 1|Line 2"
+ * Without COMPANY_GSTIN no GST invoice is issued.
+ */
+function gstinFromEnv(env: Record<string, string | undefined> = process.env): string {
+  const raw = env.COMPANY_GSTIN?.trim().toUpperCase() ?? "";
+  return raw === "OFF" ? "" : raw;
+}
+
+function addressFromEnv(env: Record<string, string | undefined> = process.env): string[] {
+  return (env.COMPANY_ADDRESS ?? "")
+    .split("|")
+    .map((l) => l.trim())
+    .filter(Boolean);
+}
+
 /** The legal entity Lettr is sold under. Set to null to hide company details and switch invoices off. */
 export const SELLER: Seller | null = {
   legalName: "Noonscope Media Pvt. Ltd.",
-  addressLines: ["D-42, Surya Palace, Delhi Road", "Meerut 250001, Uttar Pradesh, India"],
+  addressLines: addressFromEnv(),
   city: "Meerut",
   state: "Uttar Pradesh",
   stateCode: "09",
-  gstin: "09AALCN4402B1ZS",
+  gstin: gstinFromEnv(),
   logoPath: "/brand/noonscope-logo.png",
   website: "https://noonscope.com",
 };
@@ -88,8 +108,10 @@ export function getGstConfig(
   if (!seller) return null;
   const raw = env.COMPANY_GSTIN?.trim().toUpperCase();
   if (raw === "OFF") return null;
+  const gstin = raw || seller.gstin;
+  if (!gstin) return null; // no GSTIN configured: don't issue invoices
   return {
-    gstin: raw || seller.gstin,
+    gstin,
     sac: env.COMPANY_SAC?.trim() || "998319",
     invoicePrefix: env.INVOICE_PREFIX?.trim() || "LTR",
   };
