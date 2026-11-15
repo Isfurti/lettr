@@ -6,7 +6,7 @@ the code does (the code itself should be readable enough for that).
 
 ## Stack, in one line
 Next.js 16 (App Router, TypeScript) + Postgres (via `pg`, no ORM) + NextAuth v5
-+ Anthropic API + Stripe + Tailwind 4.
++ Anthropic API + Razorpay + Tailwind 4. Design docs and the security audit: `docs/`.
 
 ## Folder map
 
