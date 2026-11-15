@@ -9,8 +9,8 @@ import { createHash } from "node:crypto";
  *   keeps old instances and rollbacks alive). Add first, deploy, remove later.
  * - Keep them quick: they run inside a request on the first cold start after a
  *   deploy, with a lock timeout. No big backfills here.
- * - Previews share the production database (DATABASE_URL is set for both), so
- *   a migration on a preview branch is a migration on production.
+ * - Previews must use the staging database (docs/staging.md). Until that is
+ *   set up they share production, and a migration on a preview branch runs there.
  */
 
 // Tables and columns the app needs. Every statement is safe to run again.

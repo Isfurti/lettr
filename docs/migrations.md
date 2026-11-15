@@ -13,8 +13,8 @@ Old code can still be running (Vercel keeps old instances, rollbacks are instant
 - Rename or drop a column: do it in two deploys. First add the new one and write to both, deploy; later, remove the old one in a new migration.
 - Large backfills, `CREATE INDEX CONCURRENTLY`: not here (they run inside a request, in a transaction). Run them by hand.
 
-## Previews share the production database
-`DATABASE_URL` is set for both Production and Preview in Vercel, so a migration on a preview branch runs on production. Until there is a separate database for previews (task T7 in `tasks.md`), treat every branch with a migration as a production change.
+## Previews and the database
+Previews must use the separate staging database, never production (see `docs/staging.md`; `lib/preview-guard.ts` refuses to start a preview that points at anything else). Until that setup is done, `DATABASE_URL` is shared and a migration on a preview branch runs on production.
 
 ## Legacy table
 `schema_version` (from the old setup) is left in place. A rolled-back deployment still reads it, finds its own hash, and skips its setup. Drop it only after rollbacks to pre-migration code are no longer possible.
