@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { scoreResumeAgainstJob, extractKeywords } from "@/lib/ats-score";
 import { emptyResume } from "@/lib/types";
 import type { ResumeData } from "@/lib/types";
+import { SAMPLE_RESUME } from "@/lib/sample-resume";
 
 describe("extractKeywords", () => {
   it("extracts frequent non-stopword tokens", () => {
@@ -104,5 +105,15 @@ describe("keyword quality on a real job post", () => {
     expect(result.matchedKeywords).not.toContain("grow");
     expect(result.matchedKeywords).not.toContain("pune");
     expect(result.score).toBeLessThan(20);
+  });
+});
+
+describe("contractions in job posts", () => {
+  it("doesn't turn we're / you'll / team's / don't into keywords", () => {
+    const post =
+      "We're hiring a product marketer. You'll own launches and positioning. You'll work with the sales team's leads. We don't need agency experience. We've grown fast and we'd love CRM skills. I'm the hiring manager.";
+    const res = scoreResumeAgainstJob(SAMPLE_RESUME, post);
+    const all = [...res.matchedKeywords, ...res.missingKeywords].map((k) => k.toLowerCase());
+    for (const bad of ["re", "ll", "ve", "s", "d", "m", "t", "don"]) expect(all).not.toContain(bad);
   });
 });

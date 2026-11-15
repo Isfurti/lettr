@@ -163,6 +163,9 @@ function words(text: string): Token[] {
   return text
     .toLowerCase()
     .replace(/\.net\b/g, " dotnet") // ".NET" would otherwise lose its dot below
+    // Drop contraction endings so "we're" / "you'll" / "team's" don't leave "re", "ll", "s" behind as keywords.
+    .replace(/n['’]t\b/g, "")
+    .replace(/['’](re|ll|ve|s|d|m)\b/g, "")
     .replace(/[^a-z0-9+.#/\s-]/g, " ")
     .split(/\s+/)
     .map((w) => w.trim().replace(/^[./-]+|[./-]+$/g, "")) // drop stray edge punctuation (e.g. sentence-final periods) but keep c++ / c# / node.js
