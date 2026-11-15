@@ -4,10 +4,10 @@ import { auth } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-auth";
 import { getUserById, listApplications, listResumesForUser } from "@/lib/db";
 import { displayTitle } from "@/lib/resume-title";
-import type { ResumeData } from "@/lib/types";
 import { AppSidebar } from "@/components/AppSidebar";
 import { formatProDate } from "@/lib/pro-pass";
 import { ApplicationsBoard } from "@/components/applications/ApplicationsBoard";
+import { parseStoredResume } from "@/lib/resume-version";
 
 export const metadata: Metadata = { title: "Applications | Lettr", robots: { index: false } };
 
@@ -29,7 +29,7 @@ export default async function ApplicationsPage() {
         <p className="text-lg text-slate mt-1 mb-7">Every job you&apos;re going for, and what to do next. Free on every plan.</p>
         <ApplicationsBoard
           initial={apps}
-          resumes={resumes.map((r) => ({ id: r.id, title: displayTitle({ ...r, data: JSON.parse(r.data) as ResumeData }) }))}
+          resumes={resumes.map((r) => ({ id: r.id, title: displayTitle({ ...r, data: parseStoredResume(r.data) }) }))}
         />
       </main>
     </div>

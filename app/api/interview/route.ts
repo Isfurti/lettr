@@ -10,6 +10,7 @@ import { canUseInterviewPractice, type Plan } from "@/lib/limits";
 import { recordUse, usageContext, usedSoFar } from "@/lib/free-usage";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import type { ResumeData } from "@/lib/types";
+import { parseStoredResume } from "@/lib/resume-version";
 
 const Schema = z.object({
   role: z.string().trim().min(2, "Add the job title you're interviewing for").max(150),
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
   let resume: ResumeData | null = null;
   if (parsed.data.resumeId) {
     const row = await getResume(parsed.data.resumeId, userId);
-    if (row) resume = JSON.parse(row.data) as ResumeData;
+    if (row) resume = parseStoredResume(row.data);
   }
 
   try {

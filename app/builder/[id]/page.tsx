@@ -2,10 +2,10 @@ import { redirect, notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getResume, getUserById } from "@/lib/db";
 import { ResumeEditor } from "@/components/ResumeEditor";
-import type { ResumeData } from "@/lib/types";
 import type { Plan } from "@/lib/limits";
 import { planAllowances } from "@/lib/free-usage";
 import { TEMPLATE_IDS } from "@/lib/templates";
+import { parseStoredResume } from "@/lib/resume-version";
 
 const TABS = ["edit", "score", "match", "agent", "cover-letter", "resignation-letter"] as const;
 
@@ -29,7 +29,7 @@ export default async function BuilderPage({
   const [row, user] = await Promise.all([getResume(id, userId), getUserById(userId)]);
   if (!row) notFound();
 
-  const data = JSON.parse(row.data) as ResumeData;
+  const data = parseStoredResume(row.data);
   const plan = (user?.plan ?? "free") as Plan;
   const googleDriveConnected = Boolean(user?.google_refresh_token);
   const allowances = user && plan === "free" ? await planAllowances(user) : undefined;

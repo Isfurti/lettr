@@ -6,7 +6,6 @@ import { getUserById, listResumesForUser, listRecentActivity, logAdminAction } f
 import { scoreResumeQuality } from "@/lib/resume-score";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { AdminUserActions } from "@/components/AdminUserActions";
-import type { ResumeData } from "@/lib/types";
 import { formatDate, formatDateTime } from "@/lib/format-date";
 import { monthlyPriceForUser } from "@/lib/plans";
 import { PLAN_LIMITS, limitTier } from "@/lib/limits";
@@ -14,6 +13,7 @@ import { isAdminEmail } from "@/lib/admin-auth";
 import { PlanBadge } from "@/components/AdminWidgets";
 import { hasPaidPro, formatProDate } from "@/lib/pro-pass";
 import { displayTitle } from "@/lib/resume-title";
+import { parseStoredResume } from "@/lib/resume-version";
 
 export const metadata: Metadata = { title: "User | Lettr Admin" };
 
@@ -93,7 +93,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         <div className="space-y-2 mb-10">
           {resumeRows.length === 0 && <p className="text-sm text-ink-soft">No resumes yet.</p>}
           {resumeRows.map((r) => {
-            const data = JSON.parse(r.data) as ResumeData;
+            const data = parseStoredResume(r.data);
             const score = scoreResumeQuality(data);
             return (
               <Link

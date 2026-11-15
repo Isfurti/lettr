@@ -13,7 +13,6 @@ import { planAllowances } from "@/lib/free-usage";
 import { scoreResumeQuality, resumeScoreLevel } from "@/lib/resume-score";
 import { formatActivityLabel, timeAgo } from "@/lib/activity-format";
 import { displayTitle } from "@/lib/resume-title";
-import type { ResumeData } from "@/lib/types";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ScoreRing } from "@/components/ScoreRing";
 import { NewResumeButton } from "@/components/NewResumeButton";
@@ -27,6 +26,7 @@ import { VerifyEmailBanner } from "@/components/VerifyEmailBanner";
 import { GuestDraftRescue } from "@/components/GuestDraftRescue";
 import { DeleteAccountButton } from "@/components/DeleteAccountButton";
 import { ProBadge } from "@/components/ProBadge";
+import { parseStoredResume } from "@/lib/resume-version";
 
 export const metadata: Metadata = { title: "Dashboard | Lettr", robots: { index: false } };
 
@@ -60,7 +60,7 @@ export default async function DashboardPage({
   const atResumeLimit = resumeRows.length >= resumeLimit;
   const { drive_connected, drive_error, import: wantsImport, upgraded } = await searchParams;
 
-  const resumes = resumeRows.map((r) => ({ ...r, data: JSON.parse(r.data) as ResumeData }));
+  const resumes = resumeRows.map((r) => ({ ...r, data: parseStoredResume(r.data) }));
   const scored = resumes.map((r) => ({ ...r, quality: scoreResumeQuality(r.data) }));
   // Spotlight the most recently edited resume that actually has content -
   // a brand-new blank one scoring 0 tells the user nothing.

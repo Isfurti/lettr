@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getUserById, getResume, logAdminAction } from "@/lib/db";
 import { AdminSidebar } from "@/components/AdminSidebar";
-import type { ResumeData } from "@/lib/types";
+import { parseStoredResume } from "@/lib/resume-version";
 
 export const metadata: Metadata = { title: "Resume | Lettr Admin" };
 
@@ -20,7 +20,7 @@ export default async function AdminResumeViewPage({
   const row = await getResume(resumeId, id);
   if (!user || !row) notFound();
 
-  const data = JSON.parse(row.data) as ResumeData;
+  const data = parseStoredResume(row.data);
 
   await logAdminAction({
     adminUserId: (session.user as { id: string }).id,

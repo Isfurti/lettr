@@ -92,6 +92,8 @@ export type ResumeCustomization = {
 };
 
 export type ResumeData = {
+  /** Shape version of the saved data; see lib/resume-version.ts. Missing on resumes saved before versions existed. */
+  version?: number;
   contact: {
     fullName: string;
     email: string;

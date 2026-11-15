@@ -2,6 +2,7 @@ import { Pool } from "pg";
 import { randomUUID } from "node:crypto";
 import { hashToken } from "./token-hash";
 import { MIGRATIONS, checksum } from "./migrations";
+import { prepareResumeJsonForSave } from "./resume-version";
 import { encryptSecret } from "./secret-box";
 import type { ApplicationStatus } from "./application-status";
 import { proHasLapsed } from "./pro-pass";
@@ -237,7 +238,7 @@ export async function upsertResume(r: { id: string; userId: string; title: strin
      VALUES ($1, $2, $3, $4, $5::jsonb)
      ON CONFLICT (id) DO UPDATE
      SET title = EXCLUDED.title, template = EXCLUDED.template, data = EXCLUDED.data, updated_at = now()`,
-    [r.id, r.userId, r.title, r.template, r.data]
+    [r.id, r.userId, r.title, r.template, prepareResumeJsonForSave(r.data)]
   );
 }
 
