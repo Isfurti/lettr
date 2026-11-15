@@ -44,7 +44,7 @@ describe("resumes", () => {
     const row = await getResume(id, userId);
     expect(row).toBeDefined();
     expect(row?.title).toBe("My Resume");
-    expect(JSON.parse(row!.data)).toEqual({ foo: "bar" });
+    expect(JSON.parse(row!.data)).toEqual({ foo: "bar", version: 1 }); // saving stamps the data version
   });
 
   it("does not return a resume for a different user (ownership isolation)", async () => {

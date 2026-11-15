@@ -7,10 +7,10 @@ import { getUserById, listInterviewSessions, listResumesForUser } from "@/lib/db
 import { displayTitle } from "@/lib/resume-title";
 import { PLAN_LIMITS, type Plan } from "@/lib/limits";
 import { usageContext, usedSoFar } from "@/lib/free-usage";
-import type { ResumeData } from "@/lib/types";
 import { AppSidebar } from "@/components/AppSidebar";
 import { formatProDate } from "@/lib/pro-pass";
 import { StartInterview } from "@/components/interview/InterviewPractice";
+import { parseStoredResume } from "@/lib/resume-version";
 
 export const metadata: Metadata = { title: "Interview practice | Lettr", robots: { index: false } };
 
@@ -22,7 +22,7 @@ export default async function InterviewPage() {
   const plan = (user?.plan ?? "free") as Plan;
   const ctx = await usageContext(user ?? { id: userId, email: session.user.email });
   const usedSets = await usedSoFar(ctx, "interview");
-  const resumes = rows.map((r) => ({ ...r, data: JSON.parse(r.data) as ResumeData }));
+  const resumes = rows.map((r) => ({ ...r, data: parseStoredResume(r.data) }));
   const defaultRole = resumes.map((r) => r.data.experience[0]?.role?.trim()).find(Boolean) ?? "";
   const limit = PLAN_LIMITS[ctx.tier].interviewSets;
   const left = Math.max(0, limit - usedSets);

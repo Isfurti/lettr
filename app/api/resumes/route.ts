@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { listResumesForUser, upsertResume, countResumesForUser, getUserById, logActivity } from "@/lib/db";
 import { emptyResume } from "@/lib/types";
 import { canCreateResume, canUseTemplate, type Plan } from "@/lib/limits";
+import { isNewerThanSupported, parseStoredResume } from "@/lib/resume-version";
 
 export async function GET() {
   const session = await auth();
@@ -12,7 +13,7 @@ export async function GET() {
   const userId = (session.user as { id: string }).id;
   const rows = await listResumesForUser(userId);
   return NextResponse.json(
-    rows.map((r) => ({ ...r, data: JSON.parse(r.data) }))
+    rows.map((r) => ({ ...r, data: parseStoredResume(r.data) }))
   );
 }
 
@@ -31,6 +32,9 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json().catch(() => ({}));
+  if (body.data !== undefined && isNewerThanSupported(body.data)) {
+    return NextResponse.json({ error: "Unsupported resume version." }, { status: 400 });
+  }
   const title = typeof body.title === "string" ? body.title : "Untitled Resume";
   const template = typeof body.template === "string" ? body.template : "classic";
 
