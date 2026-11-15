@@ -52,6 +52,24 @@ export type CertificationEntry = {
   date?: string;
 };
 
+/** One entry in a section the user named themselves, e.g. "Research Assistant" at "IIT Delhi". */
+export type CustomSectionItem = {
+  id: string;
+  title: string;
+  /** Organisation or place, e.g. "IIT Delhi". */
+  subtitle?: string;
+  startDate?: string;
+  endDate?: string;
+  bullets: string[];
+};
+
+/** A section with the user's own heading, e.g. "Research experience" or "Volunteering". */
+export type CustomSection = {
+  id: string;
+  heading: string;
+  items: CustomSectionItem[];
+};
+
 export type ResumeCustomization = {
   accentColor?: string; // hex, e.g. "#b8862e" - defaults to app seal gold if unset
   fontChoice?: "editorial" | "elegant" | "classic"; // preview-only, see lib/fonts.ts
@@ -104,6 +122,8 @@ export type ResumeData = {
   certifications?: CertificationEntry[];
   languages?: string[];
   achievements?: string[];
+  /** Sections with the user's own headings. */
+  customSections?: CustomSection[];
   customization?: ResumeCustomization;
 };
 
@@ -115,6 +135,29 @@ export function extraSections(data: ResumeData) {
     languages: (data.languages ?? []).filter((l) => l.trim()),
     achievements: (data.achievements ?? []).filter((a) => a.trim()),
   };
+}
+
+/** Custom sections that have something to print: a heading and at least one item with text. */
+export function customSections(data: Pick<ResumeData, "customSections">): CustomSection[] {
+  return (data.customSections ?? [])
+    .map((s) => ({
+      ...s,
+      heading: s.heading.trim(),
+      items: (s.items ?? [])
+        .map((i) => ({ ...i, bullets: (i.bullets ?? []).filter((b) => b.trim()) }))
+        .filter((i) => i.title?.trim() || i.subtitle?.trim() || i.bullets.length > 0),
+    }))
+    .filter((s) => s.heading && s.items.length > 0);
+}
+
+/** "Jan 2022 – Mar 2023", or just the one date that's filled in. */
+export function customItemDates(i: Pick<CustomSectionItem, "startDate" | "endDate">): string {
+  return [i.startDate, i.endDate].filter((d) => d && d.trim()).join(" – ");
+}
+
+/** Every piece of text in the custom sections, for ATS and search. */
+export function customSectionText(data: Pick<ResumeData, "customSections">): string[] {
+  return customSections(data).flatMap((s) => [s.heading, ...s.items.flatMap((i) => [i.title ?? "", i.subtitle ?? "", ...i.bullets])]);
 }
 
 export const emptyResume: ResumeData = {

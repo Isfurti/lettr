@@ -1,6 +1,6 @@
 import { marketGuidance, marketOf, type Market } from "./market";
 import Anthropic from "@anthropic-ai/sdk";
-import type { ResumeData } from "./types";
+import { customItemDates, customSections as filledCustomSections, type CustomSection, type ResumeData } from "./types";
 import { MODELS, addUsage, usageFromApi, type ModelId, type TokenUsage } from "./ai-costs";
 import { plainResume, stripRich } from "./rich-text";
 import { HONESTY_RULES, blankInventedNumbers, guardRewrites, numbersIn, retryReminder, yearsOfExperience } from "./ai-honesty";
@@ -114,6 +114,22 @@ Respond ONLY with a JSON array of exactly 3 strings, no preamble, no markdown fe
   return { value: options, model: MODEL_FAST, usage };
 }
 
+/** The user's own sections ("Research experience" etc.) as prompt text; "" when there are none. */
+function customSectionsForPrompt(resume: Pick<ResumeData, "customSections">): string {
+  return filledCustomSections(resume)
+    .map(
+      (s) =>
+        `${s.heading}:\n${s.items
+          .map((i) => {
+            const name = [i.title?.trim(), i.subtitle?.trim()].filter(Boolean).join(", ");
+            const dates = customItemDates(i);
+            return `- ${name}${dates ? ` (${dates})` : ""}${i.bullets.length ? `: ${i.bullets.join("; ")}` : ""}`;
+          })
+          .join("\n")}`
+    )
+    .join("\n");
+}
+
 /**
  * The cover letter prompt. Exported so the route can tell when the resume and
  * job post are unchanged (same prompt = same letter) and reuse the saved one.
@@ -129,6 +145,7 @@ Experience: ${resume.experience
     .map((e) => `${roleLabel(e)} at ${e.company} (${e.startDate}–${e.endDate}): ${e.bullets.join("; ")}`)
     .join("\n")}
 Skills: ${resume.skills.join(", ")}
+${customSectionsForPrompt(resume)}
 `.trim();
 
   return `Write a concise, compelling cover letter (3-4 short paragraphs, under 320 words)
@@ -287,9 +304,11 @@ Respond ONLY with a JSON object matching this exact shape, no preamble, no markd
   "projects": [{ "name": string, "link": string, "description": string, "tech": string, "bullets": string[] }],
   "certifications": [{ "name": string, "issuer": string, "date": string }],
   "languages": string[],
-  "achievements": string[]
+  "achievements": string[],
+  "customSections": [{ "heading": string, "items": [{ "title": string, "subtitle": string, "startDate": string, "endDate": string, "bullets": string[] }] }]
 }
-Use empty arrays for projects, certifications, languages or achievements if the resume has none.
+Use empty arrays for projects, certifications, languages, achievements or customSections if the resume has none.
+"customSections" is for any other section that doesn't fit the fields above (e.g. "Research Experience", "Relevant Training", "Volunteering"): keep the resume's own heading; each item has a "title", the organisation or place in "subtitle", its dates and bullet points. Don't repeat anything already placed in another field.
 If someone held several titles at one company (promotions), make one experience entry: "role" and its dates are the latest title, and "earlierRoles" lists the older titles, newest first. Otherwise use an empty array.
 "grade" is a CGPA, percentage or class if shown; "location" is the school's city. Use "" when not shown.
 For projects, put the tools or tech used in "tech" and any bullet points in "bullets".`;
@@ -313,6 +332,26 @@ export function normalizeExtractedResume(raw: unknown): ResumeData {
   const contact = (r.contact as Record<string, unknown>) ?? {};
   const experience = Array.isArray(r.experience) ? r.experience : [];
   const education = Array.isArray(r.education) ? r.education : [];
+  const customSections: CustomSection[] = (Array.isArray(r.customSections) ? r.customSections : [])
+    .map((x) => {
+      const s = (x ?? {}) as Record<string, unknown>;
+      return {
+        id: crypto.randomUUID(),
+        heading: String(s.heading ?? "").trim(),
+        items: (Array.isArray(s.items) ? s.items : []).map((y) => {
+          const i = (y ?? {}) as Record<string, unknown>;
+          return {
+            id: crypto.randomUUID(),
+            title: String(i.title ?? ""),
+            subtitle: i.subtitle ? String(i.subtitle) : "",
+            startDate: i.startDate ? String(i.startDate) : "",
+            endDate: i.endDate ? String(i.endDate) : "",
+            bullets: Array.isArray(i.bullets) ? i.bullets.map(String) : [],
+          };
+        }),
+      };
+    })
+    .filter((s) => s.heading && s.items.length > 0);
 
   return {
     contact: {
@@ -378,6 +417,7 @@ export function normalizeExtractedResume(raw: unknown): ResumeData {
     }),
     languages: Array.isArray(r.languages) ? r.languages.map(String) : [],
     achievements: Array.isArray(r.achievements) ? r.achievements.map(String) : [],
+    ...(customSections.length ? { customSections } : {}),
   };
 }
 
@@ -478,7 +518,8 @@ export async function generateInterviewQuestions(params: {
     ? `Candidate background:
 Summary: ${r.summary}
 Experience: ${r.experience.map((e) => `${e.role} at ${e.company}: ${e.bullets.slice(0, 3).join("; ")}`).join("\n")}
-Skills: ${r.skills.join(", ")}`
+Skills: ${r.skills.join(", ")}
+${customSectionsForPrompt(r)}`.trim()
     : "No resume given.";
   const interviewMarket = params.market ?? marketOf(params.resume?.customization);
   const prompt = `You are an experienced interviewer. Write 6 realistic interview questions for a "${params.role}" role${
@@ -572,7 +613,8 @@ export async function atsAnalystAdvice(params: {
 Experience:
 ${r.experience.map((e) => `- ${roleLabel(e)} at ${e.company} (${e.startDate}–${e.endDate})\n${e.bullets.map((b) => `  • ${b}`).join("\n")}`).join("\n")}
 Education: ${r.education.map((e) => `${e.degree}, ${e.school}`).join("; ")}
-Skills: ${r.skills.join(", ")}`;
+Skills: ${r.skills.join(", ")}
+${customSectionsForPrompt(r)}`.trim();
   const prompt = `You are an ATS (applicant tracking system) and recruiting expert reviewing a resume. Its automatic ATS score is ${params.score}/100.
 
 Problems the checker found:

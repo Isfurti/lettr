@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- resume photos are user-uploaded data URLs, not optimisable assets */
 import { Ordered, Sec } from "@/components/templates/Ordered";
 import { Rich } from "@/components/templates/Rich";
-import type { ResumeData, ExperienceEntry } from "@/lib/types";
+import { customSections, type ResumeData, type ExperienceEntry } from "@/lib/types";
 import { ExtraSectionsPreview } from "@/components/ResumeEditor";
 import { contactParts } from "@/lib/contact";
 import { joinSkills } from "@/lib/resume-sections";
@@ -116,6 +116,7 @@ export function RibbonPreview({ data }: { data: ResumeData }) {
       <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName={label + " block w-fit"} only={["certifications"]} /></Sec>
       <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={label + " block w-fit"} only={["achievements"]} /></Sec>
       <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName={label + " block w-fit"} only={["languages"]} /></Sec>
+      <Sec k="custom"><ExtraSectionsPreview data={data} headingClassName={label + " block w-fit"} only={["custom"]} /></Sec>
       </Ordered>
     </div>
   );
@@ -150,6 +151,7 @@ export function SplitPreview({ data }: { data: ResumeData }) {
           )}</Sec>
           <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName={main} only={["projects"]} /></Sec>
           <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={main} only={["achievements"]} /></Sec>
+          <Sec k="custom"><ExtraSectionsPreview data={data} headingClassName={main} only={["custom"]} /></Sec>
           </Ordered>
         </div>
         <div className="bg-seal-soft px-6 pb-8">
@@ -230,6 +232,7 @@ export function ScholarPreview({ data }: { data: ResumeData }) {
       <Sec k="projects"><ExtraSectionsPreview data={data} headingClassName={heading} only={["projects"]} /></Sec>
       <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName={heading} only={["certifications"]} /></Sec>
       <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={heading} only={["achievements"]} /></Sec>
+      <Sec k="custom"><ExtraSectionsPreview data={data} headingClassName={heading} only={["custom"]} /></Sec>
       <Sec k="skills">{data.skills.length > 0 && (
         <>
           <h3 className={heading}>Skills</h3>
@@ -294,6 +297,7 @@ export function FresherPreview({ data }: { data: ResumeData }) {
       <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName={heading} only={["certifications"]} /></Sec>
       <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={heading} only={["achievements"]} /></Sec>
       <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName={heading} only={["languages"]} /></Sec>
+      <Sec k="custom"><ExtraSectionsPreview data={data} headingClassName={heading} only={["custom"]} /></Sec>
       </Ordered>
     </div>
   );
@@ -356,6 +360,13 @@ export function GridPreview({ data }: { data: ResumeData }) {
             </Row>
           );
         })}
+        {customSections(data).map((s) => (
+          <Row key={s.id} label={s.heading}>
+            <div className="-mt-2">
+              <ExtraSectionsPreview data={{ ...data, customSections: [s] }} headingClassName="" only={["custom"]} />
+            </div>
+          </Row>
+        ))}
       </div>
     </div>
   );
@@ -416,6 +427,7 @@ export function SpotlightPreview({ data }: { data: ResumeData }) {
       <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName={heading} only={["certifications"]} /></Sec>
       <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={heading} only={["achievements"]} /></Sec>
       <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName={heading} only={["languages"]} /></Sec>
+      <Sec k="custom"><ExtraSectionsPreview data={data} headingClassName={heading} only={["custom"]} /></Sec>
       </Ordered>
     </div>
   );

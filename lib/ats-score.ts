@@ -1,4 +1,4 @@
-import { extraSections, type ResumeData } from "./types";
+import { customSectionText, extraSections, type ResumeData } from "./types";
 import { plainResume } from "./rich-text";
 import { allRoleTitles, projectBullets } from "./resume-sections";
 
@@ -288,7 +288,7 @@ function resumeSegments(resume: ResumeData): string[] {
   const extra = extraSections(resume);
   for (const p of extra.projects) parts.push(p.name, p.description, p.tech ?? "", ...projectBullets(p));
   for (const c of extra.certifications) parts.push(c.name, c.issuer ?? "");
-  parts.push(...extra.languages, ...extra.achievements);
+  parts.push(...extra.languages, ...extra.achievements, ...customSectionText(resume));
   return parts.filter((p) => p && p.trim());
 }
 

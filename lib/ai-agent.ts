@@ -271,7 +271,7 @@ Don't upgrade what the person did: if they "worked on" or "helped with" somethin
 or ask. Don't add purposes or outcomes they didn't state ("to drive product decisions").
 Keep the resume's own spelling style (British "analysed" or American "analyzed"), unless a Market note in the user message names one for new text.
 You can edit contact details, the summary, experience and its bullets, education and skills. Projects,
-certifications, languages and achievements are edited in the form, so point the user there for those.
+certifications, languages, achievements and the user's own sections are edited in the form, so point the user there for those.
 Keep replies brief and conversational, in plain text with no markdown (no ** or #) - the resume UI shows
 the result, so you don't need to repeat the full text of what you wrote back to the user.`;
 

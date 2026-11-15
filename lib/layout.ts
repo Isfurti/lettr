@@ -17,6 +17,7 @@ export const SECTION_KEYS = [
   "certifications",
   "achievements",
   "languages",
+  "custom",
 ] as const;
 
 export type SectionKey = (typeof SECTION_KEYS)[number];
@@ -30,6 +31,7 @@ export const SECTION_LABELS: Record<SectionKey, string> = {
   certifications: "Certifications",
   achievements: "Achievements",
   languages: "Languages",
+  custom: "Your own sections",
 };
 
 const isKey = (k: unknown): k is SectionKey => (SECTION_KEYS as readonly unknown[]).includes(k);
@@ -179,6 +181,16 @@ export function applyLayout(data: ResumeData): ResumeData {
       : data.certifications?.map((x) => ({ ...x, date: x.date ? d(x.date) : x.date })),
     achievements: hidden.has("achievements") ? [] : data.achievements,
     languages: hidden.has("languages") ? [] : data.languages,
+    customSections: hidden.has("custom")
+      ? []
+      : data.customSections?.map((s) => ({
+          ...s,
+          items: (s.items ?? []).map((i) => ({
+            ...i,
+            startDate: i.startDate ? d(i.startDate) : i.startDate,
+            endDate: i.endDate ? d(i.endDate) : i.endDate,
+          })),
+        })),
   };
 }
 

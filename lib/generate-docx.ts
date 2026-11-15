@@ -1,5 +1,5 @@
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, BorderStyle, PageOrientation } from "docx";
-import { extraSections, type ResumeData } from "./types";
+import { customItemDates, customSections, extraSections, type ResumeData } from "./types";
 import { DEFAULT_ACCENT_COLOR } from "./customization";
 import { applyLayout, layoutScale, pageSize, sectionOrder, type SectionKey } from "./layout";
 import { parseRich } from "./rich-text";
@@ -50,7 +50,7 @@ export async function generateResumeDocx(input: ResumeData): Promise<Buffer> {
   ];
 
   const blocks: Record<SectionKey, Paragraph[]> = {
-    summary: [], experience: [], education: [], skills: [], projects: [], certifications: [], achievements: [], languages: [],
+    summary: [], experience: [], education: [], skills: [], projects: [], certifications: [], achievements: [], languages: [], custom: [],
   };
   let section: SectionKey = "summary";
   const add = (p: Paragraph) => blocks[section].push(p);
@@ -167,6 +167,28 @@ export async function generateResumeDocx(input: ResumeData): Promise<Buffer> {
   if (extra.languages.length > 0) {
     add(sectionHeading("Languages", seal));
     add(new Paragraph({ children: [new TextRun({ text: extra.languages.join("  •  "), size: sz(20) })] }));
+  }
+
+  section = "custom";
+  for (const s of customSections(resume)) {
+    add(sectionHeading(s.heading, seal));
+    for (const item of s.items) {
+      const dates = customItemDates(item);
+      const head = [item.title?.trim(), item.subtitle?.trim()].filter(Boolean).join(" — ");
+      add(
+        new Paragraph({
+          spacing: { before: 120 },
+          tabStops: [{ type: "right", position: 9000 }],
+          children: [
+            new TextRun({ text: head, bold: true, size: sz(20) }),
+            ...(dates ? [new TextRun({ text: `\t${dates}`, size: sz(18), color: MUTED })] : []),
+          ],
+        })
+      );
+      for (const b of item.bullets) {
+        add(new Paragraph({ bullet: { level: 0 }, spacing: { after: 40 }, children: richRuns(b, sz(20)) }));
+      }
+    }
   }
 
   for (const key of sectionOrder(c)) children.push(...blocks[key]);

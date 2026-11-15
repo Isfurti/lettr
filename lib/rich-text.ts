@@ -86,6 +86,7 @@ type WithRichFields = {
   experience: { bullets: string[] }[];
   projects?: { description: string; bullets?: string[] }[];
   achievements?: string[];
+  customSections?: { items: { bullets: string[] }[] }[];
 };
 
 /** The same resume with B / I / U tags removed, for scoring, job match and AI prompts. */
@@ -96,5 +97,9 @@ export function plainResume<T extends WithRichFields>(r: T): T {
     experience: r.experience.map((e) => ({ ...e, bullets: e.bullets.map(stripRich) })),
     projects: r.projects?.map((p) => ({ ...p, description: stripRich(p.description ?? ""), ...(p.bullets ? { bullets: p.bullets.map(stripRich) } : {}) })),
     achievements: r.achievements?.map(stripRich),
+    customSections: r.customSections?.map((s) => ({
+      ...s,
+      items: (s.items ?? []).map((i) => ({ ...i, bullets: (i.bullets ?? []).map(stripRich) })),
+    })),
   };
 }
