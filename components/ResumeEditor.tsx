@@ -1112,6 +1112,33 @@ export function EditForm({
   );
 }
 
+// ---------- Auto-growing text box ----------
+
+/** A textarea that grows to fit its text (wrapped lines included), so a whole letter shows without scrolling inside the box. */
+function AutoGrowTextarea({ value, onChange, className }: { value: string; onChange: (v: string) => void; className?: string }) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const fit = () => {
+      el.style.height = "auto";
+      el.style.height = `${el.scrollHeight + 4}px`;
+    };
+    fit();
+    // Re-fit when the box changes width (phone rotation, window resize); height changes are our own.
+    let width = el.clientWidth;
+    const ro = new ResizeObserver(() => {
+      if (el.clientWidth !== width) {
+        width = el.clientWidth;
+        fit();
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [value]);
+  return <textarea ref={ref} value={value} onChange={(e) => onChange(e.target.value)} rows={8} className={className} />;
+}
+
 // ---------- Promotions and skill groups ----------
 
 /** Earlier titles at the same company, so promotions don't repeat the company. */
@@ -2089,11 +2116,10 @@ function CoverLetterPanel({
           </div>
           <label className="block">
             <span className="text-xs font-bold text-slate">Edit anything you like. Copy, PDF and Word use your edited version.</span>
-            <textarea
+            <AutoGrowTextarea
               value={letter}
-              onChange={(e) => setLetter(e.target.value)}
-              rows={Math.max(12, letter.split("\n").length + 2)}
-              className="mt-1 w-full border-2 border-rule rounded-xl px-3 py-2.5 text-sm leading-relaxed bg-white focus:outline-none focus:border-brand-blue"
+              onChange={setLetter}
+              className="mt-1 w-full border-2 border-rule rounded-xl px-3 py-2.5 text-sm leading-relaxed bg-white focus:outline-none focus:border-brand-blue resize-none overflow-hidden"
             />
           </label>
         </div>
