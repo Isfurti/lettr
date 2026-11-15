@@ -4,6 +4,7 @@ import { hashToken } from "./token-hash";
 import { MIGRATIONS, checksum } from "./migrations";
 import { prepareResumeJsonForSave } from "./resume-version";
 import { encryptSecret } from "./secret-box";
+import { assertPreviewUsesStagingDatabase } from "./preview-guard";
 import type { ApplicationStatus } from "./application-status";
 import { proHasLapsed } from "./pro-pass";
 
@@ -18,6 +19,9 @@ if (!connectionString) {
       "DATABASE_URL=postgres://postgres:postgres@localhost:5432/resumeai"
   );
 }
+
+// Previews must never run against the production database (docs/staging.md).
+assertPreviewUsesStagingDatabase(connectionString);
 
 const pool = new Pool({
   connectionString,
