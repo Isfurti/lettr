@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import { createHash, randomUUID } from "node:crypto";
+import { hashToken } from "./token-hash";
 import type { ApplicationStatus } from "./application-status";
 import { proHasLapsed } from "./pro-pass";
 
@@ -930,7 +931,7 @@ export async function setEmailVerificationToken(userId: string, token: string, e
   await ensureSchema();
   await pool.query(
     "UPDATE users SET email_verification_token = $1, email_verification_expiry = $2 WHERE id = $3",
-    [token, expiry.toISOString(), userId]
+    [hashToken(token), expiry.toISOString(), userId]
   );
 }
 
@@ -938,7 +939,7 @@ export async function verifyEmailByToken(token: string): Promise<UserRow | undef
   await ensureSchema();
   const res = await pool.query(
     "UPDATE users SET email_verified = true, email_verification_token = NULL, email_verification_expiry = NULL WHERE email_verification_token = $1 AND email_verification_expiry > now() RETURNING *",
-    [token]
+    [hashToken(token)]
   );
   return res.rows[0];
 }
@@ -947,7 +948,7 @@ export async function setPasswordResetToken(userId: string, token: string, expir
   await ensureSchema();
   await pool.query(
     "UPDATE users SET password_reset_token = $1, password_reset_expiry = $2 WHERE id = $3",
-    [token, expiry.toISOString(), userId]
+    [hashToken(token), expiry.toISOString(), userId]
   );
 }
 
@@ -955,7 +956,7 @@ export async function getUserByPasswordResetToken(token: string): Promise<UserRo
   await ensureSchema();
   const res = await pool.query(
     "SELECT * FROM users WHERE password_reset_token = $1 AND password_reset_expiry > now()",
-    [token]
+    [hashToken(token)]
   );
   return res.rows[0];
 }

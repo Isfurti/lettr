@@ -45,6 +45,23 @@ describe("email verification", () => {
     expect(user?.email_verification_token).toBeNull();
   });
 
+  it("stores only a hash of the verification and reset tokens, never the token itself", async () => {
+    const id = randomUUID();
+    await createUser({ id, email: `hash-${id}@example.com`, passwordHash: "x" });
+    const token = randomBytes(16).toString("hex");
+    await setEmailVerificationToken(id, token, new Date(Date.now() + 60_000));
+    await setPasswordResetToken(id, token, new Date(Date.now() + 60_000));
+
+    const user = await getUserById(id);
+    expect(user?.email_verification_token).not.toBe(token);
+    expect(user?.password_reset_token).not.toBe(token);
+    expect(user?.email_verification_token).toMatch(/^[0-9a-f]{64}$/);
+    expect(user?.password_reset_token).toMatch(/^[0-9a-f]{64}$/);
+    // The stored hash is not itself a working link.
+    expect(await getUserByPasswordResetToken(user!.password_reset_token!)).toBeUndefined();
+    expect(await verifyEmailByToken(user!.email_verification_token!)).toBeUndefined();
+  });
+
   it("rejects an expired token", async () => {
     const id = randomUUID();
     await createUser({ id, email: `verify-${id}@example.com`, passwordHash: "x" });
