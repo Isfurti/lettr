@@ -38,7 +38,7 @@ describe("layout", () => {
     expect(sectionOrder(undefined)[0]).toBe("summary");
     const o = sectionOrder({ sectionOrder: ["skills", "summary", "bogus", "skills"] });
     expect(o.slice(0, 2)).toEqual(["skills", "summary"]);
-    expect(o).toHaveLength(8);
+    expect(o).toHaveLength(9);
     expect(moveSection(o, "skills", -1)).toEqual(o);
     expect(moveSection(o, "skills", 1).slice(0, 2)).toEqual(["summary", "skills"]);
   });

@@ -1,7 +1,7 @@
 import { Ordered, Sec } from "@/components/templates/Ordered";
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import type { ResumeData, ExperienceEntry } from "@/lib/types";
-import { extraSections } from "@/lib/types";
+import { customSections, extraSections } from "@/lib/types";
 import { pdfFonts } from "@/lib/pdf-fonts";
 import { ExtraSectionsPdf } from "@/components/ResumePdfDocument";
 import { contactParts } from "@/lib/contact";
@@ -159,6 +159,7 @@ export function RibbonPdf({ resume, seal }: { resume: ResumeData } & Colors) {
         <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.label} only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.label} only={["achievements"]} /></Sec>
         <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.label} only={["languages"]} /></Sec>
+        <Sec k="custom"><ExtraSectionsPdf resume={resume} titleStyle={s.label} only={["custom"]} /></Sec>
         </Ordered>
       </Page>
     </Document>
@@ -209,6 +210,7 @@ export function SplitPdf({ resume, seal, sealSoft }: { resume: ResumeData } & Co
             )}</Sec>
             <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.mainTitle} only={["projects"]} /></Sec>
             <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.mainTitle} only={["achievements"]} /></Sec>
+            <Sec k="custom"><ExtraSectionsPdf resume={resume} titleStyle={s.mainTitle} only={["custom"]} /></Sec>
             </Ordered>
           </View>
           <View style={{ width: "36%", backgroundColor: sealSoft, paddingHorizontal: 16, paddingBottom: 24 }}>
@@ -296,6 +298,7 @@ export function ScholarPdf({ resume, seal }: { resume: ResumeData } & Colors) {
         <Sec k="projects"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["projects"]} /></Sec>
         <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["achievements"]} /></Sec>
+        <Sec k="custom"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["custom"]} /></Sec>
         <Sec k="skills">{resume.skills.length > 0 && (
           <>
             <Text style={s.title}>Skills</Text>
@@ -372,6 +375,7 @@ export function FresherPdf({ resume, seal, sealSoft }: { resume: ResumeData } & 
         <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["achievements"]} /></Sec>
         <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["languages"]} /></Sec>
+        <Sec k="custom"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["custom"]} /></Sec>
         </Ordered>
       </Page>
     </Document>
@@ -446,6 +450,11 @@ export function GridPdf({ resume, seal }: { resume: ResumeData } & Colors) {
             </GridRow>
           ) : null
         )}
+        {customSections(resume).map((s) => (
+          <GridRow key={s.id} seal={seal} title={s.heading}>
+            <ExtraSectionsPdf resume={{ ...resume, customSections: [s] }} titleStyle={label} only={["custom"]} hideTitle />
+          </GridRow>
+        ))}
       </Page>
     </Document>
   );
@@ -517,6 +526,7 @@ export function SpotlightPdf({ resume, seal, sealSoft }: { resume: ResumeData } 
         <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["achievements"]} /></Sec>
         <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["languages"]} /></Sec>
+        <Sec k="custom"><ExtraSectionsPdf resume={resume} titleStyle={s.title} only={["custom"]} /></Sec>
         </Ordered>
       </Page>
     </Document>

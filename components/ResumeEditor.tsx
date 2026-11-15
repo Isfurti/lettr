@@ -10,7 +10,7 @@ import { AtsPanel } from "@/components/builder/AtsPanel";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { extraSections, type ResumeCustomization, type ResumeData, type ExperienceEntry, type EducationEntry, type ProjectEntry, type CertificationEntry, type EarlierRole, type SkillGroup } from "@/lib/types";
+import { customItemDates, customSections, extraSections, type CustomSection, type CustomSectionItem, type ResumeCustomization, type ResumeData, type ExperienceEntry, type EducationEntry, type ProjectEntry, type CertificationEntry, type EarlierRole, type SkillGroup } from "@/lib/types";
 import { scoreResumeQuality, resumeScoreLevel } from "@/lib/resume-score";
 import type { Plan } from "@/lib/limits";
 import type { Allowance, PlanAllowances } from "@/lib/free-usage";
@@ -1102,6 +1102,8 @@ export function EditForm({
             />
             <LanguageLevels data={data} setData={setData} />
           </Section>
+
+          <CustomSectionsEditor data={data} setData={setData} />
         </div>
       </div>
       <PrivacyNote className="pt-2 border-t border-rule" />
@@ -1149,6 +1151,77 @@ function EarlierRolesEditor({ exp, onChange }: { exp: ExperienceEntry; onChange:
         + Promoted here? Add an earlier title
       </button>
     </div>
+  );
+}
+
+/** Sections with the user's own heading (e.g. "Research experience"), each a list of items with bullets. */
+function CustomSectionsEditor({ data, setData }: { data: ResumeData; setData: React.Dispatch<React.SetStateAction<ResumeData>> }) {
+  const sections = data.customSections ?? [];
+  const set = (next: CustomSection[]) => setData((d) => ({ ...d, customSections: next }));
+  const patchSection = (id: string, p: Partial<CustomSection>) => set(sections.map((s) => (s.id === id ? { ...s, ...p } : s)));
+  const newItem = (): CustomSectionItem => ({ id: crypto.randomUUID(), title: "", subtitle: "", startDate: "", endDate: "", bullets: [] });
+  const addSection = () => set([...sections, { id: crypto.randomUUID(), heading: "", items: [newItem()] }]);
+  return (
+    <Section title="Your own sections" id="section-custom" action={<AddButton onClick={addSection} label="Add section" />}>
+      <p className="text-xs text-ink-soft mb-3">
+        Add a section with your own heading, e.g. Research experience, Relevant training or Volunteering.
+      </p>
+      <div className="space-y-3">
+        {sections.map((s) => {
+          const patchItem = (id: string, p: Partial<CustomSectionItem>) =>
+            patchSection(s.id, { items: s.items.map((i) => (i.id === id ? { ...i, ...p } : i)) });
+          return (
+            <div key={s.id} className="bg-white border border-rule rounded-xl p-3 space-y-3">
+              <Input label="Section heading" placeholder="Research experience" value={s.heading} onChange={(v) => patchSection(s.id, { heading: v })} />
+              {s.items.map((item) => (
+                <div key={item.id} className="bg-cream border border-rule rounded-xl p-3 space-y-2">
+                  <div className="grid sm:grid-cols-2 gap-2">
+                    <Input label="Title" placeholder="Research Assistant" value={item.title} onChange={(v) => patchItem(item.id, { title: v })} />
+                    <Input label="Organisation (optional)" placeholder="IIT Delhi" value={item.subtitle ?? ""} onChange={(v) => patchItem(item.id, { subtitle: v })} />
+                    <MonthYearInput
+                      label="Start (optional)"
+                      value={item.startDate ?? ""}
+                      onChange={(v) => patchItem(item.id, { startDate: v, ...(endsBeforeStart(v, item.endDate ?? "") ? { endDate: "" } : {}) })}
+                    />
+                    <MonthYearInput label="End (optional)" value={item.endDate ?? ""} min={item.startDate ?? ""} onChange={(v) => patchItem(item.id, { endDate: v })} />
+                  </div>
+                  <DateProblem start={item.startDate ?? ""} end={item.endDate ?? ""} />
+                  <LineListInput
+                    value={item.bullets}
+                    onChange={(bullets) => patchItem(item.id, { bullets })}
+                    label="Bullet points"
+                    placeholder={"One per line: what you did, e.g.\nStudied crop yields across 40 farms"}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => patchSection(s.id, { items: s.items.filter((i) => i.id !== item.id) })}
+                    className="min-h-10 text-sm font-bold text-red-600 hover:underline"
+                  >
+                    Remove this item
+                  </button>
+                </div>
+              ))}
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => patchSection(s.id, { items: [...s.items, newItem()] })}
+                  className="min-h-10 text-sm font-bold text-brand-blue hover:underline"
+                >
+                  + Add item
+                </button>
+                <button
+                  type="button"
+                  onClick={() => set(sections.filter((x) => x.id !== s.id))}
+                  className="min-h-10 text-sm font-bold text-red-600 hover:underline"
+                >
+                  Remove section
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Section>
   );
 }
 
@@ -2336,6 +2409,7 @@ function ClassicPreview({ data, dense }: { data: ResumeData; dense: boolean }) {
       <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName={heading} only={["certifications"]} /></Sec>
       <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={heading} only={["achievements"]} /></Sec>
       <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName={heading} only={["languages"]} /></Sec>
+      <Sec k="custom"><ExtraSectionsPreview data={data} headingClassName={heading} only={["custom"]} /></Sec>
       </Ordered>
     </div>
   );
@@ -2428,6 +2502,7 @@ function ModernPreview({ data }: { data: ResumeData }) {
         <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName={modernHeading} only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={modernHeading} only={["achievements"]} /></Sec>
         <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName={modernHeading} only={["languages"]} /></Sec>
+        <Sec k="custom"><ExtraSectionsPreview data={data} headingClassName={modernHeading} only={["custom"]} /></Sec>
         </Ordered>
       </div>
     </div>
@@ -2520,6 +2595,7 @@ function BoldPreview({ data }: { data: ResumeData }) {
       <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName={boldHeading} only={["certifications"]} /></Sec>
       <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={boldHeading} only={["achievements"]} /></Sec>
       <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName={boldHeading} only={["languages"]} /></Sec>
+      <Sec k="custom"><ExtraSectionsPreview data={data} headingClassName={boldHeading} only={["custom"]} /></Sec>
       </Ordered>
     </div>
   );
@@ -2609,6 +2685,7 @@ function SidebarPreview({ data }: { data: ResumeData }) {
         <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-4 mb-1.5" only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-4 mb-1.5" only={["achievements"]} /></Sec>
         <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-4 mb-1.5" only={["languages"]} /></Sec>
+        <Sec k="custom"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-4 mb-1.5" only={["custom"]} /></Sec>
         </Ordered>
       </div>
     </div>
@@ -2675,6 +2752,7 @@ function MinimalPreview({ data }: { data: ResumeData }) {
       <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName={minimalHeading} only={["certifications"]} /></Sec>
       <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName={minimalHeading} only={["achievements"]} /></Sec>
       <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName={minimalHeading} only={["languages"]} /></Sec>
+      <Sec k="custom"><ExtraSectionsPreview data={data} headingClassName={minimalHeading} only={["custom"]} /></Sec>
       </Ordered>
     </div>
   );
@@ -2736,6 +2814,7 @@ function ExecutivePreview({ data }: { data: ResumeData }) {
       <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-[0.2em] text-seal text-center mt-8 mb-3" variant="center" only={["certifications"]} /></Sec>
       <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-[0.2em] text-seal text-center mt-8 mb-3" variant="center" only={["achievements"]} /></Sec>
       <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-[0.2em] text-seal text-center mt-8 mb-3" variant="center" only={["languages"]} /></Sec>
+      <Sec k="custom"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-[0.2em] text-seal text-center mt-8 mb-3" variant="center" only={["custom"]} /></Sec>
       </Ordered>
     </div>
   );
@@ -2809,6 +2888,7 @@ function TechnicalPreview({ data }: { data: ResumeData }) {
       <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName="font-mono text-xs text-ink-soft mt-5 mb-1" variant="code" only={["certifications"]} /></Sec>
       <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName="font-mono text-xs text-ink-soft mt-5 mb-1" variant="code" only={["achievements"]} /></Sec>
       <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName="font-mono text-xs text-ink-soft mt-5 mb-1" variant="code" only={["languages"]} /></Sec>
+      <Sec k="custom"><ExtraSectionsPreview data={data} headingClassName="font-mono text-xs text-ink-soft mt-5 mb-1" variant="code" only={["custom"]} /></Sec>
       </Ordered>
     </div>
   );
@@ -2878,6 +2958,7 @@ function TimelinePreview({ data }: { data: ResumeData }) {
       <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-6 mb-2" only={["certifications"]} /></Sec>
       <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-6 mb-2" only={["achievements"]} /></Sec>
       <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-6 mb-2" only={["languages"]} /></Sec>
+      <Sec k="custom"><ExtraSectionsPreview data={data} headingClassName="text-xs uppercase tracking-wide text-seal font-semibold mt-6 mb-2" only={["custom"]} /></Sec>
       </Ordered>
     </div>
   );
@@ -2940,6 +3021,7 @@ function ElegantPreview({ data }: { data: ResumeData }) {
       <Sec k="certifications"><ExtraSectionsPreview data={data} headingClassName="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2" only={["certifications"]} /></Sec>
       <Sec k="achievements"><ExtraSectionsPreview data={data} headingClassName="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2" only={["achievements"]} /></Sec>
       <Sec k="languages"><ExtraSectionsPreview data={data} headingClassName="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2" only={["languages"]} /></Sec>
+      <Sec k="custom"><ExtraSectionsPreview data={data} headingClassName="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2" only={["custom"]} /></Sec>
       </Ordered>
     </div>
   );
@@ -2950,6 +3032,8 @@ function ElegantPreview({ data }: { data: ResumeData }) {
 // once. Each template passes its own heading style so it still looks native.
 
 export type ExtraKey = "projects" | "certifications" | "achievements" | "languages";
+/** "custom" is the sections the user named themselves. */
+export type ExtraOrCustomKey = ExtraKey | "custom";
 
 export function ExtraSectionsPreview({
   data,
@@ -2961,10 +3045,11 @@ export function ExtraSectionsPreview({
   headingClassName: string;
   variant?: "center" | "code";
   /** Limit to some optional sections (templates that place them in different columns). */
-  only?: ExtraKey[];
+  only?: ExtraOrCustomKey[];
 }) {
   const all = extraSections(data);
   const pick = <K extends ExtraKey>(k: K) => (!only || only.includes(k) ? all[k] : []);
+  const custom = !only || only.includes("custom") ? customSections(data) : [];
   const projects = pick("projects");
   const certifications = pick("certifications");
   const languages = pick("languages");
@@ -3027,6 +3112,32 @@ export function ExtraSectionsPreview({
           <p className={`text-sm ${align}`}>{languages.join(" • ")}</p>
         </>
       )}
+      {custom.map((s) => (
+        <div key={s.id}>
+          <h3 className={headingClassName}>{title(s.heading)}</h3>
+          {s.items.map((item) => {
+            const dates = customItemDates(item);
+            return (
+              <div key={item.id} className={`mt-2 text-sm ${align}`}>
+                <div className={center ? "" : "flex justify-between gap-3"}>
+                  <p className="font-medium">{item.title}</p>
+                  {dates && <p className="text-xs text-ink-soft shrink-0">{dates}</p>}
+                </div>
+                {item.subtitle?.trim() && <p className="text-xs text-ink-soft">{item.subtitle.trim()}</p>}
+                {item.bullets.length > 0 && (
+                  <ul className={`mt-0.5 space-y-0.5 ${center ? "" : "list-disc pl-4"}`}>
+                    {item.bullets.map((b, i) => (
+                      <li key={i} className="text-sm leading-relaxed">
+                        <Rich t={b} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ))}
     </>
   );
 }

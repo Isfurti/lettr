@@ -5,7 +5,7 @@ import type { ReactElement } from "react";
 import type { DocumentProps } from "@react-pdf/renderer";
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import type { Style } from "@react-pdf/types";
-import { extraSections, type ResumeData } from "@/lib/types";
+import { customItemDates, customSections, extraSections, type ResumeData } from "@/lib/types";
 import { pdfFonts } from "@/lib/pdf-fonts";
 import { resolveAccent, darkenHex, softenHex } from "@/lib/customization";
 import { RibbonPdf, SplitPdf, ScholarPdf, FresherPdf, GridPdf, SpotlightPdf } from "@/components/templates/NewPdfs";
@@ -160,6 +160,7 @@ function ClassicPdf({ resume, seal, dense }: { resume: ResumeData; seal: string;
         <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
         <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["languages"]} /></Sec>
+        <Sec k="custom"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["custom"]} /></Sec>
         </Ordered>
       </Page>
     </Document>
@@ -240,6 +241,7 @@ function ModernPdf({ resume, seal, sealSoft }: { resume: ResumeData; seal: strin
           <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
           <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
           <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["languages"]} /></Sec>
+          <Sec k="custom"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["custom"]} /></Sec>
           </Ordered>
         </View>
       </Page>
@@ -319,6 +321,7 @@ function BoldPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
         <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
         <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["languages"]} /></Sec>
+        <Sec k="custom"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["custom"]} /></Sec>
         </Ordered>
       </Page>
     </Document>
@@ -401,6 +404,7 @@ function SidebarPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
           <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
           <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
           <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["languages"]} /></Sec>
+          <Sec k="custom"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["custom"]} /></Sec>
           </Ordered>
         </View>
       </Page>
@@ -465,6 +469,7 @@ function MinimalPdf({ resume }: { resume: ResumeData }) {
         <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
         <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["languages"]} /></Sec>
+        <Sec k="custom"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["custom"]} /></Sec>
         </Ordered>
       </Page>
     </Document>
@@ -521,6 +526,7 @@ function ExecutivePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
         <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} align="center" only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} align="center" only={["achievements"]} /></Sec>
         <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} align="center" only={["languages"]} /></Sec>
+        <Sec k="custom"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} align="center" only={["custom"]} /></Sec>
         </Ordered>
       </Page>
     </Document>
@@ -589,6 +595,7 @@ function TechnicalPdf({ resume, seal, sealSoft, sealDeep }: { resume: ResumeData
         <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} code only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} code only={["achievements"]} /></Sec>
         <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} code only={["languages"]} /></Sec>
+        <Sec k="custom"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} code only={["custom"]} /></Sec>
         </Ordered>
       </Page>
     </Document>
@@ -662,6 +669,7 @@ function TimelinePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
         <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
         <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["languages"]} /></Sec>
+        <Sec k="custom"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["custom"]} /></Sec>
         </Ordered>
       </Page>
     </Document>
@@ -727,6 +735,7 @@ function ElegantPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
         <Sec k="certifications"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["certifications"]} /></Sec>
         <Sec k="achievements"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["achievements"]} /></Sec>
         <Sec k="languages"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["languages"]} /></Sec>
+        <Sec k="custom"><ExtraSectionsPdf resume={resume} titleStyle={s.sectionTitle} only={["custom"]} /></Sec>
         </Ordered>
       </Page>
     </Document>
@@ -747,7 +756,8 @@ export function ExtraSectionsPdf({
   titleStyle: Style;
   code?: boolean;
   align?: "center";
-  only?: ("projects" | "certifications" | "achievements" | "languages")[];
+  /** "custom" is the sections the user named themselves. */
+  only?: ("projects" | "certifications" | "achievements" | "languages" | "custom")[];
   /** Leave out the section headings (the template prints its own labels). */
   hideTitle?: boolean;
 }) {
@@ -758,6 +768,7 @@ export function ExtraSectionsPdf({
   const certifications = pick("certifications");
   const languages = pick("languages");
   const achievements = pick("achievements");
+  const custom = !only || only.includes("custom") ? customSections(resume) : [];
   const title = (t: string) => (code ? `// ${t.toLowerCase()}` : t);
   const text = { fontSize: 9.5, textAlign: align ?? "left", lineHeight: 1.35 } as const;
   return (
@@ -805,6 +816,33 @@ export function ExtraSectionsPdf({
           <Text style={text}>{languages.join("  •  ")}</Text>
         </View>
       )}
+      {custom.map((s) => (
+        <View key={s.id}>
+          {!hideTitle && <Text style={titleStyle} minPresenceAhead={40}>{title(s.heading)}</Text>}
+          {s.items.map((item) => {
+            const dates = customItemDates(item);
+            return (
+              <View key={item.id} style={{ marginBottom: 4 }} wrap={false}>
+                {align === "center" ? (
+                  <>
+                    <Text style={{ ...text, fontWeight: 700 }}>{item.title}</Text>
+                    {dates ? <Text style={{ ...text, fontSize: 8.5, color: MUTED }}>{dates}</Text> : null}
+                  </>
+                ) : (
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8 }}>
+                    <Text style={{ ...text, fontWeight: 700, flex: 1 }}>{item.title}</Text>
+                    {dates ? <Text style={{ ...text, fontSize: 8.5, color: MUTED }}>{dates}</Text> : null}
+                  </View>
+                )}
+                {item.subtitle?.trim() ? <Text style={{ ...text, fontSize: 8.5, color: MUTED }}>{item.subtitle.trim()}</Text> : null}
+                {item.bullets.map((b, i) => (
+                  <Text key={i} style={{ ...text, marginTop: 1 }}>• {b}</Text>
+                ))}
+              </View>
+            );
+          })}
+        </View>
+      ))}
     </>
   );
 }

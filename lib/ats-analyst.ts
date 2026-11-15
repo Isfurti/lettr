@@ -1,5 +1,5 @@
 import { datePairProblem } from "./resume-dates";
-import { extraSections, type ResumeData } from "./types";
+import { customSectionText, extraSections, type ResumeData } from "./types";
 import { plainResume } from "./rich-text";
 import { ACTION_VERBS, isObjectiveStyle } from "./resume-score";
 import { MARKETS, marketOf } from "./market";
@@ -121,6 +121,7 @@ export function analyzeAts(
     ...r.skills,
     ...extra.projects.flatMap((p) => [p.description, p.tech ?? "", ...projectBullets(p)]),
     ...extra.achievements,
+    ...customSectionText(r),
   ].join(" ");
   const market = marketOf(input.customization);
   const words =
