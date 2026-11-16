@@ -1,5 +1,5 @@
 import type { ResumeCustomization, ResumeData } from "./types";
-import { degreeWithGrade, schoolWithLocation, skillLines } from "./resume-sections";
+import { degreeWithGrade, groupExperience, schoolWithLocation, skillLines } from "./resume-sections";
 
 /**
  * Layout choices from the builder's Design panel that apply to every
@@ -155,12 +155,14 @@ export function applyLayout(data: ResumeData): ResumeData {
     summary: hidden.has("summary") ? "" : data.summary,
     experience: hidden.has("experience")
       ? []
-      : data.experience.map((e) => ({
-          ...e,
-          startDate: d(e.startDate),
-          endDate: d(e.endDate),
-          earlierRoles: e.earlierRoles?.map((r) => ({ ...r, startDate: d(r.startDate), endDate: d(r.endDate) })),
-        })),
+      : groupExperience(
+          data.experience.map((e) => ({
+            ...e,
+            startDate: d(e.startDate),
+            endDate: d(e.endDate),
+            earlierRoles: e.earlierRoles?.map((r) => ({ ...r, startDate: d(r.startDate), endDate: d(r.endDate) })),
+          }))
+        ),
     // Location and grade are folded into the school and degree text, so every
     // template shows them without its own code.
     education: hidden.has("education")

@@ -4,16 +4,19 @@
 
 **What changes for users:** in the Experience editor, each job gets an optional "Group heading" field (suggestions: Overseas experience, Earlier experience, Additional experience, Volunteer experience). Jobs with no heading print exactly as today. Jobs with a heading print after the ungrouped jobs, in a block under that heading (small sub-heading inside the Experience section), in the same order the user entered them. Same in every template preview, PDF, Word export and ATS view.
 
-## Design
-- Data: `ExperienceEntry.group?: string` (trimmed, max 40 chars, plain text). No migration needed: absent = today's behaviour. Resume data version stays 1 (additive optional field; old code ignores it, so rollback is safe).
-- One pure helper in `lib/resume-sections.ts`: `experienceBlocks(experience): { heading?: string; jobs: ExperienceEntry[] }[]`. Ungrouped jobs first (original order, no heading), then each distinct heading (case-insensitive match) in order of first appearance, jobs in original order within it. If no job has a heading the result is one block with no heading, so every existing render is unchanged.
-- Render: every place that does `experience.map(...)` for display (editor preview templates, NewPreviews, ResumePdfDocument, NewPdfs, Word export, ATS/admin view) iterates `experienceBlocks()` and prints a small heading line before a block that has one. Heading style reuses each template's existing minor-heading style; no new colours or fonts.
-- Not touched: AI prompts keep the plain list (heading is passed along as `group` text only where roles are listed, so AI can see that a role is overseas); score and checks: the years-vs-dates check still uses every job, grouped or not.
-- Validation: server `prepareResumeJsonForSave` trims and caps `group` at 40 chars; empty string becomes absent.
+## Design (revised after Fable review)
+- Data: `ExperienceEntry.group?: string` (saved) and `groupHeading?: string` (set by `applyLayout` only, never saved, like `skillsGrouped`). Absent = today's behaviour. Resume data version stays 1; rollback is safe.
+- `groupExperience()` in `lib/resume-sections.ts`: ungrouped jobs first (as entered), then each heading's jobs together (headings matched case-insensitively, in order of first use), stamping `groupHeading` on the first job of each group. No headings = same list returned untouched.
+- `applyLayout` calls it, so the editor preview, PDF and Word all get the new order and the stamp. Each render site adds one line inside its existing job block: `GroupHeading` (HTML) or `GroupHeadingPdf` (the heading sits inside the job's `wrap={false}` block, so it is never stranded at a page bottom); Word adds a keep-with-next paragraph. Shared `Job` (NewPreviews) and `Jobs` (NewPdfs) cover 12 templates; 9 editor previews and 9 PDF layouts get one line each.
+- Validation: there is no per-field save validation in the app (PUT stores the data as sent), so the trim and 40-character cap are applied when reading (`cleanGroup`), and the input has `maxLength`.
+- Order: the editor form, ATS checks ("newest job first"), resume title, cover-letter and interview features keep using the order the user entered. Only printed output is re-ordered.
+- Admin view: shows the heading in brackets after the job, in entered order.
+- Not changed: AI prompts (they do not see the heading), the years check (grouped jobs still count towards years).
 
 ## Risks
 - ~28 render sites: a missed one prints jobs in entered order without a heading (still correct, just unlabeled). A test renders each template with a grouped resume and asserts the heading appears once.
-- Page breaks: a heading must not be stranded at the bottom of a page in PDF (keep-with-next on the heading).
+- Page breaks: PDF heading is inside the job block; Word uses keep-with-next.
+- Real ATS parsers may read a small heading as a job title. Lettr's own checker ignores it; untested elsewhere. The heading is plain text and optional.
 - Rollback: additive field. Reverting the commit hides headings; saved data keeps the field harmlessly.
 
 ## Not in scope

@@ -94,3 +94,41 @@ export function roleLabel(exp: ExperienceEntry): string {
   const earlier = earlierRoles(exp).map((r) => r.role.trim());
   return earlier.length ? `${exp.role} (earlier: ${earlier.join(", ")})` : exp.role;
 }
+
+export const MAX_GROUP_LENGTH = 40;
+
+/** A group heading as stored: single line, trimmed, capped. Empty means no heading. */
+export function cleanGroup(g: string | undefined): string {
+  return (g ?? "").replace(/\s+/g, " ").trim().slice(0, MAX_GROUP_LENGTH);
+}
+
+/**
+ * Jobs in print order: ungrouped jobs first (as entered), then each heading's
+ * jobs together (headings in order of first use, jobs as entered). The first
+ * job of each group gets `groupHeading` so a template can print it above that
+ * job. With no headings the list is returned unchanged.
+ */
+export function groupExperience(experience: ExperienceEntry[]): ExperienceEntry[] {
+  if (!experience.some((e) => cleanGroup(e.group))) return experience;
+  const plain: ExperienceEntry[] = [];
+  const groups = new Map<string, ExperienceEntry[]>();
+  const names = new Map<string, string>();
+  for (const e of experience) {
+    const g = cleanGroup(e.group);
+    if (!g) {
+      plain.push(e);
+      continue;
+    }
+    const k = g.toLowerCase();
+    if (!groups.has(k)) {
+      groups.set(k, []);
+      names.set(k, g);
+    }
+    groups.get(k)!.push(e);
+  }
+  const out = [...plain];
+  for (const [k, jobs] of groups) {
+    jobs.forEach((j, i) => out.push(i === 0 ? { ...j, groupHeading: names.get(k) } : j));
+  }
+  return out;
+}

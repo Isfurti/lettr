@@ -8,6 +8,10 @@ export type ExperienceEntry = {
   bullets: string[];
   /** Earlier job titles at the same company (promotions), newest first. role/startDate/endDate above are the current title. */
   earlierRoles?: EarlierRole[];
+  /** Optional heading this job prints under, e.g. "Overseas experience". Jobs with the same heading print together, after the ungrouped ones. */
+  group?: string;
+  /** Set by applyLayout only (never saved): the heading to print above this job (first job of its group). */
+  groupHeading?: string;
 };
 
 export type EarlierRole = {

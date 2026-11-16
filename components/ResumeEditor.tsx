@@ -41,7 +41,8 @@ import { LanguageLevels } from "@/components/builder/LanguageLevels";
 import { PrivacyNote } from "@/components/PrivacyNote";
 import { LetterDesigns } from "@/components/builder/LetterDesigns";
 import { EarlierRoles } from "@/components/templates/EarlierRoles";
-import { joinSkills, projectBullets, withSkillGroups, filledSkillGroups } from "@/lib/resume-sections";
+import { joinSkills, projectBullets, withSkillGroups, MAX_GROUP_LENGTH, filledSkillGroups } from "@/lib/resume-sections";
+import { GroupHeading } from "@/components/templates/GroupHeading";
 
 const TEMPLATES: readonly string[] = TEMPLATE_IDS;
 
@@ -1642,6 +1643,24 @@ function ExperienceCard({
         <MonthYearInput label="End" value={exp.endDate} min={exp.startDate} onChange={(v) => onChange({ endDate: v })} allowPresent />
       </div>
       <DateProblem start={exp.startDate} end={exp.endDate} />
+      <label className="block">
+        <span className="text-sm font-bold text-slate">Group heading (optional)</span>
+        <input
+          list="exp-group-options"
+          value={exp.group ?? ""}
+          maxLength={MAX_GROUP_LENGTH}
+          placeholder="e.g. Overseas experience"
+          onChange={(e) => onChange({ group: e.target.value || undefined })}
+          className="mt-1 w-full border-2 border-rule rounded-xl px-3 min-h-11 text-[15px] bg-white placeholder:text-ink-soft/50 focus:outline-none focus:border-brand-blue"
+        />
+        <datalist id="exp-group-options">
+          <option value="Overseas experience" />
+          <option value="Earlier experience" />
+          <option value="Additional experience" />
+          <option value="Volunteer experience" />
+        </datalist>
+        <span className="text-xs text-ink-soft">Jobs with the same heading print together, after your other jobs.</span>
+      </label>
       <EarlierRolesEditor exp={exp} onChange={onChange} />
       <p className="text-xs text-ink-soft">
         Bullets: what you did + the result, with a number if you can (&ldquo;Cut onboarding time 30%&rdquo;).
@@ -2384,6 +2403,7 @@ function ClassicPreview({ data, dense }: { data: ResumeData; dense: boolean }) {
           <h3 className={heading}>Experience</h3>
           {data.experience.map((exp) => (
             <div key={exp.id} className="mt-2">
+              <GroupHeading exp={exp} />
               <div className="flex justify-between text-sm">
                 <span className="font-medium">
                   {exp.role || "Role"} {exp.company && `— ${exp.company}`}
@@ -2472,6 +2492,7 @@ function ModernPreview({ data }: { data: ResumeData }) {
             <h3 className={modernHeading}>Experience</h3>
             {data.experience.map((exp) => (
               <div key={exp.id} className="mt-3">
+                <GroupHeading exp={exp} />
                 <div className="flex justify-between text-sm">
                   <span className="font-semibold">{exp.role || "Role"}</span>
                   <span className="text-xs text-ink-soft font-mono">
@@ -2570,6 +2591,7 @@ function BoldPreview({ data }: { data: ResumeData }) {
           <h3 className={boldHeading}>Experience</h3>
           {data.experience.map((exp) => (
             <div key={exp.id} className="mt-3">
+              <GroupHeading exp={exp} />
               <div className="flex justify-between text-sm">
                 <span className="font-bold uppercase tracking-wide">
                   {exp.role || "Role"} <span className="font-normal normal-case text-ink-soft">— {exp.company}</span>
@@ -2686,6 +2708,7 @@ function SidebarPreview({ data }: { data: ResumeData }) {
             <h3 className="text-xs uppercase tracking-wide text-seal font-semibold mb-1.5">Experience</h3>
             {data.experience.map((exp) => (
               <div key={exp.id} className="mt-3">
+                <GroupHeading exp={exp} />
                 <div className="flex justify-between text-sm">
                   <span className="font-semibold">{exp.role || "Role"}</span>
                   <span className="text-xs text-ink-soft font-mono">{exp.startDate} – {exp.endDate}</span>
@@ -2748,6 +2771,7 @@ function MinimalPreview({ data }: { data: ResumeData }) {
           <h3 className={minimalHeading}>Experience</h3>
           {data.experience.map((exp) => (
             <div key={exp.id} className="mt-2">
+              <GroupHeading exp={exp} />
               <p className="text-sm font-bold">{exp.role || "Role"}, {exp.company}</p>
               <p className="text-xs">{exp.startDate} - {exp.endDate}</p>
               <EarlierRoles exp={exp} />
@@ -2807,6 +2831,7 @@ function ExecutivePreview({ data }: { data: ResumeData }) {
           <h3 className="text-xs uppercase tracking-[0.2em] text-seal text-center mb-4">Experience</h3>
           {data.experience.map((exp) => (
             <div key={exp.id} className="mt-4 text-center">
+              <GroupHeading exp={exp} />
               <p className="font-display text-base">{exp.role || "Role"}</p>
               <p className="text-xs text-ink-soft mb-1">{exp.company} · {exp.startDate} – {exp.endDate}</p>
               <EarlierRoles exp={exp} />
@@ -2874,6 +2899,7 @@ function TechnicalPreview({ data }: { data: ResumeData }) {
           <h3 className="font-mono text-xs text-ink-soft mt-5 mb-1">{"// experience"}</h3>
           {data.experience.map((exp) => (
             <div key={exp.id} className={`mt-3 ${showDividers ? "border-l-2 border-seal pl-3" : ""}`}>
+              <GroupHeading exp={exp} />
               <p className="font-mono text-sm font-semibold">{exp.role || "role"}<span className="text-seal">()</span> <span className="text-ink-soft font-normal">@ {exp.company}</span></p>
               <p className="font-mono text-[10px] text-ink-soft">{exp.startDate} – {exp.endDate}</p>
               <EarlierRoles exp={exp} />
@@ -2946,6 +2972,7 @@ function TimelinePreview({ data }: { data: ResumeData }) {
           <div className={`relative pl-5 space-y-5 ${showDividers ? "border-l-2 border-rule" : ""}`}>
             {data.experience.map((exp) => (
               <div key={exp.id} className="relative">
+                <GroupHeading exp={exp} />
                 <span className="absolute -left-[26px] top-1 w-3 h-3 rounded-full bg-seal border-2 border-paper-raised" />
                 <div className="flex justify-between text-sm">
                   <span className="font-semibold">{exp.role || "Role"}</span>
@@ -3012,6 +3039,7 @@ function ElegantPreview({ data }: { data: ResumeData }) {
           <h3 className="text-[11px] uppercase tracking-[0.15em] text-seal mt-6 mb-2">Experience</h3>
           {data.experience.map((exp) => (
             <div key={exp.id} className={`mt-3 pb-3 ${showDividers ? "border-b border-rule/60 last:border-0" : ""}`}>
+              <GroupHeading exp={exp} />
               <div className="flex justify-between">
                 <span className="text-sm italic">{exp.role || "Role"}, {exp.company}</span>
                 <span className="text-xs text-ink-soft">{exp.startDate} – {exp.endDate}</span>
