@@ -88,7 +88,7 @@ export function getLettrNotes(data: ResumeData): { overall: number; notes: Lettr
   const notes = [...result.sections]
     .filter((s) => s.tips.length > 0)
     .sort((a, b) => a.score - b.score)
-    .flatMap((s) => s.tips.map((tip) => ({ key: s.key, label: s.label, tip })));
+    .flatMap((s) => s.tips.map((tip, i) => ({ key: s.tipSections?.[i] ?? s.key, label: s.label, tip })));
   return { overall: result.overall, notes };
 }
 

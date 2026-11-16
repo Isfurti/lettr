@@ -78,7 +78,8 @@ export async function POST(req: Request) {
     const result = await extractResumeFromText(trimmed);
     data = result.value;
     await trackAiUsage({ userId: userId ?? null, feature: "check", model: result.model, usage: result.usage });
-    const q = scoreResumeQuality(data);
+    // The dates came from AI reading a file and may be misread, so skip the years-vs-dates check.
+    const q = scoreResumeQuality(data, { verifyDates: false });
     score = {
       overall: q.overall,
       tips: [...q.sections]
