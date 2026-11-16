@@ -16,7 +16,7 @@ export type Finding = {
   severity: "medium" | "low";
   message: string;
   /** Builder section the "fix" button jumps to. */
-  section: "summary" | "experience" | "skills" | "contact" | "projects";
+  section: "summary" | "experience" | "skills" | "contact";
   /** Tips that are advice only and do not lower the score. */
   scored: boolean;
 };
@@ -38,10 +38,13 @@ export type CheckOptions = {
 
 // ---------- 1. Years of experience claimed vs the dates ----------
 
-const YEARS_BEFORE = /\b(\d{1,2})\s*\+?\s*(?:years?|yrs?)\b[^.\n]{0,40}?\bexperience\b/i;
-const YEARS_AFTER = /\bexperience\s+(?:of|spanning|over)?\s*(\d{1,2})\s*\+?\s*(?:years?|yrs?)\b/i;
+// The claim must be about total experience: "10 years of experience", "7+ years' professional
+// experience". "5 years of React experience" has a skill in between, so it does not match.
+const LEAD = "(?:professional|total|combined|industry|work|relevant|hands-on|progressive|proven|extensive)";
+const YEARS_BEFORE = new RegExp(String.raw`(?<![\d.])(\d{1,2})\s*\+?\s*(?:years?|yrs?)['\u2019]?\s+(?:of\s+)?(?:${LEAD}\s+)*experience\b`, "i");
+const YEARS_AFTER = new RegExp(String.raw`\bexperience\s+(?:of|spanning|over)\s+(?<![\d.])(\d{1,2})\s*\+?\s*(?:years?|yrs?)\b`, "i");
 // "a team with 20 years of experience" is about someone else.
-const OTHER_SUBJECT = /\b(team|teams|company|firm|agency|organi[sz]ation|our|their|mentors?)\b/i;
+const OTHER_SUBJECT = /\b(team|teams|company|firm|agency|organi[sz]ation|our|their|mentors?|clients?|customers?|employers?|partners?|founders?)\b/i;
 
 function claimedYears(summary: string): number | null {
   for (const re of [YEARS_BEFORE, YEARS_AFTER]) {
@@ -62,7 +65,8 @@ function monthsWorked(resume: ResumeData, now: Date): number | null {
     const s = toMonthNumber(start, "start", now);
     const e = toMonthNumber(end, "end", now);
     if (s === null || e === null) return false;
-    ranges.push([s, Math.max(s, e)]);
+    if (e < s) return false; // end before start: cannot trust these dates
+    ranges.push([s, e]);
     return true;
   };
   for (const exp of resume.experience) {
@@ -114,7 +118,12 @@ const SCALED = /\b\d[\d,]*(?:\.\d+)?\s?(?:million|billion|crore|lakhs?)\b/gi;
 function metricsIn(text: string): Set<string> {
   const out = new Set<string>();
   for (const re of [PERCENT, CURRENCY, SCALED]) {
-    for (const m of text.matchAll(re)) out.add(m[0].toLowerCase().replace(/[\s,]/g, ""));
+    for (const m of text.matchAll(re)) {
+      const metric = m[0].toLowerCase().replace(/[\s,]/g, "");
+      // Round percentages (10%, 25%, 100%) are common, so seeing one twice proves nothing.
+      if (/^\d+%$/.test(metric) && Number(metric.slice(0, -1)) % 5 === 0) continue;
+      out.add(metric);
+    }
   }
   return out;
 }
@@ -140,7 +149,7 @@ function checkRepeatedMetric(resume: ResumeData): Finding[] {
             severity: "low",
             scored: true,
             section: "experience",
-            message: `The same figure (${metric}) appears under both ${first} and ${place.where}. Tell it once, where it matters most, and use a different result for the other.`,
+            message: `The same figure (${metric}) appears under both ${first} and ${place.where}. If it was copied by mistake, put the real figure under each. If it is true in both places, you can ignore this.`,
           },
         ];
       }
@@ -172,12 +181,12 @@ const MISSPELLINGS: Record<string, string> = {
   javascipt: "JavaScript", javascrpit: "JavaScript", javascirpt: "JavaScript", typescirpt: "TypeScript", typscript: "TypeScript",
   phtoshop: "Photoshop", photoshp: "Photoshop", photshop: "Photoshop", ilustrator: "Illustrator", powerpoit: "PowerPoint",
   powerpiont: "PowerPoint", "power point": "PowerPoint", "micorsoft excel": "Microsoft Excel", "microsft excel": "Microsoft Excel",
-  "microsoft exel": "Microsoft Excel", exel: "Excel", excell: "Excel", salesfroce: "Salesforce", "sales force": "Salesforce",
+  "microsoft exel": "Microsoft Excel", exel: "Excel", excell: "Excel", salesfroce: "Salesforce",
   tablaeu: "Tableau", tablau: "Tableau", kubernetis: "Kubernetes", kuberentes: "Kubernetes", kubenetes: "Kubernetes",
-  postgress: "PostgreSQL", postgresql: "PostgreSQL", mongodb: "MongoDB", "node js": "Node.js", nodejs: "Node.js",
-  "next js": "Next.js", nextjs: "Next.js", "react js": "React.js", reactjs: "React.js", "quick books": "QuickBooks", quickbook: "QuickBooks",
-  worpress: "WordPress", wordpres: "WordPress", linkdin: "LinkedIn", linkedln: "LinkedIn", "git hub": "GitHub", sharepont: "SharePoint",
-  hubspott: "HubSpot", "hub spot": "HubSpot", whatsap: "WhatsApp", pyhton: "Python", pythn: "Python", docekr: "Docker",
+  postgress: "PostgreSQL",
+  "quick books": "QuickBooks", quickbook: "QuickBooks",
+  worpress: "WordPress", wordpres: "WordPress", linkdin: "LinkedIn", linkedln: "LinkedIn", sharepont: "SharePoint",
+  hubspott: "HubSpot", whatsap: "WhatsApp", pyhton: "Python", pythn: "Python", docekr: "Docker",
 };
 
 function toolPieces(resume: ResumeData): string[] {
@@ -197,7 +206,9 @@ function checkToolNames(resume: ResumeData): Finding[] {
     const lower = piece.toLowerCase();
     if (seen.has(lower)) continue;
     seen.add(lower);
-    const right = MISSPELLINGS[lower] ?? CANONICAL.get(lower);
+    // All-lowercase or all-capitals is a style choice, not a mistake: only mixed-case slips ("Javascript") count.
+    const styleOnly = piece === piece.toLowerCase() || piece === piece.toUpperCase();
+    const right = MISSPELLINGS[lower] ?? (styleOnly ? undefined : CANONICAL.get(lower));
     if (right && right !== piece) wrong.push(`"${piece}" as ${right}`);
   }
   if (wrong.length === 0) return [];
@@ -216,7 +227,7 @@ function checkToolNames(resume: ResumeData): Finding[] {
 // ---------- 4. Country format ----------
 
 const BRITISH = ["colour", "colours", "organise", "organised", "organising", "analyse", "analysed", "analysing", "centre", "centres", "behaviour", "optimise", "optimised", "optimising", "realise", "realised", "favour", "labour", "defence", "prioritise", "prioritised", "specialise", "specialised", "utilise", "utilised", "recognise", "recognised", "summarise", "summarised", "minimise", "minimised", "maximise", "maximised", "modelling", "travelling", "cancelled", "licence"];
-const AMERICAN = ["color", "colors", "organize", "organized", "organizing", "analyze", "analyzed", "analyzing", "center", "centers", "behavior", "optimize", "optimized", "optimizing", "realize", "realized", "favor", "labor", "defense", "prioritize", "prioritized", "specialize", "specialized", "utilize", "utilized", "recognize", "recognized", "summarize", "summarized", "minimize", "minimized", "maximize", "maximized", "modeling", "traveling", "canceled"];
+const AMERICAN = ["color", "colors", "analyze", "analyzed", "analyzing", "center", "centers", "behavior", "favor", "labor", "defense", "modeling", "traveling", "canceled"];
 
 function proseOf(resume: ResumeData): string {
   return [
@@ -274,7 +285,7 @@ function checkCountry(resume: ResumeData): Finding[] {
 const DUTY_START = /^\s*(?:responsible for|responsibilities (?:include|included)|duties (?:include|included)|worked on|helped(?: with| to)?|assisted with|tasked with|in charge of|involved in)\b/i;
 
 function checkDutyBullets(resume: ResumeData): Finding[] {
-  const duty = resume.experience.flatMap((e) => e.bullets).filter((b) => DUTY_START.test(b));
+  const duty = resume.experience.flatMap((e) => e.bullets).filter((b) => DUTY_START.test(b) && !/\d/.test(b));
   if (duty.length < 2) return [];
   const sample = duty[0].trim().replace(/\s+/g, " ");
   return [

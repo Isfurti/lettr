@@ -55,15 +55,15 @@ describe("check 2: same figure told twice", () => {
   it("flags one figure under two roles", () => {
     const r = resume({
       experience: [
-        { ...role("Jan 2022", "Present", ["Cut costs by 40%"]), company: "Acme" },
-        { ...role("Jan 2019", "Dec 2021", ["Reduced churn by 40%"]), company: "Beta" },
+        { ...role("Jan 2022", "Present", ["Cut costs by 42%"]), company: "Acme" },
+        { ...role("Jan 2019", "Dec 2021", ["Reduced churn by 42%"]), company: "Beta" },
       ],
     });
     expect(ids(r)).toContain("repeated-metric");
   });
 
   it("does not flag the summary repeating a best number, or a figure repeated inside one role", () => {
-    const r = resume({ summary: "Cut costs by 40% at scale.", experience: [role("Jan 2022", "Present", ["Cut costs by 40%", "Kept it at 40% for a year"])] });
+    const r = resume({ summary: "Cut costs by 42% at scale.", experience: [role("Jan 2022", "Present", ["Cut costs by 42%", "Kept it at 42% for a year"])] });
     expect(ids(r)).not.toContain("repeated-metric");
   });
 
@@ -115,7 +115,7 @@ describe("check 4: country format", () => {
   it("flags the other country's spelling only with two or more words, and ignores capitalised names", () => {
     const us = resume({ summary: "Organised teams and analysed colour data.", customization: { market: "US" } });
     expect(ids(us)).toContain("country-spelling");
-    const uk = resume({ summary: "Led teams that organized events and analyzed data.", customization: { market: "UK" } });
+    const uk = resume({ summary: "Led teams that analyzed color data and ran center events.", customization: { market: "UK" } });
     expect(ids(uk)).toContain("country-spelling");
     const one = resume({ summary: "Organised the team.", customization: { market: "US" } });
     expect(ids(one)).not.toContain("country-spelling");
@@ -137,6 +137,37 @@ describe("check 5: duty bullets", () => {
   });
 });
 
+describe("false positives found in review", () => {
+  const six = [role("Jan 2021", "Present")];
+  it("years: ignores decimals, skill-specific and degree phrases", () => {
+    for (const summary of ["Spent 1.5 years of experience building.", "5 years of React experience", "A 4 year degree with internship experience", "Worked with clients who have 20 years of experience"]) {
+      expect(ids(resume({ summary: summary.replace(/^/, "Engineer. "), experience: [role("Jan 2025", "Present")] }))).not.toContain("years-vs-dates");
+    }
+    expect(ids(resume({ summary: "Engineer with 10 years' professional experience.", experience: six }))).toContain("years-vs-dates");
+    expect(ids(resume({ summary: "Engineer with experience of 10 years.", experience: six }))).toContain("years-vs-dates");
+  });
+  it("years: a job that ends before it starts is unreadable, so no claim is made", () => {
+    expect(ids(resume({ summary: "Engineer with 10 years of experience.", experience: [role("Jan 2024", "Jan 2020")] }))).not.toContain("years-vs-dates");
+  });
+  it("duty bullets: skips bullets that carry a number", () => {
+    const r = resume({ experience: [role("Jan 2022", "Present", ["Helped 200 customers onboard", "Helped 40 teams migrate"])] });
+    expect(ids(r)).not.toContain("duty-bullets");
+  });
+  it("repeated metric: round percentages do not count", () => {
+    const r = resume({ experience: [role("Jan 2022", "Present", ["Hit 100% of targets"]), role("Jan 2019", "Dec 2021", ["Hit 100% of targets"])] });
+    expect(ids(r)).not.toContain("repeated-metric");
+  });
+  it("tool names: lowercase or capitals-only entries and spaced/Next forms are style, not errors", () => {
+    for (const skills of [["java"], ["JAVASCRIPT"], ["NextJS", "NodeJS", "ReactJS"], ["Git Hub", "Hub Spot"]]) {
+      expect(ids(resume({ skills }))).not.toContain("tool-names");
+    }
+  });
+  it("UK: -ize spellings are valid Oxford British and are not flagged", () => {
+    const uk = resume({ summary: "We organize, optimize and prioritize work.", customization: { market: "UK" } });
+    expect(ids(uk)).not.toContain("country-spelling");
+  });
+});
+
 describe("score integration", () => {
   const good: ResumeData = resume({
     summary: "Backend engineer with 12 years of experience building scalable systems and leading teams across product groups.",
@@ -144,32 +175,54 @@ describe("score integration", () => {
     education: [{ id: "ed", school: "IIT", degree: "BTech", startDate: "2012", endDate: "2016" }],
     skills: ["Javascript", "Python", "SQL", "AWS", "Docker"],
   });
+  const fixed: ResumeData = { ...good, summary: good.summary.replace("12 years", "2 years"), skills: ["JavaScript", "Python", "SQL", "AWS", "Docker"] };
 
   it("findings only lower the score, by at most the cap, and never raise it", () => {
-    const withChecks = scoreResumeQuality(good, { now: NOW } as never);
-    const clean = scoreResumeQuality({ ...good, summary: "Backend engineer with 2 years of experience building scalable systems and leading teams across product groups.", skills: ["JavaScript", "Python", "SQL", "AWS", "Docker"] });
+    const withChecks = scoreResumeQuality(good, { now: NOW });
+    const clean = scoreResumeQuality(fixed, { now: NOW });
     expect(withChecks.overall).toBeLessThan(clean.overall);
     expect(clean.overall - withChecks.overall).toBeLessThanOrEqual(MAX_PENALTY);
-    expect(penaltyFor(runResumeChecks(good))).toBeLessThanOrEqual(MAX_PENALTY);
+  });
+
+  it("the penalty never exceeds the cap, even with every check firing", () => {
+    const bad = resume({
+      summary: "Engineer with 20 years of experience. Organised colour and analysed data.",
+      experience: [
+        role("Jan 2025", "Present", ["Responsible for reports", "Worked on invoices", "Cut costs by 42%"]),
+        role("Jan 2024", "Dec 2024", ["Cut costs by 42%"]),
+      ],
+      skills: ["Javascript", "Phtoshop"],
+      customization: { market: "US" },
+    });
+    const found = runResumeChecks(bad, { now: NOW });
+    expect(found.length).toBeGreaterThanOrEqual(4);
+    expect(penaltyFor(found)).toBeLessThanOrEqual(MAX_PENALTY);
   });
 
   it("adds an Accuracy section with a jump target per tip, only when there are findings", () => {
-    const r = scoreResumeQuality(good);
-    const acc = r.sections.find((s) => s.key === "accuracy")!;
+    const acc = scoreResumeQuality(good, { now: NOW }).sections.find((s) => s.key === "accuracy")!;
     expect(acc.tips.length).toBeGreaterThan(0);
     expect(acc.tipSections).toHaveLength(acc.tips.length);
     expect(scoreResumeQuality(emptyResume).sections.some((s) => s.key === "accuracy")).toBe(false);
   });
 
-  it("keeps a blank resume at 0 and a resume with content above 0", () => {
-    expect(scoreResumeQuality(emptyResume).overall).toBeLessThan(15);
-    expect(scoreResumeQuality(emptyResume).overall).toBe(scoreResumeQuality(emptyResume).overall);
+  it("the Accuracy section never scores below 70, so it cannot hijack the free 'next best fix'", () => {
+    const acc = scoreResumeQuality(good, { now: NOW }).sections.find((s) => s.key === "accuracy")!;
+    expect(acc.score).toBeGreaterThanOrEqual(70);
   });
 
-  it("unscored advice does not change the number", () => {
+  it("a blank resume stays at exactly 0; a resume with content is at least 1", () => {
+    expect(scoreResumeQuality(emptyResume, { now: NOW }).overall).toBe(0);
+    expect(scoreResumeQuality(good, { now: NOW }).overall).toBeGreaterThanOrEqual(1);
+  });
+
+  it("unscored advice does not change the number or the 'fixes left' count", () => {
     const base = resume({ summary: "Backend engineer building systems and leading teams across product groups for many years.", customization: { market: "US" } });
     const withDob = { ...base, contact: { ...base.contact, dateOfBirth: "1990-01-01" } };
-    expect(scoreResumeQuality(withDob).overall).toBe(scoreResumeQuality(base).overall);
-    expect(scoreResumeQuality(withDob).sections.some((s) => s.key === "accuracy")).toBe(true);
+    const a = scoreResumeQuality(withDob, { now: NOW });
+    expect(a.overall).toBe(scoreResumeQuality(base, { now: NOW }).overall);
+    const acc = a.sections.find((s) => s.key === "accuracy")!;
+    expect(acc.tips.length).toBe(1);
+    expect(acc.scoredTips).toBe(0);
   });
 });

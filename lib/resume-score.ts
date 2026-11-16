@@ -9,6 +9,8 @@ export type SectionScore = {
   tips: string[];
   /** Builder section each tip's "fix" button should open, when it differs from `key`. */
   tipSections?: string[];
+  /** How many of `tips` cost points. Advice-only tips are not counted as "fixes left". */
+  scoredTips?: number;
 };
 
 export type ResumeScoreResult = {
@@ -228,9 +230,11 @@ export function scoreResumeQuality(input: ResumeData, opts: CheckOptions = {}): 
     sections.push({
       key: "accuracy",
       label: "Accuracy",
-      score: Math.max(0, 100 - penalty * 10),
+      // Kept high on purpose: the free plan's single "next best fix" goes to the lowest section, and a likely-mistake tip should not always jump the queue.
+      score: Math.max(70, 100 - penalty * 5),
       tips: findings.map((f) => f.message),
       tipSections: findings.map((f) => f.section),
+      scoredTips: findings.filter((f) => f.scored).length,
     });
   }
 

@@ -78,7 +78,7 @@ export default async function DashboardPage({
   const isAdmin = isAdminEmail(session.user.email);
   const initial = displayName[0]?.toUpperCase() ?? "?";
 
-  const tipsLeft = score ? score.sections.reduce((n, s) => n + s.tips.length, 0) : 0;
+  const tipsLeft = score ? score.sections.reduce((n, s) => n + (s.scoredTips ?? s.tips.length), 0) : 0;
   const card = "min-w-0 rounded-[28px] p-6 flex flex-col";
   // The "start with the resume you already have" card has its own import and
   // create buttons, so the header doesn't repeat them while it's showing.

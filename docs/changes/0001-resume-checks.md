@@ -29,3 +29,14 @@ Dropped on review: edit-distance spell matching, word-count page-length rule, a 
 ## Open items
 - The sheet's tool example ("Alexi") is not enough to know which tool was meant. Add names to the lists in `lib/resume-checks.ts` as real resumes show them.
 - Not built, as agreed: nothing beyond the five Check rows.
+
+## Changes after review (v3)
+- Years claim: only "N years (of) [professional/total/...] experience" counts. "5 years of React experience", decimals like 1.5, and years about clients/employers/partners are ignored. A role that ends before it starts makes the dates unreadable, so no claim is made.
+- Duty bullets: bullets containing a number are skipped ("Helped 200 customers").
+- Same figure twice: round percentages (multiples of 5, incl. 100%) are ignored; message now says to keep it if true in both places.
+- Tool names: removed spaced/"JS" variants and casing-only entries; all-lowercase or all-caps entries are treated as style.
+- UK spelling: "-ize" forms removed from the US word list (valid Oxford British).
+- Accuracy section score floors at 70 so it cannot take the free plan's single "next best fix" slot.
+- Dashboard "fixes left" counts only tips that cost points (`scoredTips`); date-of-birth/photo/nationality advice is not counted.
+- "projects" removed as a jump target (that section may be hidden).
+- Penalty: at most 10 points (cap), a blank resume stays exactly 0, a resume with content stays at least 1.
