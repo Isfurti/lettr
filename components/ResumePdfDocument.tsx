@@ -12,6 +12,7 @@ import { RibbonPdf, SplitPdf, ScholarPdf, FresherPdf, GridPdf, SpotlightPdf } fr
 import { contactParts } from "@/lib/contact";
 import { joinSkills, projectBullets } from "@/lib/resume-sections";
 import { EarlierRolesPdf } from "@/components/templates/EarlierRolesPdf";
+import { GroupHeadingPdf } from "@/components/templates/GroupHeadingPdf";
 
 const INK = "#1b2a4a";
 const MUTED = "#5b6472";
@@ -134,6 +135,7 @@ function ClassicPdf({ resume, seal, dense }: { resume: ResumeData; seal: string;
             <Text style={s.sectionTitle}>Experience</Text>
             {resume.experience.map((exp) => (
               <View key={exp.id} wrap={false}>
+                <GroupHeadingPdf exp={exp} />
                 <View style={s.entryHeader}>
                   <Text style={s.entryTitle}>{exp.role} — {exp.company}</Text>
                   <Text style={s.entryMeta}>{exp.startDate} – {exp.endDate}</Text>
@@ -209,6 +211,7 @@ function ModernPdf({ resume, seal, sealSoft }: { resume: ResumeData; seal: strin
               <Text style={s.sectionTitle}>Experience</Text>
               {resume.experience.map((exp) => (
                 <View key={exp.id} wrap={false}>
+                  <GroupHeadingPdf exp={exp} />
                   <View style={s.entryHeader}>
                     <Text style={s.entryTitle}>{exp.role}</Text>
                     <Text style={s.entryMeta}>{exp.startDate} – {exp.endDate}</Text>
@@ -290,6 +293,7 @@ function BoldPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
             <Text style={s.sectionTitle}>Experience</Text>
             {resume.experience.map((exp) => (
               <View key={exp.id} wrap={false}>
+                <GroupHeadingPdf exp={exp} />
                 <View style={s.entryHeader}>
                   <Text style={s.entryTitle}>{exp.role} — {exp.company}</Text>
                   <Text style={s.entryMeta}>{exp.startDate} – {exp.endDate}</Text>
@@ -389,6 +393,7 @@ function SidebarPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
               <Text style={s.sectionTitle}>Experience</Text>
               {resume.experience.map((exp) => (
                 <View key={exp.id} wrap={false}>
+                  <GroupHeadingPdf exp={exp} />
                   <View style={s.entryHeader}>
                     <Text style={s.entryTitle}>{exp.role}</Text>
                     <Text style={s.entryMeta}>{exp.startDate} – {exp.endDate}</Text>
@@ -448,6 +453,7 @@ function MinimalPdf({ resume }: { resume: ResumeData }) {
             <Text style={s.sectionTitle}>Experience</Text>
             {resume.experience.map((exp) => (
               <View key={exp.id} wrap={false} style={{ marginTop: 4 }}>
+                <GroupHeadingPdf exp={exp} />
                 <Text style={s.entryTitle}>{exp.role}, {exp.company}</Text>
                 <Text style={s.entryMeta}>{exp.startDate} - {exp.endDate}</Text>
                 <EarlierRolesPdf exp={exp} />
@@ -507,6 +513,7 @@ function ExecutivePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
             <Text style={s.sectionTitle}>Experience</Text>
             {resume.experience.map((exp) => (
               <View key={exp.id} wrap={false} style={{ marginBottom: 8 }}>
+                <GroupHeadingPdf exp={exp} />
                 <Text style={s.entryTitle}>{exp.role}</Text>
                 <Text style={s.entryMeta}>{exp.company} · {exp.startDate} – {exp.endDate}</Text>
                 <EarlierRolesPdf exp={exp} />
@@ -571,6 +578,7 @@ function TechnicalPdf({ resume, seal, sealSoft, sealDeep }: { resume: ResumeData
             <Text style={s.sectionTitle}>{"// experience"}</Text>
             {resume.experience.map((exp) => (
               <View key={exp.id} wrap={false} style={entryStyle}>
+                <GroupHeadingPdf exp={exp} />
                 <Text style={s.entryTitle}>{exp.role}() @ {exp.company}</Text>
                 <Text style={s.entryMeta}>{exp.startDate} – {exp.endDate}</Text>
                 <EarlierRolesPdf exp={exp} />
@@ -641,6 +649,7 @@ function TimelinePdf({ resume, seal }: { resume: ResumeData; seal: string }) {
             <Text style={s.sectionTitle}>Experience</Text>
             {resume.experience.map((exp, idx) => (
               <View key={exp.id} style={s.entryWrap} wrap={false}>
+                <GroupHeadingPdf exp={exp} />
                 <View style={s.dotCol}>
                   <View style={s.dot} />
                   {showDividers && idx < resume.experience.length - 1 && <View style={s.line} />}
@@ -714,6 +723,7 @@ function ElegantPdf({ resume, seal }: { resume: ResumeData; seal: string }) {
             <Text style={s.sectionTitle}>Experience</Text>
             {resume.experience.map((exp) => (
               <View key={exp.id} wrap={false} style={s.entryBlock}>
+                <GroupHeadingPdf exp={exp} />
                 <View style={s.entryHeader}>
                   <Text style={s.entryTitle}>{exp.role}, {exp.company}</Text>
                   <Text style={s.entryMeta}>{exp.startDate} – {exp.endDate}</Text>

@@ -64,9 +64,12 @@ export async function generateResumeDocx(input: ResumeData): Promise<Buffer> {
   if (resume.experience.length > 0) {
     add(sectionHeading("Experience", seal));
     for (const exp of resume.experience) {
+      if (exp.groupHeading) {
+        add(new Paragraph({ keepNext: true, spacing: { before: 160 }, children: [new TextRun({ text: exp.groupHeading.toUpperCase(), bold: true, size: sz(16), color: MUTED })] }));
+      }
       add(
         new Paragraph({
-          spacing: { before: 120 },
+          spacing: { before: exp.groupHeading ? 40 : 120 },
           tabStops: [{ type: "right", position: 9000 }],
           children: [
             new TextRun({ text: `${exp.role} — ${exp.company}`, bold: true, size: sz(20) }),

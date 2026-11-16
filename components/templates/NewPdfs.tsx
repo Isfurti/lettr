@@ -7,6 +7,7 @@ import { ExtraSectionsPdf } from "@/components/ResumePdfDocument";
 import { contactParts } from "@/lib/contact";
 import { joinSkills } from "@/lib/resume-sections";
 import { EarlierRolesPdf } from "@/components/templates/EarlierRolesPdf";
+import { GroupHeadingPdf } from "@/components/templates/GroupHeadingPdf";
 
 /**
  * PDF versions of the Ribbon, Split, Scholar, Fresher, Grid and Spotlight
@@ -56,6 +57,7 @@ function Jobs({
     <>
       {resume.experience.map((e: ExperienceEntry) => (
         <View key={e.id} wrap={false} style={{ marginTop: 6 }}>
+          <GroupHeadingPdf exp={e} />
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
             <Text style={{ fontSize: 10.5, fontWeight: 700, maxWidth: "75%" }}>
               {e.role}

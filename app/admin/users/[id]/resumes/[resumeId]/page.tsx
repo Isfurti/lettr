@@ -59,7 +59,7 @@ export default async function AdminResumeViewPage({
               <h3 className="text-xs uppercase tracking-wide text-admin-accent font-semibold mt-4 mb-1">Experience</h3>
               {data.experience.map((exp) => (
                 <div key={exp.id} className="mt-2">
-                  <p className="text-sm font-medium">{exp.role} — {exp.company} ({exp.startDate}–{exp.endDate})</p>
+                  <p className="text-sm font-medium">{exp.role} — {exp.company} ({exp.startDate}–{exp.endDate}){exp.group ? ` [${exp.group}]` : ""}</p>
                   <ul className="mt-1 space-y-0.5">
                     {exp.bullets.map((b, i) => <li key={i} className="text-sm pl-4">• {b}</li>)}
                   </ul>

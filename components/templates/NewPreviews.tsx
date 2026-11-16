@@ -6,6 +6,7 @@ import { ExtraSectionsPreview } from "@/components/ResumeEditor";
 import { contactParts } from "@/lib/contact";
 import { joinSkills } from "@/lib/resume-sections";
 import { EarlierRoles } from "@/components/templates/EarlierRoles";
+import { GroupHeading } from "@/components/templates/GroupHeading";
 
 /**
  * Templates added in the Oct 2026 batch: Ribbon, Split, Scholar, Fresher,
@@ -51,6 +52,7 @@ function Bullets({ items, indent, marker = "•" }: { items: string[]; indent: b
 function Job({ exp, indent, stacked = false }: { exp: ExperienceEntry; indent: boolean; stacked?: boolean }) {
   return (
     <div className="mt-3">
+      <GroupHeading exp={exp} />
       <div className="flex justify-between gap-3 text-sm">
         <span className="font-semibold">
           {exp.role || "Role"}
