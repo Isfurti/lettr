@@ -1,11 +1,16 @@
 import type { ResumeData } from "./types";
 import { plainResume } from "./rich-text";
+import { runResumeChecks, penaltyFor, type CheckOptions } from "./resume-checks";
 
 export type SectionScore = {
   key: string;
   label: string;
   score: number; // 0-100
   tips: string[];
+  /** Builder section each tip's "fix" button should open, when it differs from `key`. */
+  tipSections?: string[];
+  /** How many of `tips` cost points. Advice-only tips are not counted as "fixes left". */
+  scoredTips?: number;
 };
 
 export type ResumeScoreResult = {
@@ -200,7 +205,12 @@ const WEIGHTS: Record<string, number> = {
   skills: 0.2,
 };
 
-export function scoreResumeQuality(input: ResumeData): ResumeScoreResult {
+/**
+ * The Lettr score. The five weighted sections give the base score; accuracy
+ * checks (lib/resume-checks.ts) can then only take points off, at most
+ * MAX_PENALTY, so a mistake can never raise a score and a blank resume stays 0.
+ */
+export function scoreResumeQuality(input: ResumeData, opts: CheckOptions = {}): ResumeScoreResult {
   const resume = plainResume(input);
   const sections = [
     scoreContact(resume),
@@ -210,9 +220,25 @@ export function scoreResumeQuality(input: ResumeData): ResumeScoreResult {
     scoreSkills(resume),
   ];
 
-  const overall = Math.round(
+  const base = Math.round(
     sections.reduce((sum, s) => sum + s.score * (WEIGHTS[s.key] ?? 0), 0)
   );
 
+  const findings = runResumeChecks(resume, opts);
+  const penalty = penaltyFor(findings);
+  if (findings.length > 0) {
+    sections.push({
+      key: "accuracy",
+      label: "Accuracy",
+      // Kept high on purpose: the free plan's single "next best fix" goes to the lowest section, and a likely-mistake tip should not always jump the queue.
+      score: Math.max(70, 100 - penalty * 5),
+      tips: findings.map((f) => f.message),
+      tipSections: findings.map((f) => f.section),
+      scoredTips: findings.filter((f) => f.scored).length,
+    });
+  }
+
+  // Never below 1 for a resume that has content, never above the base score.
+  const overall = base > 0 ? Math.max(1, base - penalty) : 0;
   return { overall, sections };
 }
