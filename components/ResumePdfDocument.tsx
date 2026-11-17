@@ -13,6 +13,7 @@ import { contactParts } from "@/lib/contact";
 import { joinSkills, projectBullets } from "@/lib/resume-sections";
 import { EarlierRolesPdf } from "@/components/templates/EarlierRolesPdf";
 import { GroupHeadingPdf } from "@/components/templates/GroupHeadingPdf";
+import { safePhotoDataUrl } from "@/lib/safe-photo";
 
 const INK = "#1b2a4a";
 const MUTED = "#5b6472";
@@ -27,7 +28,7 @@ function layoutFlags(resume: ResumeData) {
   return {
     showDividers: resume.customization?.showDividers ?? true,
     indent: resume.customization?.indentBullets ?? true,
-    photo: resume.customization?.showPhoto ? resume.customization?.photoDataUrl : undefined,
+    photo: resume.customization?.showPhoto ? safePhotoDataUrl(resume.customization?.photoDataUrl) : undefined,
   };
 }
 
