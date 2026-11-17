@@ -1,4 +1,5 @@
 import mammoth from "mammoth";
+import { PublicError } from "./public-error";
 
 /** Shown instead of a library error, which means nothing to the person uploading. */
 const UNREADABLE_PDF = "We couldn't read that PDF. Try saving it as a PDF again, or upload a Word file instead.";
@@ -23,20 +24,24 @@ export async function extractTextFromFile(buffer: Buffer, filename: string): Pro
       return result.text;
     } catch (err) {
       console.error("PDF text extraction failed", err);
-      throw new Error(UNREADABLE_PDF);
+      throw new PublicError(UNREADABLE_PDF);
     } finally {
       await parser.destroy();
     }
   }
 
   if (lower.endsWith(".docx")) {
-    const result = await mammoth.extractRawText({ buffer });
-    return result.value;
+    try {
+      const result = await mammoth.extractRawText({ buffer });
+      return result.value;
+    } catch {
+      throw new PublicError("Couldn't read that Word file. Try saving it again as .docx, or upload a PDF.");
+    }
   }
 
   if (lower.endsWith(".txt")) {
     return buffer.toString("utf-8");
   }
 
-  throw new Error("Unsupported file type. Please upload a PDF, DOCX, or TXT file.");
+  throw new PublicError("Unsupported file type. Please upload a PDF, DOCX, or TXT file.");
 }

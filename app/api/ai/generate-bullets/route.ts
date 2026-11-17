@@ -9,6 +9,8 @@ import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import { canUseAiWritingAssist, type Plan } from "@/lib/limits";
 import { recordUse, rewritesUsed, usageContext } from "@/lib/free-usage";
 import { trackAiUsage } from "@/lib/ai-usage";
+import * as Sentry from "@sentry/nextjs";
+import { publicMessage } from "@/lib/public-error";
 
 const Schema = z.object({
   roughBullet: z.string().min(3).max(1000),
@@ -62,7 +64,8 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ options });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "AI generation failed";
+    Sentry.captureException(err);
+    const message = publicMessage(err, "AI generation failed");
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

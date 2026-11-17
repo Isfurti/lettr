@@ -7,6 +7,7 @@ import { analyzeResumeText } from "@/lib/ats-read";
 import { scoreResumeQuality } from "@/lib/resume-score";
 import { anonymousClientKey } from "@/lib/client-key";
 import { trackAiUsage } from "@/lib/ai-usage";
+import { publicMessage } from "@/lib/public-error";
 
 export const runtime = "nodejs";
 
@@ -54,7 +55,7 @@ export async function POST(req: Request) {
     text = await extractTextFromFile(Buffer.from(await file.arrayBuffer()), file.name);
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "We couldn't open that file." },
+      { error: publicMessage(err, "We couldn't open that file.") },
       { status: 400 }
     );
   }

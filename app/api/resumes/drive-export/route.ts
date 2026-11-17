@@ -6,6 +6,8 @@ import { canExportToGoogleDrive, type Plan } from "@/lib/limits";
 import { getValidGoogleAccessToken, uploadFileToDrive } from "@/lib/google-drive";
 import { ResumePdfDocument } from "@/components/ResumePdfDocument";
 import type { ResumeData } from "@/lib/types";
+import * as Sentry from "@sentry/nextjs";
+import { publicMessage } from "@/lib/public-error";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -45,7 +47,8 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ webViewLink: uploaded.webViewLink });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to upload to Google Drive";
+    Sentry.captureException(err);
+    const message = publicMessage(err, "Failed to upload to Google Drive");
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

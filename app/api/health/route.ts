@@ -6,9 +6,10 @@ export async function GET() {
     await pool.query("SELECT 1");
     return NextResponse.json({ status: "ok", db: "connected", timestamp: new Date().toISOString() });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    // Public endpoint: say it is down, but keep the database's own message to the server log.
+    console.error("Health check: database unreachable", err);
     return NextResponse.json(
-      { status: "error", db: "disconnected", error: message, timestamp: new Date().toISOString() },
+      { status: "error", db: "disconnected", timestamp: new Date().toISOString() },
       { status: 503 }
     );
   }

@@ -8,6 +8,8 @@ import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import { canSendAgentMessage, canUseAiAgent, limitTier, type Plan } from "@/lib/limits";
 import { monthStartIST } from "@/lib/ai-costs";
 import { trackAiUsage } from "@/lib/ai-usage";
+import * as Sentry from "@sentry/nextjs";
+import { publicMessage } from "@/lib/public-error";
 
 const Schema = z.object({
   resumeData: z.any(),
@@ -64,7 +66,8 @@ export async function POST(req: Request) {
     await trackAiUsage({ userId, feature: "agent", model: AGENT_MODEL, usage });
     return NextResponse.json({ ...result, usage: { used: used + 1, limit: cap.limit } });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Agent request failed";
+    Sentry.captureException(err);
+    const message = publicMessage(err, "Agent request failed");
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

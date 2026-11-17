@@ -5,6 +5,7 @@ import { MODELS, addUsage, usageFromApi, type ModelId, type TokenUsage } from ".
 import { plainResume, stripRich } from "./rich-text";
 import { HONESTY_RULES, blankInventedNumbers, guardRewrites, numbersIn, retryReminder, yearsOfExperience } from "./ai-honesty";
 import { roleLabel } from "./resume-sections";
+import { PublicError } from "./public-error";
 
 function getClient() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -68,7 +69,7 @@ async function honestOptions(prompt: string, maxTokens: number, source: string, 
     const again = guardRewrites(source, parseJsonArraySafely(second.text), extraNumbers);
     kept = [...kept, ...again.kept.filter((o) => !kept.some((k) => k.toLowerCase() === o.toLowerCase()))];
   }
-  if (kept.length === 0) throw new Error(NO_HONEST_OPTIONS);
+  if (kept.length === 0) throw new PublicError(NO_HONEST_OPTIONS);
   return { options: kept.slice(0, 3), usage };
 }
 
@@ -320,7 +321,7 @@ For projects, put the tools or tech used in "tech" and any bullet points in "bul
   try {
     parsed = JSON.parse(cleaned);
   } catch {
-    throw new Error("Couldn't parse the resume - the file may not contain readable resume text.");
+    throw new PublicError("Couldn't parse the resume - the file may not contain readable resume text.");
   }
 
   return { value: normalizeExtractedResume(parsed), model: MODEL_FAST, usage };
@@ -552,7 +553,7 @@ Respond ONLY with a JSON array like [{"question": "...", "kind": "behavioural"}]
   } catch {
     // fall through
   }
-  if (list.length === 0) throw new Error("Couldn't write questions this time. Please try again.");
+  if (list.length === 0) throw new PublicError("Couldn't write questions this time. Please try again.");
   return { value: list, model: MODEL_FAST, usage };
 }
 
@@ -589,7 +590,7 @@ Judge like a real interviewer: a vague or very short answer scores 3-5, a clear 
       usage,
     };
   } catch {
-    throw new Error("Couldn't read the feedback this time. Please try again.");
+    throw new PublicError("Couldn't read the feedback this time. Please try again.");
   }
 }
 
@@ -654,6 +655,6 @@ Rules:
       : [];
     return { value: { summary: String(p.summary ?? ""), fixes }, model: MODEL_FAST, usage };
   } catch {
-    throw new Error("The analyst couldn't finish this time. Please try again.");
+    throw new PublicError("The analyst couldn't finish this time. Please try again.");
   }
 }

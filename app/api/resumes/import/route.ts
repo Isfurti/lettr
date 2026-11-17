@@ -10,6 +10,8 @@ import { aiCacheKey } from "@/lib/ai-costs";
 import { trackAiUsage } from "@/lib/ai-usage";
 import type { ResumeData } from "@/lib/types";
 import { randomUUID } from "node:crypto";
+import * as Sentry from "@sentry/nextjs";
+import { publicMessage } from "@/lib/public-error";
 
 export const runtime = "nodejs";
 
@@ -57,7 +59,8 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(await file.arrayBuffer());
     text = await extractTextFromFile(buffer, file.name);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't read that file";
+    Sentry.captureException(err);
+    const message = publicMessage(err, "Couldn't read that file");
     return NextResponse.json({ error: message }, { status: 400 });
   }
 

@@ -11,6 +11,7 @@ import { recordUse, usageContext, usedSoFar } from "@/lib/free-usage";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import type { ResumeData } from "@/lib/types";
 import { parseStoredResume } from "@/lib/resume-version";
+import { publicMessage } from "@/lib/public-error";
 
 const Schema = z.object({
   role: z.string().trim().min(2, "Add the job title you're interviewing for").max(150),
@@ -60,6 +61,6 @@ export async function POST(req: Request) {
     );
     return NextResponse.json({ session: row }, { status: 201 });
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Couldn't write questions." }, { status: 502 });
+    return NextResponse.json({ error: publicMessage(err, "Couldn't write questions.") }, { status: 502 });
   }
 }
