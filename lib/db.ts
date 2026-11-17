@@ -147,6 +147,8 @@ export type UserRow = {
   google_refresh_token: string | null;
   google_token_expiry: string | null;
   email_verified: boolean;
+  /** Bumped to sign out every existing session of this account. */
+  auth_epoch: number;
   email_verification_token: string | null;
   email_verification_expiry: string | null;
   password_reset_token: string | null;
@@ -193,6 +195,30 @@ export async function userExists(id: string): Promise<boolean> {
   await ensureSchema();
   const res = await pool.query("SELECT 1 FROM users WHERE id = $1", [id]);
   return (res.rowCount ?? 0) > 0;
+}
+
+/** The account's session counter, or null when the account no longer exists. */
+export async function getAuthEpoch(id: string): Promise<number | null> {
+  await ensureSchema();
+  const res = await pool.query("SELECT auth_epoch FROM users WHERE id = $1", [id]);
+  return res.rows[0] ? Number(res.rows[0].auth_epoch) : null;
+}
+
+/**
+ * A Google/LinkedIn sign-in proved ownership of an email that already has an
+ * unverified password account. Whoever made that account may not be the owner,
+ * so its password and every open session are cancelled, then it is verified.
+ */
+export async function claimUnverifiedAccount(userId: string, unusablePasswordHash: string): Promise<UserRow | undefined> {
+  await ensureSchema();
+  const res = await pool.query(
+    `UPDATE users SET password_hash = $1, auth_epoch = auth_epoch + 1, email_verified = true,
+       email_verification_token = NULL, email_verification_expiry = NULL,
+       password_reset_token = NULL, password_reset_expiry = NULL
+     WHERE id = $2 AND email_verified = false RETURNING *`,
+    [unusablePasswordHash, userId]
+  );
+  return withProExpiry(res.rows[0]);
 }
 
 export async function getUserById(id: string): Promise<UserRow | undefined> {
@@ -730,7 +756,7 @@ export async function getUserByPasswordResetToken(token: string): Promise<UserRo
 export async function resetPassword(userId: string, newPasswordHash: string) {
   await ensureSchema();
   await pool.query(
-    "UPDATE users SET password_hash = $1, password_reset_token = NULL, password_reset_expiry = NULL WHERE id = $2",
+    "UPDATE users SET password_hash = $1, auth_epoch = auth_epoch + 1, password_reset_token = NULL, password_reset_expiry = NULL WHERE id = $2",
     [newPasswordHash, userId]
   );
 }

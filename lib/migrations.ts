@@ -303,6 +303,9 @@ export const MIGRATIONS: Migration[] = [
   // safe to run again, so it is harmless on the live database; there it is
   // recorded as applied without running (see applySchema in db.ts).
   { id: "0001_baseline", sql: BASELINE_SQL },
+  // Sign-in counter: a session carries the number it was issued with, and is
+  // refused once the account's number moves on (password reset, account claim).
+  { id: "0002_auth_epoch", sql: "ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_epoch integer NOT NULL DEFAULT 0;" },
 ];
 
 export function checksum(sql: string): string {
