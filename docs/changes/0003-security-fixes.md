@@ -5,8 +5,8 @@
 | # | Fix | Status |
 |---|---|---|
 | 1 | Photo field: only inline images reach the PDF renderer (server-side fetch / local file read) | done (#66) |
-| 2 | OAuth sign-in no longer inherits an unverified password account (+ sessions end on password reset) | this PR |
-| 3 | Cron routes refuse to run when `CRON_SECRET` is unset | next |
+| 2 | OAuth sign-in no longer inherits an unverified password account (+ sessions end on password reset) | done (#67) |
+| 3 | Cron routes refuse to run when `CRON_SECRET` is unset | this PR |
 | 4 | Drive OAuth uses a random per-attempt state | next |
 | 5 | Stop returning raw internal error text (health, AI, cron) | next |
 | 6 | Register stops revealing existing emails (reset-signs-out-sessions landed with fix 2) | next |
@@ -26,3 +26,8 @@
 - Effect on a genuine user who registered with a password, never verified, then used Google: their password stops working; they sign in with Google or use "forgot password".
 - Existing sessions are unaffected (no stored number counts as 0, the default).
 - Rollback: revert the code; the extra column is harmless.
+
+## Fix 3 detail
+- Change: `lib/cron-auth.ts` (`cronAuthorized`): constant-time compare of `Authorization: Bearer <CRON_SECRET>`; false when the secret is unset or empty. Both cron routes use it.
+- Checked first: `CRON_SECRET` exists for Production in Vercel (so the daily jobs keep working). Previews have none and run no crons.
+- Rollback: revert the commit.

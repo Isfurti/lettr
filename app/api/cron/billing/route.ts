@@ -4,6 +4,7 @@ import { expireLapsedPro, listProEndingSoon, listSubscriptionsRenewingSoon, mark
 import { sendProEndingSoonEmail, sendRenewalReminderEmail } from "@/lib/email";
 import { formatProDate, isPlanId, PRO_REMINDER_DAYS, RENEWAL_PERIOD, RENEWAL_REMINDER_DAYS } from "@/lib/pro-pass";
 import { formatMinor } from "@/lib/pro-payments";
+import { cronAuthorized } from "@/lib/cron-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,12 +14,11 @@ export const dynamic = "force-dynamic";
  * emails anyone whose Pro ends in the next few days, and emails anyone whose
  * auto-renewing Pro renews in the next few days.
  *
- * If CRON_SECRET is set in Vercel, only Vercel's scheduler can call this.
- * Without it the route still only does work that's already due.
+ * Only Vercel's scheduler can call this (it sends CRON_SECRET). If CRON_SECRET is
+ * not set, nobody can.
  */
 export async function GET(req: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!cronAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
