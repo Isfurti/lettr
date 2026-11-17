@@ -48,3 +48,23 @@ describe("session counter", () => {
     expect(await getAuthEpoch(id)).toBeNull();
   });
 });
+
+describe("reset links are single use", () => {
+  it("only one of two simultaneous resets with the same link succeeds", async () => {
+    const { setPasswordResetToken, resetPasswordWithToken } = await import("@/lib/db");
+    const id = randomUUID();
+    await createUser({ id, email: `reset-${id}@example.com`, passwordHash: "old" });
+    await setPasswordResetToken(id, "link-token", new Date(Date.now() + 60_000));
+    const results = await Promise.all([resetPasswordWithToken("link-token", "hash-a"), resetPasswordWithToken("link-token", "hash-b")]);
+    expect(results.filter(Boolean)).toHaveLength(1);
+    expect(await resetPasswordWithToken("link-token", "hash-c")).toBe(false);
+    expect(await getAuthEpoch(id)).toBe(1);
+  });
+  it("an expired link does nothing", async () => {
+    const { setPasswordResetToken, resetPasswordWithToken } = await import("@/lib/db");
+    const id = randomUUID();
+    await createUser({ id, email: `reset2-${id}@example.com`, passwordHash: "old" });
+    await setPasswordResetToken(id, "old-link", new Date(Date.now() - 1000));
+    expect(await resetPasswordWithToken("old-link", "h")).toBe(false);
+  });
+});

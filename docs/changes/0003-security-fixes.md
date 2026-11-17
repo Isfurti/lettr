@@ -8,9 +8,9 @@
 | 2 | OAuth sign-in no longer inherits an unverified password account (+ sessions end on password reset) | done (#67) |
 | 3 | Cron routes refuse to run when `CRON_SECRET` is unset | done (#68) |
 | 4 | Drive OAuth uses a random per-attempt state | done (#69) |
-| 5 | Stop returning raw internal error text (health, AI, cron, file import) | this PR |
-| 6 | Register stops revealing existing emails (reset-signs-out-sessions landed with fix 2) | next |
-| 7 | Admin support page uses `requireAdmin` | next |
+| 5 | Stop returning raw internal error text (health, AI, cron, file import) | done (#70) |
+| 6 | Reset signs out old sessions (landed with fix 2); reset links single-use; register still reveals existing emails (your call, see below) | this PR |
+| 7 | Admin support page and resolve route use the shared admin guard | this PR |
 | 8 | Content-Security-Policy, report-only first | next |
 
 ## Fix 1 detail
@@ -43,3 +43,13 @@
 - Change: `lib/public-error.ts` (`PublicError`, `publicMessage`). Messages written for people (AI "try again" lines, unreadable/unsupported file, Drive not connected) are now `PublicError`s and still shown. Every other error shows the route's generic fallback line and goes to Sentry. A corrupt Word file now gets a friendly message instead of the parser's. `/api/health` reports only that the database is disconnected (the detail goes to the server log).
 - Not changed: validation errors from request schemas (they describe the user's own input).
 - Rollback: revert the commit.
+
+## Fixes 6 and 7, and follow-ups from the review (this PR)
+Reviewed by a stand-in model (Opus), because Fable's credits ran out mid-review; a Fable review is still owed.
+- Fix 7: `app/admin/support/page.tsx` now calls `requireAdmin()` (404 for non-admins; the debug panel that showed `ADMIN_EMAIL` fragments is gone). `/api/support/resolve` uses `requireAdminApi()`. Tests cover signed-out, non-admin and admin.
+- Follow-up to fix 2: the admin "Mark email verified" button also defeated it (verified the account but kept the attacker's password). It now uses `claimUnverifiedAccount` for unverified accounts: cancels the password and sessions; the owner uses "Forgot password". The button asks for confirmation and says so.
+- Reset links are single use even under two simultaneous requests (`resetPasswordWithToken` is one UPDATE).
+- "Resend verification" no longer returns the email provider's raw error. The Drive state cookie is also cleared after a failed token exchange.
+- Confirmed: `RESEND_API_KEY` exists for Production, so signups are not auto-verified (the pre-registration protection depends on that).
+- Known limit: if the real owner clicks the emailed verification link of an account someone else pre-registered, the other person's password stays. Closing that needs either verify-before-login or forced password setup at verification; both change sign-up for everyone, so not done without your decision.
+- Not changed: the register form still says an email already has an account (needed to tell genuine people to log in). Hiding it means a "check your email" flow for everyone.

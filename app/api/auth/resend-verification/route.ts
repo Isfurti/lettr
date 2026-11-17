@@ -35,7 +35,8 @@ export async function POST() {
   const result = await sendVerificationEmail(user.email, token);
 
   if (!result.sent) {
-    return NextResponse.json({ error: result.reason ?? "Failed to send email" }, { status: 502 });
+    console.error("Resend verification: email not sent", result.reason);
+    return NextResponse.json({ error: "We couldn't send the email right now. Please try again in a few minutes." }, { status: 502 });
   }
 
   return NextResponse.json({ ok: true });

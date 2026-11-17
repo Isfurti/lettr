@@ -753,6 +753,16 @@ export async function getUserByPasswordResetToken(token: string): Promise<UserRo
   return res.rows[0];
 }
 
+/** Sets the new password only if this link is still valid, and spends the link in the same statement (two clicks at once cannot both win). */
+export async function resetPasswordWithToken(token: string, newPasswordHash: string): Promise<boolean> {
+  await ensureSchema();
+  const res = await pool.query(
+    "UPDATE users SET password_hash = $1, auth_epoch = auth_epoch + 1, password_reset_token = NULL, password_reset_expiry = NULL WHERE password_reset_token = $2 AND password_reset_expiry > now()",
+    [newPasswordHash, hashToken(token)]
+  );
+  return (res.rowCount ?? 0) > 0;
+}
+
 export async function resetPassword(userId: string, newPasswordHash: string) {
   await ensureSchema();
   await pool.query(
