@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { runReviewBatchJob } from "@/lib/review-batch";
+import { cronAuthorized } from "@/lib/cron-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,13 +10,11 @@ export const dynamic = "force-dynamic";
  * Daily job (vercel.json): saves finished review analyses, emails the replies
  * and sends any waiting reviews off in a new half-price batch.
  *
- * If CRON_SECRET is set in Vercel, only Vercel's scheduler can call this.
- * Without it the route still only does work that's already due, so a stray
- * call is harmless.
+ * Only Vercel's scheduler can call this (it sends CRON_SECRET). If CRON_SECRET is
+ * not set, nobody can.
  */
 export async function GET(req: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!cronAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
