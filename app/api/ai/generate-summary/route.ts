@@ -9,6 +9,8 @@ import { getUserById, incrementAiWritingAssistCount } from "@/lib/db";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import { canUseAiWritingAssist, type Plan } from "@/lib/limits";
 import { recordUse, rewritesUsed, usageContext } from "@/lib/free-usage";
+import * as Sentry from "@sentry/nextjs";
+import { publicMessage } from "@/lib/public-error";
 
 const Schema = z.object({
   experience: z.array(z.any()).default([]),
@@ -61,7 +63,8 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ options });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "AI generation failed";
+    Sentry.captureException(err);
+    const message = publicMessage(err, "AI generation failed");
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

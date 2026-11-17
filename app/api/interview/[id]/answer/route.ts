@@ -8,6 +8,7 @@ import { trackAiUsage } from "@/lib/ai-usage";
 import { canUseInterviewPractice, type Plan } from "@/lib/limits";
 import { recordUse, usageContext, usedSoFar } from "@/lib/free-usage";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
+import { publicMessage } from "@/lib/public-error";
 
 const Schema = z.object({
   questionId: z.string().max(100),
@@ -50,6 +51,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     await saveInterviewQuestions(userId, id, questions);
     return NextResponse.json({ feedback: value });
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Couldn't review your answer." }, { status: 502 });
+    return NextResponse.json({ error: publicMessage(err, "Couldn't review your answer.") }, { status: 502 });
   }
 }

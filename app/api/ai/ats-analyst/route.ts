@@ -10,6 +10,7 @@ import { recordUse, usageContext, usedSoFar } from "@/lib/free-usage";
 import { canUseAtsAnalyst, type Plan } from "@/lib/limits";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import type { ResumeData } from "@/lib/types";
+import { publicMessage } from "@/lib/public-error";
 
 const Schema = z.object({
   resume: z.any(),
@@ -54,6 +55,6 @@ export async function POST(req: Request) {
     await recordUse(ctx, "ats_analyst");
     return NextResponse.json({ advice: value });
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "The analyst couldn't finish." }, { status: 502 });
+    return NextResponse.json({ error: publicMessage(err, "The analyst couldn't finish.") }, { status: 502 });
   }
 }

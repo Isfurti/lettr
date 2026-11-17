@@ -7,8 +7,8 @@
 | 1 | Photo field: only inline images reach the PDF renderer (server-side fetch / local file read) | done (#66) |
 | 2 | OAuth sign-in no longer inherits an unverified password account (+ sessions end on password reset) | done (#67) |
 | 3 | Cron routes refuse to run when `CRON_SECRET` is unset | done (#68) |
-| 4 | Drive OAuth uses a random per-attempt state | this PR |
-| 5 | Stop returning raw internal error text (health, AI, cron) | next |
+| 4 | Drive OAuth uses a random per-attempt state | done (#69) |
+| 5 | Stop returning raw internal error text (health, AI, cron, file import) | this PR |
 | 6 | Register stops revealing existing emails (reset-signs-out-sessions landed with fix 2) | next |
 | 7 | Admin support page uses `requireAdmin` | next |
 | 8 | Content-Security-Policy, report-only first | next |
@@ -36,4 +36,10 @@
 - Risk fixed: the Google Drive `state` was the user id, so a callback link built by someone else could attach their Drive to a victim's account who happened to be signed in.
 - Change: `/api/google/connect` makes a random value, stores it in an httpOnly, SameSite=Lax cookie (path `/api/google`, 10 minutes) and sends it as `state`. The callback connects only when cookie and `state` match (constant-time), then clears the cookie. The connect route no longer returns raw error text.
 - Effect on users: none unless they open the consent screen in one browser and finish in another (that now fails with "invalid callback"; they just start again).
+- Rollback: revert the commit.
+
+## Fix 5 detail
+- Risk fixed: public and signed-in endpoints returned `err.message` as it came, which can hold database host/user names, AI-provider details, or the "ANTHROPIC_API_KEY is not set" setup hint.
+- Change: `lib/public-error.ts` (`PublicError`, `publicMessage`). Messages written for people (AI "try again" lines, unreadable/unsupported file, Drive not connected) are now `PublicError`s and still shown. Every other error shows the route's generic fallback line and goes to Sentry. A corrupt Word file now gets a friendly message instead of the parser's. `/api/health` reports only that the database is disconnected (the detail goes to the server log).
+- Not changed: validation errors from request schemas (they describe the user's own input).
 - Rollback: revert the commit.

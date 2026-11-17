@@ -2,6 +2,7 @@ import { google } from "googleapis";
 import { getUserById, setGoogleTokens } from "./db";
 import { decryptSecret, isEncrypted } from "./secret-box";
 import { siteUrl } from "./site-url";
+import { PublicError } from "./public-error";
 
 const SCOPES = ["https://www.googleapis.com/auth/drive.file"];
 
@@ -53,7 +54,7 @@ export async function connectGoogleDriveForUser(userId: string, code: string): P
 export async function getValidGoogleAccessToken(userId: string): Promise<string> {
   const user = await getUserById(userId);
   if (!user?.google_refresh_token) {
-    throw new Error("Google Drive is not connected for this account yet.");
+    throw new PublicError("Google Drive is not connected for this account yet.");
   }
 
   const expiry = user.google_token_expiry ? new Date(user.google_token_expiry).getTime() : 0;

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { runReviewBatchJob } from "@/lib/review-batch";
 import { cronAuthorized } from "@/lib/cron-auth";
+import { publicMessage } from "@/lib/public-error";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +23,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: true, ...summary });
   } catch (err) {
     Sentry.captureException(err);
-    return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : "Failed" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: publicMessage(err, "Failed") }, { status: 500 });
   }
 }

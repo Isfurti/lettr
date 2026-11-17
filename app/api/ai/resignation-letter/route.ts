@@ -8,6 +8,8 @@ import { canUseResignationLetterBuilder, limitTier, type Plan } from "@/lib/limi
 import { generateResignationLetter } from "@/lib/ai";
 import { trackAiUsage } from "@/lib/ai-usage";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
+import * as Sentry from "@sentry/nextjs";
+import { publicMessage } from "@/lib/public-error";
 
 const Schema = z.object({
   employeeName: z.string().min(1).max(200),
@@ -57,7 +59,8 @@ export async function POST(req: Request) {
     await trackAiUsage({ userId, feature: "resignation_letter", model, usage });
     return NextResponse.json({ letter });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "AI generation failed";
+    Sentry.captureException(err);
+    const message = publicMessage(err, "AI generation failed");
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

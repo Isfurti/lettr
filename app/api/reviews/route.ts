@@ -9,6 +9,7 @@ import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import { trackAiUsage } from "@/lib/ai-usage";
 import { reviewAnalysisMode, runReviewBatchJob } from "@/lib/review-batch";
 import * as Sentry from "@sentry/nextjs";
+import { publicMessage } from "@/lib/public-error";
 
 const Schema = z.object({
   rating: z.number().int().min(1).max(5),
@@ -65,7 +66,8 @@ export async function POST(req: Request) {
     analysis = result.value;
     await trackAiUsage({ userId, feature: "review", model: result.model, usage: result.usage });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "AI analysis failed";
+    Sentry.captureException(err);
+    const message = publicMessage(err, "AI analysis failed");
     return NextResponse.json({ error: message }, { status: 502 });
   }
 
