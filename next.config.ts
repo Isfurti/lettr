@@ -9,6 +9,12 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=(self), payment=(self \"https://api.razorpay.com\")" },
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+  // The parts of a Content-Security-Policy that cannot break the site: nobody
+  // can inject a <base> tag to redirect relative links, and only Lettr's own
+  // pages can frame Lettr. A script-src policy is not here: Next.js pages use
+  // inline scripts, so it needs per-request nonces (a separate piece of work).
+  // object-src is left out on purpose: the letter preview shows a PDF in an iframe.
+  { key: "Content-Security-Policy", value: "base-uri 'self'; frame-ancestors 'self'" },
 ];
 
 const nextConfig: NextConfig = {

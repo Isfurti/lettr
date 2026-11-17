@@ -9,9 +9,9 @@
 | 3 | Cron routes refuse to run when `CRON_SECRET` is unset | done (#68) |
 | 4 | Drive OAuth uses a random per-attempt state | done (#69) |
 | 5 | Stop returning raw internal error text (health, AI, cron, file import) | done (#70) |
-| 6 | Reset signs out old sessions (landed with fix 2); reset links single-use; register still reveals existing emails (your call, see below) | this PR |
-| 7 | Admin support page and resolve route use the shared admin guard | this PR |
-| 8 | Content-Security-Policy, report-only first | next |
+| 6 | Reset signs out old sessions (landed with fix 2); reset links single-use; register still reveals existing emails (your call, see below) | done (#71) |
+| 7 | Admin support page and resolve route use the shared admin guard | done (#71) |
+| 8 | Content-Security-Policy: safe directives now; script-src later | this PR |
 
 ## Fix 1 detail
 - Risk fixed: react-pdf fetches any URL or local path given as an image source. The guest "fit to one page" route accepts a resume from anyone, and the PDF download route returns the result.
@@ -53,3 +53,8 @@ Reviewed by a stand-in model (Opus), because Fable's credits ran out mid-review;
 - Confirmed: `RESEND_API_KEY` exists for Production, so signups are not auto-verified (the pre-registration protection depends on that).
 - Known limit: if the real owner clicks the emailed verification link of an account someone else pre-registered, the other person's password stays. Closing that needs either verify-before-login or forced password setup at verification; both change sign-up for everyone, so not done without your decision.
 - Not changed: the register form still says an email already has an account (needed to tell genuine people to log in). Hiding it means a "check your email" flow for everyone.
+
+## Fix 8 detail
+- Change: `Content-Security-Policy: base-uri 'self'; frame-ancestors 'self'` on every page. Blocks injected `<base>` tags and framing by other sites (matches the existing X-Frame-Options).
+- Deliberately not added: `script-src` (Next.js pages use inline scripts, so it needs per-request nonces, a separate design), `form-action` (Chrome applies it to the redirects after a sign-in form post), and `object-src 'none'` (can stop the letter preview, which shows a PDF in an iframe).
+- Effect on users: none expected. Rollback: revert the commit.
