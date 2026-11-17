@@ -30,7 +30,9 @@ export async function GET(req: Request) {
   try {
     await connectGoogleDriveForUser(userId, code);
   } catch {
-    return NextResponse.redirect(new URL("/dashboard?drive_error=token_exchange_failed", req.url));
+    const failed = NextResponse.redirect(new URL("/dashboard?drive_error=token_exchange_failed", req.url));
+    failed.cookies.delete({ name: DRIVE_STATE_COOKIE, path: "/api/google" });
+    return failed;
   }
 
   const done = NextResponse.redirect(new URL("/dashboard?drive_connected=true", req.url));

@@ -1,6 +1,4 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { isAdminEmail } from "@/lib/admin-auth";
+import { requireAdmin } from "@/lib/admin-auth";
 import { listSupportMessages } from "@/lib/db";
 import { ResolveButton } from "@/components/ResolveButton";
 import { formatDateTime } from "@/lib/format-date";
@@ -17,48 +15,8 @@ function replyHref(m: { email: string; subject: string; message: string }) {
 }
 import { AdminSidebar } from "@/components/AdminSidebar";
 
-function fingerprint(value: string) {
-  // Shows enough to spot whitespace/hidden-character mismatches without
-  // fully exposing the value in a screenshot.
-  return {
-    length: value.length,
-    trimmedLength: value.trim().length,
-    first3: value.slice(0, 3),
-    last3: value.slice(-3),
-  };
-}
-
 export default async function AdminSupportPage() {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
-
-  const yourEmailRaw = session.user.email ?? "";
-
-  if (!isAdminEmail(yourEmailRaw)) {
-    const adminEmailRaw = process.env.ADMIN_EMAIL;
-    return (
-      <main className="flex-1 min-w-0 max-w-lg mx-auto w-full px-8 py-12">
-        <h1 className="font-brand font-extrabold text-xl mb-4">Admin check failed</h1>
-        <p className="text-sm text-ink-soft mb-6">
-          You&apos;re logged in, but your email doesn&apos;t match <code>ADMIN_EMAIL</code>. Compare
-          these fingerprints against what you typed into Vercel — a mismatched length usually means
-          stray whitespace or a hidden character got copied in.
-        </p>
-        <div className="bg-white border border-rule rounded-xl p-4 space-y-3 font-mono text-xs">
-          <div>
-            <p className="text-ink-soft mb-1">Your logged-in session email:</p>
-            <pre>{JSON.stringify(fingerprint(yourEmailRaw), null, 2)}</pre>
-          </div>
-          <div>
-            <p className="text-ink-soft mb-1">ADMIN_EMAIL env var (server-side):</p>
-            <pre>
-              {adminEmailRaw ? JSON.stringify(fingerprint(adminEmailRaw), null, 2) : "NOT SET"}
-            </pre>
-          </div>
-        </div>
-      </main>
-    );
-  }
+  await requireAdmin();
 
   const messages = await listSupportMessages();
   const open = messages.filter((m) => m.status === "open");

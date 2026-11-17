@@ -69,6 +69,7 @@ export function AdminUserActions({
   }
 
   async function verifyEmail() {
+    if (!confirm("Mark this email as verified? This also cancels the account's current password and signs it out. The owner then uses \"Forgot password\" to set a new one.")) return;
     if (await call(`/api/admin/users/${userId}/verify-email`)) {
       setJustVerified(true);
       router.refresh();
