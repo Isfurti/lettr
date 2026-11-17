@@ -8,6 +8,7 @@ import { contactParts } from "@/lib/contact";
 import { joinSkills } from "@/lib/resume-sections";
 import { EarlierRolesPdf } from "@/components/templates/EarlierRolesPdf";
 import { GroupHeadingPdf } from "@/components/templates/GroupHeadingPdf";
+import { safePhotoDataUrl } from "@/lib/safe-photo";
 
 /**
  * PDF versions of the Ribbon, Split, Scholar, Fresher, Grid and Spotlight
@@ -23,7 +24,7 @@ type Colors = { seal: string; sealSoft: string };
 const flags = (r: ResumeData) => ({
   showDividers: r.customization?.showDividers ?? true,
   indent: r.customization?.indentBullets ?? true,
-  photo: r.customization?.showPhoto ? r.customization?.photoDataUrl : undefined,
+  photo: r.customization?.showPhoto ? safePhotoDataUrl(r.customization?.photoDataUrl) : undefined,
 });
 
 const contactItems = (r: ResumeData) =>
