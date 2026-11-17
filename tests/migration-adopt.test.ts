@@ -1,6 +1,7 @@
 import { describe, it, expect, afterAll, vi } from "vitest";
 import { randomUUID } from "node:crypto";
 import pg from "pg";
+import { MIGRATIONS } from "@/lib/migrations";
 
 // Uses its own throwaway database, so it can't disturb the other test files
 // that share the main test database while they run.
@@ -37,7 +38,7 @@ describe("adopting the baseline", () => {
     const db = await freshDb();
     await db.applySchema(); // fresh database: baseline runs
     let r = await db.default.query("SELECT id FROM schema_migrations");
-    expect(r.rows.map((x) => x.id)).toEqual(["0001_baseline"]);
+    expect(r.rows.map((x) => x.id)).toEqual(MIGRATIONS.map((m) => m.id)); // baseline first, then every later migration
     const cols = (await db.default.query("SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='country_code'")).rowCount;
     expect(cols).toBe(1);
 
@@ -49,7 +50,7 @@ describe("adopting the baseline", () => {
     await db.default.query("ALTER TABLE users DROP COLUMN country_code");
     await db.applySchema();
     r = await db.default.query("SELECT id FROM schema_migrations");
-    expect(r.rows.map((x) => x.id)).toEqual(["0001_baseline"]);
+    expect(r.rows.map((x) => x.id)).toEqual(MIGRATIONS.map((m) => m.id)); // baseline first, then every later migration
     const after = (await db.default.query("SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='country_code'")).rowCount;
     expect(after).toBe(0); // recorded, not re-run
 

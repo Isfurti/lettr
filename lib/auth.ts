@@ -4,7 +4,7 @@ import Google from "next-auth/providers/google";
 import LinkedIn from "next-auth/providers/linkedin";
 import type { Provider } from "next-auth/providers";
 import bcrypt from "bcryptjs";
-import { getUserByEmail, userExists } from "./db";
+import { getUserByEmail, getAuthEpoch } from "./db";
 import { findOrCreateOAuthUser } from "./oauth-user";
 import { isRateLimited, recordRateLimitHit } from "./rate-limit";
 
@@ -42,7 +42,7 @@ const providers: Provider[] = [
         return null;
       }
 
-      return { id: user.id, email: user.email, name: user.name ?? undefined };
+      return { id: user.id, email: user.email, name: user.name ?? undefined, epoch: Number(user.auth_epoch ?? 0) } as { id: string; email: string; name?: string };
     },
   }),
 ];
@@ -81,16 +81,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (user.email) {
           const dbUser = await findOrCreateOAuthUser(user.email, user.name);
           token.id = dbUser.id;
+          token.epoch = Number(dbUser.auth_epoch ?? 0);
         }
       } else if (user) {
         token.id = user.id;
+        token.epoch = Number((user as { epoch?: number }).epoch ?? 0);
       } else if (typeof token.id === "string") {
-        // The account was deleted (by its owner or an admin) while this
-        // browser was still signed in. Sign it out instead of letting it act
-        // as a user that no longer exists. If the database can't be reached,
-        // keep the session: a short outage shouldn't sign everyone out.
+        // The account was deleted, or its password was reset / it was claimed
+        // by an OAuth sign-in, while this browser was still signed in: end the
+        // session. Sessions made before the counter existed count as 0. If
+        // the database can't be reached, keep the session: a short outage
+        // shouldn't sign everyone out.
         try {
-          if (!(await userExists(token.id))) return null;
+          const epoch = await getAuthEpoch(token.id);
+          if (epoch === null || epoch !== Number(token.epoch ?? 0)) return null;
         } catch {
           // keep the session
         }
