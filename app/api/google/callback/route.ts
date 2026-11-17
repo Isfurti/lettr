@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectGoogleDriveForUser } from "@/lib/google-drive";
+import { DRIVE_STATE_COOKIE, oauthStateMatches } from "@/lib/oauth-state";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -16,12 +17,15 @@ export async function GET(req: Request) {
     return NextResponse.redirect(new URL(`/dashboard?drive_error=${encodeURIComponent(error)}`, req.url));
   }
 
-  // The state param carries the userId that started the flow - reject if it
-  // doesn't match the currently logged-in session, to stop a crafted
-  // callback URL from attaching Drive tokens to the wrong account.
-  if (!code || state !== userId) {
-    return NextResponse.redirect(new URL("/dashboard?drive_error=invalid_callback", req.url));
-  }
+  // `state` must be the random value this browser got when it started the
+  // connection (cookie set by /api/google/connect), not anything a link can carry.
+  const cookieState = req.headers.get("cookie")?.match(new RegExp(`(?:^|; )${DRIVE_STATE_COOKIE}=([^;]+)`))?.[1];
+  const invalid = () => {
+    const res = NextResponse.redirect(new URL("/dashboard?drive_error=invalid_callback", req.url));
+    res.cookies.delete({ name: DRIVE_STATE_COOKIE, path: "/api/google" });
+    return res;
+  };
+  if (!code || !oauthStateMatches(cookieState, state)) return invalid();
 
   try {
     await connectGoogleDriveForUser(userId, code);
@@ -29,5 +33,7 @@ export async function GET(req: Request) {
     return NextResponse.redirect(new URL("/dashboard?drive_error=token_exchange_failed", req.url));
   }
 
-  return NextResponse.redirect(new URL("/dashboard?drive_connected=true", req.url));
+  const done = NextResponse.redirect(new URL("/dashboard?drive_connected=true", req.url));
+  done.cookies.delete({ name: DRIVE_STATE_COOKIE, path: "/api/google" });
+  return done;
 }
