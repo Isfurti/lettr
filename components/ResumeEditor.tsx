@@ -715,7 +715,12 @@ export function ResumeEditor({
               </UpgradeGate>
             </div>
           )}
-          {tab === "score" && <ScorePanel data={data} plan={plan} setData={setData} aiFixes={allowances?.aiFixes} period={allowances?.period} />}
+          {/* Stays mounted once opened, so unused AI rewrite options and Undo survive a trip to another tab. */}
+          {openedTabs.includes("score") && (
+            <div hidden={tab !== "score"}>
+              <ScorePanel data={data} plan={plan} setData={setData} aiFixes={allowances?.aiFixes} period={allowances?.period} />
+            </div>
+          )}
           {openedTabs.includes("match") && (
             <div hidden={tab !== "match"}>
               <AtsPanel

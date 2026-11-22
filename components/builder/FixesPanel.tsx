@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { ResumeData } from "@/lib/types";
 import { marketOf } from "@/lib/market";
 import { scoreResumeQuality } from "@/lib/resume-score";
-import { applyEdits, fixesFor, readLoc, undoEdits, type Edit, type Fix } from "@/lib/resume-fixes";
+import { applyEdits, fixesFor, undoEdits, type Edit, type Fix } from "@/lib/resume-fixes";
 import type { Allowance } from "@/lib/free-usage";
 import type { UsagePeriod } from "@/lib/limits";
 
@@ -64,7 +64,10 @@ export function FixesPanel({
   allowance?: Allowance;
   period?: UsagePeriod;
 }) {
-  const fixes = useMemo(() => fixesFor(data), [data]);
+  const current = useMemo(() => fixesFor(data), [data]);
+  const [held, setHeld] = useState<Record<string, Fix>>({});
+  // A card whose AI options are already paid for stays until used or skipped, even when the tip itself no longer lists it.
+  const fixes = [...current, ...Object.values(held).filter((h) => !current.some((c) => c.id === h.id))];
   const score = scoreResumeQuality(data).overall;
   const market = marketOf(data.customization);
   const [skipped, setSkipped] = useState<string[]>([]);
@@ -79,10 +82,14 @@ export function FixesPanel({
   const shown = fixes.filter((f) => !skipped.includes(f.id));
   const left = allowance && Number.isFinite(allowance.limit) ? Math.max(0, allowance.limit - allowance.used - aiUsed) : null;
 
-  function accept(title: string, edits: Edit[]) {
+  function accept(title: string, edits: Edit[], fixId?: string) {
     const next = applyEdits(data, edits);
     if (!next) return setNote("That text changed since this was shown, so nothing was changed. The list has been refreshed.");
     setUndo({ title, edits, scoreBefore: score });
+    if (fixId) {
+      setHeld((h) => Object.fromEntries(Object.entries(h).filter(([id]) => id !== fixId)));
+      setOptions((o) => Object.fromEntries(Object.entries(o).filter(([id]) => id !== fixId)));
+    }
     setData(next);
     setNote(`Done: ${title}.`);
   }
@@ -111,6 +118,7 @@ export function FixesPanel({
         return;
       }
       setOptions((o) => ({ ...o, [f.id]: Array.isArray(body.options) ? body.options : [] }));
+      setHeld((h) => ({ ...h, [f.id]: f }));
       setAiUsed((n) => n + 1);
     } catch {
       setError({ id: f.id, text: "Couldn't reach the server. Check your connection and try again.", upgrade: false });
@@ -127,7 +135,7 @@ export function FixesPanel({
         <h2 className="font-brand font-extrabold text-lg text-ink">Fix these</h2>
         <span className="text-sm text-ink-soft">Score {score}{undo && undo.scoreBefore !== score ? ` (was ${undo.scoreBefore})` : ""}</span>
       </div>
-      <p aria-live="polite" className="text-sm font-bold text-ink empty:hidden">{note}</p>
+      <p role="status" className={note ? "text-sm font-bold text-ink" : "sr-only"}>{note}</p>
       {undo && (
         <button type="button" onClick={undoLast} className={`${BTN} border-2 border-rule bg-white text-brand-blue hover:border-ink`}>
           Undo: {undo.title}
@@ -193,12 +201,12 @@ export function FixesPanel({
                   </p>
                 )}
                 {options[f.id]?.map((o) => {
-                  const live = readLoc(data, f.ai!.loc);
-                  const edit: Edit = { loc: f.ai!.loc, before: live ?? f.ai!.bullet, after: o };
+                  // before is the text the options were written from, so a stale option is refused rather than overwriting newer text.
+                  const edit: Edit = { loc: f.ai!.loc, before: f.ai!.bullet, after: o };
                   return (
-                    <div key={o} className="space-y-2">
+                    <div key={`${f.id}-${o}`} className="space-y-2">
                       <Diff edit={edit} />
-                      <button type="button" onClick={() => accept("Rewrote a bullet", [edit])} className={`${BTN} border-2 border-ink bg-white text-ink hover:bg-ink hover:text-white`}>Use this</button>
+                      <button type="button" onClick={() => accept("Rewrote a bullet", [edit], f.id)} className={`${BTN} border-2 border-ink bg-white text-ink hover:bg-ink hover:text-white`}>Use this</button>
                     </div>
                   );
                 })}

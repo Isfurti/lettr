@@ -158,7 +158,7 @@ export function FresherPanel({
         </p>
       )}
 
-      <p aria-live="polite" className="text-sm font-bold text-ink empty:hidden">
+      <p role="status" className={note ? "text-sm font-bold text-ink" : "sr-only"}>
         {note}
       </p>
       {(undoLayout || undoAdd) && (

@@ -56,6 +56,35 @@ describe("tool names", () => {
   });
 });
 
+describe("review fixes", () => {
+  it("two misspelt tools in one project tech line fix together and apply", () => {
+    const r = resume({ projects: [{ id: "p1", name: "App", description: "", tech: "Javascript · Pyhton · Firebase" }] });
+    const fix = only(r, "tool-names")!;
+    expect(fix.edits.filter((e) => e.loc.t === "tech")).toHaveLength(1);
+    expect(applyEdits(r, fix.edits)!.projects?.[0].tech).toBe("JavaScript · Python · Firebase");
+  });
+  it("does not rename a tool into a duplicate", () => {
+    const r = resume({ skills: ["Javascript", "JavaScript"] });
+    const fix = only(r, "tool-names");
+    expect(fix === undefined || applyEdits(r, fix.edits)!.skills.filter((s) => s === "JavaScript").length === 1).toBe(true);
+  });
+  it("UK respelling leaves valid -ize and license alone", () => {
+    expect(respell("optimize the license", "UK")).toBe("optimize the license");
+    expect(respell("analyze the color", "UK")).toBe("analyse the colour");
+  });
+  it("the same figure under two projects gets two different labels", () => {
+    const r = resume({
+      experience: [{ id: "e9", company: "Acme", role: "A", startDate: "Jan 2020", endDate: "Dec 2020", bullets: ["Grew sales by 34%"] }],
+      projects: [
+        { id: "p1", name: "A", description: "", bullets: ["Cut cost by 34%"] },
+        { id: "p2", name: "B", description: "", bullets: ["Raised leads 34%"] },
+      ],
+    });
+    const labels = only(r, "repeated-metric")!.choices!.map((c) => c.label);
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+});
+
 describe("country spelling", () => {
   const r = resume({
     summary: "We organised the colour review at the Centre for Policy.",

@@ -1,4 +1,4 @@
-import { blankMetric, runResumeChecks, type Finding, type Loc } from "./resume-checks";
+import { AMERICAN, blankMetric, runResumeChecks, type Finding, type Loc } from "./resume-checks";
 import { plainResume, stripRich } from "./rich-text";
 import type { ResumeData } from "./types";
 
@@ -134,7 +134,9 @@ const PAIRS: [string, string][] = [
 ];
 export const SPELLING_PAIRS = PAIRS;
 const TO_US = new Map(PAIRS);
-const TO_UK = new Map(PAIRS.map(([uk, us]) => [us, uk] as const));
+// Only words the spelling check itself flags: -ize is valid British, and "license" can be a verb.
+const FLAGGED_US = new Set(AMERICAN);
+const TO_UK = new Map(PAIRS.filter(([, us]) => FLAGGED_US.has(us)).map(([uk, us]) => [us, uk] as const));
 
 /** Swaps only the listed lowercase words (a capitalised "Centre" is a name and is left alone). */
 export function respell(text: string, market: "US" | "UK"): string {
@@ -158,17 +160,21 @@ export function fixesFor(d: ResumeData, findings: Finding[] = runResumeChecks(pl
     if (!det) continue;
     if (det.kind === "tools") {
       const edits: Edit[] = [];
-      for (const { from, to } of det.fixes) {
-        d.skills.forEach((s, i) => {
-          if (s.trim() === from) edits.push(...editAt(d, { t: "skill", i }, () => to));
+      // A rename that would leave the same tool twice in one list is skipped (the tip stays; the person can delete the extra).
+      const renameList = (list: string[], loc: (i: number) => Loc) => {
+        const taken = new Set(list.map((s) => s.trim()));
+        list.forEach((s, i) => {
+          const fix = det.fixes.find((x) => x.from === s.trim());
+          if (!fix || taken.has(fix.to)) return;
+          taken.add(fix.to);
+          edits.push(...editAt(d, loc(i), () => fix.to));
         });
-        (d.skillGroups ?? []).forEach((g) =>
-          g.skills.forEach((s, i) => {
-            if (s.trim() === from) edits.push(...editAt(d, { t: "groupSkill", id: g.id, i }, () => to));
-          })
-        );
-        (d.projects ?? []).forEach((p) => edits.push(...editAt(d, { t: "tech", id: p.id }, (t) => renamePiece(t, from, to))));
-      }
+      };
+      renameList(d.skills, (i) => ({ t: "skill", i }));
+      (d.skillGroups ?? []).forEach((g) => renameList(g.skills, (i) => ({ t: "groupSkill", id: g.id, i })));
+      (d.projects ?? []).forEach((p) =>
+        edits.push(...editAt(d, { t: "tech", id: p.id }, (t) => det.fixes.reduce((acc, x) => renamePiece(acc, x.from, x.to), t)))
+      );
       if (edits.length) out.push({ id: f.id, findingId: f.id, title: "Fix tool names", kind: "rule", edits });
     } else if (det.kind === "spelling") {
       const edits = proseLocs(d).flatMap((loc) => editAt(d, loc, (t) => respell(t, det.market)));
@@ -185,8 +191,12 @@ export function fixesFor(d: ResumeData, findings: Finding[] = runResumeChecks(pl
         out.push({ id: f.id, findingId: f.id, title: `Change ${det.claimed} years to ${det.real}`, kind: "rule", edits: [{ loc: { t: "summary" }, before: text, after }] });
       }
     } else if (det.kind === "repeated") {
+      const labels = det.places.map((p, k) => {
+        const same = det.places.filter((q) => q.where === p.where);
+        return same.length > 1 ? `${p.where} (${det.places.slice(0, k + 1).filter((q) => q.where === p.where).length} of ${same.length})` : p.where;
+      });
       const choices = det.places.map((keep, k) => ({
-        label: `Keep it under ${keep.where}`,
+        label: `Keep it under ${labels[k]}`,
         edits: det.places.flatMap((p, n) => (n === k ? [] : p.locs.flatMap((loc) => editAt(d, loc, (t) => blankMetric(t, det.metric))))),
       }));
       if (choices.every((c) => c.edits.length > 0)) out.push({ id: f.id, findingId: f.id, title: `Same figure (${det.metric}) twice`, kind: "choice", edits: [], choices });
