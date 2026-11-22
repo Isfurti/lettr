@@ -3,6 +3,7 @@
 import { MarketPicker } from "@/components/builder/MarketPicker";
 import { FresherPanel } from "@/components/builder/FresherPanel";
 import { FixesPanel } from "@/components/builder/FixesPanel";
+import { TailorPanel } from "@/components/builder/TailorPanel";
 import { Ordered, Sec } from "@/components/templates/Ordered";
 import { Rich } from "@/components/templates/Rich";
 import { applyLayout, layoutScale, photoShape } from "@/lib/layout";
@@ -48,7 +49,7 @@ import { GroupHeading } from "@/components/templates/GroupHeading";
 
 const TEMPLATES: readonly string[] = TEMPLATE_IDS;
 
-type EditorTab = "edit" | "score" | "match" | "agent" | "cover-letter" | "resignation-letter";
+type EditorTab = "edit" | "score" | "match" | "tailor" | "agent" | "cover-letter" | "resignation-letter";
 
 /** How long after the last change the builder saves on its own. */
 const AUTOSAVE_DELAY_MS = 1500;
@@ -690,6 +691,7 @@ export function ResumeEditor({
           { id: "agent", label: "AI Agent", pro: true },
           { id: "score", label: "Score" },
           { id: "match", label: "ATS score" },
+          { id: "tailor", label: "Tailor" },
           { id: "cover-letter", label: "Cover letter" },
           { id: "resignation-letter", label: "Resignation letter", pro: true },
         ]}
@@ -732,6 +734,19 @@ export function ResumeEditor({
                 onAddSkill={(k) => setData((d) => ({ ...d, skills: addSkill(d.skills, k) }))}
                 keywordsShown={allowances?.keywordsShown}
                 analyst={allowances ? { ...allowances.atsAnalyst, period: allowances.period } : undefined}
+              />
+            </div>
+          )}
+          {openedTabs.includes("tailor") && (
+            <div hidden={tab !== "tailor"}>
+              <TailorPanel
+                data={data}
+                resumeId={resumeId}
+                jobPost={jobPost}
+                setJobPost={setJobPost}
+                isPro={plan === "pro"}
+                allowance={allowances?.tailor}
+                period={allowances?.period}
               />
             </div>
           )}

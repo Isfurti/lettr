@@ -306,6 +306,14 @@ export const MIGRATIONS: Migration[] = [
   // Sign-in counter: a session carries the number it was issued with, and is
   // refused once the account's number moves on (password reset, account claim).
   { id: "0002_auth_epoch", sql: "ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_epoch integer NOT NULL DEFAULT 0;" },
+  // Tailored versions: a version is a normal resume row that points at its original.
+  // Deleting the original deletes its versions.
+  {
+    id: "0003_resume_versions",
+    sql: `ALTER TABLE resumes ADD COLUMN IF NOT EXISTS parent_id TEXT REFERENCES resumes(id) ON DELETE CASCADE;
+ALTER TABLE resumes ADD COLUMN IF NOT EXISTS version_name TEXT;
+CREATE INDEX IF NOT EXISTS idx_resumes_parent ON resumes(parent_id);`,
+  },
 ];
 
 export function checksum(sql: string): string {

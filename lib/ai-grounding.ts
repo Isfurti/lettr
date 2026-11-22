@@ -8,8 +8,9 @@
  * sentence, an ALL-CAPS acronym, or written with + # . or digits (C++, Node.js,
  * EC2). A checked word must appear somewhere in the source text.
  *
- * shortcut: lowercase tools are checked only against the short LOWER_TOOLS
- * list, and a plain capitalised opening word is never checked. Grow the list
+ * shortcut: lowercase tools and employers are checked only against the LOWER_TOOLS
+ * list, and a capitalised opening word is skipped only when it looks like a verb
+ * (ends in -ed or -ing, or is a common irregular verb). Grow the list
  * if real output slips through.
  */
 
@@ -20,9 +21,20 @@ function clean(token: string): string {
 }
 
 /** Tools people write in lower case; checked when they appear in output but not in the source. */
-const LOWER_TOOLS = new Set(["python", "java", "javascript", "typescript", "sql", "excel", "react", "node", "docker", "kubernetes", "aws", "git", "github", "npm", "pandas", "numpy", "figma", "photoshop", "tableau", "flutter", "django", "flask", "mysql", "mongodb", "firebase", "linux", "html", "css", "php", "ruby", "swift", "kotlin", "golang", "rust"]);
+const LOWER_TOOLS = new Set(["tensorflow", "pytorch", "postgres", "postgresql", "spark", "hadoop", "kafka", "redis", "jenkins", "terraform", "ansible", "azure", "gcp", "salesforce", "jira", "slack", "tally", "sap", "oracle", "google", "amazon", "microsoft", "meta", "apple", "infosys", "tcs", "wipro", "accenture", "deloitte", "flipkart", "paytm", "zomato", "swiggy", "python", "java", "javascript", "typescript", "sql", "excel", "react", "node", "docker", "kubernetes", "aws", "git", "github", "npm", "pandas", "numpy", "figma", "photoshop", "tableau", "flutter", "django", "flask", "mysql", "mongodb", "firebase", "linux", "html", "css", "php", "ruby", "swift", "kotlin", "golang", "rust"]);
 /** Capitalised words that are not names. */
 const NOT_NAMES = new Set(["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]);
+
+/** Irregular past-tense verbs that often open a resume bullet. */
+const IRREGULAR_VERBS = new Set(["led", "built", "ran", "wrote", "drove", "grew", "won", "taught", "oversaw", "spoke", "chose", "made", "took", "set", "cut", "put", "began", "sold", "held", "kept", "brought", "saw", "met", "found", "gave", "got", "taught", "sent", "spent", "paid", "read", "shot"]);
+
+/** A capitalised word that opens a sentence and looks like a verb (Managed, Led, Managing), so it is not a name. */
+function isOpeningVerb(raw: string): boolean {
+  if (!/^[A-Z][a-z]+$/.test(raw)) return false;
+  const w = raw.toLowerCase();
+  if (LOWER_TOOLS.has(w)) return false;
+  return IRREGULAR_VERBS.has(w) || /(ed|ing)$/.test(w);
+}
 
 function looksLikeName(token: string): boolean {
   if (LOWER_TOOLS.has(token.toLowerCase())) return true;
@@ -56,7 +68,7 @@ export function ungroundedTerms(output: string, source: string): string[] {
       const raw = m[0];
       if (first) {
         first = false;
-        if (/^[A-Z][a-z]+$/.test(raw)) continue; // a plain opening verb is capitalised whatever it is; "AWS" or "Python" is not
+        if (isOpeningVerb(raw)) continue; // a capitalised opening verb is not a name; "AWS", "Python" or "Google" is
       }
       const token = clean(raw);
       if (token.length < 2 || !looksLikeName(token)) continue;

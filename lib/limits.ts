@@ -36,6 +36,8 @@ type Limits = {
   atsAnalyst: number;
   /** AI fixes for accuracy tips (the rule-based fixes are free and unlimited). Free: for life. */
   aiFixes: number;
+  /** Tailor-to-a-job tries. Free: for life. Saving a tailored version is Pro only. */
+  tailor: number;
   /** Fresher bullet drafts (guided prompts for students and first jobs). Free: for life. */
   fresherBullets: number;
   /** Missing keywords shown from a job post; the rest are blurred. */
@@ -58,6 +60,7 @@ export const PLAN_LIMITS: Record<LimitTier, Limits> = {
     interviewFeedback: 6, // the 6 questions in that one set
     atsAnalyst: 1,
     aiFixes: 1,
+    tailor: 1,
     fresherBullets: 3,
     keywordsShown: 3,
     trackedJobs: 10,
@@ -76,6 +79,7 @@ export const PLAN_LIMITS: Record<LimitTier, Limits> = {
     interviewFeedback: 15,
     atsAnalyst: 3,
     aiFixes: 3,
+    tailor: 3,
     fresherBullets: 5,
     keywordsShown: Infinity,
     trackedJobs: Infinity,
@@ -95,6 +99,7 @@ export const PLAN_LIMITS: Record<LimitTier, Limits> = {
     interviewFeedback: 300,
     atsAnalyst: 100,
     aiFixes: 100,
+    tailor: 100,
     fresherBullets: Infinity,
     keywordsShown: Infinity,
     trackedJobs: Infinity,
@@ -261,6 +266,22 @@ export function canUseAiFix(tier: LimitTier, used: number, now = new Date()): Li
   };
 }
 
+/** Tailor to a job: 1 for life on the free plan, 3 a month on legacy free, 100 a month on Pro. */
+export function canUseTailor(tier: LimitTier, used: number, now = new Date()): LimitCheck & { limit: number } {
+  const limit = PLAN_LIMITS[tier].tailor;
+  if (used < limit) return { allowed: true, limit };
+  return {
+    allowed: false,
+    limit,
+    reason:
+      tier === "free"
+        ? "You've used your free job tailoring. Upgrade to Pro to keep going."
+        : tier === "free_legacy"
+          ? `You've used this month's ${limit} job tailorings on the free plan. ${moreLine(tier, now)}`
+          : `You've used this month's ${limit} job tailorings (our fair-use limit). ${moreLine(tier, now)}`,
+  };
+}
+
 /** Fresher bullet drafts: 3 for life on the free plan, 5 a month on legacy free, unlimited on Pro (the daily fair-use cap still applies). */
 export function canUseFresherBullets(tier: LimitTier, used: number, now = new Date()): LimitCheck & { limit: number } {
   const limit = PLAN_LIMITS[tier].fresherBullets;
@@ -300,7 +321,8 @@ export type DailyFeature =
   | "interview_feedback"
   | "import"
   | "fresher_bullet"
-  | "fix";
+  | "fix"
+  | "tailor";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
@@ -324,6 +346,7 @@ export const DAILY_FEATURE_LABELS: Record<DailyFeature, string> = {
   import: "resume imports",
   fresher_bullet: "bullet drafts",
   fix: "AI fixes",
+  tailor: "job tailoring",
 };
 
 export const DAILY_LIMITS: Record<LimitTier, Record<DailyFeature, number> & { total: number }> = {
@@ -338,6 +361,7 @@ export const DAILY_LIMITS: Record<LimitTier, Record<DailyFeature, number> & { to
     import: 3,
     fresher_bullet: 3,
     fix: 1,
+    tailor: 1,
     total: 15,
   },
   free_legacy: {
@@ -351,6 +375,7 @@ export const DAILY_LIMITS: Record<LimitTier, Record<DailyFeature, number> & { to
     import: 3,
     fresher_bullet: 5,
     fix: 3,
+    tailor: 3,
     total: 25,
   },
   pro: {
@@ -364,6 +389,7 @@ export const DAILY_LIMITS: Record<LimitTier, Record<DailyFeature, number> & { to
     import: 10,
     fresher_bullet: 60,
     fix: 20,
+    tailor: 10,
     total: 150,
   },
 };
