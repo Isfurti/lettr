@@ -35,7 +35,8 @@ export const GUIDES: Guide[] = [
     description:
       "The one-page fresher resume format recruiters and ATS software read best: what to include, in what order, and the mistakes that get first resumes rejected.",
     published: "2026-10-18",
-    readMinutes: 6,
+    updated: "2026-11-22",
+    readMinutes: 8,
     intro:
       "Your first resume doesn't need years of experience. It needs a clear format, the right keywords and proof of what you can do. Here's the format that works for campus placements, off-campus applications and job portals in India.",
     sections: [
@@ -90,6 +91,64 @@ export const GUIDES: Guide[] = [
           "Spelling mistakes and an unprofessional email address",
           "Exaggerating skills you can't talk about in the interview",
           "Saving the file as \"resume.pdf\" instead of \"FirstName-LastName-Resume.pdf\"",
+        ],
+      },
+      {
+        heading: "A sample fresher resume (made-up person)",
+        paragraphs: [
+          "Here is the shape of a one-page fresher resume for a made-up B.Com graduate. The details are invented, so use them only as a pattern.",
+          "Header: Rohan Mehta, Jaipur. 98xxxxxx00. rohan.mehta@example.com. linkedin.com/in/rohan-mehta-example.",
+          "Objective: B.Com graduate looking for an accounts executive role. Completed a 3-month internship handling Tally entries and GST filing for 40+ clients.",
+        ],
+        list: [
+          "Education: B.Com, University of Rajasthan, 2026. 72%. Class 12 (Commerce), 78%.",
+          "Internship: Accounts intern, a local CA firm (example), May to Jul 2025. Entered daily vouchers in Tally and prepared GST return workings for 40+ clients.",
+          "Project: Built a monthly budget tracker in Excel with formulas and charts for a college fest team of 12.",
+          "Skills: Tally Prime, MS Excel (VLOOKUP, pivot tables), GST basics, typing, English and Hindi.",
+          "Achievements: Treasurer of the college commerce society, 2025. Completed an online Excel course.",
+        ],
+      },
+      {
+        heading: "What to put in the skills section, by field",
+        paragraphs: [
+          "List only the tools you can use and talk about. These are examples of the kind of words that match common entry-level job posts.",
+        ],
+        list: [
+          "Computer science and IT: programming languages you have used, SQL, Git, a framework or two, and basics like data structures.",
+          "Commerce and accounting: Tally, MS Excel, GST and TDS basics, bank reconciliation.",
+          "Mechanical and core engineering: AutoCAD or SolidWorks, ANSYS if you used it, Six Sigma or lean basics if you studied them.",
+          "MBA and marketing: Excel, PowerPoint, Google Analytics basics, social media tools, a CRM if you used one.",
+          "Any field: communication, a second language, and typing speed if the job needs it.",
+        ],
+      },
+      {
+        heading: "No internship or project yet?",
+        paragraphs: [
+          "Many first-time applicants worry about this. You usually have more than you think. Think about anything where you took responsibility or produced something, even without a salary.",
+        ],
+        list: [
+          "College projects, mini-projects and your final-year project",
+          "Coding, design or writing you did on your own, with a link if it is online",
+          "Club, society or fest roles, such as treasurer, event lead or volunteer",
+          "Part-time work, tuition or freelance jobs",
+          "Online courses and certificates, with the name of the provider",
+        ],
+      },
+      {
+        heading: "Resume, CV or biodata?",
+        paragraphs: [
+          "In India people use these words loosely. For most private-sector and campus jobs, a one-page resume is what recruiters want. A CV can mean a longer document for academic or research roles. A biodata, with personal details such as date of birth and father's name, is old-style and is not needed for most jobs today. Follow the form or job post if it asks for something specific.",
+        ],
+      },
+      {
+        heading: "Check before you send",
+        ordered: true,
+        list: [
+          "It fits on one page, with clear headings.",
+          "Your email address is professional and your phone number is correct.",
+          "Every skill and project is something you can explain in an interview.",
+          "You have used words from the job post where they are true for you.",
+          "The file is a PDF named FirstName-LastName-Resume.pdf, and you can select the text in it.",
         ],
       },
     ],
@@ -282,7 +341,8 @@ export const GUIDES: Guide[] = [
     description:
       "See what an ATS-friendly resume looks like, section by section, with sample wording you can adapt. Plain format, real keywords and bullets that show results.",
     published: "2026-11-09",
-    readMinutes: 6,
+    updated: "2026-11-22",
+    readMinutes: 8,
     intro:
       "Most ATS advice tells you what to avoid. This guide shows what a good one looks like: the layout, the wording of each section and a before-and-after for the bullets that matter most. Adapt it to your own facts, and never copy details that aren't yours.",
     sections: [
@@ -339,6 +399,75 @@ export const GUIDES: Guide[] = [
           "Upload your resume to Lettr's free ATS checker to see the exact text hiring software reads, your score and the fixes that matter. No account needed.",
         ],
       },
+      {
+        heading: "A full sample, section by section",
+        paragraphs: [
+          "Here is a complete example for a made-up person, so you can see how the pieces fit together. Every name, company and number below is invented. Use it only to copy the shape, and fill in your own facts.",
+          "Header: Asha Verma, Pune, India. 98xxxxxx00. asha.verma@example.com. linkedin.com/in/asha-verma-example.",
+        ],
+      },
+      {
+        heading: "Sample experience entry",
+        paragraphs: [
+          "Data Analyst, Brightline Retail (example company), Jun 2023 – Present",
+        ],
+        list: [
+          "Built weekly sales dashboards in Power BI for 4 regional managers, replacing a manual Excel report.",
+          "Wrote SQL queries to pull order and returns data from the company database for monthly reviews.",
+          "Cleaned and merged data from 3 sources in Python (pandas), cutting report preparation from two days to half a day.",
+          "Presented findings to the sales head every month and suggested 2 changes to discount timing.",
+        ],
+      },
+      {
+        heading: "Sample education entry",
+        paragraphs: [
+          "B.Sc. Statistics, Savitribai Phule Pune University, 2023. CGPA 8.1/10.",
+          "Keep education short once you have work experience. One or two lines is enough. A fresher can add coursework, projects and marks, but someone with a few years of experience rarely needs to.",
+        ],
+      },
+      {
+        heading: "How an ATS reads your file",
+        paragraphs: [
+          "An applicant tracking system, or ATS, does not look at your resume the way a person does. It first pulls the text out of your file and then tries to sort that text into fields such as name, job titles, dates, employers, education and skills. Recruiters then search and filter those fields.",
+          "Systems differ, and no one outside the vendor knows exactly how each one works. But the same few things cause trouble again and again, so it is safest to avoid them.",
+        ],
+        list: [
+          "Text in tables, columns or text boxes can be read in the wrong order, so a job title ends up next to the wrong company.",
+          "Headings with unusual names, such as \"My Journey\" instead of \"Experience\", may not be recognised as a section.",
+          "Text inside images, including some resume templates exported as pictures, can't be read at all.",
+          "Information in the header or footer of a Word file is sometimes skipped, so keep your contact details in the main body.",
+          "Dates written in different styles on different lines make it harder to work out how long you stayed in each role.",
+        ],
+      },
+      {
+        heading: "Match the job post without stuffing keywords",
+        paragraphs: [
+          "Recruiters often search by skills and job titles. If the job post says \"Power BI\" and your resume only says \"business intelligence tools\", a search for the first may not find you. So it helps to use the same words the post uses, where they are true for you.",
+        ],
+        list: [
+          "Read the job post and underline the tools, skills and job titles that appear more than once.",
+          "Tick off the ones you really have. Skip the rest. Do not add skills you cannot talk about in an interview.",
+          "Put those words into your summary, your skills section and your bullets, in natural sentences.",
+          "Use both the short and long form once if people use both, for example \"search engine optimisation (SEO)\".",
+          "Do not repeat a keyword again and again or hide it in white text. Recruiters see it, and many systems flag it.",
+        ],
+      },
+      {
+        heading: "Mistakes to avoid",
+        list: [
+          "Copying a sample word for word. The summary, bullets and numbers must be yours.",
+          "Using one resume for every job instead of adjusting the summary and skills for each post.",
+          "A creative layout with columns, icons and graphics. It may look good to a person but read badly to software.",
+          "Listing every tool you have ever touched. A long skills list with no proof in your bullets is not convincing.",
+          "Saving the file as a scanned image or a photo of a printout.",
+        ],
+      },
+      {
+        heading: "PDF or Word?",
+        paragraphs: [
+          "Both usually work. A PDF made from a normal document keeps your layout the same on every screen, and the text can be selected, which is what the software needs. Use Word if the job post asks for it. Whichever you pick, open the file and try to select and copy the text. If you can't, an ATS can't read it either.",
+        ],
+      },
     ],
     cta: { label: "Check my resume for free", href: "/resume-checker" },
     relatedExamples: ["data-analyst", "business-analyst", "digital-marketing-executive"],
@@ -349,7 +478,8 @@ export const GUIDES: Guide[] = [
     description:
       "A simple 15-point ATS checklist: format, keywords, contact details and file type. Run through it before every application to avoid getting filtered out.",
     published: "2026-11-09",
-    readMinutes: 5,
+    updated: "2026-11-22",
+    readMinutes: 8,
     intro:
       "Use this checklist before you send any application. Each point takes a few seconds to check, and together they catch most of the problems that make an ATS misread a resume.",
     sections: [
@@ -396,6 +526,60 @@ export const GUIDES: Guide[] = [
         heading: "Let a tool run the checks",
         paragraphs: [
           "Lettr's free ATS checker runs these checks for you. Upload your file and you'll see the plain text the software reads, a score and the fixes in order of importance.",
+        ],
+      },
+      {
+        heading: "Why each check matters",
+        paragraphs: [
+          "A checklist is only useful if you know why each item is there. Here is the short reason behind the three groups.",
+        ],
+        list: [
+          "Format checks: software reads your file as plain text. Columns, tables, icons and graphics can scramble the order or drop text.",
+          "Content checks: recruiters often search for job titles and skills. If your words do not match the job post, a search may not find you, and a person skimming will not see the match either.",
+          "Contact and file checks: if the software cannot read your email or phone number, or cannot open the file, the rest does not matter.",
+        ],
+      },
+      {
+        heading: "The 30-second copy-and-paste test",
+        ordered: true,
+        paragraphs: [
+          "This is the quickest check you can do yourself, and it needs no tool.",
+        ],
+        list: [
+          "Open your resume file.",
+          "Select all the text and copy it.",
+          "Paste it into a plain notepad.",
+          "Read what you get. Is it in the right order? Are the dates next to the right jobs? Are your phone and email there? Is anything missing?",
+        ],
+      },
+      {
+        heading: "Fixing the most common failures",
+        list: [
+          "Text comes out jumbled: your file has columns or tables. Switch to a single-column layout.",
+          "Nothing pastes at all: the file is an image or a scan. Export again from the original document as a PDF with real text.",
+          "Phone or email is missing: it was in the header or inside an icon. Move it into the main body as plain text.",
+          "Dates are out of order or mixed up: write every date the same way, for example Jun 2023 – Present, and put them on the same line as the role.",
+          "Odd symbols in place of bullets: replace fancy bullets with normal round bullets.",
+        ],
+      },
+      {
+        heading: "Tailor it for each job in about ten minutes",
+        ordered: true,
+        paragraphs: [
+          "You do not need to rewrite your resume for every application. A short pass is enough.",
+        ],
+        list: [
+          "Read the job post and note the job title, the main tools and the main duties.",
+          "Change your summary so it names the job title and your strongest matching skills.",
+          "Move the most relevant bullets to the top of each role.",
+          "Add any missing skills from the post that you genuinely have.",
+          "Run the checklist above once more, then save the file with your name in it.",
+        ],
+      },
+      {
+        heading: "A note on scores",
+        paragraphs: [
+          "ATS checkers, including Lettr's, give a score to help you spot problems. A score is a guide, not a promise. Each company's software works differently, and a human still decides who gets an interview. Use the score to fix real problems, and do not chase 100 by stuffing keywords.",
         ],
       },
     ],
