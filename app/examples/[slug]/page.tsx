@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { guidesForExample } from "@/lib/guides";
 import { notFound } from "next/navigation";
 import { PublicNav } from "@/components/PublicNav";
 import { Footer } from "@/components/Footer";
@@ -108,6 +109,20 @@ export default async function ExamplePage({ params }: { params: Promise<{ slug: 
             </div>
           </div>
         </div>
+
+        <section className="mt-16 sm:mt-20" aria-labelledby="related-guides">
+          <h2 id="related-guides" className="font-brand font-extrabold text-[24px] sm:text-[28px] tracking-tight mb-5">Guides that go with this example</h2>
+          <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {guidesForExample(e.slug).map((g) => (
+              <li key={g.slug}>
+                <Link href={`/guides/${g.slug}`} className="flex items-center justify-between gap-3 min-h-14 px-5 py-3 rounded-2xl bg-white border-2 border-rule hover:border-ink font-bold transition-colors">
+                  {g.title}
+                  <span aria-hidden="true" className="text-brand-blue">→</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
 
         {related.length > 0 && (
           <section className="mt-16 sm:mt-20">

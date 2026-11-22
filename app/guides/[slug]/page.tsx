@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MarketingPage, WRAP, BTN_BLUE, CtaBand } from "@/components/marketing/MarketingPage";
-import { GUIDES, getGuide } from "@/lib/guides";
+import { GUIDES, getGuide, readNext } from "@/lib/guides";
 import { getExample } from "@/lib/examples";
 import { SELLER } from "@/lib/company";
 import { formatDate } from "@/lib/format-date";
@@ -108,6 +108,21 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
               {g.cta.label}
             </Link>
           </div>
+
+          {readNext(g.slug).length > 0 && (
+            <nav aria-labelledby="read-next" className="mt-10">
+              <h2 id="read-next" className="font-brand font-extrabold text-[22px] tracking-tight">Read next</h2>
+              <ul className="mt-3 space-y-2">
+                {readNext(g.slug).map((n) => (
+                  <li key={n.slug}>
+                    <Link href={`/guides/${n.slug}`} className="inline-flex items-center min-h-11 font-bold text-brand-blue hover:underline">
+                      {n.title} →
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
         </div>
       </article>
 
