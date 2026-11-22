@@ -171,6 +171,9 @@ export type ResumeRow = {
   data: string; // JSON string, to keep the same shape callers already expect
   created_at: string;
   updated_at: string;
+  /** Set on a tailored version: the id of the original it was made from. */
+  parent_id?: string | null;
+  version_name?: string | null;
 };
 
 /**
@@ -246,7 +249,7 @@ export async function createUser(u: {
 export async function listResumesForUser(userId: string): Promise<ResumeRow[]> {
   await ensureSchema();
   const res = await pool.query(
-    "SELECT id, user_id, title, template, data::text as data, created_at, updated_at FROM resumes WHERE user_id = $1 ORDER BY updated_at DESC",
+    "SELECT id, user_id, title, template, data::text as data, created_at, updated_at, parent_id, version_name FROM resumes WHERE user_id = $1 ORDER BY updated_at DESC",
     [userId]
   );
   return res.rows;
@@ -255,7 +258,7 @@ export async function listResumesForUser(userId: string): Promise<ResumeRow[]> {
 export async function getResume(id: string, userId: string): Promise<ResumeRow | undefined> {
   await ensureSchema();
   const res = await pool.query(
-    "SELECT id, user_id, title, template, data::text as data, created_at, updated_at FROM resumes WHERE id = $1 AND user_id = $2",
+    "SELECT id, user_id, title, template, data::text as data, created_at, updated_at, parent_id, version_name FROM resumes WHERE id = $1 AND user_id = $2",
     [id, userId]
   );
   return res.rows[0];
@@ -272,6 +275,36 @@ export async function upsertResume(r: { id: string; userId: string; title: strin
   );
 }
 
+/**
+ * Saves a tailored version: a new resume row that points at its original. The
+ * original row is only read, never written. Returns undefined if the original
+ * is not this user's, or is itself a version (versions of versions are not allowed).
+ */
+export async function createResumeVersion(v: {
+  id: string;
+  userId: string;
+  parentId: string;
+  versionName: string;
+  data: string;
+}): Promise<{ id: string; title: string; template: string } | undefined> {
+  await ensureSchema();
+  const res = await pool.query(
+    `INSERT INTO resumes (id, user_id, title, template, data, parent_id, version_name)
+     SELECT $1, p.user_id, p.title || ' - ' || $4::text, p.template, $5::jsonb, p.id, $4
+     FROM resumes p WHERE p.id = $3 AND p.user_id = $2 AND p.parent_id IS NULL
+     RETURNING id, title, template`,
+    [v.id, v.userId, v.parentId, v.versionName, prepareResumeJsonForSave(v.data)]
+  );
+  return res.rows[0];
+}
+
+/** Names of the user's versions of one original, for numbering duplicates like "Legal assistant (2)". */
+export async function listVersionNames(parentId: string, userId: string): Promise<string[]> {
+  await ensureSchema();
+  const res = await pool.query("SELECT version_name FROM resumes WHERE parent_id = $1 AND user_id = $2", [parentId, userId]);
+  return res.rows.map((r) => r.version_name as string).filter(Boolean);
+}
+
 export async function deleteResume(id: string, userId: string) {
   await ensureSchema();
   await pool.query("DELETE FROM resumes WHERE id = $1 AND user_id = $2", [id, userId]);
@@ -279,7 +312,7 @@ export async function deleteResume(id: string, userId: string) {
 
 export async function countResumesForUser(userId: string): Promise<number> {
   await ensureSchema();
-  const res = await pool.query("SELECT COUNT(*)::int AS count FROM resumes WHERE user_id = $1", [userId]);
+  const res = await pool.query("SELECT COUNT(*)::int AS count FROM resumes WHERE user_id = $1 AND parent_id IS NULL", [userId]);
   return res.rows[0].count;
 }
 
@@ -565,7 +598,7 @@ export async function getAdminOverview(excludeEmail?: string | null): Promise<Ad
        FROM users u WHERE ${userFilter}`,
       [ex]
     ),
-    pool.query(`SELECT COUNT(*)::int AS count FROM resumes r JOIN users u ON u.id = r.user_id WHERE ${userFilter}`, [ex]),
+    pool.query(`SELECT COUNT(*)::int AS count FROM resumes r JOIN users u ON u.id = r.user_id WHERE r.parent_id IS NULL AND ${userFilter}`, [ex]),
     pool.query("SELECT COUNT(*)::int AS count FROM support_messages WHERE status = 'open'"),
     pool.query(
       `SELECT to_char(date_trunc('week', created_at), 'YYYY-MM-DD') AS week, COUNT(*)::int AS count
@@ -663,7 +696,7 @@ export async function listAllUsers(search?: string): Promise<AdminUserRow[]> {
     `SELECT u.id, u.email, u.name, u.plan, u.created_at, u.country_code, u.pricing_tier,
             (u.plan = 'pro' AND u.pro_until IS NOT NULL) AS paid_pro, u.pro_until, u.pro_plan,
             u.pdf_download_count, u.ai_writing_assist_count,
-            (SELECT COUNT(*)::int FROM resumes r WHERE r.user_id = u.id) AS resume_count,
+            (SELECT COUNT(*)::int FROM resumes r WHERE r.user_id = u.id AND r.parent_id IS NULL) AS resume_count,
             (SELECT MAX(a.created_at) FROM activity_log a WHERE a.user_id = u.id) AS last_active
      FROM users u
      WHERE ($1::text IS NULL OR u.email ILIKE '%' || $1 || '%' OR u.name ILIKE '%' || $1 || '%')
@@ -676,7 +709,7 @@ export async function listAllUsers(search?: string): Promise<AdminUserRow[]> {
 export async function getTemplatePopularity(): Promise<{ template: string; count: number }[]> {
   await ensureSchema();
   const res = await pool.query(
-    "SELECT template, COUNT(*)::int AS count FROM resumes GROUP BY template ORDER BY count DESC"
+    "SELECT template, COUNT(*)::int AS count FROM resumes WHERE parent_id IS NULL GROUP BY template ORDER BY count DESC"
   );
   return res.rows;
 }

@@ -16,7 +16,8 @@ export type AiFeature =
   | "interview_feedback"
   | "ats_analyst"
   | "fresher_bullet"
-  | "fix";
+  | "fix"
+  | "tailor";
 
 /**
  * Records one AI request. Never throws: a failed log line must not break

@@ -203,3 +203,20 @@ describe("free AI rewrite allowance", () => {
     expect(PLAN_LIMITS.free.maxAiWritingAssists).toBe(FREE_AI_REWRITES);
   });
 });
+
+import { canUseTailor } from "@/lib/limits";
+
+describe("tailor allowance", () => {
+  it("1 free for life, 3 a month on legacy free, 100 a month on Pro", () => {
+    expect(canUseTailor("free", 0).allowed).toBe(true);
+    expect(canUseTailor("free", 1).allowed).toBe(false);
+    expect(canUseTailor("free_legacy", 2).allowed).toBe(true);
+    expect(canUseTailor("free_legacy", 3).allowed).toBe(false);
+    expect(canUseTailor("pro", 99).allowed).toBe(true);
+    expect(canUseTailor("pro", 100).allowed).toBe(false);
+  });
+  it("the blocked message carries no price text", () => {
+    const r = canUseTailor("free", 1);
+    expect(r.allowed ? "" : r.reason).not.toMatch(/₹|\$\d|per month/i);
+  });
+});

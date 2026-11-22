@@ -142,3 +142,14 @@ The daily column is my proposal, copied from the pattern of the existing daily l
 - AI fix: duty bullet to a result bullet, through `polishBullet` with the new grounding check, `POST /api/ai/fix-bullet`. Limits as in the table: free 1 for life, legacy 3 a month, Pro 100 a month, daily 1 / 3 / 20.
 - UI: "Fix these" cards at the top of the Score tab (everyone sees them, including the guest builder). Before and after as labelled text, Accept, Skip, one Undo, and "Score 21 (was 20)" after a fix.
 - Left out: bullets with bold/italic marks get no fix button (shortcut comment in the code); only the last fix can be undone; no per-tip fix inside the Pro breakdown list (the cards sit above it).
+
+## Feature 2 as built (PR 3)
+- Migration `0003_resume_versions`: `resumes.parent_id` (cascade delete) and `version_name`. A version is a normal resume row; `countResumesForUser` and the admin counts leave versions out.
+- `lib/tailor.ts` (plain code): `planTailor` (gaps from the ATS keyword match, skills re-ordered only, bullets picked only if they already match the job), `applyTailorChanges` (refuses stale or skill-adding changes), `checkTailoredVersion` (server-side: a version may differ from its original only in skills order, summary and bullet text, and every reworded piece may use only names already in the person's text).
+- `tailorResume` in `lib/ai.ts`: per-bullet guarded rewrites; a bullet with no safe option is left as is and listed. The job post is data only, never a source of facts.
+- Routes: `POST /api/ai/tailor` (proposal only; free 1 for life, legacy 3 a month, Pro 100 a month, daily 1 / 3 / 10; counted before the AI runs; 3 requests per 10 minutes) and `POST /api/resumes/[id]/versions` (Pro only; max 20 per original; reads the original from the database).
+- UI: new **Tailor** tab. Picks are applied to a copy and saved as a new version, so autosave can never write them into the original. Free users get one try with the proposal, diff and gaps; "Save as new version" is Pro.
+- Hardened after review: the grounding check now catches a tool or employer that opens a sentence (e.g. "Python scripts...") and a longer list of lower-case tools and employers. Still a list, so an unknown lower-case name can slip through.
+- Left out: a dashboard grouping of versions under their original (versions show as separate resumes titled "<title> - <name>"), a delete-original confirmation that mentions its versions, and what happens to versions if someone stops being Pro.
+- Known gap: daily caps count usage after the AI call, so several requests sent at once can pass them; the free allowance is now recorded first, and the rate limit is 3 per 10 minutes.
+- Not run locally: tests that need Postgres (no database here); CI runs them.
