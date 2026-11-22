@@ -1,6 +1,7 @@
 "use client";
 
 import { MarketPicker } from "@/components/builder/MarketPicker";
+import { FresherPanel } from "@/components/builder/FresherPanel";
 import { Ordered, Sec } from "@/components/templates/Ordered";
 import { Rich } from "@/components/templates/Rich";
 import { applyLayout, layoutScale, photoShape } from "@/lib/layout";
@@ -12,7 +13,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { customItemDates, customSections, extraSections, type CustomSection, type CustomSectionItem, type ResumeCustomization, type ResumeData, type ExperienceEntry, type EducationEntry, type ProjectEntry, type CertificationEntry, type EarlierRole, type SkillGroup } from "@/lib/types";
 import { scoreResumeQuality, resumeScoreLevel } from "@/lib/resume-score";
-import type { Plan } from "@/lib/limits";
+import type { Plan, UsagePeriod } from "@/lib/limits";
 import type { Allowance, PlanAllowances } from "@/lib/free-usage";
 import { BuilderTabs, MobileViewToggle, LettrNotes, ScoreStamp, goToSection } from "@/components/builder/BuilderChrome";
 import { ScoreRing } from "@/components/ScoreRing";
@@ -703,7 +704,7 @@ export function ResumeEditor({
         <div className={`overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 ${mobileView === "preview" ? "hidden lg:block" : ""}`}>
           {openedTabs.includes("edit") && (
             <div hidden={tab !== "edit"}>
-              <EditForm data={data} setData={setData} plan={plan} rewrites={allowances?.rewrites} template={template} setTemplate={setTemplate} />
+              <EditForm data={data} setData={setData} plan={plan} rewrites={allowances?.rewrites} fresher={allowances?.fresherBullets} period={allowances?.period} template={template} setTemplate={setTemplate} />
             </div>
           )}
           {openedTabs.includes("agent") && (
@@ -813,6 +814,8 @@ export function EditForm({
   setData,
   plan,
   rewrites,
+  fresher,
+  period,
   guest = false,
   template,
   setTemplate,
@@ -821,6 +824,9 @@ export function EditForm({
   setData: React.Dispatch<React.SetStateAction<ResumeData>>;
   plan?: Plan;
   rewrites?: Allowance;
+  /** Fresher bullet drafts left. Only passed on the free plan; Pro is unlimited. */
+  fresher?: Allowance;
+  period?: UsagePeriod;
   /** For the template picker in the Design panel. */
   template?: string;
   setTemplate?: (t: string) => void;
@@ -924,6 +930,7 @@ export function EditForm({
         </div>
       )}
       <MarketPicker data={data} setData={setData} />
+      <FresherPanel data={data} setData={setData} guest={guest} allowance={fresher} period={period} />
       <ProgressChecklist data={data} />
 
       <DesignPanel data={data} setData={setData} template={template} setTemplate={setTemplate} plan={guest ? undefined : plan} />
