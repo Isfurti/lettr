@@ -780,6 +780,320 @@ export const GUIDES: Guide[] = [
     cta: { label: "Check my resume for free", href: "/resume-checker" },
     relatedExamples: ["law-graduate", "accountant", "chartered-accountant"],
   },
+  {
+    slug: "ats-resume-requirements",
+    title: "ATS resume requirements: what the software needs from your file",
+    description:
+      "The practical requirements an applicant tracking system has for your resume file, layout, headings, dates and keywords, with a short fix list if yours fails.",
+    published: "2026-11-22",
+    readMinutes: 5,
+    intro:
+      "Applicant tracking systems (ATS) are not mysterious. They need a file they can open, text they can read in order, and headings and dates they can recognise. Here is what that means in practice.",
+    sections: [
+      {
+        heading: "1. A file the software can open",
+        paragraphs: [
+          "Send a PDF or Word (.docx) file unless the job post says otherwise. Avoid image files, scans and photos of a printout. Avoid password-protected files, because the software cannot open them.",
+        ],
+        list: [
+          "Name the file clearly, for example Asha-Verma-Resume.pdf.",
+          "Open your own file and try to select the text. If you can't, the software can't read it either.",
+          "Keep the file small enough to upload without trouble.",
+        ],
+      },
+      {
+        heading: "2. A single-column layout with real text",
+        paragraphs: [
+          "Software reads text from top to bottom. Columns, tables and text boxes can mix up the order, so a job title can end up next to the wrong employer. A simple single-column layout is the safest choice.",
+        ],
+      },
+      {
+        heading: "3. Standard section headings",
+        paragraphs: [
+          "Use names the software expects, such as Summary, Experience, Education and Skills. Creative headings like \"My Journey\" or \"What I Bring\" may not be recognised as sections.",
+        ],
+      },
+      {
+        heading: "4. Contact details in the main body",
+        paragraphs: [
+          "Put your name, phone, email and city at the top of the page as plain text. Details placed only in a header, footer or icon are sometimes skipped.",
+        ],
+      },
+      {
+        heading: "5. Consistent dates",
+        paragraphs: [
+          "Write every date in the same style, for example Jun 2023 – Present, and keep it on the same line as the role. This helps the software work out how long you stayed in each job.",
+        ],
+      },
+      {
+        heading: "6. Words that match the job",
+        paragraphs: [
+          "Recruiters often search by job title and skill. Use the same words as the job post where they are true for you, in your summary, skills and bullets. Do not stuff keywords or hide them in white text.",
+        ],
+      },
+      {
+        heading: "If you are unsure",
+        paragraphs: [
+          "Do the copy-and-paste test: select all the text in your file, paste it into a notepad and read it. If it is in the right order and nothing is missing, you have met most of these requirements. Remember that each company's system is different and a person still makes the final decision.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["software-engineer", "accountant", "data-analyst"],
+  },
+  {
+    slug: "resume-for-1-2-years-experience",
+    title: "Resume for 1–2 years of experience: format and examples",
+    description:
+      "How to write a resume with one or two years of experience: what goes first, how to turn your first job into strong bullets, and what to cut from your fresher resume.",
+    published: "2026-11-22",
+    readMinutes: 6,
+    intro:
+      "With one or two years of work behind you, you are no longer a fresher, but you do not have a long career yet. Your resume should lead with your job, keep education short and show results from the work you actually did.",
+    sections: [
+      {
+        heading: "The order that works",
+        ordered: true,
+        list: [
+          "Header with contact details",
+          "Summary of two or three lines naming your role and strongest skills",
+          "Experience, with your current job first",
+          "Skills",
+          "Projects, only if they add something your job does not show",
+          "Education, kept to one or two lines",
+        ],
+      },
+      {
+        heading: "Move experience above education",
+        paragraphs: [
+          "Once you have a job, recruiters want to see it first. Keep marks and coursework only if they help for a specific role. Class 10 and 12 details are usually not needed any more.",
+        ],
+      },
+      {
+        heading: "Write a short summary",
+        paragraphs: [
+          "Name your role, your years of experience and two or three skills that match the job. For example: Data analyst with 1.5 years of experience building dashboards in Power BI and writing SQL for a retail team. This is an example of the shape, so use your own facts.",
+        ],
+      },
+      {
+        heading: "Turn duties into results",
+        paragraphs: [
+          "A duty says what you were asked to do. A result says what changed because of it. For each bullet, start with a verb, name the tool or method and add a number or scale if you honestly have one.",
+        ],
+        list: [
+          "Duty: Responsible for weekly reports.",
+          "Better: Built weekly sales reports in Excel for 4 regional managers, replacing a manual process.",
+          "If you have no number, describe the scale: how many people used it, how often, how big.",
+        ],
+      },
+      {
+        heading: "Use your internships and projects wisely",
+        paragraphs: [
+          "If your internship is your only other experience, keep it below your job in a short entry. Keep one or two projects only if they show a skill the job asks for. Drop college projects that repeat what your job already shows.",
+        ],
+      },
+      {
+        heading: "Keep it to one page",
+        paragraphs: [
+          "One page is the norm at this stage. If it spills over, cut old coursework, repeated bullets and skills you cannot talk about.",
+        ],
+      },
+      {
+        heading: "Tailor it before you apply",
+        paragraphs: [
+          "Read the job post, note the title and main tools, then adjust your summary and move the most relevant bullets to the top. A short pass is enough.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["data-analyst", "business-analyst", "software-engineer"],
+  },
+  {
+    slug: "explain-gap-or-short-job-on-resume",
+    title: "How to explain a career gap or a very short job on your resume",
+    description:
+      "Honest ways to handle a gap between jobs or a job you left after a few months: what to write on the resume, what to say in the interview, and what not to do.",
+    published: "2026-11-22",
+    readMinutes: 5,
+    intro:
+      "A gap or a very short job worries many people, but it is common and usually easy to handle. The rule is simple: be honest, keep it brief and move the reader quickly to what you can do now.",
+    sections: [
+      {
+        heading: "Never hide it by changing dates",
+        paragraphs: [
+          "Do not stretch dates or invent a role to cover a gap. Background checks and interviews often bring it out, and being caught is worse than the gap itself.",
+        ],
+      },
+      {
+        heading: "Short job: show it, keep it short",
+        paragraphs: [
+          "You can list a job you held for a few months. Give the title, company and dates, and write one or two honest bullets about what you did or learned. Do not hide it unless the job is irrelevant and the gap it leaves is small.",
+        ],
+      },
+      {
+        heading: "Gap: say what you did",
+        paragraphs: [
+          "If the gap is a few months, many people simply leave it and explain it in the interview. For a longer gap, add a short line in the resume and keep it factual.",
+        ],
+        list: [
+          "Career break, Jan 2025 – Aug 2025: family responsibilities.",
+          "Career break, 2024: full-time exam preparation.",
+          "Upskilling, Mar 2025 – Aug 2025: completed courses in SQL and Excel.",
+        ],
+      },
+      {
+        heading: "Use years instead of months if it helps",
+        paragraphs: [
+          "Writing 2023 – 2025 instead of exact months is acceptable for older roles, as long as you give exact dates when asked.",
+        ],
+      },
+      {
+        heading: "Prepare a 20-second answer",
+        paragraphs: [
+          "In the interview, give a calm, short answer: what happened, what you did in that time, and why you are ready now. Do not over-explain or blame anyone. Then bring the conversation back to the role.",
+        ],
+      },
+      {
+        heading: "What to avoid",
+        list: [
+          "Fake jobs, stretched dates or made-up freelancing",
+          "Long apologies on the resume",
+          "Criticising a former employer",
+          "Leaving a gap unexplained in an interview when asked directly",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["accountant", "sales-executive", "hr-executive"],
+  },
+  {
+    slug: "ai-engineer-resume-example",
+    title: "AI engineer resume example for 1–2 years of experience",
+    description:
+      "How to write an AI or machine learning engineer resume: what to put first, how to describe models and projects honestly, and which skills and results recruiters look for.",
+    published: "2026-11-22",
+    readMinutes: 6,
+    intro:
+      "AI and machine learning recruiters want to see what you built, with what tools, and what it achieved. A clear resume with real projects and honest results beats a long list of buzzwords.",
+    sections: [
+      {
+        heading: "What goes first",
+        paragraphs: [
+          "Lead with a short summary and your work experience. If you are early in your career, put one or two strong projects right after it. Keep education to a line or two.",
+        ],
+      },
+      {
+        heading: "Sample summary (made-up)",
+        paragraphs: [
+          "AI engineer with 1.5 years of experience building and deploying NLP models in Python. Comfortable with PyTorch, scikit-learn and REST APIs. Looking for an applied ML role. Use this only as a shape and replace every detail with your own.",
+        ],
+      },
+      {
+        heading: "Describe projects the right way",
+        paragraphs: [
+          "For each project, say the problem, the data, the method and the result. Name the tools you used, and give a number only if you measured it.",
+        ],
+        list: [
+          "Problem: classify customer support tickets by topic.",
+          "Method: fine-tuned a small transformer model on labelled tickets.",
+          "Result: improved accuracy over the earlier rule-based approach, measured on a held-out set.",
+          "Add a link to code or a demo if you can share it.",
+        ],
+      },
+      {
+        heading: "Skills to list, only if you have them",
+        list: [
+          "Languages: Python, SQL",
+          "Libraries: PyTorch or TensorFlow, scikit-learn, pandas, NumPy",
+          "Tools: Git, Docker, a cloud platform you have used",
+          "Areas: NLP, computer vision, recommendation, LLM applications",
+          "Practice: evaluation, data cleaning, deployment basics",
+        ],
+      },
+      {
+        heading: "Be honest about your role",
+        paragraphs: [
+          "Say whether you built, fine-tuned, evaluated or deployed a model. If you used a pre-trained model or an API, say so. Interviewers will ask, and honest answers build trust.",
+        ],
+      },
+      {
+        heading: "Mistakes to avoid",
+        list: [
+          "Listing every library you have opened once",
+          "Vague bullets like \"worked on machine learning\"",
+          "Results with no way to check them",
+          "Projects that are only tutorial copies without your own change",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["data-analyst", "software-engineer", "business-analyst"],
+  },
+  {
+    slug: "legal-assistant-resume-example",
+    title: "Legal assistant resume example for freshers and early-career candidates",
+    description:
+      "How to write a legal assistant resume: what to include, how to describe drafting, research and court work, and sample wording for law firms and in-house teams.",
+    published: "2026-11-22",
+    readMinutes: 5,
+    intro:
+      "Law firms and legal teams look for accuracy, drafting ability and reliability. A clear one-page resume that shows what legal work you have actually done will help you stand out.",
+    sections: [
+      {
+        heading: "What to include, in order",
+        ordered: true,
+        list: [
+          "Header with contact details and city",
+          "Short profile of two or three lines",
+          "Experience and internships, with the most recent first",
+          "Education, including your law degree and year",
+          "Skills and software",
+          "Moot courts, papers and certifications",
+        ],
+      },
+      {
+        heading: "Sample profile (made-up)",
+        paragraphs: [
+          "Law graduate with internship experience in drafting, legal research and court filing support. Comfortable with MS Word, case-law databases and client communication. Seeking a legal assistant role at a law firm. Use this as a shape and change every detail to match your own experience.",
+        ],
+      },
+      {
+        heading: "Describe legal work in plain terms",
+        paragraphs: [
+          "Say what you drafted, researched or supported, and what it was used for. Do not share confidential client details.",
+        ],
+        list: [
+          "Drafted first versions of notices and agreements for review by the supervising advocate.",
+          "Researched case law on a given issue and prepared a short note for the team.",
+          "Maintained the case diary and tracked hearing dates for active matters.",
+        ],
+      },
+      {
+        heading: "Skills that fit the role",
+        list: [
+          "Legal drafting and proofreading",
+          "Legal research on case-law databases you have used",
+          "MS Word and Excel",
+          "Document filing and record keeping",
+          "English and Hindi, or the regional languages you work in",
+        ],
+      },
+      {
+        heading: "Moot courts, papers and certificates",
+        paragraphs: [
+          "List the competitions and papers with your role and the year. If you were published or ranked, say so only if it is true and can be checked.",
+        ],
+      },
+      {
+        heading: "Keep it accurate and short",
+        paragraphs: [
+          "Legal employers notice mistakes. Check names, dates and spellings, and keep the resume to one page.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["law-graduate", "accountant", "chartered-accountant"],
+  },
 ];
 
 export function getGuide(slug: string) {
