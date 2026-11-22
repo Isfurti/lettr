@@ -133,3 +133,12 @@ The daily column is my proposal, copied from the pattern of the existing daily l
 - Left out: the new-resume entry. `/builder/new` redirects straight into the builder for signed-in users, so there is no screen to put a choice on; the panel sits at the top of the builder instead. A `?path=fresher` shortcut was not built.
 - Known limit: the grounding check does not look at lowercase tool names (see the `shortcut:` comment).
 - Not run locally: the 25 test files that need Postgres (no database here); CI runs them.
+
+## Feature 1 as built (PR 2)
+- `lib/resume-checks.ts`: each finding now also carries structured `detail` (tool pairs, spelling words, every place a repeated figure sits, duty-bullet positions, the years span). Messages, scores and existing tests are unchanged (41 existing score and check tests pass untouched).
+- `lib/resume-fixes.ts`: a fix is a list of exact text edits (place + before + after). `applyEdits` and `undoEdits` refuse if any place no longer holds the expected text, and change nothing if one edit fails.
+- Free, rule-based (no AI, no limit): tool-name spelling and casing, US/UK spelling (only listed lowercase words), remove photo / date of birth / nationality for US and UK, repeated figure (you pick where it stays; the other gets a [X] blank).
+- **Changed from the brief, tell me if wrong:** the "years wording" fix is rule-based, not AI. It only swaps the number for what the dates add up to (and is not offered when that is under 2 years, to avoid "1 years"). It needs no AI and cannot invent anything.
+- AI fix: duty bullet to a result bullet, through `polishBullet` with the new grounding check, `POST /api/ai/fix-bullet`. Limits as in the table: free 1 for life, legacy 3 a month, Pro 100 a month, daily 1 / 3 / 20.
+- UI: "Fix these" cards at the top of the Score tab (everyone sees them, including the guest builder). Before and after as labelled text, Accept, Skip, one Undo, and "Score 21 (was 20)" after a fix.
+- Left out: bullets with bold/italic marks get no fix button (shortcut comment in the code); only the last fix can be undone; no per-tip fix inside the Pro breakdown list (the cards sit above it).

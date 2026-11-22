@@ -13,6 +13,7 @@ const TRACKED: Record<DailyFeature, string[]> = {
   interview_feedback: ["interview_feedback"],
   import: ["import"],
   fresher_bullet: ["fresher_bullet"],
+  fix: ["fix"],
 };
 
 /** The daily fair-use check for one AI request. Call it just before the AI runs. */

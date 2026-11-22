@@ -210,7 +210,7 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
             </div>
           )}
           {tab === "edit" && <EditForm data={data} setData={setData} guest template={template} setTemplate={setTemplate} />}
-          {tab === "score" && <ScorePanel data={data} plan="free" />}
+          {tab === "score" && <ScorePanel data={data} plan="free" setData={setData} guest />}
           {tab === "match" && (
             <AtsPanel
               data={data}

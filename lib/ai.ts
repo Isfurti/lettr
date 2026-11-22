@@ -91,6 +91,8 @@ export async function polishBullet(params: {
   role: string;
   targetJobDescription?: string;
   market?: Market;
+  /** Also drop options that name a tool or name the person never gave (lib/ai-grounding.ts). */
+  grounded?: boolean;
 }): Promise<AiResult<string[]>> {
   params = { ...params, roughBullet: stripRich(params.roughBullet) };
   const prompt = `You are an expert resume writer. Rewrite the rough work point below into 3 distinct
@@ -120,7 +122,7 @@ Respond ONLY with a JSON array of exactly 3 strings, no preamble, no markdown fe
 
   // Only the person's own words count as facts - not the job post.
   const source = `${params.roughBullet}\n${params.role}`;
-  const { options, usage } = await honestOptions(prompt, 500, source);
+  const { options, usage } = await honestOptions(prompt, 500, source, [], params.grounded ?? false);
   return { value: options, model: MODEL_FAST, usage };
 }
 
