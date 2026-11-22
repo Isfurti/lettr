@@ -93,6 +93,7 @@ export type ResumeCustomization = {
   dateStyle?: "short" | "long" | "numeric" | "year"; // how dates print - defaults to "Jan 2024"
   photoShape?: "circle" | "rounded" | "square";
   market?: "IN" | "US" | "UK" | "EU" | "GULF"; // "Applying in" - tunes AI and ATS advice (see lib/market.ts)
+  fresher?: boolean; // "little or no experience" path is on (see lib/fresher.ts)
 };
 
 export type ResumeData = {

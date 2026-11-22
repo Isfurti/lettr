@@ -34,6 +34,8 @@ type Limits = {
   interviewSets: number;
   interviewFeedback: number;
   atsAnalyst: number;
+  /** Fresher bullet drafts (guided prompts for students and first jobs). Free: for life. */
+  fresherBullets: number;
   /** Missing keywords shown from a job post; the rest are blurred. */
   keywordsShown: number;
   trackedJobs: number;
@@ -53,6 +55,7 @@ export const PLAN_LIMITS: Record<LimitTier, Limits> = {
     interviewSets: 1,
     interviewFeedback: 6, // the 6 questions in that one set
     atsAnalyst: 1,
+    fresherBullets: 3,
     keywordsShown: 3,
     trackedJobs: 10,
     resignationLetterBuilder: false,
@@ -69,6 +72,7 @@ export const PLAN_LIMITS: Record<LimitTier, Limits> = {
     interviewSets: 2,
     interviewFeedback: 15,
     atsAnalyst: 3,
+    fresherBullets: 5,
     keywordsShown: Infinity,
     trackedJobs: Infinity,
     resignationLetterBuilder: false,
@@ -86,6 +90,7 @@ export const PLAN_LIMITS: Record<LimitTier, Limits> = {
     interviewSets: 40,
     interviewFeedback: 300,
     atsAnalyst: 100,
+    fresherBullets: Infinity,
     keywordsShown: Infinity,
     trackedJobs: Infinity,
     resignationLetterBuilder: true,
@@ -235,6 +240,20 @@ export function canUseAtsAnalyst(tier: LimitTier, used: number, now = new Date()
   };
 }
 
+/** Fresher bullet drafts: 3 for life on the free plan, 5 a month on legacy free, unlimited on Pro (the daily fair-use cap still applies). */
+export function canUseFresherBullets(tier: LimitTier, used: number, now = new Date()): LimitCheck & { limit: number } {
+  const limit = PLAN_LIMITS[tier].fresherBullets;
+  if (used < limit) return { allowed: true, limit };
+  return {
+    allowed: false,
+    limit,
+    reason:
+      tier === "free"
+        ? "You've used your free bullet drafts. Upgrade to Pro to keep going."
+        : `You've used this month's ${limit} bullet drafts on the free plan. ${moreLine(tier, now)}`,
+  };
+}
+
 export function canTrackJob(tier: LimitTier, tracked: number): LimitCheck {
   const limit = PLAN_LIMITS[tier].trackedJobs;
   if (tracked < limit) return { allowed: true };
@@ -258,7 +277,8 @@ export type DailyFeature =
   | "ats_analyst"
   | "interview"
   | "interview_feedback"
-  | "import";
+  | "import"
+  | "fresher_bullet";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
@@ -280,6 +300,7 @@ export const DAILY_FEATURE_LABELS: Record<DailyFeature, string> = {
   interview: "practice interviews",
   interview_feedback: "answer reviews",
   import: "resume imports",
+  fresher_bullet: "bullet drafts",
 };
 
 export const DAILY_LIMITS: Record<LimitTier, Record<DailyFeature, number> & { total: number }> = {
@@ -292,6 +313,7 @@ export const DAILY_LIMITS: Record<LimitTier, Record<DailyFeature, number> & { to
     interview: 1,
     interview_feedback: 6,
     import: 3,
+    fresher_bullet: 3,
     total: 15,
   },
   free_legacy: {
@@ -303,6 +325,7 @@ export const DAILY_LIMITS: Record<LimitTier, Record<DailyFeature, number> & { to
     interview: 2,
     interview_feedback: 15,
     import: 3,
+    fresher_bullet: 5,
     total: 25,
   },
   pro: {
@@ -314,6 +337,7 @@ export const DAILY_LIMITS: Record<LimitTier, Record<DailyFeature, number> & { to
     interview: 5,
     interview_feedback: 40,
     import: 10,
+    fresher_bullet: 60,
     total: 150,
   },
 };

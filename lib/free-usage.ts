@@ -49,7 +49,7 @@ export async function usageContext(user: {
 }
 
 /** Features counted once per person on the free plan. */
-export type FreeFeature = "cover_letter" | "ats_analyst" | "interview" | "interview_feedback" | "rewrite" | "pdf_clean";
+export type FreeFeature = "cover_letter" | "ats_analyst" | "interview" | "interview_feedback" | "rewrite" | "pdf_clean" | "fresher_bullet";
 
 /** Uses so far: for life on the free plan, this month otherwise. */
 export async function usedSoFar(ctx: UsageContext, feature: Exclude<FreeFeature, "rewrite" | "pdf_clean">): Promise<number> {
@@ -83,6 +83,7 @@ export type PlanAllowances = {
   rewrites: Allowance;
   coverLetters: Allowance;
   atsAnalyst: Allowance;
+  fresherBullets: Allowance;
   interviewSets: Allowance;
   cleanPdfs: Allowance;
   keywordsShown: number;
@@ -99,12 +100,13 @@ export async function planAllowances(user: {
 }): Promise<PlanAllowances> {
   const ctx = await usageContext(user);
   const L = PLAN_LIMITS[ctx.tier];
-  const [rewrites, coverLetters, atsAnalyst, interviewSets, cleanPdfs] = await Promise.all([
+  const [rewrites, coverLetters, atsAnalyst, interviewSets, cleanPdfs, fresherBullets] = await Promise.all([
     rewritesUsed(ctx, user.ai_writing_assist_count ?? 0),
     usedSoFar(ctx, "cover_letter"),
     usedSoFar(ctx, "ats_analyst"),
     usedSoFar(ctx, "interview"),
     cleanPdfsUsed(ctx, user.pdf_download_count ?? 0),
+    usedSoFar(ctx, "fresher_bullet"),
   ]);
   return {
     tier: ctx.tier,
@@ -112,6 +114,7 @@ export async function planAllowances(user: {
     rewrites: { used: rewrites, limit: L.maxAiWritingAssists },
     coverLetters: { used: coverLetters, limit: L.coverLetters },
     atsAnalyst: { used: atsAnalyst, limit: L.atsAnalyst },
+    fresherBullets: { used: fresherBullets, limit: L.fresherBullets },
     interviewSets: { used: interviewSets, limit: L.interviewSets },
     cleanPdfs: { used: cleanPdfs, limit: L.cleanPdfDownloads },
     keywordsShown: L.keywordsShown,
