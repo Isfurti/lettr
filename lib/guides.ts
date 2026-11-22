@@ -782,11 +782,11 @@ export const GUIDES: Guide[] = [
   },
   {
     slug: "ats-resume-requirements",
-    title: "ATS resume requirements: what the software needs from your file",
+    title: "ATS resume requirements: what is required and what is a myth",
     description:
       "The practical requirements an applicant tracking system has for your resume file, layout, headings, dates and keywords, with a short fix list if yours fails.",
     published: "2026-11-22",
-    readMinutes: 5,
+    readMinutes: 3,
     intro:
       "Applicant tracking systems (ATS) are not mysterious. They need a file they can open, text they can read in order, and headings and dates they can recognise. Here is what that means in practice.",
     sections: [
@@ -837,6 +837,15 @@ export const GUIDES: Guide[] = [
           "Do the copy-and-paste test: select all the text in your file, paste it into a notepad and read it. If it is in the right order and nothing is missing, you have met most of these requirements. Remember that each company's system is different and a person still makes the final decision.",
         ],
       },
+      {
+        heading: "Common myths",
+        list: [
+          "Myth: you need a score of 100. A score is a guide to spot problems, not a pass mark every company uses.",
+          "Myth: a plain resume is a bad resume. A simple layout is easier for software and for people to read.",
+          "Myth: more keywords always help. Keywords that are not backed up by your experience hurt you in the interview.",
+          "Myth: a PDF always fails. A PDF with real, selectable text is normally fine.",
+        ],
+      },
     ],
     cta: { label: "Check my resume for free", href: "/resume-checker" },
     relatedExamples: ["software-engineer", "accountant", "data-analyst"],
@@ -847,7 +856,7 @@ export const GUIDES: Guide[] = [
     description:
       "How to write a resume with one or two years of experience: what goes first, how to turn your first job into strong bullets, and what to cut from your fresher resume.",
     published: "2026-11-22",
-    readMinutes: 6,
+    readMinutes: 3,
     intro:
       "With one or two years of work behind you, you are no longer a fresher, but you do not have a long career yet. Your resume should lead with your job, keep education short and show results from the work you actually did.",
     sections: [
@@ -866,7 +875,7 @@ export const GUIDES: Guide[] = [
       {
         heading: "Move experience above education",
         paragraphs: [
-          "Once you have a job, recruiters want to see it first. Keep marks and coursework only if they help for a specific role. Class 10 and 12 details are usually not needed any more.",
+          "Once you have a job, recruiters want to see it first. Keep marks and coursework only if they help for a specific role. Class 10 and 12 details are usually not needed on the resume any more, but some employers still ask for them on application forms, so keep them handy.",
         ],
       },
       {
@@ -914,7 +923,7 @@ export const GUIDES: Guide[] = [
     description:
       "Honest ways to handle a gap between jobs or a job you left after a few months: what to write on the resume, what to say in the interview, and what not to do.",
     published: "2026-11-22",
-    readMinutes: 5,
+    readMinutes: 3,
     intro:
       "A gap or a very short job worries many people, but it is common and usually easy to handle. The rule is simple: be honest, keep it brief and move the reader quickly to what you can do now.",
     sections: [
@@ -927,7 +936,7 @@ export const GUIDES: Guide[] = [
       {
         heading: "Short job: show it, keep it short",
         paragraphs: [
-          "You can list a job you held for a few months. Give the title, company and dates, and write one or two honest bullets about what you did or learned. Do not hide it unless the job is irrelevant and the gap it leaves is small.",
+          "You can list a job you held for a few months. Give the title, company and dates, and write one or two honest bullets about what you did or learned. Be careful about leaving it off. Past jobs often show up anyway in background checks and EPF service history, and application forms that ask for your full work history must be answered in full.",
         ],
       },
       {
@@ -939,12 +948,6 @@ export const GUIDES: Guide[] = [
           "Career break, Jan 2025 – Aug 2025: family responsibilities.",
           "Career break, 2024: full-time exam preparation.",
           "Upskilling, Mar 2025 – Aug 2025: completed courses in SQL and Excel.",
-        ],
-      },
-      {
-        heading: "Use years instead of months if it helps",
-        paragraphs: [
-          "Writing 2023 – 2025 instead of exact months is acceptable for older roles, as long as you give exact dates when asked.",
         ],
       },
       {
@@ -964,15 +967,15 @@ export const GUIDES: Guide[] = [
       },
     ],
     cta: { label: "Check my resume for free", href: "/resume-checker" },
-    relatedExamples: ["accountant", "sales-executive", "hr-executive"],
+    relatedExamples: ["returning-after-career-break"],
   },
   {
     slug: "ai-engineer-resume-example",
-    title: "AI engineer resume example for 1–2 years of experience",
+    title: "AI engineer resume: what to include, with a sample outline",
     description:
       "How to write an AI or machine learning engineer resume: what to put first, how to describe models and projects honestly, and which skills and results recruiters look for.",
     published: "2026-11-22",
-    readMinutes: 6,
+    readMinutes: 3,
     intro:
       "AI and machine learning recruiters want to see what you built, with what tools, and what it achieved. A clear resume with real projects and honest results beats a long list of buzzwords.",
     sections: [
@@ -1031,11 +1034,11 @@ export const GUIDES: Guide[] = [
   },
   {
     slug: "legal-assistant-resume-example",
-    title: "Legal assistant resume example for freshers and early-career candidates",
+    title: "Legal assistant resume: what to include for freshers and early-career candidates",
     description:
       "How to write a legal assistant resume: what to include, how to describe drafting, research and court work, and sample wording for law firms and in-house teams.",
     published: "2026-11-22",
-    readMinutes: 5,
+    readMinutes: 3,
     intro:
       "Law firms and legal teams look for accuracy, drafting ability and reliability. A clear one-page resume that shows what legal work you have actually done will help you stand out.",
     sections: [
@@ -1054,7 +1057,7 @@ export const GUIDES: Guide[] = [
       {
         heading: "Sample profile (made-up)",
         paragraphs: [
-          "Law graduate with internship experience in drafting, legal research and court filing support. Comfortable with MS Word, case-law databases and client communication. Seeking a legal assistant role at a law firm. Use this as a shape and change every detail to match your own experience.",
+          "Law graduate (or diploma holder) with internship experience in drafting, legal research and court filing support. Comfortable with MS Word, case-law databases and client communication. Seeking a legal assistant role at a law firm. Use this as a shape and change every detail to match your own experience.",
         ],
       },
       {
@@ -1092,7 +1095,7 @@ export const GUIDES: Guide[] = [
       },
     ],
     cta: { label: "Check my resume for free", href: "/resume-checker" },
-    relatedExamples: ["law-graduate", "accountant", "chartered-accountant"],
+    relatedExamples: ["law-graduate"],
   },
 ];
 
