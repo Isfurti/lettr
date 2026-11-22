@@ -8,7 +8,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = siteUrl();
   // Only pages with a real date get one. A made-up "changed now" on every page
   // teaches Google to ignore the date, so the rest leave it out.
-  const latestGuide = new Date(Math.max(...GUIDES.map((g) => new Date(g.updated ?? g.published).getTime())));
+  const guideTimes = GUIDES.map((g) => new Date(g.updated ?? g.published).getTime());
+  const latestGuide = guideTimes.length ? new Date(Math.max(...guideTimes)) : undefined;
 
   return [
     { url: `${baseUrl}/`, changeFrequency: "weekly", priority: 1 },
