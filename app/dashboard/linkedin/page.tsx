@@ -11,7 +11,7 @@ import { formatProDate } from "@/lib/pro-pass";
 import { LinkedInOptimizer } from "@/components/linkedin/LinkedInOptimizer";
 import { linkedinFromResume } from "@/lib/linkedin";
 import { parseStoredResume } from "@/lib/resume-version";
-import { marketOf } from "@/lib/market";
+import { marketFromCountry, marketOf } from "@/lib/market";
 
 export const metadata: Metadata = { title: "LinkedIn profile | Lettr", robots: { index: false } };
 
@@ -36,7 +36,7 @@ export default async function LinkedInPage() {
         <LinkedInOptimizer
           resumes={originals.map((r) => ({ id: r.id, title: displayTitle(r), sections: linkedinFromResume(r.data) }))}
           defaultRole={first?.experience[0]?.role?.trim() ?? ""}
-          defaultMarket={(first && marketOf(first.customization)) || "IN"}
+          defaultMarket={(first && marketOf(first.customization)) || marketFromCountry(user?.country_code) || "IN"}
           allowance={{ used, limit: Number.isFinite(limit) ? limit : null, tier: ctx.tier }}
         />
       </main>
