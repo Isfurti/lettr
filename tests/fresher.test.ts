@@ -57,6 +57,14 @@ describe("ungroundedTerms", () => {
   it("catches acronyms, symbols and digit names", () => {
     expect(ungroundedTerms("Wrote C++ services on AWS EC2 with Node.js", source).sort()).toEqual(["AWS", "C++", "EC2", "Node.js"].sort());
   });
+  it("checks a name after a colon or as the first word, and lower-case tools", () => {
+    expect(ungroundedTerms("Built a site: Vue frontend", source)).toEqual(["Vue"]);
+    expect(ungroundedTerms("AWS hosted the app", source)).toEqual(["AWS"]);
+    expect(ungroundedTerms("Analysed data with pandas and jQuery", source).sort()).toEqual(["jQuery", "pandas"]);
+  });
+  it("does not flag months", () => {
+    expect(ungroundedTerms("Finished in March with React", source)).toEqual([]);
+  });
   it("ignores the opening word and [X] blanks", () => {
     expect(ungroundedTerms("Designed a booking app used by [X] students", source)).toEqual([]);
   });

@@ -58,7 +58,8 @@ export async function POST(req: Request) {
   try {
     const { value: options, model, usage } = await draftFresherBullets({ answers, market });
     await trackAiUsage({ userId, feature: "fresher_bullet", model, usage });
-    await recordUse(ctx, "fresher_bullet");
+    // A failed free-use record must not cost the person the options they were just given.
+    await recordUse(ctx, "fresher_bullet").catch((e) => Sentry.captureException(e));
     return NextResponse.json({ options });
   } catch (err) {
     Sentry.captureException(err);

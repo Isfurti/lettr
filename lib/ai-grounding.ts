@@ -8,9 +8,9 @@
  * sentence, an ALL-CAPS acronym, or written with + # . or digits (C++, Node.js,
  * EC2). A checked word must appear somewhere in the source text.
  *
- * shortcut: lowercase tool names ("python" typed in lower case) are not
- * checked, and a sentence's first word is never checked. Upgrade to a tool
- * list lookup if real output slips through.
+ * shortcut: lowercase tools are checked only against the short LOWER_TOOLS
+ * list, and a plain capitalised opening word is never checked. Grow the list
+ * if real output slips through.
  */
 
 const WORD = /[A-Za-z][A-Za-z0-9+#.\-']*/g;
@@ -19,7 +19,15 @@ function clean(token: string): string {
   return token.replace(/['’]s$/i, "").replace(/[.\-']+$/, "");
 }
 
+/** Tools people write in lower case; checked when they appear in output but not in the source. */
+const LOWER_TOOLS = new Set(["python", "java", "javascript", "typescript", "sql", "excel", "react", "node", "docker", "kubernetes", "aws", "git", "github", "npm", "pandas", "numpy", "figma", "photoshop", "tableau", "flutter", "django", "flask", "mysql", "mongodb", "firebase", "linux", "html", "css", "php", "ruby", "swift", "kotlin", "golang", "rust"]);
+/** Capitalised words that are not names. */
+const NOT_NAMES = new Set(["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]);
+
 function looksLikeName(token: string): boolean {
+  if (LOWER_TOOLS.has(token.toLowerCase())) return true;
+  if (NOT_NAMES.has(token.toLowerCase())) return false;
+  if (/^[a-z]+[A-Z]/.test(token)) return true; // iOS, jQuery, macOS
   if (/^[A-Z]{2,}$/.test(token)) return true; // SQL, CGPA
   if (/[+#]/.test(token) || /[A-Za-z]\.[A-Za-z]/.test(token)) return true; // C++, C#, Node.js
   if (/[A-Za-z]/.test(token) && /\d/.test(token)) return true; // EC2, B2B
@@ -42,13 +50,13 @@ export function ungroundedTerms(output: string, source: string): string[] {
   const known = sourceWords(source);
   const found: string[] = [];
   const text = output.replace(/\[[^\]]*\]/g, " "); // [X] blanks are never names
-  for (const sentence of text.split(/(?<=[.!?:])\s+/)) {
+  for (const sentence of text.split(/(?<=[.!?])\s+/)) {
     let first = true;
     for (const m of sentence.matchAll(WORD)) {
       const raw = m[0];
       if (first) {
         first = false;
-        continue; // the opening word is capitalised whatever it is
+        if (/^[A-Z][a-z]+$/.test(raw)) continue; // a plain opening verb is capitalised whatever it is; "AWS" or "Python" is not
       }
       const token = clean(raw);
       if (token.length < 2 || !looksLikeName(token)) continue;

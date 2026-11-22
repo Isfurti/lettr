@@ -47,7 +47,8 @@ export const FRESHER_LIMITS = { name: 120, what: 400, tools: 200, result: 200 } 
 
 /** Everything the person typed: the only facts the draft may use. */
 export function fresherSource(a: FresherAnswers): string {
-  return [a.name, a.what, a.tools, a.result].map((s) => s.trim()).filter(Boolean).join("\n");
+  const label = FRESHER_KINDS.find((k) => k.id === a.kind)?.label ?? "";
+  return [label, a.name, a.what, a.tools, a.result].map((s) => s.trim()).filter(Boolean).join("\n");
 }
 
 /** What is missing before a draft can be asked for, or null when ready. */

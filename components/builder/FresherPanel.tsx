@@ -24,6 +24,7 @@ const FIELD =
 const BTN =
   "inline-flex items-center justify-center min-h-11 px-4 rounded-full text-sm font-bold disabled:opacity-60";
 
+type AddedField = "projects" | "achievements" | "customSections";
 const EMPTY: FresherAnswers = { kind: "project", name: "", what: "", tools: "", result: "" };
 
 /** "Little or no experience" path: layout switch, short guidance and guided bullet drafting. Every change is shown first and can be undone. */
@@ -42,8 +43,10 @@ export function FresherPanel({
 }) {
   const on = isFresher(data.customization);
   const market = marketOf(data.customization);
-  const [undoLayout, setUndoLayout] = useState<ResumeData["customization"] | null>(null);
-  const [undoAdd, setUndoAdd] = useState<ResumeData | null>(null);
+  // Undo restores only what this panel changed, never other edits made since.
+  const [undoLayout, setUndoLayout] = useState<{ sectionOrder?: string[]; fresher?: boolean } | null>(null);
+  const [undoAdd, setUndoAdd] = useState<{ field: AddedField; before: ResumeData[AddedField]; after: ResumeData[AddedField] } | null>(null);
+  const [drafted, setDrafted] = useState(0);
   const [answers, setAnswers] = useState<FresherAnswers>(EMPTY);
   const [options, setOptions] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -60,14 +63,14 @@ export function FresherPanel({
   };
 
   function turnOn() {
-    setUndoLayout(data.customization ?? {});
+    setUndoLayout({ sectionOrder: data.customization?.sectionOrder, fresher: data.customization?.fresher });
     setData((d) => ({ ...d, customization: applyFresherPath(d.customization) }));
     setNote("Fresher layout is on: Education, Projects, Skills and Achievements now come before Experience.");
   }
   function undoTurnOn() {
     if (!undoLayout) return;
     const back = undoLayout;
-    setData((d) => ({ ...d, customization: back }));
+    setData((d) => ({ ...d, customization: { ...d.customization, sectionOrder: back.sectionOrder, fresher: back.fresher } }));
     setUndoLayout(null);
     setNote("Back to your earlier layout.");
   }
@@ -77,6 +80,7 @@ export function FresherPanel({
       delete c.fresher;
       return { ...d, customization: c };
     });
+    setUndoLayout(null);
     setNote("Fresher layout is off. Your section order is unchanged; change it in Design.");
   }
 
@@ -99,7 +103,10 @@ export function FresherPanel({
         setError(body.error ?? "Couldn't draft a bullet. Please try again.");
         return;
       }
-      setOptions(Array.isArray(body.options) ? body.options : []);
+      const got: string[] = Array.isArray(body.options) ? body.options : [];
+      setOptions(got);
+      setDrafted((n) => n + 1);
+      setNote(`${got.length} draft${got.length === 1 ? "" : "s"} ready below.`);
     } catch {
       setError("Couldn't reach the server. Check your connection and try again.");
     } finally {
@@ -108,8 +115,10 @@ export function FresherPanel({
   }
 
   function use(bullet: string) {
-    setUndoAdd(data);
-    setData((d) => addFresherItem(d, answers, bullet, () => crypto.randomUUID()));
+    const next = addFresherItem(data, answers, bullet, () => crypto.randomUUID());
+    const field: AddedField = kind.id === "competition" ? "achievements" : kind.id === "club" ? "customSections" : "projects";
+    setUndoAdd({ field, before: data[field], after: next[field] });
+    setData((d) => ({ ...d, [field]: next[field] }));
     setNote(`Added to ${kind.where}. You can edit it there.`);
     setOptions([]);
     setAnswers({ ...EMPTY, kind: answers.kind });
@@ -117,12 +126,17 @@ export function FresherPanel({
   function undoLastAdd() {
     if (!undoAdd) return;
     const back = undoAdd;
-    setData(() => back);
+    // Only if that section is still exactly as we left it; otherwise the person has edited it since.
+    if (data[back.field] !== back.after) {
+      setUndoAdd(null);
+      return setNote("That section has changed since, so remove the bullet there instead.");
+    }
+    setData((d) => ({ ...d, [back.field]: back.before }));
     setUndoAdd(null);
     setNote("Removed what you just added.");
   }
 
-  const left = allowance && Number.isFinite(allowance.limit) ? Math.max(0, allowance.limit - allowance.used) : null;
+  const left = allowance && Number.isFinite(allowance.limit) ? Math.max(0, allowance.limit - allowance.used - drafted) : null;
 
   return (
     <section aria-label="Little or no experience" className="bg-white border-2 border-rule rounded-2xl p-4 space-y-3">
@@ -144,24 +158,28 @@ export function FresherPanel({
         </p>
       )}
 
-      <div aria-live="polite" className="text-sm font-bold text-ink">
-        {note}{" "}
-        {undoLayout && (
-          <button type="button" onClick={undoTurnOn} className="underline text-brand-blue">
-            Undo layout
-          </button>
-        )}
-        {undoAdd && (
-          <button type="button" onClick={undoLastAdd} className="underline text-brand-blue">
-            Undo add
-          </button>
-        )}
-      </div>
+      <p aria-live="polite" className="text-sm font-bold text-ink empty:hidden">
+        {note}
+      </p>
+      {(undoLayout || undoAdd) && (
+        <div className="flex flex-wrap gap-2">
+          {undoLayout && (
+            <button type="button" onClick={undoTurnOn} className={`${BTN} border-2 border-rule bg-white text-brand-blue hover:border-ink`}>
+              Undo layout
+            </button>
+          )}
+          {undoAdd && (
+            <button type="button" onClick={undoLastAdd} className={`${BTN} border-2 border-rule bg-white text-brand-blue hover:border-ink`}>
+              Undo add
+            </button>
+          )}
+        </div>
+      )}
 
       {on && (
         <>
           <details className="rounded-xl bg-cream border border-rule p-3">
-            <summary className="cursor-pointer min-h-8 text-sm font-bold text-ink">What to include and leave out</summary>
+            <summary className="cursor-pointer min-h-11 flex items-center text-sm font-bold text-ink">What to include and leave out</summary>
             <ul className="mt-2 space-y-2 text-sm text-ink">
               {fresherGuidance(market).map((t) => (
                 <li key={t.title}>
@@ -240,7 +258,7 @@ export function FresherPanel({
           )}
 
           {options.length > 0 && (
-            <div className="space-y-2" aria-label="Draft options">
+            <div role="group" className="space-y-2" aria-label="Draft options">
               <p className="text-sm font-bold text-ink">Pick one to add, or change the answers above and draft again.</p>
               <ul className="space-y-2">
                 {options.map((o) => (
