@@ -256,7 +256,7 @@ export default async function DashboardPage({
           </div>
         )}
 
-        <div className="grid sm:grid-cols-2 gap-5 mb-12">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
           <Link href="/dashboard/applications" className="group bg-white border-2 border-rule hover:border-ink rounded-[28px] p-6 flex flex-col">
             <p className="font-extrabold">Applications</p>
             <p className="mt-2 text-slate flex-1">
@@ -272,6 +272,11 @@ export default async function DashboardPage({
             <p className="font-extrabold">Interview practice</p>
             <p className="mt-2 text-slate flex-1">Answer real questions for your role, out loud or typed, and get honest feedback on each answer.</p>
             <span className="mt-3 font-bold text-brand-blue group-hover:underline">Practise now →</span>
+          </Link>
+          <Link href="/dashboard/linkedin" className="group bg-white border-2 border-rule hover:border-ink rounded-[28px] p-6 flex flex-col">
+            <p className="font-extrabold">LinkedIn profile</p>
+            <p className="mt-2 text-slate flex-1">Score your profile for free, then get a stronger headline, About and experience from your own words.</p>
+            <span className="mt-3 font-bold text-brand-blue group-hover:underline">Improve my profile →</span>
           </Link>
         </div>
 
