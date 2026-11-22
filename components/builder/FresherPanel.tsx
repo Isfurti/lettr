@@ -234,12 +234,12 @@ export function FresherPanel({
               </p>
             ) : (
               <div className="flex flex-wrap items-center gap-3">
-                <button type="button" onClick={draft} disabled={busy} className={`${BTN} bg-brand-blue text-white`}>
+                <button type="button" onClick={draft} disabled={busy || allowance?.limit === 0} className={`${BTN} bg-brand-blue text-white`}>
                   {busy ? "Drafting…" : "Draft a bullet"}
                 </button>
                 {allowance && (
                   <span className="text-sm text-ink-soft">
-                    {left === null ? "Unlimited drafts" : `${left} ${period === "month" ? "left this month" : "free left"}`}
+                    {allowance.limit === 0 ? "Pro feature" : left === null ? "Unlimited drafts" : `${left} ${period === "month" ? "left this month" : "free left"}`}
                   </span>
                 )}
               </div>

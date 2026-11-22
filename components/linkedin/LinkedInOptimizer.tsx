@@ -204,8 +204,8 @@ export function LinkedInOptimizer({
           <button type="button" onClick={run} disabled={busy || !hasText || role.trim().length < 2 || left === 0} className={`${BTN} bg-ink text-white`}>
             {busy ? "Writing..." : "Rewrite my profile"}
           </button>
-          {left !== null && <span className="text-sm text-slate">{left === 0 ? "No tries left" : `${left} ${allowance.tier === "free" ? "free try left" : "left this month"}`}</span>}
-          {left === 0 && <Link href="/pricing" className="text-sm font-bold underline text-brand-blue">See Pro</Link>}
+          {left !== null && <span className="text-sm text-slate">{allowance.limit === 0 ? "Pro feature" : left === 0 ? "No tries left" : `${left} ${allowance.tier === "free" ? "free try left" : "left this month"}`}</span>}
+          {(left === 0 || allowance.limit === 0) && <Link href="/pricing" className="text-sm font-bold underline text-brand-blue">See Pro</Link>}
           {role.trim().length < 2 && <span className="text-sm text-slate">Add a target role.</span>}
         </div>
         {error && (

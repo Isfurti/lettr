@@ -207,12 +207,12 @@ describe("never changes silently, always can undo", () => {
 });
 
 describe("AI fix limits (owner table, 2026-11-22)", () => {
-  it("free 1 for life, legacy 3 a month, Pro 100 a month", () => {
-    expect(PLAN_LIMITS.free.aiFixes).toBe(1);
-    expect(PLAN_LIMITS.free_legacy.aiFixes).toBe(3);
+  it("Pro only: 0 on both free tiers, Pro 100 a month", () => {
+    expect(PLAN_LIMITS.free.aiFixes).toBe(0);
+    expect(PLAN_LIMITS.free_legacy.aiFixes).toBe(0);
     expect(PLAN_LIMITS.pro.aiFixes).toBe(100);
-    expect(canUseAiFix("free", 0).allowed).toBe(true);
-    const r = canUseAiFix("free", 1);
+    expect(canUseAiFix("free", 0).allowed).toBe(false);
+    const r = canUseAiFix("free", 0);
     expect(r.allowed).toBe(false);
     if (!r.allowed) expect(r.reason).not.toMatch(/[₹$£€]/);
     expect(canUseAiFix("pro", 99).allowed).toBe(true);

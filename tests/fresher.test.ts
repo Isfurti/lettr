@@ -184,19 +184,19 @@ describe("guidance", () => {
 });
 
 describe("fresher bullet limits (owner table, 2026-11-22)", () => {
-  it("free 3 for life, legacy 5 a month, Pro unlimited", () => {
-    expect(PLAN_LIMITS.free.fresherBullets).toBe(3);
+  it("Pro only: 0 on both free tiers, Pro unlimited", () => {
+    expect(PLAN_LIMITS.free.fresherBullets).toBe(0);
     expect(PLAN_LIMITS.free.period).toBe("lifetime");
-    expect(PLAN_LIMITS.free_legacy.fresherBullets).toBe(5);
+    expect(PLAN_LIMITS.free_legacy.fresherBullets).toBe(0);
     expect(PLAN_LIMITS.free_legacy.period).toBe("month");
     expect(PLAN_LIMITS.pro.fresherBullets).toBe(Infinity);
   });
   it("blocks at the allowance with a message that has no price", () => {
-    expect(canUseFresherBullets("free", 2).allowed).toBe(true);
-    const r = canUseFresherBullets("free", 3);
+    expect(canUseFresherBullets("free", 0).allowed).toBe(false);
+    const r = canUseFresherBullets("free", 0);
     expect(r.allowed).toBe(false);
     if (!r.allowed) expect(r.reason).not.toMatch(/[₹$£€]/);
-    expect(canUseFresherBullets("free_legacy", 5).allowed).toBe(false);
+    expect(canUseFresherBullets("free_legacy", 0).allowed).toBe(false);
     expect(canUseFresherBullets("pro", 100000).allowed).toBe(true);
   });
   it("daily caps: 3 / 5 / 60, and still inside the all-AI total", () => {

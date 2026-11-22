@@ -34,13 +34,13 @@ type Limits = {
   interviewSets: number;
   interviewFeedback: number;
   atsAnalyst: number;
-  /** AI fixes for accuracy tips (the rule-based fixes are free and unlimited). Free: for life. */
+  /** AI fixes for accuracy tips (the rule-based fixes are free and unlimited). Pro only (0 on free plans). */
   aiFixes: number;
-  /** Tailor-to-a-job tries. Free: for life. Saving a tailored version is Pro only. */
+  /** Tailor-to-a-job tries. Pro only (0 on free plans), as is saving a tailored version. */
   tailor: number;
-  /** LinkedIn optimiser runs (headline, About, experience). Free: for life. The score and tips are free and unlimited. */
+  /** LinkedIn optimiser runs (headline, About, experience). Pro only (0 on free plans). The score and tips are free and unlimited. */
   linkedin: number;
-  /** Fresher bullet drafts (guided prompts for students and first jobs). Free: for life. */
+  /** Fresher bullet drafts (guided prompts for students and first jobs). Pro only (0 on free plans). */
   fresherBullets: number;
   /** Missing keywords shown from a job post; the rest are blurred. */
   keywordsShown: number;
@@ -61,10 +61,10 @@ export const PLAN_LIMITS: Record<LimitTier, Limits> = {
     interviewSets: 1,
     interviewFeedback: 6, // the 6 questions in that one set
     atsAnalyst: 1,
-    aiFixes: 1,
-    tailor: 1,
-    linkedin: 1,
-    fresherBullets: 3,
+    aiFixes: 0,
+    tailor: 0,
+    linkedin: 0,
+    fresherBullets: 0,
     keywordsShown: 3,
     trackedJobs: 10,
     resignationLetterBuilder: false,
@@ -81,10 +81,10 @@ export const PLAN_LIMITS: Record<LimitTier, Limits> = {
     interviewSets: 2,
     interviewFeedback: 15,
     atsAnalyst: 3,
-    aiFixes: 3,
-    tailor: 3,
-    linkedin: 3,
-    fresherBullets: 5,
+    aiFixes: 0,
+    tailor: 0,
+    linkedin: 0,
+    fresherBullets: 0,
     keywordsShown: Infinity,
     trackedJobs: Infinity,
     resignationLetterBuilder: false,
@@ -255,10 +255,11 @@ export function canUseAtsAnalyst(tier: LimitTier, used: number, now = new Date()
   };
 }
 
-/** AI fixes: 1 for life on the free plan, 3 a month on legacy free, 100 a month on Pro. */
+/** AI fixes: Pro only (100 a month, fair use). */
 export function canUseAiFix(tier: LimitTier, used: number, now = new Date()): LimitCheck & { limit: number } {
   const limit = PLAN_LIMITS[tier].aiFixes;
   if (used < limit) return { allowed: true, limit };
+  if (limit === 0) return { allowed: false, limit, reason: "AI fixing is a Pro feature. Upgrade to Pro to use it." };
   return {
     allowed: false,
     limit,
@@ -271,10 +272,11 @@ export function canUseAiFix(tier: LimitTier, used: number, now = new Date()): Li
   };
 }
 
-/** Tailor to a job: 1 for life on the free plan, 3 a month on legacy free, 100 a month on Pro. */
+/** Tailor to a job: Pro only (100 a month, fair use). */
 export function canUseTailor(tier: LimitTier, used: number, now = new Date()): LimitCheck & { limit: number } {
   const limit = PLAN_LIMITS[tier].tailor;
   if (used < limit) return { allowed: true, limit };
+  if (limit === 0) return { allowed: false, limit, reason: "Tailoring to a job is a Pro feature. Upgrade to Pro to use it." };
   return {
     allowed: false,
     limit,
@@ -287,10 +289,11 @@ export function canUseTailor(tier: LimitTier, used: number, now = new Date()): L
   };
 }
 
-/** LinkedIn optimiser: 1 for life on the free plan, 3 a month on legacy free, 100 a month on Pro. */
+/** LinkedIn optimiser: Pro only (100 a month, fair use). */
 export function canUseLinkedin(tier: LimitTier, used: number, now = new Date()): LimitCheck & { limit: number } {
   const limit = PLAN_LIMITS[tier].linkedin;
   if (used < limit) return { allowed: true, limit };
+  if (limit === 0) return { allowed: false, limit, reason: "The LinkedIn rewrite is a Pro feature. Upgrade to Pro to use it." };
   return {
     allowed: false,
     limit,
@@ -303,10 +306,11 @@ export function canUseLinkedin(tier: LimitTier, used: number, now = new Date()):
   };
 }
 
-/** Fresher bullet drafts: 3 for life on the free plan, 5 a month on legacy free, unlimited on Pro (the daily fair-use cap still applies). */
+/** Fresher bullet drafts: Pro only (unlimited, the daily fair-use cap still applies). */
 export function canUseFresherBullets(tier: LimitTier, used: number, now = new Date()): LimitCheck & { limit: number } {
   const limit = PLAN_LIMITS[tier].fresherBullets;
   if (used < limit) return { allowed: true, limit };
+  if (limit === 0) return { allowed: false, limit, reason: "Bullet drafting is a Pro feature. Upgrade to Pro to use it." };
   return {
     allowed: false,
     limit,

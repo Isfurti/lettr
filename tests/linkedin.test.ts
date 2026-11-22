@@ -87,10 +87,9 @@ describe("inputs", () => {
 });
 
 describe("allowance", () => {
-  it("1 free for life, 3 a month on legacy free, 100 a month on Pro", () => {
-    expect(canUseLinkedin("free", 0).allowed).toBe(true);
-    expect(canUseLinkedin("free", 1).allowed).toBe(false);
-    expect(canUseLinkedin("free_legacy", 3).allowed).toBe(false);
+  it("Pro only: blocked on both free tiers, 100 a month on Pro", () => {
+    expect(canUseLinkedin("free", 0).allowed).toBe(false);
+    expect(canUseLinkedin("free_legacy", 0).allowed).toBe(false);
     expect(canUseLinkedin("pro", 99).allowed).toBe(true);
     expect(canUseLinkedin("pro", 100).allowed).toBe(false);
   });
