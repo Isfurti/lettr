@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
 import { monthStartIST } from "./ai-costs";
-import { countAiUses, countFreeUses, recordFreeUse, type FreeUseWho } from "./db";
+import { countAiUses, countFreeUses, recordFreeUse, refundFreeUse, type FreeUseWho } from "./db";
 import { emailHash } from "./email-normalise";
 import { limitTier, PLAN_LIMITS, type LimitTier, type UsagePeriod } from "./limits";
 
@@ -49,7 +49,7 @@ export async function usageContext(user: {
 }
 
 /** Features counted once per person on the free plan. */
-export type FreeFeature = "cover_letter" | "ats_analyst" | "interview" | "interview_feedback" | "rewrite" | "pdf_clean" | "fresher_bullet" | "fix" | "tailor";
+export type FreeFeature = "cover_letter" | "ats_analyst" | "interview" | "interview_feedback" | "rewrite" | "pdf_clean" | "fresher_bullet" | "fix" | "tailor" | "linkedin";
 
 /** Uses so far: for life on the free plan, this month otherwise. */
 export async function usedSoFar(ctx: UsageContext, feature: Exclude<FreeFeature, "rewrite" | "pdf_clean">): Promise<number> {
@@ -66,6 +66,11 @@ export async function rewritesUsed(ctx: UsageContext, accountCount: number): Pro
 /** Call after a successful use. Only the free plan needs its own record. */
 export async function recordUse(ctx: UsageContext, feature: FreeFeature) {
   if (ctx.tier === "free") await recordFreeUse(ctx.who, feature);
+}
+
+/** Gives back a free try recorded for a request that then failed. */
+export async function refundUse(ctx: UsageContext, feature: FreeFeature) {
+  if (ctx.tier === "free") await refundFreeUse(ctx.who, feature);
 }
 
 /** Clean PDFs (no footer) used so far: per person on the free plan, per account otherwise. */
@@ -86,6 +91,7 @@ export type PlanAllowances = {
   fresherBullets: Allowance;
   aiFixes: Allowance;
   tailor: Allowance;
+  linkedin: Allowance;
   interviewSets: Allowance;
   cleanPdfs: Allowance;
   keywordsShown: number;
@@ -102,7 +108,7 @@ export async function planAllowances(user: {
 }): Promise<PlanAllowances> {
   const ctx = await usageContext(user);
   const L = PLAN_LIMITS[ctx.tier];
-  const [rewrites, coverLetters, atsAnalyst, interviewSets, cleanPdfs, fresherBullets, aiFixes, tailor] = await Promise.all([
+  const [rewrites, coverLetters, atsAnalyst, interviewSets, cleanPdfs, fresherBullets, aiFixes, tailor, linkedin] = await Promise.all([
     rewritesUsed(ctx, user.ai_writing_assist_count ?? 0),
     usedSoFar(ctx, "cover_letter"),
     usedSoFar(ctx, "ats_analyst"),
@@ -111,6 +117,7 @@ export async function planAllowances(user: {
     usedSoFar(ctx, "fresher_bullet"),
     usedSoFar(ctx, "fix"),
     usedSoFar(ctx, "tailor"),
+    usedSoFar(ctx, "linkedin"),
   ]);
   return {
     tier: ctx.tier,
@@ -121,6 +128,7 @@ export async function planAllowances(user: {
     fresherBullets: { used: fresherBullets, limit: L.fresherBullets },
     aiFixes: { used: aiFixes, limit: L.aiFixes },
     tailor: { used: tailor, limit: L.tailor },
+    linkedin: { used: linkedin, limit: L.linkedin },
     interviewSets: { used: interviewSets, limit: L.interviewSets },
     cleanPdfs: { used: cleanPdfs, limit: L.cleanPdfDownloads },
     keywordsShown: L.keywordsShown,

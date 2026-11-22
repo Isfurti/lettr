@@ -15,6 +15,7 @@ const TRACKED: Record<DailyFeature, string[]> = {
   fresher_bullet: ["fresher_bullet"],
   fix: ["fix"],
   tailor: ["tailor"],
+  linkedin: ["linkedin"],
 };
 
 /** The daily fair-use check for one AI request. Call it just before the AI runs. */

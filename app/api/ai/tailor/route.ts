@@ -7,7 +7,7 @@ import type { ResumeData } from "@/lib/types";
 import { trackAiUsage } from "@/lib/ai-usage";
 import { checkDailyAiCap } from "@/lib/daily-caps";
 import { getUserById } from "@/lib/db";
-import { recordUse, usageContext, usedSoFar } from "@/lib/free-usage";
+import { recordUse, refundUse, usageContext, usedSoFar } from "@/lib/free-usage";
 import { canUseTailor } from "@/lib/limits";
 import { MARKET_IDS } from "@/lib/market";
 import { publicMessage } from "@/lib/public-error";
@@ -84,6 +84,7 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     Sentry.captureException(err);
+    await refundUse(ctx, "tailor").catch((e) => Sentry.captureException(e));
     return NextResponse.json({ error: publicMessage(err, "AI generation failed") }, { status: 502 });
   }
 }

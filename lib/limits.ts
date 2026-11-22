@@ -38,6 +38,8 @@ type Limits = {
   aiFixes: number;
   /** Tailor-to-a-job tries. Free: for life. Saving a tailored version is Pro only. */
   tailor: number;
+  /** LinkedIn optimiser runs (headline, About, experience). Free: for life. The score and tips are free and unlimited. */
+  linkedin: number;
   /** Fresher bullet drafts (guided prompts for students and first jobs). Free: for life. */
   fresherBullets: number;
   /** Missing keywords shown from a job post; the rest are blurred. */
@@ -61,6 +63,7 @@ export const PLAN_LIMITS: Record<LimitTier, Limits> = {
     atsAnalyst: 1,
     aiFixes: 1,
     tailor: 1,
+    linkedin: 1,
     fresherBullets: 3,
     keywordsShown: 3,
     trackedJobs: 10,
@@ -80,6 +83,7 @@ export const PLAN_LIMITS: Record<LimitTier, Limits> = {
     atsAnalyst: 3,
     aiFixes: 3,
     tailor: 3,
+    linkedin: 3,
     fresherBullets: 5,
     keywordsShown: Infinity,
     trackedJobs: Infinity,
@@ -100,6 +104,7 @@ export const PLAN_LIMITS: Record<LimitTier, Limits> = {
     atsAnalyst: 100,
     aiFixes: 100,
     tailor: 100,
+    linkedin: 100,
     fresherBullets: Infinity,
     keywordsShown: Infinity,
     trackedJobs: Infinity,
@@ -282,6 +287,22 @@ export function canUseTailor(tier: LimitTier, used: number, now = new Date()): L
   };
 }
 
+/** LinkedIn optimiser: 1 for life on the free plan, 3 a month on legacy free, 100 a month on Pro. */
+export function canUseLinkedin(tier: LimitTier, used: number, now = new Date()): LimitCheck & { limit: number } {
+  const limit = PLAN_LIMITS[tier].linkedin;
+  if (used < limit) return { allowed: true, limit };
+  return {
+    allowed: false,
+    limit,
+    reason:
+      tier === "free"
+        ? "You've used your free LinkedIn rewrite. Upgrade to Pro to keep going."
+        : tier === "free_legacy"
+          ? `You've used this month's ${limit} LinkedIn rewrites on the free plan. ${moreLine(tier, now)}`
+          : `You've used this month's ${limit} LinkedIn rewrites (our fair-use limit). ${moreLine(tier, now)}`,
+  };
+}
+
 /** Fresher bullet drafts: 3 for life on the free plan, 5 a month on legacy free, unlimited on Pro (the daily fair-use cap still applies). */
 export function canUseFresherBullets(tier: LimitTier, used: number, now = new Date()): LimitCheck & { limit: number } {
   const limit = PLAN_LIMITS[tier].fresherBullets;
@@ -322,7 +343,8 @@ export type DailyFeature =
   | "import"
   | "fresher_bullet"
   | "fix"
-  | "tailor";
+  | "tailor"
+  | "linkedin";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
@@ -347,6 +369,7 @@ export const DAILY_FEATURE_LABELS: Record<DailyFeature, string> = {
   fresher_bullet: "bullet drafts",
   fix: "AI fixes",
   tailor: "job tailoring",
+  linkedin: "LinkedIn rewrites",
 };
 
 export const DAILY_LIMITS: Record<LimitTier, Record<DailyFeature, number> & { total: number }> = {
@@ -362,6 +385,7 @@ export const DAILY_LIMITS: Record<LimitTier, Record<DailyFeature, number> & { to
     fresher_bullet: 3,
     fix: 1,
     tailor: 1,
+    linkedin: 1,
     total: 15,
   },
   free_legacy: {
@@ -376,6 +400,7 @@ export const DAILY_LIMITS: Record<LimitTier, Record<DailyFeature, number> & { to
     fresher_bullet: 5,
     fix: 3,
     tailor: 3,
+    linkedin: 3,
     total: 25,
   },
   pro: {
@@ -390,6 +415,7 @@ export const DAILY_LIMITS: Record<LimitTier, Record<DailyFeature, number> & { to
     fresher_bullet: 60,
     fix: 20,
     tailor: 10,
+    linkedin: 5,
     total: 150,
   },
 };
