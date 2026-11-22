@@ -153,3 +153,13 @@ The daily column is my proposal, copied from the pattern of the existing daily l
 - Left out: a dashboard grouping of versions under their original (versions show as separate resumes titled "<title> - <name>"), a delete-original confirmation that mentions its versions, and what happens to versions if someone stops being Pro.
 - Known gap: daily caps count usage after the AI call, so several requests sent at once can pass them; the free allowance is now recorded first, and the rate limit is 3 per 10 minutes.
 - Not run locally: tests that need Postgres (no database here); CI runs them.
+
+## Feature 4 as built (PR 4)
+- Page `/dashboard/linkedin` (signed in), linked from a new dashboard card. Input three ways: paste per section, upload the LinkedIn PDF export (text read in code, file not stored), or start from a Lettr resume. Asks for target role and country first.
+- Free, in code, no AI: profile score with reasons (updates as you type), the static tips, character limits (headline 220, About 2,600, enforced in code, not trusted to the model).
+- AI (`optimiseLinkedIn`, `POST /api/ai/linkedin`): 3 headlines, 3 About versions, rewrites of the 6 longest experience points, and keywords split into "you already show" and "add only if true". Each part is guarded on its own; a part with no safe option comes back empty. Free 1 for life, legacy 3 a month, Pro 100 a month, daily 1 / 3 / 5. Counted before the AI runs and given back if nothing came back.
+- Privacy: pasted text and the PDF go to the AI for this request only. No database write, no cache, no feedback record (a test greps the routes for this). Nothing is posted to LinkedIn: copy buttons only.
+- Honesty: facts are only what the person pasted; the target role lends only its plain role words, never a tool name. Pasted text has angle brackets removed and sits in a data block the prompt says to ignore instructions in.
+- Also from review: a failed Tailor run now gives the free try back too.
+- Left out: the LinkedIn score is not saved anywhere; the PDF section split is best effort (check each box after upload); no link from the builder yet (dashboard only).
+- Not run locally: tests that need Postgres; CI runs them.

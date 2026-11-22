@@ -6,6 +6,7 @@ import { EMPTY_SECTIONS, HEADLINE_MAX, ABOUT_MAX, INPUT_CAPS, LINKEDIN_TIPS, sco
 import { MARKET_IDS } from "@/lib/market";
 
 const BTN = "inline-flex items-center justify-center min-h-11 px-4 rounded-full text-sm font-bold disabled:opacity-60";
+const COUNTRY_NAMES: Record<string, string> = { IN: "India", US: "United States", UK: "United Kingdom", EU: "Europe", GULF: "Gulf countries" };
 const FIELD = "mt-1 w-full rounded-xl border border-rule bg-white p-3 text-sm text-ink";
 
 type Result = {
@@ -20,6 +21,8 @@ type Result = {
 function CopyButton({ text, label }: { text: string; label: string }) {
   const [done, setDone] = useState(false);
   return (
+    <>
+    <span role="status" className="sr-only">{done ? `Copied ${label}` : ""}</span>
     <button
       type="button"
       aria-label={`Copy ${label}`}
@@ -34,6 +37,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
     >
       {done ? "Copied" : "Copy"}
     </button>
+    </>
   );
 }
 
@@ -80,7 +84,10 @@ export function LinkedInOptimizer({
   const set = (k: keyof LinkedInSections) => (e: React.ChangeEvent<HTMLTextAreaElement>) => setS((p) => ({ ...p, [k]: e.target.value }));
   const hasText = (s.headline + s.about + s.experience).trim().length >= 40;
 
+  const hasAny = () => (s.headline + s.about + s.experience + s.skills).trim().length > 0;
+
   async function uploadPdf(file: File) {
+    if (hasAny() && !window.confirm("This will replace the text you have entered. Continue?")) return;
     setNote(null);
     setError(null);
     const fd = new FormData();
@@ -130,7 +137,7 @@ export function LinkedInOptimizer({
           <label className="block">
             <span className="text-sm font-bold">Country</span>
             <select value={market} onChange={(e) => setMarket(e.target.value)} className="mt-1 w-full rounded-xl border border-rule bg-white px-3 min-h-11 text-sm">
-              {MARKET_IDS.map((m) => <option key={m} value={m}>{m}</option>)}
+              {MARKET_IDS.map((m) => <option key={m} value={m}>{COUNTRY_NAMES[m] ?? m}</option>)}
             </select>
           </label>
         </div>
@@ -143,7 +150,7 @@ export function LinkedInOptimizer({
                 defaultValue=""
                 onChange={(e) => {
                   const r = resumes.find((x) => x.id === e.target.value);
-                  if (r) {
+                  if (r && (!hasAny() || window.confirm("This will replace the text you have entered. Continue?"))) {
                     setS((p) => ({ ...r.sections, headline: p.headline }));
                     setNote("Filled from your resume. Add your current headline if you want it checked.");
                   }
@@ -155,7 +162,7 @@ export function LinkedInOptimizer({
               </select>
             </label>
           )}
-          <label className={`${BTN} border-2 border-rule bg-white text-brand-blue hover:border-ink cursor-pointer`}>
+          <label className={`${BTN} border-2 border-rule bg-white text-brand-blue hover:border-ink cursor-pointer focus-within:ring-2 focus-within:ring-brand-blue focus-within:ring-offset-2`}>
             Upload LinkedIn PDF
             <input type="file" accept="application/pdf,.pdf" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadPdf(f); e.target.value = ""; }} />
           </label>
@@ -198,6 +205,7 @@ export function LinkedInOptimizer({
             {busy ? "Writing..." : "Rewrite my profile"}
           </button>
           {left !== null && <span className="text-sm text-slate">{left === 0 ? "No tries left" : `${left} ${allowance.tier === "free" ? "free try left" : "left this month"}`}</span>}
+          {left === 0 && <Link href="/pricing" className="text-sm font-bold underline text-brand-blue">See Pro</Link>}
           {role.trim().length < 2 && <span className="text-sm text-slate">Add a target role.</span>}
         </div>
         {error && (
@@ -205,8 +213,9 @@ export function LinkedInOptimizer({
         )}
       </section>
 
+      <p role="status" className="sr-only">{result ? "Your rewrites are ready below." : ""}</p>
       {result && (
-        <div className="space-y-8" aria-live="polite">
+        <div className="space-y-8">
           <section aria-labelledby="li-h" className="space-y-3">
             <h3 id="li-h" className="font-brand font-extrabold text-xl">Headline options</h3>
             {result.headlines.length ? result.headlines.map((h, n) => <Option key={n} initial={h} label={`headline option ${n + 1}`} max={HEADLINE_MAX} />) : <p className="text-sm text-slate">No safe headline this time. Add more detail about your skills and try again.</p>}

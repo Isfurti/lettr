@@ -22,6 +22,7 @@ export async function POST(req: Request) {
     );
   }
 
+  if (Number(req.headers.get("content-length") ?? 0) > 6 * 1024 * 1024) return NextResponse.json({ error: "File is too large (max 5MB)" }, { status: 400 });
   const formData = await req.formData().catch(() => null);
   const file = formData?.get("file");
   if (!file || !(file instanceof File)) return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
@@ -29,7 +30,9 @@ export async function POST(req: Request) {
   if (file.size > 5 * 1024 * 1024) return NextResponse.json({ error: "File is too large (max 5MB)" }, { status: 400 });
 
   try {
-    const text = await extractTextFromFile(Buffer.from(await file.arrayBuffer()), file.name);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    if (buffer.subarray(0, 5).toString("latin1") !== "%PDF-") return NextResponse.json({ error: "That file is not a PDF. Upload the PDF that LinkedIn gives you." }, { status: 400 });
+    const text = await extractTextFromFile(buffer, file.name);
     if (text.trim().length < 40) {
       return NextResponse.json({ error: "Couldn't find readable text in that PDF. Paste your sections instead." }, { status: 400 });
     }

@@ -87,3 +87,9 @@ export function dropUngrounded(options: string[], source: string): { kept: strin
   for (const o of options) (ungroundedTerms(o, source).length ? dropped : kept).push(o);
   return { kept, dropped };
 }
+
+/** True for a word that looks like a tool, product or employer name (so it must not be borrowed from a target role). */
+export function isToolLike(token: string): boolean {
+  const t = clean(token);
+  return LOWER_TOOLS.has(t.toLowerCase()) || /^[A-Z0-9][A-Z0-9+#.]{1,}$/.test(t) || /[+#]/.test(t) || /[A-Za-z]\.[A-Za-z]/.test(t) || (/[A-Za-z]/.test(t) && /\d/.test(t));
+}

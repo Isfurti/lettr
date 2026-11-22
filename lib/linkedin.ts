@@ -1,4 +1,5 @@
 import { extractKeywords, keywordInText } from "./ats-score";
+import { isToolLike } from "./ai-grounding";
 import { stripRich } from "./rich-text";
 import type { ResumeData } from "./types";
 
@@ -37,9 +38,19 @@ export function capSections(s: Partial<LinkedInSections>): LinkedInSections {
   };
 }
 
-/** Everything the person gave, as one block of facts for the honesty and grounding checks. */
+/** Text that goes into a prompt as data: markup and angle brackets removed so it cannot close the data block. */
+export function promptSafe(s: string): string {
+  return stripRich(s).replace(/[<>]/g, " ");
+}
+
+/**
+ * Everything the person gave, as one block of facts for the honesty and grounding checks.
+ * The target role is NOT a fact about them, but its plain role words ("Data Analyst") may be used
+ * in a headline; a tool-like word in it ("AWS", "Python") is never borrowed from it.
+ */
 export function sourceFacts(s: LinkedInSections, targetRole: string): string {
-  return [s.headline, s.about, s.experience, s.skills, targetRole].join("\n");
+  const roleWords = targetRole.split(/\s+/).filter((w) => w && !isToolLike(w)).join(" ");
+  return [s.headline, s.about, s.experience, s.skills, roleWords].join("\n");
 }
 
 /** The longest experience lines, which are the ones worth rewriting. */
@@ -70,7 +81,7 @@ export function scoreProfile(s: LinkedInSections, targetRole: string): ProfileSc
 
   const roleWords = extractKeywords(targetRole, 5);
   const roleInHeadline = roleWords.length > 0 && roleWords.some((k) => keywordInText(k, h));
-  add(roleInHeadline || !targetRole.trim(), 15, targetRole.trim() ? "Your headline names your target role." : "Add a target role to check your keywords.", `Your headline does not mention "${targetRole.trim()}". Recruiters search by role.`);
+  add(roleInHeadline, 15, "Your headline names your target role.", targetRole.trim() ? `Your headline does not mention "${targetRole.trim()}". Recruiters search by role.` : "Add a target role to check your headline and keywords.");
 
   const a = s.about.trim();
   const aboutOk = a.length >= 300 && a.length <= ABOUT_MAX;
@@ -85,7 +96,7 @@ export function scoreProfile(s: LinkedInSections, targetRole: string): ProfileSc
   const blob = [h, a, s.experience, s.skills].join("\n");
   const kws = extractKeywords(targetRole, 8);
   const covered = kws.filter((k) => keywordInText(k, blob)).length;
-  add(kws.length === 0 || covered / kws.length >= 0.6, 10, "Your profile uses the words for your target role.", "Your profile uses few of the words for your target role. Add the ones that are true for you.", kws.length ? Math.round((covered / kws.length) * 10) : 0);
+  add(kws.length > 0 && covered / kws.length >= 0.6, 10, "Your profile uses the words for your target role.", "Your profile uses few of the words for your target role. Add the ones that are true for you.", kws.length ? Math.round((covered / kws.length) * 10) : 0);
 
   const score = Math.min(100, reasons.reduce((n, r) => n + r.points, 0));
   return { score, reasons };
@@ -106,7 +117,11 @@ export function linkedinFromResume(r: ResumeData): LinkedInSections {
   };
 }
 
-/** Splits the text of a LinkedIn "Save to PDF" export into the four sections. Best effort. */
+/**
+ * Splits the text of a LinkedIn "Save to PDF" export into the four sections. Best effort.
+ * The export lists Contact and Top Skills (three skills) before the name, so lines after the
+ * third skill, and any lines before the first heading, are the name block: name, then headline.
+ */
 export function splitLinkedInPdf(text: string): LinkedInSections {
   const lines = text.replace(/\r/g, "").split("\n").map((l) => l.trim());
   const heading = (l: string) => {
@@ -119,19 +134,25 @@ export function splitLinkedInPdf(text: string): LinkedInSections {
   };
   const out: LinkedInSections = { ...EMPTY_SECTIONS };
   let cur: keyof LinkedInSections | "other" | null = null;
-  const body: string[] = [];
+  let skillLines = 0;
+  const nameBlock: string[] = [];
   for (const l of lines) {
-    if (/^page \d+ of \d+$/i.test(l)) continue;
+    if (!l || /^page \d+ of \d+$/i.test(l)) continue;
     const h = heading(l);
     if (h) {
       cur = h;
       continue;
     }
-    if (cur && cur !== "other" && l) out[cur] += (out[cur] ? "\n" : "") + l;
-    if (!cur && l) body.push(l);
+    if (cur === "skills") {
+      if (skillLines < 3) {
+        out.skills += (out.skills ? "\n" : "") + l;
+        skillLines++;
+      } else nameBlock.push(l);
+    } else if (cur === null) nameBlock.push(l);
+    else if (cur !== "other") out[cur] += (out[cur] ? "\n" : "") + l;
   }
-  // The headline sits under the name near the top, before any heading.
-  out.headline = body.slice(1, 3).join(" ").slice(0, INPUT_CAPS.headline);
+  // nameBlock is the name, then the headline, then the location.
+  out.headline = nameBlock[1] ?? "";
   return capSections(out);
 }
 

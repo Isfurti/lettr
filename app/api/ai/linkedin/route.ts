@@ -7,7 +7,7 @@ import { keywordInText } from "@/lib/ats-score";
 import { trackAiUsage } from "@/lib/ai-usage";
 import { checkDailyAiCap } from "@/lib/daily-caps";
 import { getUserById } from "@/lib/db";
-import { recordUse, usageContext, usedSoFar } from "@/lib/free-usage";
+import { recordUse, refundUse, usageContext, usedSoFar } from "@/lib/free-usage";
 import { capSections, INPUT_CAPS, sourceFacts } from "@/lib/linkedin";
 import { canUseLinkedin } from "@/lib/limits";
 import { MARKET_IDS } from "@/lib/market";
@@ -30,6 +30,7 @@ export async function POST(req: Request) {
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const userId = (session.user as { id: string }).id;
 
+  if (Number(req.headers.get("content-length") ?? 0) > 120_000) return NextResponse.json({ error: "That is too much text. Shorten it and try again." }, { status: 400 });
   const raw = await req.text();
   if (raw.length > 60_000) return NextResponse.json({ error: "That is too much text. Shorten it and try again." }, { status: 400 });
   let body: unknown = null;
@@ -66,6 +67,11 @@ export async function POST(req: Request) {
     const { targetRole, market } = parsed.data;
     const { value, model, usage } = await optimiseLinkedIn({ sections, targetRole, market });
     await trackAiUsage({ userId, feature: "linkedin", model, usage });
+    if (!value.headlines.length && !value.about.length && !value.experience.length) {
+      // Nothing safe came back: the person got nothing, so the try is given back.
+      await refundUse(ctx, "linkedin").catch((e) => Sentry.captureException(e));
+      return NextResponse.json({ error: "Couldn't write anything that sticks to your own words this time. Add more detail to your profile text and try again. Your try was not used." }, { status: 422 });
+    }
     const facts = sourceFacts(sections, targetRole);
     const have: string[] = [];
     const addIfTrue: string[] = [];
@@ -73,6 +79,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ headlines: value.headlines, about: value.about, experience: value.experience, keywordsYouShow: have, keywordsAddIfTrue: addIfTrue });
   } catch (err) {
     Sentry.captureException(err);
+    await refundUse(ctx, "linkedin").catch((e) => Sentry.captureException(e));
     return NextResponse.json({ error: publicMessage(err, "AI generation failed") }, { status: 502 });
   }
 }

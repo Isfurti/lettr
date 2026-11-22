@@ -1216,6 +1216,16 @@ export async function recordFreeUse(who: FreeUseWho, feature: string) {
   ]);
 }
 
+/** Gives back one free try (used when the AI step failed and the person got nothing). */
+export async function refundFreeUse(who: FreeUseWho, feature: string) {
+  await ensureSchema();
+  if (!who.userId) return;
+  await pool.query(
+    "DELETE FROM free_uses WHERE ctid = (SELECT ctid FROM free_uses WHERE user_id = $1 AND feature = $2 ORDER BY ctid DESC LIMIT 1)",
+    [who.userId, feature]
+  );
+}
+
 export type AiUsageSummaryRow = {
   feature: string;
   model: string;

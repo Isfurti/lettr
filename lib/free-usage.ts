@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
 import { monthStartIST } from "./ai-costs";
-import { countAiUses, countFreeUses, recordFreeUse, type FreeUseWho } from "./db";
+import { countAiUses, countFreeUses, recordFreeUse, refundFreeUse, type FreeUseWho } from "./db";
 import { emailHash } from "./email-normalise";
 import { limitTier, PLAN_LIMITS, type LimitTier, type UsagePeriod } from "./limits";
 
@@ -66,6 +66,11 @@ export async function rewritesUsed(ctx: UsageContext, accountCount: number): Pro
 /** Call after a successful use. Only the free plan needs its own record. */
 export async function recordUse(ctx: UsageContext, feature: FreeFeature) {
   if (ctx.tier === "free") await recordFreeUse(ctx.who, feature);
+}
+
+/** Gives back a free try recorded for a request that then failed. */
+export async function refundUse(ctx: UsageContext, feature: FreeFeature) {
+  if (ctx.tier === "free") await refundFreeUse(ctx.who, feature);
 }
 
 /** Clean PDFs (no footer) used so far: per person on the free plan, per account otherwise. */
