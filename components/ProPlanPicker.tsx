@@ -25,6 +25,8 @@ const FEATURES = (templateCount: number) => [
   "Unlimited AI rewrites & cover letters (fair use)",
   "AI Resume Agent",
   "ATS analyst & interview practice",
+  "Tailor to a job, with saved versions",
+  "AI resume fixer, fresher bullet drafts & LinkedIn rewrite",
   "All missing keywords, unlimited job tracking",
 ];
 
