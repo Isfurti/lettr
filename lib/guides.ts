@@ -36,7 +36,7 @@ export const GUIDES: Guide[] = [
       "The one-page fresher resume format recruiters and ATS software read best: what to include, in what order, and the mistakes that get first resumes rejected.",
     published: "2026-10-18",
     updated: "2026-11-22",
-    readMinutes: 8,
+    readMinutes: 6,
     intro:
       "Your first resume doesn't need years of experience. It needs a clear format, the right keywords and proof of what you can do. Here's the format that works for campus placements, off-campus applications and job portals in India.",
     sections: [
@@ -98,13 +98,13 @@ export const GUIDES: Guide[] = [
         paragraphs: [
           "Here is the shape of a one-page fresher resume for a made-up B.Com graduate. The details are invented, so use them only as a pattern.",
           "Header: Rohan Mehta, Jaipur. 98xxxxxx00. rohan.mehta@example.com. linkedin.com/in/rohan-mehta-example.",
-          "Objective: B.Com graduate looking for an accounts executive role. Completed a 3-month internship handling Tally entries and GST filing for 40+ clients.",
+          "Objective: B.Com graduate looking for an accounts executive role. Completed a 3-month internship handling Tally entries and GST return workings for 40+ clients.",
         ],
         list: [
           "Education: B.Com, University of Rajasthan, 2026. 72%. Class 12 (Commerce), 78%.",
           "Internship: Accounts intern, a local CA firm (example), May to Jul 2025. Entered daily vouchers in Tally and prepared GST return workings for 40+ clients.",
           "Project: Built a monthly budget tracker in Excel with formulas and charts for a college fest team of 12.",
-          "Skills: Tally Prime, MS Excel (VLOOKUP, pivot tables), GST basics, typing, English and Hindi.",
+          "Skills: TallyPrime, MS Excel (VLOOKUP, pivot tables), GST basics, English and Hindi.",
           "Achievements: Treasurer of the college commerce society, 2025. Completed an online Excel course.",
         ],
       },
@@ -342,7 +342,7 @@ export const GUIDES: Guide[] = [
       "See what an ATS-friendly resume looks like, section by section, with sample wording you can adapt. Plain format, real keywords and bullets that show results.",
     published: "2026-11-09",
     updated: "2026-11-22",
-    readMinutes: 8,
+    readMinutes: 6,
     intro:
       "Most ATS advice tells you what to avoid. This guide shows what a good one looks like: the layout, the wording of each section and a before-and-after for the bullets that matter most. Adapt it to your own facts, and never copy details that aren't yours.",
     sections: [
@@ -394,15 +394,9 @@ export const GUIDES: Guide[] = [
         ],
       },
       {
-        heading: "Check yours",
+        heading: "Sample header",
         paragraphs: [
-          "Upload your resume to Lettr's free ATS checker to see the exact text hiring software reads, your score and the fixes that matter. No account needed.",
-        ],
-      },
-      {
-        heading: "A full sample, section by section",
-        paragraphs: [
-          "Here is a complete example for a made-up person, so you can see how the pieces fit together. Every name, company and number below is invented. Use it only to copy the shape, and fill in your own facts.",
+          "Below are the remaining pieces of an example for a made-up person, next to the summary, bullets and skills above. Every name, company and number below is invented. Use it only to copy the shape, and fill in your own facts.",
           "Header: Asha Verma, Pune, India. 98xxxxxx00. asha.verma@example.com. linkedin.com/in/asha-verma-example.",
         ],
       },
@@ -434,7 +428,7 @@ export const GUIDES: Guide[] = [
         list: [
           "Text in tables, columns or text boxes can be read in the wrong order, so a job title ends up next to the wrong company.",
           "Headings with unusual names, such as \"My Journey\" instead of \"Experience\", may not be recognised as a section.",
-          "Text inside images, including some resume templates exported as pictures, can't be read at all.",
+          "Text inside images, including some resume templates exported as pictures, often can't be read.",
           "Information in the header or footer of a Word file is sometimes skipped, so keep your contact details in the main body.",
           "Dates written in different styles on different lines make it harder to work out how long you stayed in each role.",
         ],
@@ -449,7 +443,7 @@ export const GUIDES: Guide[] = [
           "Tick off the ones you really have. Skip the rest. Do not add skills you cannot talk about in an interview.",
           "Put those words into your summary, your skills section and your bullets, in natural sentences.",
           "Use both the short and long form once if people use both, for example \"search engine optimisation (SEO)\".",
-          "Do not repeat a keyword again and again or hide it in white text. Recruiters see it, and many systems flag it.",
+          "Do not repeat a keyword again and again or hide it in white text. Recruiters notice it, and it reads badly when a person opens your resume.",
         ],
       },
       {
@@ -468,6 +462,12 @@ export const GUIDES: Guide[] = [
           "Both usually work. A PDF made from a normal document keeps your layout the same on every screen, and the text can be selected, which is what the software needs. Use Word if the job post asks for it. Whichever you pick, open the file and try to select and copy the text. If you can't, an ATS can't read it either.",
         ],
       },
+      {
+        heading: "Check yours",
+        paragraphs: [
+          "Upload your resume to Lettr's free ATS checker to see the exact text hiring software reads, your score and the fixes that matter. No account needed.",
+        ],
+      },
     ],
     cta: { label: "Check my resume for free", href: "/resume-checker" },
     relatedExamples: ["data-analyst", "business-analyst", "digital-marketing-executive"],
@@ -479,7 +479,7 @@ export const GUIDES: Guide[] = [
       "A simple 15-point ATS checklist: format, keywords, contact details and file type. Run through it before every application to avoid getting filtered out.",
     published: "2026-11-09",
     updated: "2026-11-22",
-    readMinutes: 8,
+    readMinutes: 5,
     intro:
       "Use this checklist before you send any application. Each point takes a few seconds to check, and together they catch most of the problems that make an ATS misread a resume.",
     sections: [
@@ -523,12 +523,6 @@ export const GUIDES: Guide[] = [
         ],
       },
       {
-        heading: "Let a tool run the checks",
-        paragraphs: [
-          "Lettr's free ATS checker runs these checks for you. Upload your file and you'll see the plain text the software reads, a score and the fixes in order of importance.",
-        ],
-      },
-      {
         heading: "Why each check matters",
         paragraphs: [
           "A checklist is only useful if you know why each item is there. Here is the short reason behind the three groups.",
@@ -555,8 +549,8 @@ export const GUIDES: Guide[] = [
       {
         heading: "Fixing the most common failures",
         list: [
-          "Text comes out jumbled: your file has columns or tables. Switch to a single-column layout.",
-          "Nothing pastes at all: the file is an image or a scan. Export again from the original document as a PDF with real text.",
+          "Text comes out jumbled: this usually means columns, tables or text boxes. Switch to a single-column layout.",
+          "Nothing pastes at all: this usually means the file is an image or a scan. Export again from the original document as a PDF with real text.",
           "Phone or email is missing: it was in the header or inside an icon. Move it into the main body as plain text.",
           "Dates are out of order or mixed up: write every date the same way, for example Jun 2023 – Present, and put them on the same line as the role.",
           "Odd symbols in place of bullets: replace fancy bullets with normal round bullets.",
@@ -580,6 +574,12 @@ export const GUIDES: Guide[] = [
         heading: "A note on scores",
         paragraphs: [
           "ATS checkers, including Lettr's, give a score to help you spot problems. A score is a guide, not a promise. Each company's software works differently, and a human still decides who gets an interview. Use the score to fix real problems, and do not chase 100 by stuffing keywords.",
+        ],
+      },
+      {
+        heading: "Let a tool run the checks",
+        paragraphs: [
+          "Lettr's free ATS checker runs these checks for you. Upload your file and you'll see the plain text the software reads, a score and the fixes in order of importance.",
         ],
       },
     ],
