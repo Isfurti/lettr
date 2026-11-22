@@ -49,7 +49,7 @@ export async function usageContext(user: {
 }
 
 /** Features counted once per person on the free plan. */
-export type FreeFeature = "cover_letter" | "ats_analyst" | "interview" | "interview_feedback" | "rewrite" | "pdf_clean" | "fresher_bullet";
+export type FreeFeature = "cover_letter" | "ats_analyst" | "interview" | "interview_feedback" | "rewrite" | "pdf_clean" | "fresher_bullet" | "fix";
 
 /** Uses so far: for life on the free plan, this month otherwise. */
 export async function usedSoFar(ctx: UsageContext, feature: Exclude<FreeFeature, "rewrite" | "pdf_clean">): Promise<number> {
@@ -84,6 +84,7 @@ export type PlanAllowances = {
   coverLetters: Allowance;
   atsAnalyst: Allowance;
   fresherBullets: Allowance;
+  aiFixes: Allowance;
   interviewSets: Allowance;
   cleanPdfs: Allowance;
   keywordsShown: number;
@@ -100,13 +101,14 @@ export async function planAllowances(user: {
 }): Promise<PlanAllowances> {
   const ctx = await usageContext(user);
   const L = PLAN_LIMITS[ctx.tier];
-  const [rewrites, coverLetters, atsAnalyst, interviewSets, cleanPdfs, fresherBullets] = await Promise.all([
+  const [rewrites, coverLetters, atsAnalyst, interviewSets, cleanPdfs, fresherBullets, aiFixes] = await Promise.all([
     rewritesUsed(ctx, user.ai_writing_assist_count ?? 0),
     usedSoFar(ctx, "cover_letter"),
     usedSoFar(ctx, "ats_analyst"),
     usedSoFar(ctx, "interview"),
     cleanPdfsUsed(ctx, user.pdf_download_count ?? 0),
     usedSoFar(ctx, "fresher_bullet"),
+    usedSoFar(ctx, "fix"),
   ]);
   return {
     tier: ctx.tier,
@@ -115,6 +117,7 @@ export async function planAllowances(user: {
     coverLetters: { used: coverLetters, limit: L.coverLetters },
     atsAnalyst: { used: atsAnalyst, limit: L.atsAnalyst },
     fresherBullets: { used: fresherBullets, limit: L.fresherBullets },
+    aiFixes: { used: aiFixes, limit: L.aiFixes },
     interviewSets: { used: interviewSets, limit: L.interviewSets },
     cleanPdfs: { used: cleanPdfs, limit: L.cleanPdfDownloads },
     keywordsShown: L.keywordsShown,

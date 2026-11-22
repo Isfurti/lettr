@@ -2,6 +2,7 @@
 
 import { MarketPicker } from "@/components/builder/MarketPicker";
 import { FresherPanel } from "@/components/builder/FresherPanel";
+import { FixesPanel } from "@/components/builder/FixesPanel";
 import { Ordered, Sec } from "@/components/templates/Ordered";
 import { Rich } from "@/components/templates/Rich";
 import { applyLayout, layoutScale, photoShape } from "@/lib/layout";
@@ -714,7 +715,7 @@ export function ResumeEditor({
               </UpgradeGate>
             </div>
           )}
-          {tab === "score" && <ScorePanel data={data} plan={plan} />}
+          {tab === "score" && <ScorePanel data={data} plan={plan} setData={setData} aiFixes={allowances?.aiFixes} period={allowances?.period} />}
           {openedTabs.includes("match") && (
             <div hidden={tab !== "match"}>
               <AtsPanel
@@ -1919,7 +1920,23 @@ function ChatText({ text }: { text: string }) {
 
 // ---------- Score panel (Rezi Score) ----------
 
-export function ScorePanel({ data, plan }: { data: ResumeData; plan: Plan }) {
+export function ScorePanel({
+  data,
+  plan,
+  setData,
+  guest = false,
+  aiFixes,
+  period,
+}: {
+  data: ResumeData;
+  plan: Plan;
+  /** Passed where the resume can be edited; without it no fix buttons are shown. */
+  setData?: React.Dispatch<React.SetStateAction<ResumeData>>;
+  guest?: boolean;
+  /** AI fixes left. Only passed on the free plan; Pro is unlimited. */
+  aiFixes?: Allowance;
+  period?: UsagePeriod;
+}) {
   const result = scoreResumeQuality(data);
   const isPro = plan === "pro";
 
@@ -1943,6 +1960,8 @@ export function ScorePanel({ data, plan }: { data: ResumeData; plan: Plan }) {
           </div>
         </div>
       </div>
+
+      {setData && <FixesPanel data={data} setData={setData} guest={guest} allowance={aiFixes} period={period} />}
 
       {!isPro && (() => {
         // Free users still get the single most useful next step - a score

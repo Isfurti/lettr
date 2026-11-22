@@ -11,6 +11,28 @@ import { marketOf } from "./market";
  * Findings only ever lower the Lettr score, and by at most MAX_PENALTY points.
  */
 
+/** Where a piece of text lives in a resume. Bullets have no ids of their own, so a place is the entry's id plus the position. */
+export type Loc =
+  | { t: "summary" }
+  | { t: "bullet"; id: string; i: number }
+  | { t: "projDesc"; id: string }
+  | { t: "projBullet"; id: string; i: number }
+  | { t: "achievement"; i: number }
+  | { t: "skill"; i: number }
+  | { t: "groupSkill"; id: string; i: number }
+  | { t: "tech"; id: string }
+  | { t: "contact"; field: "dateOfBirth" | "nationality" }
+  | { t: "photo" };
+
+/** What a check found, in a form the resume fixer (lib/resume-fixes.ts) can act on. The message is unchanged. */
+export type FindingDetail =
+  | { kind: "years"; claimed: number; real: number; start: number; end: number }
+  | { kind: "repeated"; metric: string; places: { where: string; locs: Loc[] }[] }
+  | { kind: "tools"; fixes: { from: string; to: string }[] }
+  | { kind: "personal"; items: ("photo" | "dateOfBirth" | "nationality")[] }
+  | { kind: "spelling"; market: "US" | "UK"; words: string[] }
+  | { kind: "duty"; bullets: { id: string; i: number }[] };
+
 export type Finding = {
   id: string;
   severity: "medium" | "low";
@@ -19,6 +41,8 @@ export type Finding = {
   section: "summary" | "experience" | "skills" | "contact";
   /** Tips that are advice only and do not lower the score. */
   scored: boolean;
+  /** Structured facts about the finding, for the fixer. Not shown to people. */
+  detail?: FindingDetail;
 };
 
 export const PENALTY_POINTS = { medium: 3, low: 1 } as const;
@@ -46,13 +70,14 @@ const YEARS_AFTER = new RegExp(String.raw`\bexperience\s+(?:of|spanning|over)\s+
 // "a team with 20 years of experience" is about someone else.
 const OTHER_SUBJECT = /\b(team|teams|company|firm|agency|organi[sz]ation|our|their|mentors?|clients?|customers?|employers?|partners?|founders?)\b/i;
 
-function claimedYears(summary: string): number | null {
+function claimedYears(summary: string): { years: number; start: number; end: number } | null {
   for (const re of [YEARS_BEFORE, YEARS_AFTER]) {
     const m = re.exec(summary);
     if (!m) continue;
     const before = summary.slice(Math.max(0, m.index - 30), m.index);
     if (OTHER_SUBJECT.test(before)) continue;
-    return Number(m[1]);
+    const start = m.index + m[0].indexOf(m[1]);
+    return { years: Number(m[1]), start, end: start + m[1].length };
   }
   return null;
 }
@@ -91,8 +116,9 @@ function monthsWorked(resume: ResumeData, now: Date): number | null {
 
 function checkYears(resume: ResumeData, opts: CheckOptions): Finding[] {
   if (opts.verifyDates === false) return [];
-  const claimed = claimedYears(resume.summary ?? "");
-  if (claimed === null || claimed < 2) return [];
+  const claim = claimedYears(resume.summary ?? "");
+  if (claim === null || claim.years < 2) return [];
+  const claimed = claim.years;
   const months = monthsWorked(resume, opts.now ?? new Date());
   if (months === null) return [];
   const real = months / 12;
@@ -104,6 +130,7 @@ function checkYears(resume: ResumeData, opts: CheckOptions): Finding[] {
       severity: "medium",
       scored: true,
       section: "summary",
+      detail: { kind: "years", claimed, real: roundedReal, start: claim.start, end: claim.end },
       message: `Your summary says ${claimed} years of experience, but the dates in Experience add up to about ${roundedReal}. If the number is right, add the missing roles. Otherwise change it so a recruiter doesn't doubt the rest.`,
     },
   ];
@@ -131,12 +158,15 @@ function metricsIn(text: string): Set<string> {
 function checkRepeatedMetric(resume: ResumeData): Finding[] {
   // Places a figure should be told once. The summary is left out: restating
   // your best number in the summary is good practice.
-  const places: Array<{ where: string; text: string }> = [];
+  const places: Array<{ where: string; text: string; parts: Array<{ loc: Loc; text: string }> }> = [];
+  const add = (where: string, parts: Array<{ loc: Loc; text: string }>) => places.push({ where, text: parts.map((p) => p.text).join("\n"), parts });
   resume.experience.forEach((e, i) => {
-    places.push({ where: e.company?.trim() ? `your ${e.company.trim()} role` : `role ${i + 1}`, text: e.bullets.join("\n") });
+    add(e.company?.trim() ? `your ${e.company.trim()} role` : `role ${i + 1}`, e.bullets.map((text, n) => ({ loc: { t: "bullet", id: e.id, i: n }, text })));
   });
-  (resume.projects ?? []).forEach((p) => places.push({ where: "Projects", text: [p.description, ...(p.bullets ?? [])].join("\n") }));
-  places.push({ where: "Achievements", text: (resume.achievements ?? []).join("\n") });
+  (resume.projects ?? []).forEach((p) =>
+    add("Projects", [{ loc: { t: "projDesc", id: p.id }, text: p.description }, ...(p.bullets ?? []).map((text, n) => ({ loc: { t: "projBullet", id: p.id, i: n } as Loc, text }))])
+  );
+  add("Achievements", (resume.achievements ?? []).map((text, i) => ({ loc: { t: "achievement", i }, text })));
 
   const seen = new Map<string, string>();
   for (const place of places) {
@@ -149,6 +179,13 @@ function checkRepeatedMetric(resume: ResumeData): Finding[] {
             severity: "low",
             scored: true,
             section: "experience",
+            detail: {
+              kind: "repeated",
+              metric,
+              places: places
+                .filter((p) => metricsIn(p.text).has(metric))
+                .map((p) => ({ where: p.where, locs: p.parts.filter((x) => metricsIn(x.text).has(metric)).map((x) => x.loc) })),
+            },
             message: `The same figure (${metric}) appears under both ${first} and ${place.where}. If it was copied by mistake, put the real figure under each. If it is true in both places, you can ignore this.`,
           },
         ];
@@ -201,6 +238,7 @@ function toolPieces(resume: ResumeData): string[] {
 
 function checkToolNames(resume: ResumeData): Finding[] {
   const wrong: string[] = [];
+  const fixes: { from: string; to: string }[] = [];
   const seen = new Set<string>();
   for (const piece of toolPieces(resume)) {
     const lower = piece.toLowerCase();
@@ -209,7 +247,10 @@ function checkToolNames(resume: ResumeData): Finding[] {
     // All-lowercase or all-capitals is a style choice, not a mistake: only mixed-case slips ("Javascript") count.
     const styleOnly = piece === piece.toLowerCase() || piece === piece.toUpperCase();
     const right = MISSPELLINGS[lower] ?? (styleOnly ? undefined : CANONICAL.get(lower));
-    if (right && right !== piece) wrong.push(`"${piece}" as ${right}`);
+    if (right && right !== piece) {
+      wrong.push(`"${piece}" as ${right}`);
+      fixes.push({ from: piece, to: right });
+    }
   }
   if (wrong.length === 0) return [];
   const shown = wrong.slice(0, 3).join(", ");
@@ -219,6 +260,7 @@ function checkToolNames(resume: ResumeData): Finding[] {
       severity: "low",
       scored: true,
       section: "skills",
+      detail: { kind: "tools", fixes },
       message: `Check how you write tool names: ${shown}${wrong.length > 3 ? ` and ${wrong.length - 3} more` : ""}. Misspelt or oddly written names look careless and can miss keyword matches in hiring software.`,
     },
   ];
@@ -226,8 +268,8 @@ function checkToolNames(resume: ResumeData): Finding[] {
 
 // ---------- 4. Country format ----------
 
-const BRITISH = ["colour", "colours", "organise", "organised", "organising", "analyse", "analysed", "analysing", "centre", "centres", "behaviour", "optimise", "optimised", "optimising", "realise", "realised", "favour", "labour", "defence", "prioritise", "prioritised", "specialise", "specialised", "utilise", "utilised", "recognise", "recognised", "summarise", "summarised", "minimise", "minimised", "maximise", "maximised", "modelling", "travelling", "cancelled", "licence"];
-const AMERICAN = ["color", "colors", "analyze", "analyzed", "analyzing", "center", "centers", "behavior", "favor", "labor", "defense", "modeling", "traveling", "canceled"];
+export const BRITISH = ["colour", "colours", "organise", "organised", "organising", "analyse", "analysed", "analysing", "centre", "centres", "behaviour", "optimise", "optimised", "optimising", "realise", "realised", "favour", "labour", "defence", "prioritise", "prioritised", "specialise", "specialised", "utilise", "utilised", "recognise", "recognised", "summarise", "summarised", "minimise", "minimised", "maximise", "maximised", "modelling", "travelling", "cancelled", "licence"];
+export const AMERICAN = ["color", "colors", "analyze", "analyzed", "analyzing", "center", "centers", "behavior", "favor", "labor", "defense", "modeling", "traveling", "canceled"];
 
 function proseOf(resume: ResumeData): string {
   return [
@@ -253,15 +295,17 @@ function checkCountry(resume: ResumeData): Finding[] {
 
   const c = resume.customization;
   const personal: string[] = [];
-  if (c?.showPhoto && c.photoDataUrl) personal.push("a photo");
-  if (resume.contact.dateOfBirth?.trim()) personal.push("a date of birth");
-  if (resume.contact.nationality?.trim()) personal.push("nationality");
+  const items: ("photo" | "dateOfBirth" | "nationality")[] = [];
+  if (c?.showPhoto && c.photoDataUrl) { personal.push("a photo"); items.push("photo"); }
+  if (resume.contact.dateOfBirth?.trim()) { personal.push("a date of birth"); items.push("dateOfBirth"); }
+  if (resume.contact.nationality?.trim()) { personal.push("nationality"); items.push("nationality"); }
   if (personal.length > 0) {
     findings.push({
       id: "country-personal",
       severity: "medium",
       scored: false, // advice only: it protects the candidate, so it should not cost them points
       section: "contact",
+      detail: { kind: "personal", items },
       message: `${country} employers avoid ${personal.join(", ")} on a resume, because it keeps hiring fair, and some will set aside resumes that include it. You can remove ${personal.length === 1 ? "it" : "them"} unless you have a reason to keep ${personal.length === 1 ? "it" : "them"}.`,
     });
   }
@@ -274,6 +318,7 @@ function checkCountry(resume: ResumeData): Finding[] {
       severity: "low",
       scored: true,
       section: "summary",
+      detail: { kind: "spelling", market, words: otherSpelling },
       message: `You chose to apply in the ${country}, but the text uses ${market === "US" ? "British" : "American"} spelling (${otherSpelling.slice(0, 3).join(", ")}). Switch to ${market === "US" ? "American" : "British"} spelling so it reads as local.`,
     });
   }
@@ -285,7 +330,10 @@ function checkCountry(resume: ResumeData): Finding[] {
 const DUTY_START = /^\s*(?:responsible for|responsibilities (?:include|included)|duties (?:include|included)|worked on|helped(?: with| to)?|assisted with|tasked with|in charge of|involved in)\b/i;
 
 function checkDutyBullets(resume: ResumeData): Finding[] {
-  const duty = resume.experience.flatMap((e) => e.bullets).filter((b) => DUTY_START.test(b) && !/\d/.test(b));
+  const dutyAt = resume.experience.flatMap((e) =>
+    e.bullets.map((b, i) => ({ id: e.id, i, b })).filter((x) => DUTY_START.test(x.b) && !/\d/.test(x.b))
+  );
+  const duty = dutyAt.map((x) => x.b);
   if (duty.length < 2) return [];
   const sample = duty[0].trim().replace(/\s+/g, " ");
   return [
@@ -294,9 +342,19 @@ function checkDutyBullets(resume: ResumeData): Finding[] {
       severity: "medium",
       scored: true,
       section: "experience",
+      detail: { kind: "duty", bullets: dutyAt.map(({ id, i }) => ({ id, i })) },
       message: `${duty.length} bullets describe duties instead of results (for example "${sample.length > 60 ? sample.slice(0, 57) + "..." : sample}"). Say what changed because of your work: what you improved, built or won.`,
     },
   ];
+}
+
+/** `text` with every occurrence of the figure `metric` (as found by the repeated-figure check) turned into a [X] blank: "34%" becomes "[X]%". */
+export function blankMetric(text: string, metric: string): string {
+  let out = text;
+  for (const re of [PERCENT, CURRENCY, SCALED]) {
+    out = out.replace(re, (m) => (m.toLowerCase().replace(/[\s,]/g, "") === metric ? m.replace(/\d[\d,]*(?:\.\d+)?/, "[X]") : m));
+  }
+  return out;
 }
 
 /** Every finding for a resume, in a fixed order. Expects text with formatting marks already removed. */
