@@ -24,3 +24,23 @@ describe("guides", () => {
     for (const g of GUIDES) expect(JSON.stringify(g)).not.toMatch(/₹|\$\d|\bprice\b|per month/i);
   });
 });
+
+import { READ_NEXT, readNext, guidesForExample } from "@/lib/guides";
+import { EXAMPLES } from "@/lib/examples";
+
+describe("guide links", () => {
+  it("every guide has Read next links, all to real guides, never to itself", () => {
+    for (const g of GUIDES) {
+      const next = READ_NEXT[g.slug] ?? [];
+      expect(next.length, g.slug).toBeGreaterThan(0);
+      for (const s of next) {
+        expect(getGuide(s), `${g.slug} -> ${s}`).toBeTruthy();
+        expect(s).not.toBe(g.slug);
+      }
+      expect(readNext(g.slug).length).toBe(next.length);
+    }
+  });
+  it("every resume example page gets at least two guides", () => {
+    for (const e of EXAMPLES) expect(guidesForExample(e.slug).length, e.slug).toBeGreaterThanOrEqual(2);
+  });
+});

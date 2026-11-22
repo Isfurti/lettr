@@ -1102,3 +1102,36 @@ export const GUIDES: Guide[] = [
 export function getGuide(slug: string) {
   return GUIDES.find((g) => g.slug === slug);
 }
+
+/** Which guides to suggest at the end of each guide. Plain data; a test checks every slug exists. */
+export const READ_NEXT: Record<string, string[]> = {
+  "resume-format-for-freshers": ["fresher-resume-examples", "ats-resume-checklist"],
+  "naukri-resume": ["ats-friendly-resume", "resume-for-1-2-years-experience"],
+  "ats-friendly-resume": ["ats-resume-requirements", "ats-resume-checklist"],
+  "cover-letter-format": ["ats-friendly-resume", "resume-for-1-2-years-experience"],
+  "ats-resume-example": ["ats-resume-requirements", "ats-resume-checklist"],
+  "ats-resume-checklist": ["ats-resume-requirements", "ats-resume-example"],
+  "fresher-resume-examples": ["resume-format-for-freshers", "bcom-llb-resume-example"],
+  "bcom-llb-resume-example": ["how-to-write-llb-in-resume", "legal-assistant-resume-example"],
+  "how-to-write-llb-in-resume": ["bcom-llb-resume-example", "legal-assistant-resume-example"],
+  "ats-resume-requirements": ["ats-friendly-resume", "ats-resume-example"],
+  "resume-for-1-2-years-experience": ["explain-gap-or-short-job-on-resume", "ats-resume-checklist"],
+  "explain-gap-or-short-job-on-resume": ["resume-for-1-2-years-experience", "ats-friendly-resume"],
+  "ai-engineer-resume-example": ["resume-for-1-2-years-experience", "ats-resume-requirements"],
+  "legal-assistant-resume-example": ["bcom-llb-resume-example", "how-to-write-llb-in-resume"],
+};
+
+export function readNext(slug: string): Guide[] {
+  return (READ_NEXT[slug] ?? []).map((s) => getGuide(s)).filter((x): x is Guide => !!x);
+}
+
+/** Guides to show on a resume example page: those that list it, topped up with two general ATS guides (3 at most). */
+export function guidesForExample(exampleSlug: string, max = 3): Guide[] {
+  const out = GUIDES.filter((g) => g.relatedExamples?.includes(exampleSlug)).slice(0, max);
+  for (const s of ["ats-friendly-resume", "ats-resume-checklist", "ats-resume-example"]) {
+    if (out.length >= Math.max(2, Math.min(max, out.length + 1)) && out.length >= 2) break;
+    const g = getGuide(s);
+    if (g && !out.some((o) => o.slug === g.slug)) out.push(g);
+  }
+  return out.slice(0, max);
+}
