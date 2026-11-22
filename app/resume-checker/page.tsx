@@ -5,6 +5,8 @@ import { PublicNav } from "@/components/PublicNav";
 import { Footer } from "@/components/Footer";
 import { ResumeChecker } from "@/components/checker/ResumeChecker";
 import { HeroCtas, NoFileStrip, StickySignup } from "@/components/checker/LandingCtas";
+import { siteUrl } from "@/lib/site-url";
+import { breadcrumbJsonLd, faqPageJsonLd, jsonLdString } from "@/lib/json-ld";
 
 export const metadata: Metadata = {
   title: "Free ATS Resume & CV Checker: Get Your ATS Score | Lettr",
@@ -40,6 +42,24 @@ const FAQ = [
 
 export default async function ResumeCheckerPage({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
   const { from } = await searchParams;
+  const base = siteUrl();
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      name: "Lettr free ATS resume checker",
+      url: `${base}/resume-checker`,
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Any",
+      description: metadata.description,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    },
+    faqPageJsonLd(FAQ),
+    breadcrumbJsonLd(base, [
+      { name: "Home", path: "/" },
+      { name: "Free ATS resume checker", path: "/resume-checker" },
+    ]),
+  ];
   return (
     <div className="flex-1 flex flex-col bg-cream text-ink">
       <PublicNav />
@@ -75,6 +95,20 @@ export default async function ResumeCheckerPage({ searchParams }: { searchParams
               </Link>
               .
             </p>
+            <p className="mt-5 font-bold">Learn more about ATS</p>
+            <ul className="mt-2 space-y-1.5">
+              {[
+                ["/guides/ats-friendly-resume", "How to make an ATS-friendly resume"],
+                ["/guides/ats-resume-checklist", "ATS resume checklist: 15 checks"],
+                ["/guides/ats-resume-example", "An ATS resume example you can copy"],
+              ].map(([href, label]) => (
+                <li key={href}>
+                  <Link href={href} className="inline-flex items-center min-h-10 font-bold text-brand-blue hover:underline">
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
           <div className="flex flex-col gap-3">
             {FAQ.map((f) => (
@@ -91,6 +125,7 @@ export default async function ResumeCheckerPage({ searchParams }: { searchParams
       </main>
       <Footer />
       <StickySignup />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }} />
     </div>
   );
 }

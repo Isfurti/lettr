@@ -8,6 +8,8 @@ import { UseExampleButton } from "@/components/examples/UseExampleButton";
 import { LazyResumeShot } from "@/components/examples/LazyResumeShot";
 import { EXAMPLES, getExample } from "@/lib/examples";
 import { isTemplateFree } from "@/lib/templates";
+import { siteUrl } from "@/lib/site-url";
+import { breadcrumbJsonLd, jsonLdString } from "@/lib/json-ld";
 
 export function generateStaticParams() {
   return EXAMPLES.map((e) => ({ slug: e.slug }));
@@ -37,6 +39,11 @@ export default async function ExamplePage({ params }: { params: Promise<{ slug: 
     (_, i) => sameCategory[(at + 1 + i) % sameCategory.length]
   );
   const templateName = e.template[0].toUpperCase() + e.template.slice(1);
+  const jsonLd = breadcrumbJsonLd(siteUrl(), [
+    { name: "Home", path: "/" },
+    { name: "Resume examples", path: "/examples" },
+    { name: e.title, path: `/examples/${e.slug}` },
+  ]);
 
   return (
     <div className="flex-1 flex flex-col bg-cream text-ink">
@@ -120,6 +127,7 @@ export default async function ExamplePage({ params }: { params: Promise<{ slug: 
         )}
       </main>
       <Footer />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }} />
     </div>
   );
 }
