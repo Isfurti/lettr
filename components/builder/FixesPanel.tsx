@@ -185,12 +185,12 @@ export function FixesPanel({
                     {guest ? (
                       <Link href="/signup?continue=builder" className="text-sm font-bold text-brand-blue hover:underline">Create a free account to use AI fixes</Link>
                     ) : (
-                      <button type="button" onClick={() => rewrite(f)} disabled={busy !== null} className={`${BTN} bg-brand-blue text-white`}>
+                      <button type="button" onClick={() => rewrite(f)} disabled={busy !== null || allowance?.limit === 0} className={`${BTN} bg-brand-blue text-white`}>
                         {busy === f.id ? "Rewriting…" : "Rewrite with AI"}
                       </button>
                     )}
                     {!guest && allowance && (
-                      <span className="text-sm text-ink-soft">{left === null ? "Unlimited" : `${left} ${period === "month" ? "left this month" : "free left"}`}</span>
+                      <span className="text-sm text-ink-soft">{allowance.limit === 0 ? "Pro feature" : left === null ? "Unlimited" : `${left} ${period === "month" ? "left this month" : "free left"}`}</span>
                     )}
                     <button type="button" onClick={() => setSkipped((s) => [...s, f.id])} className={`${BTN} border-2 border-rule bg-white text-ink hover:border-ink`}>Skip</button>
                   </div>

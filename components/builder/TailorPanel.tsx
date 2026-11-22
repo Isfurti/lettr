@@ -143,12 +143,12 @@ export function TailorPanel({
       </label>
 
       <div className="flex flex-wrap items-center gap-3">
-        <button type="button" onClick={run} disabled={busy || tooShort || left === 0} className={`${BTN} bg-ink text-white`}>
+        <button type="button" onClick={run} disabled={busy || tooShort || left === 0 || allowance?.limit === 0} className={`${BTN} bg-ink text-white`}>
           {busy ? "Tailoring..." : "Tailor my resume"}
         </button>
         {left !== null && (
           <span className="text-sm text-slate">
-            {left === 0 ? "No tries left" : `${left} ${period === "month" ? "left this month" : "free try left"}`}
+            {allowance?.limit === 0 ? "Pro feature" : left === 0 ? "No tries left" : `${left} ${period === "month" ? "left this month" : "free try left"}`}
           </span>
         )}
         {tooShort && jobPost.length > 0 && <span className="text-sm text-slate">Paste a longer job post.</span>}

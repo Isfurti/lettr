@@ -163,3 +163,9 @@ The daily column is my proposal, copied from the pattern of the existing daily l
 - Also from review: a failed Tailor run now gives the free try back too.
 - Left out: the LinkedIn score is not saved anywhere; the PDF section split is best effort (check each box after upload); no link from the builder yet (dashboard only).
 - Not run locally: tests that need Postgres; CI runs them.
+
+## Decision 2026-11-22 (evening): career tools are Pro only
+
+Owner decision (Sagar): Resume fixer (AI rewrites), Fresher bullet drafts, Tailor to a job and the LinkedIn rewrite are Pro only. Free and free legacy allowances for these four are now 0 in `PLAN_LIMITS`; Pro limits are unchanged (fixer 100, tailor 100, LinkedIn 100 a month, fresher bullets unlimited, all under the daily fair-use caps). Nobody loses a feature they had, because all four shipped today.
+
+Still free: the rule-based fixes, the Fresher layout, the LinkedIn score and tips, and the ATS score. Panels show "Pro feature" with a link to Pro when the allowance is 0. The pricing page feature list is unchanged and still needs the owner's wording.
