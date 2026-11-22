@@ -71,10 +71,11 @@ describe("once-per-person free plan", () => {
     expect(r.allowed).toBe(false);
     if (!r.allowed) expect(r.reason).not.toMatch(/month/);
   });
-  it("tracks up to 10 jobs free", () => {
-    expect(canTrackJob("free", 9).allowed).toBe(true);
-    expect(canTrackJob("free", 10).allowed).toBe(false);
-    expect(canTrackJob("free_legacy", 500).allowed).toBe(true);
+  it("tracking new jobs is Pro only", () => {
+    expect(canTrackJob("free", 0).allowed).toBe(false);
+    expect(canTrackJob("free_legacy", 0).allowed).toBe(false);
+    const r = canTrackJob("free", 0);
+    if (!r.allowed) expect(r.reason).toMatch(/Pro feature/);
     expect(canTrackJob("pro", 500).allowed).toBe(true);
   });
 });

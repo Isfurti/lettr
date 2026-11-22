@@ -275,7 +275,7 @@ export default async function DashboardPage({
           </Link>
           <Link href="/dashboard/linkedin" className="group bg-white border-2 border-rule hover:border-ink rounded-[28px] p-6 flex flex-col">
             <p className="font-extrabold">LinkedIn profile</p>
-            <p className="mt-2 text-slate flex-1">Score your profile for free, then get a stronger headline, About and experience from your own words.</p>
+            <p className="mt-2 text-slate flex-1">Get a profile score, a stronger headline, About and experience, all from your own words. Pro.</p>
             <span className="mt-3 font-bold text-brand-blue group-hover:underline">Improve my profile →</span>
           </Link>
         </div>

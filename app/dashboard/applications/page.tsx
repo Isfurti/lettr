@@ -26,7 +26,7 @@ export default async function ApplicationsPage() {
       />
       <main className="flex-1 min-w-0 px-4 sm:px-8 lg:px-12 py-6 sm:py-10 max-w-[1400px] w-full">
         <h1 className="font-brand font-extrabold text-[32px] sm:text-[44px] leading-tight tracking-tight">Applications</h1>
-        <p className="text-lg text-slate mt-1 mb-7">Every job you&apos;re going for, and what to do next. Free on every plan.</p>
+        <p className="text-lg text-slate mt-1 mb-7">Every job you&apos;re going for, and what to do next. Adding new jobs is a Pro feature. Jobs you already saved stay here.</p>
         <ApplicationsBoard
           initial={apps}
           resumes={resumes.map((r) => ({ id: r.id, title: displayTitle({ ...r, data: parseStoredResume(r.data) }) }))}
