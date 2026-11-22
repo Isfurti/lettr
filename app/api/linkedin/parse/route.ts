@@ -5,6 +5,7 @@ import { extractTextFromFile } from "@/lib/extract-text";
 import { splitLinkedInPdf } from "@/lib/linkedin";
 import { publicMessage } from "@/lib/public-error";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
+import { getUserById } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -13,6 +14,9 @@ export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const userId = (session.user as { id: string }).id;
+
+  const user = await getUserById(userId);
+  if (user?.plan !== "pro") return NextResponse.json({ error: "The LinkedIn tools are a Pro feature.", upgradeRequired: true }, { status: 402 });
 
   const rate = await checkAndRecordRateLimit(userId, "linkedin-parse", 10, 10);
   if (!rate.allowed) {

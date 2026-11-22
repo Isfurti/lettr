@@ -51,11 +51,11 @@ const COMPARISON: { feature: string; free: string | boolean; pro: string | boole
   { feature: "Tailor your resume to a job post (saved versions)", free: false, pro: `${PRO.tailor} a month` },
   { feature: "AI resume fixer (one-click rewrites for tips)", free: "Rule-based fixes only", pro: `${PRO.aiFixes} a month` },
   { feature: "Fresher bullet drafts (guided, for first resumes)", free: "Layout only", pro: "Unlimited (fair use)" },
-  { feature: "LinkedIn profile rewrite", free: "Score and tips only", pro: `${PRO.linkedin} a month` },
+  { feature: "LinkedIn profile rewrite", free: false, pro: `${PRO.linkedin} a month` },
   { feature: "Interview practice with AI feedback", free: `${FREE.interviewSets} free interview`, pro: `${PRO.interviewSets} a month` },
   { feature: "AI Resume Agent (chat editing)", free: false, pro: true },
   { feature: "AI resignation letters", free: false, pro: true },
-  { feature: "Job application tracker", free: `Up to ${FREE.trackedJobs} jobs`, pro: "Unlimited" },
+  { feature: "Job application tracker", free: false, pro: "Unlimited" },
   { feature: "Any accent colour", free: "8 preset colours", pro: "Any colour" },
 ];
 
@@ -227,7 +227,6 @@ export default async function PricingPage() {
               <FeatureLine included>Live ATS score and resume score</FeatureLine>
               <FeatureLine included>Unlimited clean PDF downloads, no watermark</FeatureLine>
               <FeatureLine included>{FREE_AI_TRY_LINE}</FeatureLine>
-              <FeatureLine included>Track up to {FREE.trackedJobs} jobs</FeatureLine>
             </ul>
             <Link
               href="/signup"

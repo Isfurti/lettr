@@ -66,7 +66,7 @@ export const PLAN_LIMITS: Record<LimitTier, Limits> = {
     linkedin: 0,
     fresherBullets: 0,
     keywordsShown: 3,
-    trackedJobs: 10,
+    trackedJobs: 0,
     resignationLetterBuilder: false,
     docxExport: false,
     googleDriveExport: false,
@@ -86,7 +86,7 @@ export const PLAN_LIMITS: Record<LimitTier, Limits> = {
     linkedin: 0,
     fresherBullets: 0,
     keywordsShown: Infinity,
-    trackedJobs: Infinity,
+    trackedJobs: 0,
     resignationLetterBuilder: false,
     docxExport: false,
     googleDriveExport: false,
@@ -324,6 +324,7 @@ export function canUseFresherBullets(tier: LimitTier, used: number, now = new Da
 export function canTrackJob(tier: LimitTier, tracked: number): LimitCheck {
   const limit = PLAN_LIMITS[tier].trackedJobs;
   if (tracked < limit) return { allowed: true };
+  if (limit === 0) return { allowed: false, reason: "The job tracker is a Pro feature. Upgrade to Pro to track your applications. Jobs you already saved stay visible." };
   return {
     allowed: false,
     reason: `The free plan tracks up to ${limit} jobs. Remove one, or upgrade to Pro to track as many as you like.`,
