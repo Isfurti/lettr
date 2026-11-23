@@ -39,7 +39,7 @@ const MIN_SIDE = 64;
 
 const emptyView: ProfileView = {
   resumeId: null, shared: false, url: null, showCity: false, showLinks: false, showContact: false, showPersonal: false, hasPhoto: false, photoVersion: null, takenDown: false,
-  bannerStyle: "navy-gold", pronouns: "", openToWork: false, otwRole: "", otwPlace: "", otwNotice: "", showUpdated: true,
+  bannerStyle: "navy-gold", pronouns: "", openToWork: false, otwRole: "", otwPlace: "", otwNotice: "", showUpdated: false,
 };
 
 /** Square-crops the middle of the picture and saves it as a 512px JPEG on white, which also removes any camera data. */
@@ -122,7 +122,7 @@ export function ProfileSettings({ initial, resumes, name }: { initial: ProfileVi
     otwRole: initial?.otwRole ?? "",
     otwPlace: initial?.otwPlace ?? "",
     otwNotice: initial?.otwNotice ?? "",
-    showUpdated: initial?.showUpdated ?? true,
+    showUpdated: initial?.showUpdated ?? false,
   });
   const patchLook = (next: Partial<typeof look>) => setLook((cur) => ({ ...cur, ...next }));
 
@@ -174,8 +174,11 @@ export function ProfileSettings({ initial, resumes, name }: { initial: ProfileVi
   async function saveLook() {
     const r = await call("/api/profile/look", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(look) });
     if (r?.ok) {
-      setP(r.data.profile as ProfileView);
-      say(true, "Saved.");
+      const fresh = r.data.profile as ProfileView;
+      setP(fresh);
+      // Show what was really saved (text is tidied, and "open to work" with no text is stored as off).
+      setLook({ bannerStyle: fresh.bannerStyle, pronouns: fresh.pronouns, openToWork: fresh.openToWork, otwRole: fresh.otwRole, otwPlace: fresh.otwPlace, otwNotice: fresh.otwNotice, showUpdated: fresh.showUpdated });
+      say(true, fresh.openToWork === look.openToWork ? "Saved." : "Saved. Open to work stays off until you fill in at least one box.");
       router.refresh();
     }
   }

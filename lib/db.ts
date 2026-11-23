@@ -1111,7 +1111,7 @@ export async function saveProfileLook(userId: string, l: ProfileLookInput): Prom
   const res = await pool.query(
     `UPDATE profiles SET banner_style = $2, pronouns = NULLIF($3, ''), open_to_work = $4,
        otw_role = NULLIF($5, ''), otw_place = NULLIF($6, ''), otw_notice = NULLIF($7, ''), show_updated = $8, updated_at = now()
-     WHERE user_id = $1 RETURNING ${PROFILE_COLUMNS}`,
+     WHERE user_id = $1 AND disabled_at IS NULL RETURNING ${PROFILE_COLUMNS}`,
     [userId, l.bannerStyle, l.pronouns, l.openToWork && Boolean(l.otwRole || l.otwPlace || l.otwNotice), l.otwRole, l.otwPlace, l.otwNotice, l.showUpdated]
   );
   return res.rows[0];

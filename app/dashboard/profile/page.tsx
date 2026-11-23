@@ -6,7 +6,6 @@ import { getProfile, getResume, getUserById, listOriginalResumeTitles } from "@/
 import { formatProDate } from "@/lib/pro-pass";
 import type { Plan } from "@/lib/limits";
 import { parseStoredResume } from "@/lib/resume-version";
-import { profileUrl } from "@/lib/profile-consent";
 import { AppSidebar } from "@/components/AppSidebar";
 import { profileView } from "@/lib/profile-view";
 import { ProfileSettings, type ProfileView } from "@/components/profile/ProfileSettings";

@@ -368,6 +368,12 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS otw_place TEXT;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS otw_notice TEXT;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS show_updated BOOLEAN NOT NULL DEFAULT true;`,
   },
+  {
+    id: "0007_profile_updated_default_off",
+    // "Last updated" shows when the owner last edited, so it is opt-in: nothing new becomes public on a live profile by itself.
+    sql: `ALTER TABLE profiles ALTER COLUMN show_updated SET DEFAULT false;
+UPDATE profiles SET show_updated = false;`,
+  },
 ];
 
 export function checksum(sql: string): string {

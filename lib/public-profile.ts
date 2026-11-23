@@ -4,7 +4,7 @@ import { formatResumeDate, hiddenSections } from "./layout";
 import { marketOf, type Market } from "./market";
 import { splitLanguage } from "./contact";
 import type { PublicProfileSource } from "./db";
-import { bannerOf, openToWorkLine, updatedAgo, type BannerStyle } from "./profile-look";
+import { INVISIBLE, bannerOf, openToWorkLine, updatedAgo, type BannerStyle } from "./profile-look";
 
 /**
  * The public face of a profile. This is an allowlist: the page is built only
@@ -48,7 +48,7 @@ export type PublicProfile = {
 
 const clip = (v: unknown, max: number): string => (typeof v === "string" ? v.trim().slice(0, max) : "");
 /** Short owner-typed text for chips: one line, no angle brackets. */
-const plain = (v: unknown, max: number): string => clip(v, max).replace(/[<>]/g, "").replace(/\s+/g, " ");
+const plain = (v: unknown, max: number): string => clip(v, max).replace(INVISIBLE, "").replace(/[<>]/g, "").replace(/\s+/g, " ");
 /** Odd saved data (a newer shape, a hand-edited row) must never crash the public page. */
 const rows = <T,>(v: unknown, max: number): T[] =>
   Array.isArray(v) ? (v.filter((x) => x && typeof x === "object" && !Array.isArray(x)) as T[]).slice(0, max) : [];

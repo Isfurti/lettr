@@ -10,7 +10,7 @@ import { BANNER_STYLES } from "@/lib/profile-look";
 
 const card = "rounded-[28px] border-2 border-[var(--pp-line)] bg-[var(--pp-card)] p-6 sm:p-8";
 const h2 = "font-brand text-[26px] font-extrabold leading-tight text-[var(--pp-ink)]";
-const focus = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f5bea]";
+const focus = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--pp-focus)]";
 const h3 = "font-brand text-xl font-extrabold text-[var(--pp-ink)]";
 
 const EMAIL_OK = /^[^\s@?&,;:<>]+@[^\s@?&,;:<>]+\.[^\s@?&,;:<>]+$/;
@@ -27,7 +27,7 @@ function Avatar({ p, photoSrc }: { p: PublicProfile; photoSrc: string }) {
     return <img src={photoSrc} alt="" width={96} height={96} className="size-24 shrink-0 rounded-full border-4 border-[var(--pp-card)] object-cover" />;
   }
   return (
-    <div aria-hidden="true" className="flex size-24 shrink-0 items-center justify-center rounded-full border-4 border-[var(--pp-card)] bg-[#041632] font-brand text-4xl font-extrabold text-[#ffc94d]">
+    <div aria-hidden="true" className="flex size-24 shrink-0 items-center justify-center rounded-full border-4 border-[var(--pp-card)] bg-[#041632] font-brand text-4xl font-extrabold text-[#ffc94d] dark:bg-[#ffc94d] dark:text-[#041632]">
       {initials(p.name)}
     </div>
   );
@@ -36,7 +36,7 @@ function Avatar({ p, photoSrc }: { p: PublicProfile; photoSrc: string }) {
 function Banner({ style }: { style: PublicProfile["bannerStyle"] }) {
   const bg = BANNER_STYLES.find((b) => b.id === style)?.bg ?? "#041632";
   return (
-    <div aria-hidden="true" className="relative h-24 overflow-hidden sm:h-32" style={{ background: bg }}>
+    <div aria-hidden="true" className="relative h-24 overflow-hidden border-b border-[var(--pp-line)] sm:h-32" style={{ background: bg }}>
       {style === "navy-gold" && (
         <svg width="100%" height="100%" viewBox="0 0 800 128" preserveAspectRatio="xMaxYMid slice" className="absolute inset-0">
           <circle cx="700" cy="30" r="110" fill="#ffc94d" />
@@ -66,7 +66,7 @@ export function PublicProfileView({ profile: p, photoSrc, footer, reportHref = "
     <div className="pp-root flex min-h-screen flex-col bg-[var(--pp-bg)] text-[var(--pp-ink)]">
       <header className="flex items-center justify-between border-b border-[var(--pp-line)] px-5 py-4 sm:px-12">
         <a href="/" className={`flex min-h-11 items-center gap-2.5 no-underline ${focus}`}>
-          <span className="flex size-[34px] items-center justify-center rounded-[10px] bg-[#041632] font-brand text-xl font-extrabold text-[#ffc94d]">L</span>
+          <span className="flex size-[34px] items-center justify-center rounded-[10px] bg-[#041632] font-brand text-xl font-extrabold text-[#ffc94d] dark:bg-[#ffc94d] dark:text-[#041632]">L</span>
           <span className="font-brand text-2xl font-extrabold text-[var(--pp-ink)]">lettr</span>
         </a>
         <a href="/signup" className={`inline-flex min-h-11 items-center rounded-full bg-[#ffc94d] px-5 font-extrabold text-[#041632] no-underline shadow-[0_4px_0_#e0a800] sm:px-6 ${focus}`}>
@@ -79,20 +79,20 @@ export function PublicProfileView({ profile: p, photoSrc, footer, reportHref = "
           <section className={`${card} flex flex-col gap-5 overflow-hidden !p-0`}>
             <Banner style={p.bannerStyle} />
             <div className="flex flex-col gap-5 px-6 pb-6 sm:px-8 sm:pb-8">
-            <div className="-mt-12 flex flex-wrap items-end gap-6 sm:-mt-14">
-              <Avatar p={p} photoSrc={photoSrc} />
-              <div className="flex min-w-0 flex-col gap-1.5 pt-2">
+            <div className="flex flex-wrap items-start gap-x-6 gap-y-3">
+              <div className="-mt-12 sm:-mt-14"><Avatar p={p} photoSrc={photoSrc} /></div>
+              <div className="flex min-w-0 flex-col gap-1.5 pt-1">
                 <h1 className="font-brand text-[34px] font-extrabold leading-[1.1] tracking-tight text-[var(--pp-ink)] sm:text-[40px]">
                   {p.name || "Lettr profile"}
-                  {p.pronouns && <span className="ml-3 align-middle text-base font-semibold text-[var(--pp-muted)]">({p.pronouns})</span>}
                 </h1>
+                {p.pronouns && <p className="text-[15px] font-semibold text-[var(--pp-muted)]">{p.pronouns}</p>}
                 {p.headline && <p className="text-lg font-semibold sm:text-xl">{p.headline}</p>}
                 {p.place && <p className="text-[15px] text-[var(--pp-muted)]">{p.place}{p.updated ? ` · Last updated ${p.updated}` : ""}</p>}
                 {!p.place && p.updated && <p className="text-[15px] text-[var(--pp-muted)]">Last updated {p.updated}</p>}
               </div>
             </div>
             {p.openToWork && (
-              <p className="inline-flex min-h-9 w-fit max-w-full items-center gap-2 rounded-full bg-[#e9f7ee] px-3.5 py-1.5 text-[13px] font-extrabold text-[#14663a]">
+              <p className="inline-flex min-h-9 w-fit max-w-full items-center gap-2 rounded-full bg-[var(--pp-otw-bg)] px-3.5 py-1.5 text-[13px] font-extrabold text-[var(--pp-otw-ink)]">
                 <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-[#1f9d57]" />
                 <span>Open to work · {p.openToWork}</span>
               </p>
@@ -265,7 +265,7 @@ export function PublicProfileView({ profile: p, photoSrc, footer, reportHref = "
             </section>
           )}
 
-          <section className="flex flex-col gap-3 rounded-[28px] bg-[#041632] p-6 text-[#fffdf8]">
+          <section className="flex flex-col gap-3 rounded-[28px] border-2 border-[var(--pp-line)] bg-[#041632] p-6 text-[#fffdf8]">
             <p className="font-brand text-[22px] font-extrabold leading-tight">Your resume can be your profile too.</p>
             <p className="text-[15px] leading-normal text-[#d6dcea]">Build a resume on Lettr and share it as a private-by-default link.</p>
             <a href="/signup" className={`inline-flex min-h-12 items-center justify-center rounded-full bg-[#ffc94d] px-6 font-extrabold text-[#041632] no-underline shadow-[0_4px_0_#e0a800] ${focus}`}>

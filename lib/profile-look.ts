@@ -16,12 +16,15 @@ export function bannerOf(v: unknown): BannerStyle {
   return BANNER_STYLES.some((b) => b.id === v) ? (v as BannerStyle) : "navy-gold";
 }
 
+/** Zero-width and text-direction characters: they can make text look different from what it says. */
+export const INVISIBLE = /[\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u2069\uFEFF]/g;
+
 /** Plain text only: no line breaks, no angle brackets, so these fields can never hold markup or a link. */
 const text = (max: number) =>
   z
     .string()
     .max(max)
-    .transform((s) => s.replace(/\s+/g, " ").trim())
+    .transform((s) => s.replace(INVISIBLE, "").replace(/\s+/g, " ").trim())
     .refine((s) => !/[<>]/.test(s), "No angle brackets.");
 
 export const ProfileLook = z.object({

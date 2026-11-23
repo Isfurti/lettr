@@ -15,7 +15,7 @@ const resume: ResumeData = {
 const src = (over = {}) => ({
   user_id: "u", slug: "s".repeat(22), show_city: true, show_links: false, show_contact: false, show_personal: false,
   photo_etag: null, has_photo: false, resume_id: "r", data: JSON.stringify(resume),
-  banner_style: "navy-gold", pronouns: null, open_to_work: false, otw_role: null, otw_place: null, otw_notice: null, show_updated: true, resume_updated_at: null, ...over,
+  banner_style: "navy-gold", pronouns: null, open_to_work: false, otw_role: null, otw_place: null, otw_notice: null, show_updated: false, resume_updated_at: null, ...over,
 });
 const html = (over = {}) => renderToStaticMarkup(<PublicProfileView profile={buildPublicProfile(src(over))} photoSrc="/p/x/photo?v=1" />);
 
@@ -64,11 +64,11 @@ describe("PublicProfileView", () => {
     expect(off).not.toContain("Open to work");
     expect(off).not.toContain("Last updated");
     const now = new Date(Date.now() - 3 * 86_400_000).toISOString();
-    const on = html({ pronouns: "she/her", open_to_work: true, otw_role: "Data Analyst", otw_place: "Pune or remote", otw_notice: "30 days notice", resume_updated_at: now });
-    expect(on).toContain("(she/her)");
+    const on = html({ pronouns: "she/her", open_to_work: true, otw_role: "Data Analyst", otw_place: "Pune or remote", otw_notice: "30 days notice", resume_updated_at: now, show_updated: true });
+    expect(on).toContain("she/her");
     expect(on).toContain("Open to work · Data Analyst · Pune or remote · 30 days notice");
     expect(on).toContain("Last updated 3 days ago");
-    expect(html({ resume_updated_at: now, show_updated: false })).not.toContain("Last updated");
+    expect(html({ resume_updated_at: now })).not.toContain("Last updated");
   });
   it("keeps owner-typed chip text as plain text", () => {
     const h = html({ pronouns: "<b>x</b>", open_to_work: true, otw_role: "<img src=x onerror=1>" });

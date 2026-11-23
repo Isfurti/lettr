@@ -30,3 +30,9 @@ describe("ProfileLook", () => {
     expect(updatedAgo("garbage", now)).toBe("");
   });
 });
+
+describe("hidden characters", () => {
+  it("are removed from owner text", () => {
+    expect(ProfileLook.parse({ ...ok, pronouns: "sh‮e/her​" }).pronouns).toBe("she/her");
+  });
+});
