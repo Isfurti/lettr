@@ -7,14 +7,14 @@ import { Logo } from "@/components/Logo";
 import { InstallAppButton } from "@/components/AppInstall";
 import { ProBadge } from "@/components/ProBadge";
 import { signOut } from "next-auth/react";
-import { Home, LayoutTemplate, MessageSquare, LifeBuoy, Crown, LogOut, ShieldAlert, Globe, Briefcase, Mic, UserRound, Download, Menu, X } from "lucide-react";
+import { FileText, LayoutTemplate, MessageSquare, LifeBuoy, Crown, LogOut, ShieldAlert, Globe, Briefcase, Mic, UserRound, Download, Menu, X } from "lucide-react";
 import { TAGLINE } from "@/lib/tagline";
 
 const BASE_NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: Home },
+  { href: "/dashboard", label: "My profile", icon: UserRound },
+  { href: "/dashboard/resumes", label: "My resumes", icon: FileText },
   { href: "/dashboard/applications", label: "Applications", icon: Briefcase },
   { href: "/dashboard/interview", label: "Interview practice", icon: Mic },
-  { href: "/dashboard/profile", label: "My profile", icon: UserRound },
   { href: "/templates", label: "Templates", icon: LayoutTemplate },
   { href: "/dashboard/feedback", label: "Feedback", icon: MessageSquare },
   { href: "/support", label: "Help", icon: LifeBuoy },
@@ -68,7 +68,9 @@ export function AppSidebar({
   const NAV_ITEMS = [...BASE_NAV_ITEMS, { href: "/pricing", label: plan === "pro" ? "Your plan" : "Upgrade to Pro", icon: Crown }];
 
   // "Interview practice" stays highlighted inside one interview, and so on.
-  const isActive = (href: string) => pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
+  // Home is the profile, so its settings and preview pages keep "My profile" lit.
+  const isActive = (href: string) =>
+    href === "/dashboard" ? pathname === href || pathname === "/dashboard/profile" || pathname.startsWith("/dashboard/profile/") : pathname === href || pathname.startsWith(`${href}/`);
 
   const itemClass = (active: boolean) =>
     `flex items-center gap-3 px-3.5 min-h-11 rounded-xl text-[15px] transition-colors ${

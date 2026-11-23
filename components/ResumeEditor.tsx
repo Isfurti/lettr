@@ -417,7 +417,7 @@ export function ResumeEditor({
       setSaveError("Couldn't delete this resume. Try again.");
       return;
     }
-    router.push("/dashboard");
+    router.push("/dashboard/resumes");
   }
 
   const liveScore = scoreResumeQuality(data);
@@ -442,14 +442,14 @@ export function ResumeEditor({
       <header className="border-b border-rule bg-cream px-3 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0 basis-full sm:basis-auto flex-1">
           <Link
-            href="/dashboard"
-            aria-label="Back to dashboard"
-            title="Back to dashboard"
+            href="/dashboard/resumes"
+            aria-label="Back to my resumes"
+            title="Back to my resumes"
             onClick={(e) => {
               // Make sure the last few keystrokes are saved before leaving.
               if (latest.current.snapshot === savedRef.current) return;
               e.preventDefault();
-              void save("auto").then(() => router.push("/dashboard"));
+              void save("auto").then(() => router.push("/dashboard/resumes"));
             }}
             className="w-11 h-11 shrink-0 rounded-full bg-ink text-gold font-brand font-extrabold text-xl flex items-center justify-center -rotate-6 hover:rotate-0 transition-transform"
           >

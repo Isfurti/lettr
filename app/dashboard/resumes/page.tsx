@@ -1,0 +1,432 @@
+import { Suspense } from "react";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { ensureUserRegion } from "@/lib/user-region";
+import Link from "next/link";
+import { auth } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/admin-auth";
+import { getActiveSubscriptionForUser, listResumesForUser, getUserById, listRecentActivity, listInvoicesForUser, listApplications } from "@/lib/db";
+import { formatMoney } from "@/lib/gst";
+import { PLAN_LIMITS, type Plan } from "@/lib/limits";
+import { planAllowances } from "@/lib/free-usage";
+import { scoreResumeQuality, resumeScoreLevel } from "@/lib/resume-score";
+import { formatActivityLabel, timeAgo } from "@/lib/activity-format";
+import { displayTitle } from "@/lib/resume-title";
+import { AppSidebar } from "@/components/AppSidebar";
+import { ScoreRing } from "@/components/ScoreRing";
+import { NewResumeButton } from "@/components/NewResumeButton";
+import { ImportResumeButton } from "@/components/ImportResumeButton";
+import { formatProDate, hasPaidPro, isPlanId, PRO_PASSES, RENEWAL_PERIOD } from "@/lib/pro-pass";
+import { formatMinor } from "@/lib/pro-payments";
+import { CancelAutoRenewButton } from "@/components/CancelAutoRenewButton";
+import { subscriptionsEnabled } from "@/lib/razorpay";
+import { ResumeSearch } from "@/components/ResumeSearch";
+import { VerifyEmailBanner } from "@/components/VerifyEmailBanner";
+import { GuestDraftRescue } from "@/components/GuestDraftRescue";
+import { DeleteAccountButton } from "@/components/DeleteAccountButton";
+import { ProBadge } from "@/components/ProBadge";
+import { parseStoredResume } from "@/lib/resume-version";
+
+export const metadata: Metadata = { title: "My resumes | Lettr", robots: { index: false } };
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ drive_connected?: string; drive_error?: string; import?: string; upgraded?: string }>;
+}) {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const userId = (session.user as { id: string }).id;
+  const [resumeRows, foundUser, recentActivity, headersList, invoices, applications] = await Promise.all([
+    listResumesForUser(userId),
+    getUserById(userId),
+    listRecentActivity(userId, 5),
+    headers(),
+    listInvoicesForUser(userId),
+    listApplications(userId),
+  ]);
+  const activeApps = applications.filter((a) => a.status !== "rejected");
+  const nextStep = activeApps
+    .filter((a) => a.next_step && a.next_step_on)
+    .sort((a, b) => (a.next_step_on! < b.next_step_on! ? -1 : 1))[0];
+  // Fill in the user's region if it was never saved, so their pricing (and
+  // the admin Users/Subscriptions pages) are right from their next visit.
+  const user = foundUser ? await ensureUserRegion(foundUser, headersList) : foundUser;
+  const plan = (user?.plan ?? "free") as Plan;
+  const resumeLimit = PLAN_LIMITS[plan].maxResumes;
+  const allowances = user && plan === "free" ? await planAllowances(user) : null;
+  const atResumeLimit = resumeRows.length >= resumeLimit;
+  const { drive_connected, drive_error, import: wantsImport, upgraded } = await searchParams;
+
+  const resumes = resumeRows.map((r) => ({ ...r, data: parseStoredResume(r.data) }));
+  const scored = resumes.map((r) => ({ ...r, quality: scoreResumeQuality(r.data) }));
+  // Spotlight the most recently edited resume that actually has content -
+  // a brand-new blank one scoring 0 tells the user nothing.
+  const mostRecent = scored.find((r) => r.quality.overall > 0) ?? scored[0];
+  const score = mostRecent ? mostRecent.quality : null;
+  const isPaidPro = Boolean(user && hasPaidPro(user));
+  const proUntil = isPaidPro && user?.pro_until ? formatProDate(user.pro_until) : null;
+  const passName = user && isPlanId(user.pro_plan) ? PRO_PASSES[user.pro_plan].name : "Pro pass";
+  const autoSub = user ? await getActiveSubscriptionForUser(user.id) : undefined;
+  const renewsOn = autoSub?.current_end ? formatProDate(autoSub.current_end) : null;
+
+  const rawName = session.user.name || session.user.email?.split("@")[0] || "there";
+  // Names typed in lowercase ("sagar agarwal") read better capitalised.
+  const displayName = rawName === rawName.toLowerCase() ? rawName.replace(/\b\p{L}/gu, (c) => c.toUpperCase()) : rawName;
+  const isAdmin = isAdminEmail(session.user.email);
+  const initial = displayName[0]?.toUpperCase() ?? "?";
+
+  const tipsLeft = score ? score.sections.reduce((n, s) => n + (s.scoredTips ?? s.tips.length), 0) : 0;
+  const card = "min-w-0 rounded-[28px] p-6 flex flex-col";
+  // The "start with the resume you already have" card has its own import and
+  // create buttons, so the header doesn't repeat them while it's showing.
+  const showStartCard = (Boolean(wantsImport) || resumes.length === 0) && !atResumeLimit;
+
+  return (
+    <div className="flex-1 flex flex-col lg:flex-row bg-cream text-ink">
+      <AppSidebar
+        isAdmin={isAdmin}
+        plan={plan}
+        proUntil={proUntil}
+        usage={
+          allowances
+            ? { label: "AI rewrites", used: allowances.rewrites.used, limit: allowances.rewrites.limit }
+            : undefined
+        }
+      />
+
+      <main className="flex-1 min-w-0 px-4 sm:px-8 lg:px-12 py-6 sm:py-10 max-w-[1200px] w-full">
+        {user && !user.email_verified && <VerifyEmailBanner />}
+        <Suspense fallback={null}>
+          <GuestDraftRescue />
+        </Suspense>
+        {upgraded && plan === "pro" && (
+          <div className="mb-6 bg-gold-soft text-ink font-bold rounded-2xl px-5 py-4">
+            Welcome to Pro! Every Pro feature is unlocked{proUntil ? ` until ${proUntil}` : ""}. Your invoice is below.
+          </div>
+        )}
+        {drive_connected && (
+          <div className="mb-6 bg-brand-blue-soft text-brand-blue-deep font-bold rounded-2xl px-5 py-4">
+            Google Drive connected. You can now save resumes straight to Drive from the builder.
+          </div>
+        )}
+        {drive_error && (
+          <div className="mb-6 bg-red-50 text-red-700 rounded-2xl px-5 py-4">
+            Couldn&apos;t connect Google Drive ({drive_error}). Please try again.
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-end justify-between gap-5 mb-8">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <h1 className="font-brand font-extrabold text-[34px] sm:text-[44px] leading-[1.05] tracking-tight">
+                Welcome back, {displayName.split(" ")[0]}.
+              </h1>
+              {plan === "pro" && <ProBadge size="md" />}
+            </div>
+            <p className="mt-2 text-lg text-slate">
+              {resumes.length === 0
+                ? "Let's build your first resume."
+                : score && score.overall >= 90
+                ? "Your best resume is in great shape."
+                : tipsLeft > 0
+                ? `${tipsLeft} quick fix${tipsLeft === 1 ? "" : "es"} left on your best resume.`
+                : `You have ${resumes.length} resume${resumes.length === 1 ? "" : "s"} in your workspace.`}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            {showStartCard ? null : !atResumeLimit ? (
+              <>
+                <ImportResumeButton />
+                <NewResumeButton label="New resume" />
+              </>
+            ) : (
+              <Link
+                href="/pricing"
+                className="btn-press inline-flex items-center min-h-11 px-5 rounded-full bg-gold text-ink font-extrabold shadow-[0_4px_0_var(--gold-deep)]"
+              >
+                Upgrade for more resumes
+              </Link>
+            )}
+            <div
+              title={session.user.email ?? undefined}
+              className="hidden sm:flex w-11 h-11 rounded-full bg-ink text-gold font-brand font-extrabold items-center justify-center"
+            >
+              {initial}
+            </div>
+          </div>
+        </div>
+
+        {showStartCard && (
+          <div className="mb-8 bg-white border-2 border-ink rounded-[28px] shadow-[6px_6px_0_var(--ink)] p-6 sm:p-8 flex flex-col gap-5">
+            <div className="max-w-2xl">
+              <p className="font-brand font-extrabold text-2xl">
+                {wantsImport ? "Upload your current resume" : "Start with the resume you already have"}
+              </p>
+              <p className="mt-1 text-slate">
+                Upload a PDF or Word file, or your LinkedIn profile saved as a PDF, and Lettr fills in every section for you.
+                Or start from a blank, guided form.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <ImportResumeButton />
+              <Link
+                href="/resume-checker?from=linkedin"
+                className="btn-press inline-flex items-center justify-center min-h-11 px-5 rounded-full bg-white border-2 border-ink text-[15px] font-bold"
+              >
+                From LinkedIn
+              </Link>
+              <Link
+                href="/examples"
+                className="btn-press inline-flex items-center justify-center min-h-11 px-5 rounded-full bg-white border-2 border-ink text-[15px] font-bold"
+              >
+                Start from an example
+              </Link>
+              <NewResumeButton label="Start from scratch" />
+            </div>
+          </div>
+        )}
+
+        {mostRecent && (
+          <div className="grid md:grid-cols-2 xl:grid-cols-[1.35fr_1fr_1fr] gap-5 mb-12">
+            <div className={`${card} bg-white border-2 border-ink shadow-[6px_6px_0_var(--ink)] md:col-span-2 xl:col-span-1`}>
+              <div className="flex items-center gap-4 sm:gap-6">
+                <ScoreRing value={score?.overall ?? 0} size={112} strokeWidth={10} />
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-slate">Your best resume</p>
+                  <h2 className="font-brand font-extrabold text-2xl leading-tight line-clamp-2 break-words">{displayTitle(mostRecent)}</h2>
+                  <p className="mt-1 text-slate">
+                    {
+                      {
+                        strong: "Strong resume. Minor polish left.",
+                        solid: "Solid start. A few gaps to close.",
+                        "needs-work": "Needs work. Open the score to see what to fix.",
+                        early: "Early stage. Worth filling in more sections.",
+                      }[resumeScoreLevel(score?.overall ?? 0)]
+                    }
+                  </p>
+                  <Link
+                    href={`/builder/${mostRecent.id}?tab=score`}
+                    className="btn-press mt-3 inline-flex items-center whitespace-nowrap min-h-11 px-5 rounded-full bg-brand-blue text-white font-bold shadow-[0_4px_0_var(--brand-blue-deep)]"
+                  >
+                    {plan === "pro" ? "Full breakdown" : "Fix next tip"}
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <div className={`${card} bg-brand-blue-soft`}>
+              <p className="font-extrabold text-brand-blue-deep">Applying somewhere new?</p>
+              <p className="mt-2 text-slate leading-relaxed flex-1">
+                See your ATS score: how job-site software will read your resume, the keywords you&apos;re missing, and what to fix.
+              </p>
+              <Link
+                href={`/builder/${mostRecent.id}?tab=match`}
+                className="btn-press mt-4 self-start inline-flex items-center min-h-11 px-5 rounded-full bg-brand-blue text-white font-bold shadow-[0_4px_0_var(--brand-blue-deep)]"
+              >
+                Check my ATS score
+              </Link>
+            </div>
+
+            <div className={`${card} bg-gold-soft`}>
+              <p className="font-extrabold flex items-center gap-2">
+                Need a cover letter?
+                {allowances && (
+                  <span className="bg-ink text-gold text-xs font-extrabold px-2 py-0.5 rounded-full">
+                    {allowances.period === "month"
+                      ? `${allowances.coverLetters.limit} free a month`
+                      : allowances.coverLetters.used >= allowances.coverLetters.limit
+                        ? "Pro"
+                        : "1 free"}
+                  </span>
+                )}
+              </p>
+              <p className="mt-2 text-slate leading-relaxed flex-1">
+                Lettr writes one from your resume and the job post, in the tone you choose.
+              </p>
+              <Link
+                href={`/builder/${mostRecent.id}?tab=cover-letter`}
+                className="btn-press mt-4 self-start inline-flex items-center min-h-11 px-5 rounded-full bg-gold text-ink font-extrabold shadow-[0_4px_0_var(--gold-deep)]"
+              >
+                Write a cover letter
+              </Link>
+            </div>
+          </div>
+        )}
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
+          <Link href="/dashboard/applications" className="group bg-white border-2 border-rule hover:border-ink rounded-[28px] p-6 flex flex-col">
+            <p className="font-extrabold">Applications</p>
+            <p className="mt-2 text-slate flex-1">
+              {applications.length === 0
+                ? "Track every job you apply for, with reminders for each next step."
+                : nextStep
+                ? `${activeApps.length} active. Next: ${nextStep.next_step} (${nextStep.company}, ${new Date(`${nextStep.next_step_on}T00:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}).`
+                : `${activeApps.length} active application${activeApps.length === 1 ? "" : "s"}.`}
+            </p>
+            <span className="mt-3 font-bold text-brand-blue group-hover:underline">{applications.length === 0 ? "Start tracking →" : "Open tracker →"}</span>
+          </Link>
+          <Link href="/dashboard/interview" className="group bg-white border-2 border-rule hover:border-ink rounded-[28px] p-6 flex flex-col">
+            <p className="font-extrabold">Interview practice</p>
+            <p className="mt-2 text-slate flex-1">Answer real questions for your role, out loud or typed, and get honest feedback on each answer.</p>
+            <span className="mt-3 font-bold text-brand-blue group-hover:underline">Practise now →</span>
+          </Link>
+          <Link href="/dashboard/linkedin" className="group bg-white border-2 border-rule hover:border-ink rounded-[28px] p-6 flex flex-col">
+            <p className="font-extrabold">LinkedIn profile</p>
+            <p className="mt-2 text-slate flex-1">Get a profile score, a stronger headline, About and experience, all from your own words. Pro.</p>
+            <span className="mt-3 font-bold text-brand-blue group-hover:underline">Improve my profile →</span>
+          </Link>
+        </div>
+
+        <ResumeSearch
+          resumes={scored.map((r) => ({
+            id: r.id,
+            title: r.title,
+            template: r.template,
+            updated_at: r.updated_at,
+            score: r.quality.overall,
+            data: r.data,
+          }))}
+          atResumeLimit={atResumeLimit}
+        />
+
+        <div className={`mt-12 grid gap-5 ${plan === "free" && user ? "lg:grid-cols-2" : ""}`}>
+          <section className="bg-white rounded-[28px] border border-rule p-6">
+            <h2 className="font-brand font-extrabold text-2xl mb-4">Recently</h2>
+            {recentActivity.length === 0 ? (
+              <p className="text-slate">Nothing yet. What you do in Lettr will show up here.</p>
+            ) : (
+              <ul className="space-y-4">
+                {recentActivity.map((a) => {
+                  const { title, icon } = formatActivityLabel(a.action);
+                  return (
+                    <li key={a.id} className="flex items-center gap-3">
+                      <span aria-hidden="true" className="w-9 h-9 shrink-0 rounded-full bg-brand-blue-soft text-brand-blue flex items-center justify-center">
+                        {icon}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold truncate">{title}</p>
+                        {a.detail && <p className="text-sm text-slate truncate">{a.detail}</p>}
+                      </div>
+                      <span className="text-sm text-slate shrink-0">{timeAgo(a.created_at)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+
+          {allowances && user && (
+            <section className="bg-white rounded-[28px] border border-rule p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+                <h2 className="font-brand font-extrabold text-2xl">Your free plan</h2>
+                <Link href="/pricing" className="inline-flex items-center min-h-11 font-bold text-brand-blue hover:underline">
+                  Get unlimited with Pro
+                </Link>
+              </div>
+              <div className="space-y-5">
+                {[
+                  { label: "Resumes", used: resumes.length, limit: resumeLimit },
+                  { label: "AI rewrites", ...allowances.rewrites },
+                  { label: allowances.period === "month" ? "Cover letters this month" : "AI cover letter", ...allowances.coverLetters },
+                  { label: allowances.period === "month" ? "ATS analyst reviews this month" : "ATS analyst review", ...allowances.atsAnalyst },
+                  { label: allowances.period === "month" ? "Practice interviews this month" : "Practice interview", ...allowances.interviewSets },
+                ].map((u) => {
+                  const used = Math.min(u.used, u.limit);
+                  return (
+                    <div key={u.label}>
+                      <div className="flex items-start justify-between gap-3 mb-1.5">
+                        <span className="font-bold min-w-0">{u.label}</span>
+                        <span className="text-slate shrink-0 whitespace-nowrap">
+                          {used} of {u.limit} used
+                        </span>
+                      </div>
+                      <div className="h-2.5 bg-sand rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${used >= u.limit ? "bg-gold-deep" : "bg-brand-blue"}`}
+                          style={{ width: `${(used / u.limit) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+        </div>
+
+        {plan === "pro" ? (
+          <section className="mt-5 bg-white rounded-[28px] border border-rule p-6 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              {autoSub ? (
+                <>
+                  <p className="font-bold">
+                    {autoSub.cancel_at_cycle_end
+                      ? `You're on Pro until ${proUntil}. It won't renew.`
+                      : `You're on Pro, renewing ${RENEWAL_PERIOD[isPlanId(autoSub.plan_id) ? autoSub.plan_id : "monthly"]} at ${formatMinor(autoSub.amount, autoSub.currency)}.`}
+                  </p>
+                  <p className="text-sm text-slate mt-1">
+                    {autoSub.cancel_at_cycle_end
+                      ? "You won't be charged again. Your resumes stay saved after Pro ends."
+                      : `Next renewal ${renewsOn ? `on ${renewsOn}` : "soon"}. We email you 3 days before.`}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-bold">
+                    {isPaidPro ? `You're on Pro (${passName}) until ${proUntil}.` : "You're on Pro (added by the Lettr team)."}
+                  </p>
+                  {isPaidPro && (
+                    <p className="text-sm text-slate mt-1">
+                      {subscriptionsEnabled()
+                        ? "It won't renew on its own. You can pick a plan after it ends."
+                        : "It won't renew on its own, so you're never charged again unless you buy more time."}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+            {autoSub && !autoSub.cancel_at_cycle_end && <CancelAutoRenewButton proUntil={renewsOn ?? proUntil ?? "the end of the time you've paid for"} />}
+            {isPaidPro && !autoSub && !subscriptionsEnabled() && (
+              <Link href="/pricing" className="inline-flex items-center min-h-11 font-bold text-brand-blue hover:underline">
+                Add more time →
+              </Link>
+            )}
+          </section>
+        ) : null}
+
+        {invoices.length > 0 && (
+          <section className="mt-5 bg-white rounded-[28px] border border-rule p-6">
+            <h2 className="font-brand font-extrabold text-2xl mb-4">Invoices</h2>
+            <ul className="divide-y divide-rule">
+              {invoices.map((inv) => (
+                <li key={inv.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <p className="font-bold">{inv.number}</p>
+                    <p className="text-sm text-slate">
+                      {new Date(inv.issued_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} ·{" "}
+                      {inv.description}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="font-bold">{formatMoney(inv.total, inv.currency)}</span>
+                    <a href={`/api/invoices/${inv.id}/pdf`} className="inline-flex items-center min-h-11 font-bold text-brand-blue hover:underline">
+                      Download PDF
+                    </a>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section className="mt-12 pt-6 border-t border-rule">
+          <p className="text-sm font-bold text-slate mb-3">Account</p>
+          <DeleteAccountButton />
+        </section>
+      </main>
+    </div>
+  );
+}
