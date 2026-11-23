@@ -46,5 +46,5 @@ export default async function PublicProfilePage({ params }: Props) {
   if (!found || !found.profile.name) notFound();
   const { profile } = found;
   const photoSrc = `/p/${slug}/photo?v=${encodeURIComponent(profile.photoVersion)}`;
-  return <PublicProfileView profile={profile} photoSrc={photoSrc} reportHref={`/p/${slug}/report`} />;
+  return <PublicProfileView profile={profile} photoSrc={photoSrc} />;
 }

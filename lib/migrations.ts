@@ -341,22 +341,6 @@ CREATE INDEX IF NOT EXISTS idx_resumes_parent ON resumes(parent_id);`,
 CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_slug ON profiles(slug) WHERE slug IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_profiles_resume ON profiles(resume_id);`,
   },
-  {
-    id: "0005_profile_reports",
-    sql: `CREATE TABLE IF NOT EXISTS profile_reports (
-  id TEXT PRIMARY KEY,
-  profile_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  reason TEXT NOT NULL CHECK (reason IN ('not_me', 'private_info', 'harassment', 'spam', 'other')),
-  details TEXT,
-  reporter_email TEXT,
-  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'actioned', 'dismissed')),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  handled_at TIMESTAMPTZ,
-  handled_by TEXT
-);
-CREATE INDEX IF NOT EXISTS idx_profile_reports_status ON profile_reports(status, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_profile_reports_user ON profile_reports(profile_user_id);`,
-  },
 ];
 
 export function checksum(sql: string): string {
