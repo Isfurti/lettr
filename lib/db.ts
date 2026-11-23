@@ -1175,6 +1175,13 @@ export async function setProfilePhoto(userId: string, photo: Buffer, mime: strin
   return (res.rowCount ?? 0) > 0;
 }
 
+/** The user's original resumes (never tailored versions), newest first, for the "which resume is my profile" choice. */
+export async function listOriginalResumeTitles(userId: string): Promise<{ id: string; title: string }[]> {
+  await ensureSchema();
+  const res = await pool.query("SELECT id, title FROM resumes WHERE user_id = $1 AND parent_id IS NULL ORDER BY updated_at DESC", [userId]);
+  return res.rows;
+}
+
 /** Makes sure the user has a profile row (private, nothing chosen yet), so a picture can be attached before the first share. */
 export async function ensureProfile(userId: string): Promise<void> {
   await ensureSchema();
