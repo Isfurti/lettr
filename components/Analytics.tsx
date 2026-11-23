@@ -9,7 +9,6 @@ import {
   GA_ID,
   META_PIXEL_ID,
   OPEN_CONSENT_EVENT,
-  isPrivatePath,
   readConsent,
   saveConsent,
   trackingConfigured,
@@ -93,7 +92,7 @@ export function Analytics() {
   // (GA4 counts these on its own through enhanced measurement.)
   const firstPath = useRef(true);
   useEffect(() => {
-    if (consent !== "granted" || isPrivatePath(pathname)) return;
+    if (consent !== "granted") return;
     if (firstPath.current) {
       firstPath.current = false;
       return;
@@ -101,7 +100,7 @@ export function Analytics() {
     window.fbq?.("track", "PageView");
   }, [pathname, consent]);
 
-  if (!trackingConfigured || consent === "pending" || isPrivatePath(pathname)) return null;
+  if (!trackingConfigured || consent === "pending" || pathname.startsWith("/admin")) return null;
 
   function choose(v: Consent) {
     saveConsent(v);

@@ -21,8 +21,6 @@ export type PublicProfile = {
   headline: string;
   place: string;
   summary: string;
-  /** The owner chose to show phone and email (even if they have none filled in). */
-  contactShared: boolean;
   email: string;
   phone: string;
   links: { label: string; url: string }[];
@@ -124,7 +122,6 @@ export function buildPublicProfile(src: PublicProfileSource): PublicProfile {
     headline,
     place: src.show_city ? cityOf(data.contact?.location) : "",
     summary: hidden.has("summary") ? "" : clip(data.summary, 1200),
-    contactShared: src.show_contact,
     email: src.show_contact ? clip(data.contact?.email, 120) : "",
     phone: src.show_contact ? clip(data.contact?.phone, 40) : "",
     links,
