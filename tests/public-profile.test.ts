@@ -42,14 +42,6 @@ const src = (over: Partial<PublicProfileSource> = {}, data: ResumeData = resume)
   has_photo: false,
   resume_id: "r1",
   data: JSON.stringify(data),
-  banner_style: "navy-gold",
-  pronouns: null,
-  open_to_work: false,
-  otw_role: null,
-  otw_place: null,
-  otw_notice: null,
-  show_updated: true,
-  resume_updated_at: null,
   ...over,
 });
 

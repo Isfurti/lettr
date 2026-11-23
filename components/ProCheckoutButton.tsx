@@ -127,7 +127,7 @@ export function ProCheckoutButton({
               currency: String(order.currency ?? ""),
               plan,
             }).catch(() => undefined);
-            window.location.href = "/dashboard/resumes?upgraded=1";
+            window.location.href = "/dashboard?upgraded=1";
           } catch (err) {
             setError(err instanceof Error ? err.message : "We couldn't confirm the payment.");
             setBusy(false);

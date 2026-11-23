@@ -4,7 +4,6 @@ import { formatResumeDate, hiddenSections } from "./layout";
 import { marketOf, type Market } from "./market";
 import { splitLanguage } from "./contact";
 import type { PublicProfileSource } from "./db";
-import { INVISIBLE, bannerOf, openToWorkLine, updatedAgo, type BannerStyle } from "./profile-look";
 
 /**
  * The public face of a profile. This is an allowlist: the page is built only
@@ -38,17 +37,9 @@ export type PublicProfile = {
   achievements: string[];
   hasPhoto: boolean;
   photoVersion: string;
-  bannerStyle: BannerStyle;
-  pronouns: string;
-  /** "Data Analyst · Pune · 30 days notice", or empty when the owner has not switched it on. */
-  openToWork: string;
-  /** "2 days ago", or empty when the owner hid it. */
-  updated: string;
 };
 
 const clip = (v: unknown, max: number): string => (typeof v === "string" ? v.trim().slice(0, max) : "");
-/** Short owner-typed text for chips: one line, no angle brackets. */
-const plain = (v: unknown, max: number): string => clip(v, max).replace(INVISIBLE, "").replace(/[<>]/g, "").replace(/\s+/g, " ");
 /** Odd saved data (a newer shape, a hand-edited row) must never crash the public page. */
 const rows = <T,>(v: unknown, max: number): T[] =>
   Array.isArray(v) ? (v.filter((x) => x && typeof x === "object" && !Array.isArray(x)) as T[]).slice(0, max) : [];
@@ -171,10 +162,6 @@ export function buildPublicProfile(src: PublicProfileSource): PublicProfile {
     achievements: hidden.has("achievements") ? [] : list(data.achievements, 10, 300),
     hasPhoto: src.has_photo,
     photoVersion: src.photo_etag ?? "",
-    bannerStyle: bannerOf(src.banner_style),
-    pronouns: plain(src.pronouns, 30),
-    openToWork: src.open_to_work ? openToWorkLine({ role: plain(src.otw_role, 60), place: plain(src.otw_place, 60), notice: plain(src.otw_notice, 40) }) : "",
-    updated: src.show_updated ? updatedAgo(src.resume_updated_at) : "",
   };
 }
 

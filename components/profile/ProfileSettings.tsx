@@ -3,7 +3,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BANNER_STYLES, type BannerStyle } from "@/lib/profile-look";
 import { PROFILE_CONSENT_VERSION, PROFILE_MIN_AGE, consentLines } from "@/lib/profile-consent";
 
 export type ProfileView = {
@@ -17,13 +16,6 @@ export type ProfileView = {
   hasPhoto: boolean;
   photoVersion: string | null;
   takenDown: boolean;
-  bannerStyle: BannerStyle;
-  pronouns: string;
-  openToWork: boolean;
-  otwRole: string;
-  otwPlace: string;
-  otwNotice: string;
-  showUpdated: boolean;
 };
 
 type Resume = { id: string; title: string };
@@ -39,7 +31,6 @@ const MIN_SIDE = 64;
 
 const emptyView: ProfileView = {
   resumeId: null, shared: false, url: null, showCity: false, showLinks: false, showContact: false, showPersonal: false, hasPhoto: false, photoVersion: null, takenDown: false,
-  bannerStyle: "navy-gold", pronouns: "", openToWork: false, otwRole: "", otwPlace: "", otwNotice: "", showUpdated: false,
 };
 
 /** Square-crops the middle of the picture and saves it as a 512px JPEG on white, which also removes any camera data. */
@@ -115,17 +106,6 @@ export function ProfileSettings({ initial, resumes, name }: { initial: ProfileVi
   const flags = { showCity: p?.showCity ?? false, showLinks: p?.showLinks ?? false, showContact: p?.showContact ?? false, showPersonal: p?.showPersonal ?? false };
   const initials = name.split(/\s+/).filter(Boolean).map((w) => Array.from(w)[0]).slice(0, 2).join("").toUpperCase() || "?";
 
-  const [look, setLook] = useState({
-    bannerStyle: (initial?.bannerStyle ?? "navy-gold") as BannerStyle,
-    pronouns: initial?.pronouns ?? "",
-    openToWork: initial?.openToWork ?? false,
-    otwRole: initial?.otwRole ?? "",
-    otwPlace: initial?.otwPlace ?? "",
-    otwNotice: initial?.otwNotice ?? "",
-    showUpdated: initial?.showUpdated ?? false,
-  });
-  const patchLook = (next: Partial<typeof look>) => setLook((cur) => ({ ...cur, ...next }));
-
   const msgCount = useRef(0);
   const say = (ok: boolean, text: string) => setMsg({ ok, text, id: ++msgCount.current });
 
@@ -168,18 +148,6 @@ export function ProfileSettings({ initial, resumes, name }: { initial: ProfileVi
       setP(r.data.profile as ProfileView);
       say(true, okText);
       router.refresh(); // the page's name and initials follow the chosen resume
-    }
-  }
-
-  async function saveLook() {
-    const r = await call("/api/profile/look", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(look) });
-    if (r?.ok) {
-      const fresh = r.data.profile as ProfileView;
-      setP(fresh);
-      // Show what was really saved (text is tidied, and "open to work" with no text is stored as off).
-      setLook({ bannerStyle: fresh.bannerStyle, pronouns: fresh.pronouns, openToWork: fresh.openToWork, otwRole: fresh.otwRole, otwPlace: fresh.otwPlace, otwNotice: fresh.otwNotice, showUpdated: fresh.showUpdated });
-      say(true, fresh.openToWork === look.openToWork ? "Saved." : "Saved. Open to work stays off until you fill in at least one box.");
-      router.refresh();
     }
   }
 
@@ -256,7 +224,7 @@ export function ProfileSettings({ initial, resumes, name }: { initial: ProfileVi
       <div className={card}>
         <p className="font-extrabold text-xl">Make a resume first</p>
         <p className="text-slate">Your profile is one of your resumes. Create one and it can become your profile.</p>
-        <Link href="/dashboard/resumes" className={`${btn} bg-gold text-ink self-start shadow-[0_4px_0_var(--gold-deep)]`}>Go to my resumes</Link>
+        <Link href="/dashboard" className={`${btn} bg-gold text-ink self-start shadow-[0_4px_0_var(--gold-deep)]`}>Go to my resumes</Link>
       </div>
     );
   }
@@ -382,50 +350,6 @@ export function ProfileSettings({ initial, resumes, name }: { initial: ProfileVi
         </Row>
         {p?.shared && <p className="text-[13px] text-slate">These switches change your live page straight away.</p>}
       </section>
-
-      {saved && chosen && (
-        <section className={card}>
-          <h2 className="font-extrabold text-lg">Look and job search</h2>
-          <fieldset className="flex flex-col gap-2.5 border-0 p-0">
-            <legend className="font-bold">Banner style</legend>
-            <div className="flex flex-wrap gap-2.5">
-              {BANNER_STYLES.map((b) => (
-                <label key={b.id} className={`flex min-h-11 cursor-pointer items-center gap-2.5 rounded-full border-2 px-3.5 text-sm font-bold has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-blue ${look.bannerStyle === b.id ? "border-ink bg-[#f4f0e3]" : "border-rule bg-white"}`}>
-                  <input type="radio" name="banner" value={b.id} checked={look.bannerStyle === b.id} onChange={() => patchLook({ bannerStyle: b.id })} className="sr-only" />
-                  <span aria-hidden="true" className="size-5 rounded-full border border-rule" style={{ background: b.bg }} />
-                  {b.label}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="pf-pronouns" className="font-bold">Pronouns <span className="font-normal text-slate">(optional)</span></label>
-            <input id="pf-pronouns" maxLength={30} value={look.pronouns} onChange={(e) => patchLook({ pronouns: e.target.value })} placeholder="she/her, he/him, they/them" className="min-h-12 rounded-[14px] border-2 border-rule bg-paper px-4 font-semibold" />
-          </div>
-          <Row title="Open to work" hint="Shows a green chip on your page with what you are looking for.">
-            {(ids) => <Switch on={look.openToWork} {...ids} onChange={(v) => patchLook({ openToWork: v })} />}
-          </Row>
-          {look.openToWork && (
-            <div className="grid gap-3 sm:grid-cols-3">
-              {([
-                ["otwRole", "Role", "Data Analyst", 60],
-                ["otwPlace", "City or remote", "Pune or remote", 60],
-                ["otwNotice", "Notice period", "30 days notice", 40],
-              ] as const).map(([key, label, ph, max]) => (
-                <div key={key} className="flex flex-col gap-1">
-                  <label htmlFor={`pf-${key}`} className="text-sm font-bold text-slate">{label}</label>
-                  <input id={`pf-${key}`} maxLength={max} value={look[key]} onChange={(e) => patchLook({ [key]: e.target.value })} placeholder={ph} className="min-h-12 rounded-[14px] border-2 border-rule bg-paper px-4 font-semibold" />
-                </div>
-              ))}
-            </div>
-          )}
-          <Row title="Last updated" hint="Shows when your resume was last changed, as “2 days ago”.">
-            {(ids) => <Switch on={look.showUpdated} {...ids} onChange={(v) => patchLook({ showUpdated: v })} />}
-          </Row>
-          <p className="text-[13px] text-slate">Everything you type here is public once you share. Don&apos;t put a phone number or email in these boxes.{p?.shared ? " Changes show on your live page straight away." : ""}</p>
-          <button type="button" aria-disabled={busy} onClick={() => { if (!busyRef.current) void saveLook(); }} className={`${btn} ${wide} bg-ink text-white self-start`}>Save look and job search</button>
-        </section>
-      )}
 
       <p className="text-[13px] text-slate">Details on a profile are provided by the owner and are not verified by Lettr. Deleting your account removes your profile page straight away.</p>
 

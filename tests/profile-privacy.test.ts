@@ -6,8 +6,8 @@ import { scrubDeep, scrubProfileUrls } from "@/lib/sentry-scrub";
 
 describe("tracking is off on private paths", () => {
   it("covers admin and shared profiles only", () => {
-    for (const p of ["/admin", "/admin/users", "/p", "/p/abc", "/p/abc/photo", "/dashboard", "/dashboard/profile", "/dashboard/profile/preview"]) expect(isPrivatePath(p)).toBe(true);
-    for (const p of ["/", "/pricing", "/pro", "/privacy", "/examples/p/x", "/dashboard/resumes", "/dashboard/profiles-x"]) expect(isPrivatePath(p)).toBe(false);
+    for (const p of ["/admin", "/admin/users", "/p", "/p/abc", "/p/abc/photo", "/dashboard/profile", "/dashboard/profile/preview"]) expect(isPrivatePath(p)).toBe(true);
+    for (const p of ["/", "/pricing", "/pro", "/privacy", "/examples/p/x", "/dashboard", "/dashboard/profiles-x"]) expect(isPrivatePath(p)).toBe(false);
   });
 });
 

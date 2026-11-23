@@ -83,7 +83,7 @@ export async function sendProConfirmationEmail(params: {
     text:
       `Thanks for buying the Lettr Pro ${params.passName}. Every Pro feature is now unlocked.\n\n` +
       `Your Pro runs until ${params.proUntil}. It won't renew on its own, so you'll never be charged again unless you buy another pass.\n\n` +
-      `Your invoice is on your dashboard: ${getAppUrl()}/dashboard/resumes\n\n${EMAIL_SIGN_OFF}`,
+      `Your invoice is on your dashboard: ${getAppUrl()}/dashboard\n\n${EMAIL_SIGN_OFF}`,
   });
 }
 
@@ -110,7 +110,7 @@ export async function sendAutoRenewStartedEmail(p: RenewalDetails): Promise<{ se
     text:
       `Thanks for joining Lettr Pro. Every Pro feature is now unlocked.\n\n` +
       `Your plan renews automatically at ${p.price} ${p.period}. The next renewal is on ${p.renewsOn}, and we'll email you 3 days before each one.\n\n` +
-      `Cancel any time from your dashboard and Pro keeps running until the end of the time you've paid for:\n${getAppUrl()}/dashboard/resumes\n\n${EMAIL_SIGN_OFF}`,
+      `Cancel any time from your dashboard and Pro keeps running until the end of the time you've paid for:\n${getAppUrl()}/dashboard\n\n${EMAIL_SIGN_OFF}`,
   });
 }
 
@@ -120,7 +120,7 @@ export async function sendRenewalReceiptEmail(p: RenewalDetails): Promise<{ sent
     subject: "Your Lettr Pro renewed",
     text:
       `Your Lettr Pro renewed (${p.price}). The next renewal is on ${p.renewsOn}.\n\n` +
-      `Your invoice is on your dashboard, where you can also cancel any time:\n${getAppUrl()}/dashboard/resumes\n\n${EMAIL_SIGN_OFF}`,
+      `Your invoice is on your dashboard, where you can also cancel any time:\n${getAppUrl()}/dashboard\n\n${EMAIL_SIGN_OFF}`,
   });
 }
 
@@ -130,7 +130,7 @@ export async function sendRenewalReminderEmail(p: RenewalDetails): Promise<{ sen
     subject: "Your Lettr Pro renews in 3 days",
     text:
       `Just a heads-up: your Lettr Pro renews on ${p.renewsOn} at ${p.price}.\n\n` +
-      `Nothing to do if you want to keep it. To stop it, cancel from your dashboard before then. Pro keeps running until the end of the time you've paid for:\n${getAppUrl()}/dashboard/resumes\n\n${EMAIL_SIGN_OFF}`,
+      `Nothing to do if you want to keep it. To stop it, cancel from your dashboard before then. Pro keeps running until the end of the time you've paid for:\n${getAppUrl()}/dashboard\n\n${EMAIL_SIGN_OFF}`,
   });
 }
 
