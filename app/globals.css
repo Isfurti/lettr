@@ -229,3 +229,17 @@ textarea.field-input {
   .btn-press:hover, .lift:hover { transform: none; }
   .reveal-init { opacity: 1; transform: none; }
 }
+
+/* Public profile page colours. Dark mode follows the visitor's device setting, so it needs no script or stored choice. */
+.pp-root {
+  --pp-bg: #fffdf8; --pp-card: #ffffff; --pp-ink: #041632; --pp-body: #27344f; --pp-muted: #4a5878;
+  --pp-line: #e8e2d2; --pp-dash: #c9c1a8; --pp-chip: #eef2ff; --pp-chip-ink: #1f3fb0; --pp-link: #2f5bea;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  .pp-root {
+    --pp-bg: #061226; --pp-card: #0c1e3a; --pp-ink: #fffdf8; --pp-body: #d6dcea; --pp-muted: #a9b4cc;
+    --pp-line: #1f3357; --pp-dash: #3d5276; --pp-chip: #14294d; --pp-chip-ink: #bcd0ff; --pp-link: #8fb0ff;
+    color-scheme: dark;
+  }
+}

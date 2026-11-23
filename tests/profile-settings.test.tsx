@@ -6,6 +6,7 @@ import { ProfileSettings, type ProfileView } from "@/components/profile/ProfileS
 const base: ProfileView = {
   resumeId: "r1", shared: false, url: null, showCity: false, showLinks: false, showContact: false, showPersonal: false,
   hasPhoto: false, photoVersion: null, takenDown: false,
+  bannerStyle: "navy-gold", pronouns: "", openToWork: false, otwRole: "", otwPlace: "", otwNotice: "", showUpdated: true,
 };
 const resumes = [{ id: "r1", title: "Data Analyst resume" }, { id: "r2", title: "Other" }];
 const html = (initial: ProfileView | null, rs = resumes) => renderToStaticMarkup(<ProfileSettings initial={initial} resumes={rs} name="Asha Verma" />);
@@ -51,7 +52,18 @@ describe("ProfileSettings", () => {
   it("every switch has an accessible name", () => {
     const h = html(base);
     const switches = h.match(/role="switch"[^>]*/g) ?? [];
-    expect(switches.length).toBe(4);
+    expect(switches.length).toBe(6); // four visibility switches, open to work, last updated
     for (const s of switches) expect(s).toContain("aria-labelledby=");
+  });
+});
+
+describe("look and job search section", () => {
+  it("shows for a chosen resume, with the open-to-work boxes only when it is on", () => {
+    expect(html(base)).toContain("Look and job search");
+    expect(html(base)).not.toContain("Notice period");
+    expect(html({ ...base, openToWork: true, otwRole: "Data Analyst" })).toContain("Notice period");
+  });
+  it("is not shown before a resume is chosen", () => {
+    expect(html(null)).not.toContain("Look and job search");
   });
 });

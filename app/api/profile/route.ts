@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getProfile, listOriginalResumeTitles, saveProfileSettings } from "@/lib/db";
-import { PROFILE_CONSENT_VERSION, profileUrl } from "@/lib/profile-consent";
+import { PROFILE_CONSENT_VERSION } from "@/lib/profile-consent";
 import { isSameOriginRequest } from "@/lib/same-origin";
+import { profileView } from "@/lib/profile-view";
 
 export const runtime = "nodejs";
 
@@ -20,30 +21,12 @@ async function userIdOf(): Promise<string | null> {
   return session?.user ? (session.user as { id: string }).id : null;
 }
 
-function view(p: Awaited<ReturnType<typeof getProfile>>) {
-  if (!p) return null;
-  return {
-    resumeId: p.resume_id,
-    shared: p.shared,
-    url: p.shared && p.slug ? profileUrl(p.slug) : null,
-    showCity: p.show_city,
-    showLinks: p.show_links,
-    showContact: p.show_contact,
-    showPersonal: p.show_personal,
-    hasPhoto: p.has_photo,
-    photoVersion: p.photo_etag,
-    // What the owner may need to know, never the internal reason text.
-    takenDown: Boolean(p.disabled_at),
-    consentVersion: p.consent_version,
-  };
-}
-
 /** The owner's profile settings and the resumes they can choose from. Free for everyone. */
 export async function GET() {
   const userId = await userIdOf();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const [profile, resumes] = await Promise.all([getProfile(userId), listOriginalResumeTitles(userId)]);
-  return NextResponse.json({ profile: view(profile), resumes, consentVersion: PROFILE_CONSENT_VERSION });
+  return NextResponse.json({ profile: profileView(profile), resumes, consentVersion: PROFILE_CONSENT_VERSION });
 }
 
 /**
@@ -60,5 +43,5 @@ export async function PUT(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   const saved = await saveProfileSettings(userId, parsed.data);
   if (!saved) return NextResponse.json({ error: "Choose one of your own resumes (not a tailored version)." }, { status: 400 });
-  return NextResponse.json({ profile: view(saved) });
+  return NextResponse.json({ profile: profileView(saved) });
 }

@@ -357,6 +357,17 @@ CREATE INDEX IF NOT EXISTS idx_profiles_resume ON profiles(resume_id);`,
 CREATE INDEX IF NOT EXISTS idx_profile_reports_status ON profile_reports(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_profile_reports_user ON profile_reports(profile_user_id);`,
   },
+  {
+    id: "0006_profile_look",
+    sql: `ALTER TABLE profiles ADD COLUMN IF NOT EXISTS banner_style TEXT NOT NULL DEFAULT 'navy-gold'
+  CHECK (banner_style IN ('navy-gold', 'gold-sun', 'blue-wave', 'plain'));
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS pronouns TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS open_to_work BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS otw_role TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS otw_place TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS otw_notice TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS show_updated BOOLEAN NOT NULL DEFAULT true;`,
+  },
 ];
 
 export function checksum(sql: string): string {

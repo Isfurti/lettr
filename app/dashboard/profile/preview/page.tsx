@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getProfile, getResume } from "@/lib/db";
 import { buildPublicProfile } from "@/lib/public-profile";
+import { ownerSource } from "@/lib/profile-source";
 import { PublicProfileView } from "@/components/profile/PublicProfileView";
 
 export const metadata: Metadata = { title: "Profile preview | Lettr", robots: { index: false, follow: false } };
@@ -20,18 +21,7 @@ export default async function ProfilePreviewPage() {
 
   let view;
   try {
-    view = buildPublicProfile({
-      user_id: userId,
-      slug: profile.slug ?? "",
-      show_city: profile.show_city,
-      show_links: profile.show_links,
-      show_contact: profile.show_contact,
-      show_personal: profile.show_personal,
-      photo_etag: profile.photo_etag,
-      has_photo: profile.has_photo,
-      resume_id: resume.id,
-      data: resume.data,
-    });
+    view = buildPublicProfile(ownerSource(userId, profile, resume));
   } catch {
     redirect("/dashboard/profile"); // saved data this version cannot read
   }

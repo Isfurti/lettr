@@ -7,6 +7,7 @@ import { encryptSecret } from "./secret-box";
 import { assertPreviewUsesStagingDatabase } from "./preview-guard";
 import type { ApplicationStatus } from "./application-status";
 import { proHasLapsed } from "./pro-pass";
+import type { ProfileLookInput } from "./profile-look";
 
 // Every call site in the app only uses the exported functions below, so
 // swapping providers (e.g. a different Postgres host, or connection pooling
@@ -1047,10 +1048,18 @@ export type ProfileRow = {
   photo_etag: string | null;
   link_changed_at: string | null;
   has_photo: boolean;
+  banner_style: string;
+  pronouns: string | null;
+  open_to_work: boolean;
+  otw_role: string | null;
+  otw_place: string | null;
+  otw_notice: string | null;
+  show_updated: boolean;
 };
 
 const PROFILE_COLUMNS = `user_id, resume_id, slug, shared, show_city, show_links, show_contact, show_personal, age_confirmed_at,
-  consent_version, disabled_at, disabled_reason, photo_mime, photo_etag, link_changed_at, (photo IS NOT NULL) AS has_photo`;
+  consent_version, disabled_at, disabled_reason, photo_mime, photo_etag, link_changed_at, (photo IS NOT NULL) AS has_photo,
+  banner_style, pronouns, open_to_work, otw_role, otw_place, otw_notice, show_updated`;
 
 /** A new random profile link: 22 characters, not guessable. */
 export function newProfileSlug(): string {
@@ -1094,6 +1103,18 @@ export async function saveProfileSettings(
     if ((err as { code?: string }).code === "23503") return undefined; // the resume was deleted a moment ago
     throw err;
   }
+}
+
+/** Saves banner, pronouns, open-to-work and the last-updated switch. The profile row must exist (a resume was chosen). */
+export async function saveProfileLook(userId: string, l: ProfileLookInput): Promise<ProfileRow | undefined> {
+  await ensureSchema();
+  const res = await pool.query(
+    `UPDATE profiles SET banner_style = $2, pronouns = NULLIF($3, ''), open_to_work = $4,
+       otw_role = NULLIF($5, ''), otw_place = NULLIF($6, ''), otw_notice = NULLIF($7, ''), show_updated = $8, updated_at = now()
+     WHERE user_id = $1 RETURNING ${PROFILE_COLUMNS}`,
+    [userId, l.bannerStyle, l.pronouns, l.openToWork && Boolean(l.otwRole || l.otwPlace || l.otwNotice), l.otwRole, l.otwPlace, l.otwNotice, l.showUpdated]
+  );
+  return res.rows[0];
 }
 
 /**
@@ -1147,6 +1168,14 @@ export type PublicProfileSource = {
   has_photo: boolean;
   resume_id: string;
   data: string;
+  banner_style: string;
+  pronouns: string | null;
+  open_to_work: boolean;
+  otw_role: string | null;
+  otw_place: string | null;
+  otw_notice: string | null;
+  show_updated: boolean;
+  resume_updated_at: string | null;
 };
 
 /**
@@ -1159,7 +1188,9 @@ export async function getPublicProfileBySlug(slug: string): Promise<PublicProfil
   await ensureSchema();
   const res = await pool.query(
     `SELECT p.user_id, p.slug, p.show_city, p.show_links, p.show_contact, p.show_personal, p.photo_etag,
-            (p.photo IS NOT NULL) AS has_photo, r.id AS resume_id, r.data::text AS data
+            (p.photo IS NOT NULL) AS has_photo, r.id AS resume_id, r.data::text AS data,
+            p.banner_style, p.pronouns, p.open_to_work, p.otw_role, p.otw_place, p.otw_notice, p.show_updated,
+            r.updated_at::text AS resume_updated_at
      FROM profiles p
      JOIN resumes r ON r.id = p.resume_id AND r.user_id = p.user_id AND r.parent_id IS NULL
      WHERE p.slug = $1 AND p.shared = true AND p.disabled_at IS NULL`,
