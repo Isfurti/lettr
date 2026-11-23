@@ -326,18 +326,20 @@ CREATE INDEX IF NOT EXISTS idx_resumes_parent ON resumes(parent_id);`,
   show_city BOOLEAN NOT NULL DEFAULT false,
   show_links BOOLEAN NOT NULL DEFAULT false,
   show_contact BOOLEAN NOT NULL DEFAULT false,
+  show_personal BOOLEAN NOT NULL DEFAULT false,
   age_confirmed_at TIMESTAMPTZ,
   consent_version INTEGER,
   disabled_at TIMESTAMPTZ,
   disabled_reason TEXT,
   photo BYTEA,
-  photo_mime TEXT,
+  photo_mime TEXT CHECK (photo_mime IS NULL OR photo_mime IN ('image/jpeg', 'image/png', 'image/webp')),
   photo_etag TEXT,
   link_changed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_slug ON profiles(slug) WHERE slug IS NOT NULL;`,
+CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_slug ON profiles(slug) WHERE slug IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_profiles_resume ON profiles(resume_id);`,
   },
 ];
 

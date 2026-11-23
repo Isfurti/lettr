@@ -307,6 +307,11 @@ export async function listVersionNames(parentId: string, userId: string): Promis
 
 export async function deleteResume(id: string, userId: string) {
   await ensureSchema();
+  // If this resume is the shared profile, close the link first so it cannot come back with a different resume.
+  await pool.query(
+    "UPDATE profiles SET shared = false, slug = NULL, link_changed_at = now(), updated_at = now() WHERE resume_id = $1 AND user_id = $2",
+    [id, userId]
+  );
   await pool.query("DELETE FROM resumes WHERE id = $1 AND user_id = $2", [id, userId]);
 }
 
@@ -1033,6 +1038,7 @@ export type ProfileRow = {
   show_city: boolean;
   show_links: boolean;
   show_contact: boolean;
+  show_personal: boolean;
   age_confirmed_at: string | null;
   consent_version: number | null;
   disabled_at: string | null;
@@ -1043,7 +1049,7 @@ export type ProfileRow = {
   has_photo: boolean;
 };
 
-const PROFILE_COLUMNS = `user_id, resume_id, slug, shared, show_city, show_links, show_contact, age_confirmed_at,
+const PROFILE_COLUMNS = `user_id, resume_id, slug, shared, show_city, show_links, show_contact, show_personal, age_confirmed_at,
   consent_version, disabled_at, disabled_reason, photo_mime, photo_etag, link_changed_at, (photo IS NOT NULL) AS has_photo`;
 
 /** A new random profile link: 22 characters, not guessable. */
@@ -1065,19 +1071,23 @@ export async function getProfile(userId: string): Promise<ProfileRow | undefined
  */
 export async function saveProfileSettings(
   userId: string,
-  s: { resumeId: string; showCity: boolean; showLinks: boolean; showContact: boolean }
+  s: { resumeId: string; showCity: boolean; showLinks: boolean; showContact: boolean; showPersonal: boolean }
 ): Promise<ProfileRow | undefined> {
   await ensureSchema();
   const own = await pool.query("SELECT 1 FROM resumes WHERE id = $1 AND user_id = $2 AND parent_id IS NULL", [s.resumeId, userId]);
   if (own.rowCount === 0) return undefined;
   const res = await pool.query(
-    `INSERT INTO profiles (user_id, resume_id, show_city, show_links, show_contact)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO profiles (user_id, resume_id, show_city, show_links, show_contact, show_personal)
+     VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (user_id) DO UPDATE
        SET resume_id = EXCLUDED.resume_id, show_city = EXCLUDED.show_city, show_links = EXCLUDED.show_links,
-           show_contact = EXCLUDED.show_contact, updated_at = now()
+           show_contact = EXCLUDED.show_contact, show_personal = EXCLUDED.show_personal,
+           -- A different resume is a different page: it needs a fresh share and a fresh link.
+           shared = CASE WHEN profiles.resume_id IS NOT DISTINCT FROM EXCLUDED.resume_id THEN profiles.shared ELSE false END,
+           slug = CASE WHEN profiles.resume_id IS NOT DISTINCT FROM EXCLUDED.resume_id THEN profiles.slug ELSE NULL END,
+           updated_at = now()
      RETURNING ${PROFILE_COLUMNS}`,
-    [userId, s.resumeId, s.showCity, s.showLinks, s.showContact]
+    [userId, s.resumeId, s.showCity, s.showLinks, s.showContact, s.showPersonal]
   );
   return res.rows[0];
 }
@@ -1089,8 +1099,8 @@ export async function saveProfileSettings(
 export async function shareProfile(userId: string, consentVersion: number): Promise<ProfileRow | undefined> {
   await ensureSchema();
   const res = await pool.query(
-    `UPDATE profiles SET shared = true, slug = $2, age_confirmed_at = now(), consent_version = $3,
-       link_changed_at = now(), updated_at = now()
+    `UPDATE profiles SET shared = true, slug = COALESCE(slug, $2), age_confirmed_at = now(), consent_version = $3,
+       link_changed_at = CASE WHEN slug IS NULL THEN now() ELSE link_changed_at END, updated_at = now()
      WHERE user_id = $1 AND resume_id IS NOT NULL AND disabled_at IS NULL
      RETURNING ${PROFILE_COLUMNS}`,
     [userId, newProfileSlug(), consentVersion]
@@ -1127,6 +1137,7 @@ export type PublicProfileSource = {
   show_city: boolean;
   show_links: boolean;
   show_contact: boolean;
+  show_personal: boolean;
   photo_etag: string | null;
   has_photo: boolean;
   resume_id: string;
@@ -1142,7 +1153,7 @@ export async function getPublicProfileBySlug(slug: string): Promise<PublicProfil
   if (!/^[A-Za-z0-9_-]{16,64}$/.test(slug)) return undefined;
   await ensureSchema();
   const res = await pool.query(
-    `SELECT p.user_id, p.slug, p.show_city, p.show_links, p.show_contact, p.photo_etag,
+    `SELECT p.user_id, p.slug, p.show_city, p.show_links, p.show_contact, p.show_personal, p.photo_etag,
             (p.photo IS NOT NULL) AS has_photo, r.id AS resume_id, r.data::text AS data
      FROM profiles p
      JOIN resumes r ON r.id = p.resume_id AND r.user_id = p.user_id AND r.parent_id IS NULL
@@ -1152,8 +1163,10 @@ export async function getPublicProfileBySlug(slug: string): Promise<PublicProfil
   return res.rows[0];
 }
 
-/** Stores the profile picture (already checked by lib/profile-photo.ts). Needs a profile row. */
+/** Stores the profile picture (the image itself is checked and resized by lib/profile-photo.ts). Needs a profile row. */
 export async function setProfilePhoto(userId: string, photo: Buffer, mime: string, etag: string): Promise<boolean> {
+  // Last line of defence (the database also checks the type): never store a type that could run script when served.
+  if (!["image/jpeg", "image/png", "image/webp"].includes(mime) || photo.length === 0 || photo.length > 300_000) return false;
   await ensureSchema();
   const res = await pool.query(
     "UPDATE profiles SET photo = $2, photo_mime = $3, photo_etag = $4, updated_at = now() WHERE user_id = $1",

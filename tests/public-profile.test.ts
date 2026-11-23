@@ -37,6 +37,7 @@ const src = (over: Partial<PublicProfileSource> = {}, data: ResumeData = resume)
   show_city: false,
   show_links: false,
   show_contact: false,
+  show_personal: false,
   photo_etag: null,
   has_photo: false,
   resume_id: "r1",
@@ -69,9 +70,40 @@ describe("buildPublicProfile leak guard", () => {
   });
 });
 
+describe("owner switches and hidden sections", () => {
+  it("hides visa and nationality unless the owner turns them on, and nationality outside the Gulf", () => {
+    expect(JSON.stringify(buildPublicProfile(src()))).not.toContain("Authorized");
+    const on = buildPublicProfile(src({ show_personal: true }));
+    expect(on.facts.map((f) => f.value)).toEqual(["Authorized"]);
+    const gulf = { ...resume, customization: { ...resume.customization, market: "GULF" as const } };
+    const g = buildPublicProfile(src({ show_personal: true }, gulf));
+    expect(g.facts.map((f) => f.label)).toEqual(["Visa status", "Nationality"]);
+  });
+
+  it("keeps hidden sections out of the headline as well as the sections", () => {
+    const hid = { ...resume, customization: { ...resume.customization, hiddenSections: ["experience", "skills"] } } as ResumeData;
+    const p = buildPublicProfile(src({}, hid));
+    expect(p.headline).toBe("");
+    expect(JSON.stringify(p)).not.toContain("Data Analyst");
+    expect(JSON.stringify(p)).not.toContain("Python");
+  });
+
+  it("does not crash on odd saved data", () => {
+    const odd = { ...resume, experience: {} as never, education: [null] as never, projects: "x" as never };
+    expect(() => buildPublicProfile(src({}, odd))).not.toThrow();
+  });
+
+  it("gates project links behind the links switch", () => {
+    expect(buildPublicProfile(src()).projects[0].url).toBe("");
+    expect(buildPublicProfile(src({ show_links: true })).projects[0].url).toBe("https://example.com/churn");
+  });
+});
+
 describe("helpers", () => {
   it("cityOf drops parts with digits and keeps the last two", () => {
     expect(cityOf("Flat 4B, 12 MG Road, Pune, India")).toBe("Pune, India");
+    expect(cityOf("MG Road, Koregaon Park, Pune")).toBe("Koregaon Park, Pune");
+    expect(cityOf("Baker Street, London")).toBe("London");
     expect(cityOf("")).toBe("");
   });
   it("safeHttpUrl only allows web addresses", () => {
@@ -79,5 +111,6 @@ describe("helpers", () => {
     expect(safeHttpUrl("data:text/html,x")).toBe("");
     expect(safeHttpUrl("example.com/a")).toBe("https://example.com/a");
     expect(safeHttpUrl("http://example.com")).toBe("http://example.com/");
+    expect(safeHttpUrl("https://user:pass@example.com")).toBe("");
   });
 });

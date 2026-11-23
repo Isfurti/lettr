@@ -1,4 +1,5 @@
 import { parseStoredResume } from "./resume-version";
+import type { ExperienceEntry, EducationEntry, ProjectEntry, CertificationEntry } from "./types";
 import { formatResumeDate, hiddenSections } from "./layout";
 import { marketOf, type Market } from "./market";
 import { splitLanguage } from "./contact";
@@ -37,6 +38,9 @@ export type PublicProfile = {
 };
 
 const clip = (v: unknown, max: number): string => (typeof v === "string" ? v.trim().slice(0, max) : "");
+/** Odd saved data (a newer shape, a hand-edited row) must never crash the public page. */
+const rows = <T,>(v: unknown, max: number): T[] =>
+  Array.isArray(v) ? (v.filter((x) => x && typeof x === "object" && !Array.isArray(x)) as T[]).slice(0, max) : [];
 const list = (v: unknown, max: number, each: number): string[] =>
   Array.isArray(v) ? v.map((x) => clip(x, each)).filter(Boolean).slice(0, max) : [];
 
@@ -48,6 +52,7 @@ export function safeHttpUrl(v: unknown): string {
   if (!withScheme) return "";
   try {
     const u = new URL(withScheme);
+    if (u.username || u.password) return "";
     return u.protocol === "https:" || u.protocol === "http:" ? u.toString() : "";
   } catch {
     return "";
@@ -56,14 +61,16 @@ export function safeHttpUrl(v: unknown): string {
 
 /**
  * "Pune, India" from a free-text location. Parts holding digits (house numbers,
- * pin codes) are dropped, and only the last two remaining parts are kept, so a
+ * pin codes) or street words are dropped, and only the last two remaining parts are kept, so a
  * full street address never reaches a public page.
  */
+const STREET_WORD = /\b(road|rd|street|st|lane|ln|marg|nagar|sector|flat|apt|apartment|house|plot|block|colony|avenue|ave|floor|tower|society)\b/i;
+
 export function cityOf(location: unknown): string {
   const parts = clip(location, 200)
     .split(",")
     .map((p) => p.trim())
-    .filter((p) => p && !/\d/.test(p));
+    .filter((p) => p && !/\d/.test(p) && !STREET_WORD.test(p));
   return parts.slice(-2).join(", ").slice(0, 80);
 }
 
@@ -81,20 +88,25 @@ export function buildPublicProfile(src: PublicProfileSource): PublicProfile {
   const c = data.customization;
   const market = marketOf(c);
   const hidden = new Set(hiddenSections(c));
-  const style = c?.dateStyle ?? (market === "EU" ? "numeric" : undefined);
+  const style = c?.dateStyle; // same as the owner's resume, so the page and the file agree
   const d = (v: string) => formatResumeDate(clip(v, 40), style);
   const range = (a: string, b: string) => [d(a), d(b)].filter(Boolean).join(" – ");
 
   const name = clip(data.contact?.fullName, 100);
-  const skills = list(data.skills, 40, 60);
-  const role = clip(data.experience?.[0]?.role, 100);
+  const skills = hidden.has("skills") ? [] : list(data.skills, 40, 60);
+  const exp = hidden.has("experience") ? [] : rows<ExperienceEntry>(data.experience, 12);
+  const role = clip(exp[0]?.role, 100);
   const headline = [role, skills.slice(0, 3).join(", ")].filter(Boolean).join(" | ").slice(0, 160);
 
+  // Work authorization and nationality are personal details: only when the owner switched them on,
+  // and nationality only where a CV normally carries it (the Gulf), matching lib/contact.ts.
   const facts: PublicProfile["facts"] = [];
-  const visa = clip(data.contact?.visaStatus, 120);
-  if (visa) facts.push({ label: market ? VISA_LABEL[market] : "Visa status", value: visa });
-  const nationality = clip(data.contact?.nationality, 80);
-  if (nationality && (market === "GULF" || market === "EU" || market === "IN")) facts.push({ label: "Nationality", value: nationality });
+  if (src.show_personal) {
+    const visa = clip(data.contact?.visaStatus, 120);
+    if (visa) facts.push({ label: market ? VISA_LABEL[market] : "Visa status", value: visa });
+    const nationality = clip(data.contact?.nationality, 80);
+    if (nationality && market === "GULF") facts.push({ label: "Nationality", value: nationality });
+  }
 
   const links: PublicProfile["links"] = [];
   if (src.show_links) {
@@ -114,9 +126,7 @@ export function buildPublicProfile(src: PublicProfileSource): PublicProfile {
     phone: src.show_contact ? clip(data.contact?.phone, 40) : "",
     links,
     facts,
-    experience: hidden.has("experience")
-      ? []
-      : (data.experience ?? []).slice(0, 12).map((e) => ({
+    experience: exp.map((e) => ({
           role: clip(e.role, 100),
           company: clip(e.company, 100),
           dates: range(e.startDate, e.endDate),
@@ -124,7 +134,7 @@ export function buildPublicProfile(src: PublicProfileSource): PublicProfile {
         })),
     projects: hidden.has("projects")
       ? []
-      : (data.projects ?? []).slice(0, 8).map((p) => ({
+      : rows<ProjectEntry>(data.projects, 8).map((p) => ({
           name: clip(p.name, 100),
           description: clip(p.description, 500),
           tech: clip(p.tech, 150),
@@ -132,7 +142,7 @@ export function buildPublicProfile(src: PublicProfileSource): PublicProfile {
         })),
     education: hidden.has("education")
       ? []
-      : (data.education ?? []).slice(0, 6).map((e) => ({
+      : rows<EducationEntry>(data.education, 6).map((e) => ({
           degree: clip(e.degree, 120),
           school: clip(e.school, 120),
           dates: range(e.startDate, e.endDate),
@@ -140,11 +150,11 @@ export function buildPublicProfile(src: PublicProfileSource): PublicProfile {
         })),
     certifications: hidden.has("certifications")
       ? []
-      : (data.certifications ?? []).slice(0, 10).map((x) => ({
+      : rows<CertificationEntry>(data.certifications, 10).map((x) => ({
           name: clip(x.name, 120),
           detail: [clip(x.issuer, 80), d(clip(x.date, 40))].filter(Boolean).join(", "),
         })),
-    skills: hidden.has("skills") ? [] : skills,
+    skills,
     languages: hidden.has("languages") ? [] : list(data.languages, 10, 60).map(splitLanguage),
     achievements: hidden.has("achievements") ? [] : list(data.achievements, 10, 300),
     hasPhoto: src.has_photo,
