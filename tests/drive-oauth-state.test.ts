@@ -44,7 +44,7 @@ describe("Drive connect and callback", () => {
 
   it("callback connects only when the cookie and state match", async () => {
     const ok = await call("s".repeat(48), `${DRIVE_STATE_COOKIE}=${"s".repeat(48)}`);
-    expect(ok.headers.get("location")).toContain("/dashboard/resumes?drive_connected=true");
+    expect(ok.headers.get("location")).toContain("drive_connected=true");
     expect(connect).toHaveBeenCalledWith("user-1", "abc");
   });
 

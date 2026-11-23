@@ -25,7 +25,7 @@ export const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "";
  * so those scripts are never already running when a profile opens.
  */
 export function isPrivatePath(pathname: string): boolean {
-  return pathname.startsWith("/admin") || pathname === "/p" || pathname.startsWith("/p/") || pathname === "/dashboard" || pathname === "/dashboard/profile" || pathname.startsWith("/dashboard/profile/");
+  return pathname.startsWith("/admin") || pathname === "/p" || pathname.startsWith("/p/") || pathname === "/dashboard/profile" || pathname.startsWith("/dashboard/profile/");
 }
 
 export const trackingConfigured = Boolean(GA_ID || ADS_ID || META_PIXEL_ID);
