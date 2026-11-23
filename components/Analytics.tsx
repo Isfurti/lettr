@@ -9,6 +9,7 @@ import {
   GA_ID,
   META_PIXEL_ID,
   OPEN_CONSENT_EVENT,
+  isPrivatePath,
   readConsent,
   saveConsent,
   trackingConfigured,
@@ -26,16 +27,6 @@ function subscribeConsent(onChange: () => void) {
 }
 
 const REGION_KEY = "lettr-consent-required";
-
-/**
- * Pages that are never tracked: the admin area, and shared profiles (/p/...).
- * A profile address is a private link, so it must not reach Google or Meta.
- * Links into /p/ from inside the app use plain <a> tags (a full page load), so
- * the scripts are not already running when one opens.
- */
-function isPrivatePath(pathname: string): boolean {
-  return pathname.startsWith("/admin") || pathname === "/p" || pathname.startsWith("/p/");
-}
 
 /** Asks the server whether this visitor's country needs an opt-in, remembered for the browser session. */
 async function fetchConsentRequired(): Promise<boolean> {

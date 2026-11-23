@@ -41,4 +41,20 @@ describe("PublicProfileView", () => {
     expect(on).toContain('src="/p/x/photo?v=1"');
     expect(html()).not.toContain("<img");
   });
+
+  it("does not turn a messy email into extra recipients, and says nothing false when contact is on but empty", () => {
+    const messy = { ...resume, contact: { ...resume.contact, email: "a@b.com?cc=x@y.com&body=hi", phone: "ab" } };
+    const h = html({ show_contact: true, data: JSON.stringify(messy) });
+    expect(h).not.toContain("mailto:");
+    expect(h).not.toContain("tel:");
+    const none = html({ show_contact: true, data: JSON.stringify({ ...resume, contact: { fullName: "Asha Verma", email: "" } }) });
+    expect(none).not.toContain("hidden by");
+  });
+
+  it("links out only with nofollow/ugc/noopener/noreferrer and says so for screen readers", () => {
+    const h = html({ show_links: true, data: JSON.stringify({ ...resume, contact: { ...resume.contact, linkedin: "linkedin.com/in/asha" } }) });
+    expect(h).toContain('rel="nofollow ugc noopener noreferrer"');
+    expect(h).toContain('target="_blank"');
+    expect(h).toContain("(opens in a new tab)");
+  });
 });
