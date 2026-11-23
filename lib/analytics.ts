@@ -18,14 +18,13 @@ export const ADS_PURCHASE_LABEL = process.env.NEXT_PUBLIC_GOOGLE_ADS_PURCHASE_LA
 export const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "";
 
 /**
- * Pages that are never tracked: the admin area, shared profiles (/p/...), and the owner's profile
- * settings and preview (they show the whole resume).
+ * Pages that are never tracked: the admin area, and shared profiles (/p/...).
  * A profile address is a private link, so it must not reach Google or Meta.
  * Nothing in the app links into /p/ (the owner's preview is /dashboard/profile/preview),
  * so those scripts are never already running when a profile opens.
  */
 export function isPrivatePath(pathname: string): boolean {
-  return pathname.startsWith("/admin") || pathname === "/p" || pathname.startsWith("/p/") || pathname === "/dashboard/profile" || pathname.startsWith("/dashboard/profile/");
+  return pathname.startsWith("/admin") || pathname === "/p" || pathname.startsWith("/p/");
 }
 
 export const trackingConfigured = Boolean(GA_ID || ADS_ID || META_PIXEL_ID);
