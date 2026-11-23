@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getProfile, listOriginalResumeTitles, saveProfileSettings } from "@/lib/db";
 import { PROFILE_CONSENT_VERSION, profileUrl } from "@/lib/profile-consent";
+import { isSameOriginRequest } from "@/lib/same-origin";
 
 export const runtime = "nodejs";
 
@@ -45,10 +46,16 @@ export async function GET() {
   return NextResponse.json({ profile: view(profile), resumes, consentVersion: PROFILE_CONSENT_VERSION });
 }
 
-/** Chooses the resume and what is shown. This never makes anything public by itself: sharing has its own step. */
+/**
+ * Chooses the resume and what is shown. It never starts sharing (that has its own
+ * step with the age tick), and a different resume always stops it. While a profile
+ * is shared, the "what people can see" switches act on the live page at once; the
+ * settings screen says so when it is on.
+ */
 export async function PUT(req: Request) {
   const userId = await userIdOf();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!isSameOriginRequest(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const parsed = Settings.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   const saved = await saveProfileSettings(userId, parsed.data);

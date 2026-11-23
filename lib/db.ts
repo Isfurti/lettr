@@ -1074,36 +1074,41 @@ export async function saveProfileSettings(
   s: { resumeId: string; showCity: boolean; showLinks: boolean; showContact: boolean; showPersonal: boolean }
 ): Promise<ProfileRow | undefined> {
   await ensureSchema();
-  const own = await pool.query("SELECT 1 FROM resumes WHERE id = $1 AND user_id = $2 AND parent_id IS NULL", [s.resumeId, userId]);
-  if (own.rowCount === 0) return undefined;
-  const res = await pool.query(
-    `INSERT INTO profiles (user_id, resume_id, show_city, show_links, show_contact, show_personal)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     ON CONFLICT (user_id) DO UPDATE
-       SET resume_id = EXCLUDED.resume_id, show_city = EXCLUDED.show_city, show_links = EXCLUDED.show_links,
-           show_contact = EXCLUDED.show_contact, show_personal = EXCLUDED.show_personal,
-           -- A different resume is a different page: it needs a fresh share and a fresh link.
-           shared = CASE WHEN profiles.resume_id IS NOT DISTINCT FROM EXCLUDED.resume_id THEN profiles.shared ELSE false END,
-           slug = CASE WHEN profiles.resume_id IS NOT DISTINCT FROM EXCLUDED.resume_id THEN profiles.slug ELSE NULL END,
-           updated_at = now()
-     RETURNING ${PROFILE_COLUMNS}`,
-    [userId, s.resumeId, s.showCity, s.showLinks, s.showContact, s.showPersonal]
-  );
-  return res.rows[0];
+  try {
+    // One statement: the resume must be the user's own original at the moment of writing, so a delete in between cannot slip through.
+    const res = await pool.query(
+      `INSERT INTO profiles (user_id, resume_id, show_city, show_links, show_contact, show_personal)
+       SELECT $1, r.id, $3, $4, $5, $6 FROM resumes r WHERE r.id = $2 AND r.user_id = $1 AND r.parent_id IS NULL
+       ON CONFLICT (user_id) DO UPDATE
+         SET resume_id = EXCLUDED.resume_id, show_city = EXCLUDED.show_city, show_links = EXCLUDED.show_links,
+             show_contact = EXCLUDED.show_contact, show_personal = EXCLUDED.show_personal,
+             -- A different resume is a different page: it needs a fresh share and a fresh link.
+             shared = CASE WHEN profiles.resume_id IS NOT DISTINCT FROM EXCLUDED.resume_id THEN profiles.shared ELSE false END,
+             slug = CASE WHEN profiles.resume_id IS NOT DISTINCT FROM EXCLUDED.resume_id THEN profiles.slug ELSE NULL END,
+             updated_at = now()
+       RETURNING ${PROFILE_COLUMNS}`,
+      [userId, s.resumeId, s.showCity, s.showLinks, s.showContact, s.showPersonal]
+    );
+    return res.rows[0];
+  } catch (err) {
+    if ((err as { code?: string }).code === "23503") return undefined; // the resume was deleted a moment ago
+    throw err;
+  }
 }
 
 /**
- * Turns sharing on with a fresh random link. Needs a chosen resume, and is
- * refused while an admin has taken the profile down. Records the age tick.
+ * Turns sharing on with a random link (an existing live link is kept). Only for
+ * the resume the caller checked (so a resume switched in between is refused),
+ * and refused while an admin has taken the profile down. Records the age tick.
  */
-export async function shareProfile(userId: string, consentVersion: number): Promise<ProfileRow | undefined> {
+export async function shareProfile(userId: string, consentVersion: number, resumeId: string): Promise<ProfileRow | undefined> {
   await ensureSchema();
   const res = await pool.query(
     `UPDATE profiles SET shared = true, slug = COALESCE(slug, $2), age_confirmed_at = now(), consent_version = $3,
        link_changed_at = CASE WHEN slug IS NULL THEN now() ELSE link_changed_at END, updated_at = now()
-     WHERE user_id = $1 AND resume_id IS NOT NULL AND disabled_at IS NULL
+     WHERE user_id = $1 AND resume_id = $4 AND disabled_at IS NULL
      RETURNING ${PROFILE_COLUMNS}`,
-    [userId, newProfileSlug(), consentVersion]
+    [userId, newProfileSlug(), consentVersion, resumeId]
   );
   return res.rows[0];
 }

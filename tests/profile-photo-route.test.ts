@@ -24,7 +24,7 @@ describe("public photo route", () => {
 
     expect((await call("A".repeat(22))).status).toBe(404);
 
-    const slug = (await shareProfile(userId, 1))!.slug!;
+    const slug = (await shareProfile(userId, 1, resumeId))!.slug!;
     const ok = await call(slug);
     expect(ok.status).toBe(200);
     expect(ok.headers.get("content-type")).toBe("image/jpeg");

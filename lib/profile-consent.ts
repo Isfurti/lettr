@@ -3,6 +3,7 @@ import { siteUrl } from "./site-url";
 /**
  * Version of the "what becomes public" text the owner agreed to before the
  * first share. Bump it when that text changes, so the share dialog asks again.
+ * Profiles already shared stay shared: a bump only applies to the next share.
  */
 export const PROFILE_CONSENT_VERSION = 1;
 
