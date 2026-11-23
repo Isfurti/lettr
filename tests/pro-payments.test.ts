@@ -159,7 +159,7 @@ describe("checkout routes", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.keyId).toBe("rzp_test_key");
-    expect(sent[0].amount).toBe(149900);
+    expect(sent[0].amount).toBe(99900);
     expect(sent[0].currency).toBe("INR");
     expect(sent[0].notes.userId).toBe(user.id);
   });
