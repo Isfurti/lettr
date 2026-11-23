@@ -66,9 +66,9 @@ function fakeRazorpay() {
 
 describe("Pro pass pricing", () => {
   it("charges the India prices in paise", () => {
-    expect(passAmountMinor(REGION_PRICES.IN, "monthly")).toBe(59900);
-    expect(passAmountMinor(REGION_PRICES.IN, "quarter")).toBe(149900);
-    expect(passAmountMinor(REGION_PRICES.IN, "yearly")).toBe(499900);
+    expect(passAmountMinor(REGION_PRICES.IN, "monthly")).toBe(39900);
+    expect(passAmountMinor(REGION_PRICES.IN, "quarter")).toBe(99900);
+    expect(passAmountMinor(REGION_PRICES.IN, "yearly")).toBe(329900);
   });
 
   it("only takes rupees until international payments are switched on", () => {
@@ -159,7 +159,7 @@ describe("checkout routes", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.keyId).toBe("rzp_test_key");
-    expect(sent[0].amount).toBe(149900);
+    expect(sent[0].amount).toBe(99900);
     expect(sent[0].currency).toBe("INR");
     expect(sent[0].notes.userId).toBe(user.id);
   });

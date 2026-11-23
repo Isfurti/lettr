@@ -21,7 +21,7 @@ describe("renewing Pro plans", () => {
       expect(renewingAmountMinor(p, "quarter"), k).toBe(p.quarter * 100);
       expect(renewingAmountMinor(p, "yearly"), k).toBe(p.yearly * 100);
     }
-    expect(renewingAmountMinor(REGION_PRICES.IN, "monthly")).toBe(59900);
+    expect(renewingAmountMinor(REGION_PRICES.IN, "monthly")).toBe(39900);
   });
 
   it("map to the right Razorpay periods", () => {
