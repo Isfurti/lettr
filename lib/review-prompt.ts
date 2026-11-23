@@ -15,7 +15,7 @@ export type PromptState = { views: number; snoozeUntil?: number; done?: boolean 
 const APP_PATHS = [/^\/dashboard(\/|$)/, /^\/builder\//];
 
 export function isAppPage(pathname: string): boolean {
-  if (pathname.startsWith("/dashboard/feedback")) return false;
+  if (pathname.startsWith("/dashboard/feedback") || pathname.startsWith("/dashboard/profile/preview")) return false;
   return APP_PATHS.some((re) => re.test(pathname));
 }
 
