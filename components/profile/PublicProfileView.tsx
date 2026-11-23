@@ -32,7 +32,7 @@ function Avatar({ p, photoSrc }: { p: PublicProfile; photoSrc: string }) {
   );
 }
 
-export function PublicProfileView({ profile: p, photoSrc, footer }: { profile: PublicProfile; photoSrc: string; footer?: React.ReactNode }) {
+export function PublicProfileView({ profile: p, photoSrc, footer, reportHref = "/support" }: { profile: PublicProfile; photoSrc: string; footer?: React.ReactNode; reportHref?: string }) {
   const hidden = !p.contactShared;
   return (
     <div className="flex min-h-screen flex-col bg-[#fffdf8] text-[#041632]">
@@ -238,7 +238,7 @@ export function PublicProfileView({ profile: p, photoSrc, footer }: { profile: P
         <span>Details provided by the profile owner, not verified by Lettr. Made with Lettr. From Lettr to your offer letter.</span>
         {footer ?? (
           <span className="flex gap-5">
-            <a href="/support" className={`inline-flex min-h-11 items-center text-[#4a5878] underline ${focus}`}>
+            <a href={reportHref} className={`inline-flex min-h-11 items-center text-[#4a5878] underline ${focus}`}>
               Report this profile
             </a>
             <a href="/privacy" className={`inline-flex min-h-11 items-center text-[#4a5878] underline ${focus}`}>
