@@ -30,7 +30,7 @@ describe("profiles", () => {
     await saveProfileSettings(userId, settings(resumeId));
     expect((await getProfile(userId))?.shared).toBe(false);
 
-    const shared = await shareProfile(userId, 1);
+    const shared = await shareProfile(userId, 1, resumeId);
     expect(shared?.slug).toMatch(/^[A-Za-z0-9_-]{22}$/);
     const found = await getPublicProfileBySlug(shared!.slug!);
     expect(found?.user_id).toBe(userId);
@@ -40,10 +40,10 @@ describe("profiles", () => {
   it("stops resolving after revoke, and a new share gives a different link", async () => {
     const { userId, resumeId } = await setup();
     await saveProfileSettings(userId, settings(resumeId));
-    const first = (await shareProfile(userId, 1))!.slug!;
+    const first = (await shareProfile(userId, 1, resumeId))!.slug!;
     await revokeProfile(userId);
     expect(await getPublicProfileBySlug(first)).toBeUndefined();
-    const second = (await shareProfile(userId, 1))!.slug!;
+    const second = (await shareProfile(userId, 1, resumeId))!.slug!;
     expect(second).not.toBe(first);
     expect(await getPublicProfileBySlug(first)).toBeUndefined();
     await deleteUserAccount(userId);
@@ -60,12 +60,12 @@ describe("profiles", () => {
   it("an admin takedown hides the page and blocks re-sharing until restored", async () => {
     const { userId, resumeId } = await setup();
     await saveProfileSettings(userId, settings(resumeId));
-    const slug = (await shareProfile(userId, 1))!.slug!;
+    const slug = (await shareProfile(userId, 1, resumeId))!.slug!;
     await setProfileDisabled(userId, "reported");
     expect(await getPublicProfileBySlug(slug)).toBeUndefined();
-    expect(await shareProfile(userId, 1)).toBeUndefined();
+    expect(await shareProfile(userId, 1, resumeId)).toBeUndefined();
     await setProfileDisabled(userId, null);
-    expect(await shareProfile(userId, 1)).toBeDefined();
+    expect(await shareProfile(userId, 1, resumeId)).toBeDefined();
     await deleteUserAccount(userId);
   });
 
@@ -73,11 +73,11 @@ describe("profiles", () => {
     const { userId, resumeId } = await setup();
     await saveProfileSettings(userId, settings(resumeId));
     await setProfilePhoto(userId, Buffer.from([1, 2, 3]), "image/jpeg", "etag1");
-    const slug = (await shareProfile(userId, 1))!.slug!;
+    const slug = (await shareProfile(userId, 1, resumeId))!.slug!;
     expect((await getPublicProfilePhoto(slug))?.mime).toBe("image/jpeg");
     await revokeProfile(userId);
     expect(await getPublicProfilePhoto(slug)).toBeUndefined();
-    const live = (await shareProfile(userId, 1))!.slug!;
+    const live = (await shareProfile(userId, 1, resumeId))!.slug!;
     await deleteUserAccount(userId);
     expect(await getPublicProfileBySlug(live)).toBeUndefined();
     expect(await getProfile(userId)).toBeUndefined();
@@ -97,7 +97,7 @@ describe("profiles", () => {
   it("deleting the profile resume closes the link, and picking another resume needs a fresh share", async () => {
     const { userId, resumeId } = await setup();
     await saveProfileSettings(userId, settings(resumeId));
-    const old = (await shareProfile(userId, 1))!.slug!;
+    const old = (await shareProfile(userId, 1, resumeId))!.slug!;
     await deleteResume(resumeId, userId);
     expect(await getPublicProfileBySlug(old)).toBeUndefined();
 
@@ -113,8 +113,8 @@ describe("profiles", () => {
   it("sharing twice keeps the same link", async () => {
     const { userId, resumeId } = await setup();
     await saveProfileSettings(userId, settings(resumeId));
-    const a = (await shareProfile(userId, 1))!.slug;
-    const b = (await shareProfile(userId, 1))!.slug;
+    const a = (await shareProfile(userId, 1, resumeId))!.slug;
+    const b = (await shareProfile(userId, 1, resumeId))!.slug;
     expect(b).toBe(a);
     await deleteUserAccount(userId);
   });
