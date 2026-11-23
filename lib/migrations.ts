@@ -314,6 +314,31 @@ export const MIGRATIONS: Migration[] = [
 ALTER TABLE resumes ADD COLUMN IF NOT EXISTS version_name TEXT;
 CREATE INDEX IF NOT EXISTS idx_resumes_parent ON resumes(parent_id);`,
   },
+  // Public profiles: a profile is one of the user's own original resumes, shared
+  // by an unguessable link. Private until shared; the link is replaced on revoke.
+  {
+    id: "0004_profiles",
+    sql: `CREATE TABLE IF NOT EXISTS profiles (
+  user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  resume_id TEXT REFERENCES resumes(id) ON DELETE SET NULL,
+  slug TEXT,
+  shared BOOLEAN NOT NULL DEFAULT false,
+  show_city BOOLEAN NOT NULL DEFAULT false,
+  show_links BOOLEAN NOT NULL DEFAULT false,
+  show_contact BOOLEAN NOT NULL DEFAULT false,
+  age_confirmed_at TIMESTAMPTZ,
+  consent_version INTEGER,
+  disabled_at TIMESTAMPTZ,
+  disabled_reason TEXT,
+  photo BYTEA,
+  photo_mime TEXT,
+  photo_etag TEXT,
+  link_changed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_slug ON profiles(slug) WHERE slug IS NOT NULL;`,
+  },
 ];
 
 export function checksum(sql: string): string {
