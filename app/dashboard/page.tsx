@@ -8,7 +8,6 @@ import { getProfile, getResume, getUserById, listOriginalResumeTitles } from "@/
 import { formatProDate } from "@/lib/pro-pass";
 import type { Plan } from "@/lib/limits";
 import { buildPublicProfile, type PublicProfile } from "@/lib/public-profile";
-import { ownerSource } from "@/lib/profile-source";
 import { profileUrl } from "@/lib/profile-consent";
 import { AppSidebar } from "@/components/AppSidebar";
 import { VerifyEmailBanner } from "@/components/VerifyEmailBanner";
@@ -53,7 +52,18 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
   let view: PublicProfile | null = null;
   if (resume && !resume.parent_id) {
     try {
-      view = buildPublicProfile(ownerSource(userId, profile, resume));
+      view = buildPublicProfile({
+        user_id: userId,
+        slug: profile?.slug ?? "",
+        show_city: profile?.show_city ?? false,
+        show_links: profile?.show_links ?? false,
+        show_contact: profile?.show_contact ?? false,
+        show_personal: profile?.show_personal ?? false,
+        photo_etag: profile?.photo_etag ?? null,
+        has_photo: profile?.has_photo ?? false,
+        resume_id: resume.id,
+        data: resume.data,
+      });
     } catch {
       view = null; // saved data this version cannot read: show the empty state, not an error page
     }

@@ -6,8 +6,8 @@ import { getProfile, getResume, getUserById, listOriginalResumeTitles } from "@/
 import { formatProDate } from "@/lib/pro-pass";
 import type { Plan } from "@/lib/limits";
 import { parseStoredResume } from "@/lib/resume-version";
+import { profileUrl } from "@/lib/profile-consent";
 import { AppSidebar } from "@/components/AppSidebar";
-import { profileView } from "@/lib/profile-view";
 import { ProfileSettings, type ProfileView } from "@/components/profile/ProfileSettings";
 
 export const metadata: Metadata = { title: "Profile settings | Lettr", robots: { index: false } };
@@ -22,7 +22,20 @@ export default async function ProfilePage() {
   const resume = chosen ? await getResume(chosen, userId) : undefined;
   const name = resume ? (parseStoredResume(resume.data).contact?.fullName ?? "") : "";
 
-  const initial: ProfileView | null = profileView(profile);
+  const initial: ProfileView | null = profile
+    ? {
+        resumeId: profile.resume_id,
+        shared: profile.shared,
+        url: profile.shared && profile.slug ? profileUrl(profile.slug) : null,
+        showCity: profile.show_city,
+        showLinks: profile.show_links,
+        showContact: profile.show_contact,
+        showPersonal: profile.show_personal,
+        hasPhoto: profile.has_photo,
+        photoVersion: profile.photo_etag,
+        takenDown: Boolean(profile.disabled_at),
+      }
+    : null;
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row bg-cream text-ink">
