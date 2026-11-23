@@ -26,7 +26,12 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // Shared profiles: never listed, archived or kept. The page itself is never cached (a revoked link must stop at once).
+      { source: "/p/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive, nosnippet, noimageindex" }] },
+      { source: "/p/:slug", headers: [{ key: "Cache-Control", value: "private, no-store" }] },
+    ];
   },
   // pdf-parse (via pdfjs-dist) dynamically loads a worker file at runtime.
   // Next.js's bundler mangles that dynamic import path, so we tell it to
