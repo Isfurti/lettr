@@ -4,7 +4,6 @@ import { auth } from "@/lib/auth";
 import { clearProfilePhoto, ensureProfile, getOwnProfilePhoto, setProfilePhoto } from "@/lib/db";
 import { MAX_UPLOAD_BYTES, sanitizeProfilePhoto } from "@/lib/profile-photo";
 import { checkAndRecordRateLimit, refundRateLimit } from "@/lib/rate-limit";
-import { isSameOriginRequest } from "@/lib/same-origin";
 
 export const runtime = "nodejs";
 
@@ -34,7 +33,6 @@ export async function GET() {
 export async function POST(req: Request) {
   const userId = await userIdOf();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!isSameOriginRequest(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   // The size is known before anything is read, so a huge body is never buffered.
   const declared = Number(req.headers.get("content-length"));
@@ -72,10 +70,9 @@ export async function POST(req: Request) {
 }
 
 /** Removes the picture; the page falls back to the initials avatar. */
-export async function DELETE(req: Request) {
+export async function DELETE() {
   const userId = await userIdOf();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!isSameOriginRequest(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   await clearProfilePhoto(userId);
   return NextResponse.json({ ok: true });
 }
