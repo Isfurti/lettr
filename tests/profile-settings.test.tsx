@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh() {}, push() {} }) }));
 import { ProfileSettings, type ProfileView } from "@/components/profile/ProfileSettings";
 
 const base: ProfileView = {
@@ -15,15 +16,22 @@ describe("ProfileSettings", () => {
     expect(h).toContain("Private");
     expect(h).toContain(">AV<");
     expect(h).toContain("Share my profile");
-    expect(h).not.toContain('role="dialog"');
+    expect(h).not.toContain("<dialog");
     expect(h).not.toContain("Stop sharing");
+  });
+
+  it("names the switches with the row text and offers no share button for a resume without a name", () => {
+    const h = renderToStaticMarkup(<ProfileSettings initial={base} resumes={resumes} name="" />);
+    expect(h).toContain("has no name yet");
+    expect(h).not.toContain("Share my profile");
+    expect(h).toContain("aria-labelledby");
   });
 
   it("shows the link and the stop button only while shared", () => {
     const h = html({ ...base, shared: true, url: "https://getlettr.com/p/abcdefghijklmnopqrstuv" });
     expect(h).toContain("Shared by link");
     expect(h).toContain("getlettr.com/p/abcdefghijklmnopqrstuv");
-    expect(h).toContain("Stop sharing and revoke link");
+    expect(h).toContain("Stop sharing");
     expect(h).toContain("change your live page straight away");
     expect(h).not.toContain("Share my profile");
   });
@@ -44,6 +52,6 @@ describe("ProfileSettings", () => {
     const h = html(base);
     const switches = h.match(/role="switch"[^>]*/g) ?? [];
     expect(switches.length).toBe(4);
-    for (const s of switches) expect(s).toContain("aria-label=");
+    for (const s of switches) expect(s).toContain("aria-labelledby=");
   });
 });

@@ -18,18 +18,23 @@ export default async function ProfilePreviewPage() {
   const resume = await getResume(profile.resume_id, userId);
   if (!resume || resume.parent_id) redirect("/dashboard/profile");
 
-  const view = buildPublicProfile({
-    user_id: userId,
-    slug: profile.slug ?? "",
-    show_city: profile.show_city,
-    show_links: profile.show_links,
-    show_contact: profile.show_contact,
-    show_personal: profile.show_personal,
-    photo_etag: profile.photo_etag,
-    has_photo: profile.has_photo,
-    resume_id: resume.id,
-    data: resume.data,
-  });
+  let view;
+  try {
+    view = buildPublicProfile({
+      user_id: userId,
+      slug: profile.slug ?? "",
+      show_city: profile.show_city,
+      show_links: profile.show_links,
+      show_contact: profile.show_contact,
+      show_personal: profile.show_personal,
+      photo_etag: profile.photo_etag,
+      has_photo: profile.has_photo,
+      resume_id: resume.id,
+      data: resume.data,
+    });
+  } catch {
+    redirect("/dashboard/profile"); // saved data this version cannot read
+  }
 
   return (
     <>
