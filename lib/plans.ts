@@ -13,7 +13,7 @@ export type RegionPrices = {
   region: string;
   /** ISO currency code, so amounts in different currencies are never added together. */
   currency: "INR" | "USD" | "GBP" | "EUR" | "AUD";
-  /** Formats a whole-number amount in the region's currency, e.g. 599 → "₹599". */
+  /** Formats a whole-number amount in the region's currency, e.g. 399 → "₹399". */
   format: (amount: number) => string;
   monthly: number;
   quarter: number;
@@ -24,13 +24,13 @@ export type RegionPrices = {
 const fmt = (symbol: string, locale = "en-US") => (n: number) => `${symbol}${n.toLocaleString(locale)}`;
 
 export const REGION_PRICES: Record<string, RegionPrices> = {
-  IN: { region: "India", currency: "INR", format: fmt("₹", "en-IN"), monthly: 599, quarter: 1499, yearly: 4999, taxNote: "Prices include GST." },
-  US: { region: "Standard", currency: "USD", format: fmt("$"), monthly: 24, quarter: 49, yearly: 149 },
-  GB: { region: "United Kingdom", currency: "GBP", format: fmt("£"), monthly: 19, quarter: 39, yearly: 119 },
-  EU: { region: "Europe", currency: "EUR", format: fmt("€"), monthly: 22, quarter: 45, yearly: 139 },
-  AU: { region: "Australia", currency: "AUD", format: fmt("A$"), monthly: 35, quarter: 72, yearly: 219 },
-  MID: { region: "Regional", currency: "USD", format: fmt("$"), monthly: 12, quarter: 25, yearly: 75 },
-  VALUE: { region: "Regional", currency: "USD", format: fmt("$"), monthly: 6, quarter: 12, yearly: 39 },
+  IN: { region: "India", currency: "INR", format: fmt("₹", "en-IN"), monthly: 399, quarter: 999, yearly: 3299, taxNote: "Prices include GST." },
+  US: { region: "Standard", currency: "USD", format: fmt("$"), monthly: 19, quarter: 39, yearly: 119 },
+  GB: { region: "United Kingdom", currency: "GBP", format: fmt("£"), monthly: 15, quarter: 31, yearly: 95 },
+  EU: { region: "Europe", currency: "EUR", format: fmt("€"), monthly: 17, quarter: 35, yearly: 109 },
+  AU: { region: "Australia", currency: "AUD", format: fmt("A$"), monthly: 28, quarter: 57, yearly: 175 },
+  MID: { region: "Regional", currency: "USD", format: fmt("$"), monthly: 9, quarter: 19, yearly: 59 },
+  VALUE: { region: "Regional", currency: "USD", format: fmt("$"), monthly: 5, quarter: 10, yearly: 30 },
 };
 
 export const EURO_COUNTRIES = new Set([
@@ -82,7 +82,7 @@ export function perMonth(prices: RegionPrices, plan: PlanId): number {
 
 /**
  * The Pro price a saved user sees on the pricing page (monthly plan), e.g.
- * "₹599/mo". The admin pages use this so they always match what people are shown.
+ * "₹399/mo". The admin pages use this so they always match what people are shown.
  */
 export function monthlyPriceForUser(user: { country_code: string | null; pricing_tier: string | null }): {
   prices: RegionPrices;
@@ -93,7 +93,7 @@ export function monthlyPriceForUser(user: { country_code: string | null; pricing
 }
 
 /**
- * Adds up monthly list prices per currency ("₹1,198 + $24"). A rough guide
+ * Adds up monthly list prices per currency ("₹798 + $19"). A rough guide
  * only: it doesn't know who's on a 3-month or yearly plan.
  */
 export function monthlyRevenueLabel(users: { country_code: string | null; pricing_tier: string | null }[]): string {

@@ -66,9 +66,9 @@ function fakeRazorpay() {
 
 describe("Pro pass pricing", () => {
   it("charges the India prices in paise", () => {
-    expect(passAmountMinor(REGION_PRICES.IN, "monthly")).toBe(59900);
-    expect(passAmountMinor(REGION_PRICES.IN, "quarter")).toBe(149900);
-    expect(passAmountMinor(REGION_PRICES.IN, "yearly")).toBe(499900);
+    expect(passAmountMinor(REGION_PRICES.IN, "monthly")).toBe(39900);
+    expect(passAmountMinor(REGION_PRICES.IN, "quarter")).toBe(99900);
+    expect(passAmountMinor(REGION_PRICES.IN, "yearly")).toBe(329900);
   });
 
   it("only takes rupees until international payments are switched on", () => {
