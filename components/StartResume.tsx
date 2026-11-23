@@ -48,7 +48,7 @@ export function StartResume({ template, fallbackId }: { template: string; fallba
         <div className="text-center">
           <h1 className="font-brand font-extrabold text-2xl mb-2">We couldn&apos;t start your resume</h1>
           <p className="text-ink-soft mb-5">Please try again from your dashboard.</p>
-          <Link href="/dashboard" className="font-bold text-brand-blue hover:underline">
+          <Link href="/dashboard/resumes" className="font-bold text-brand-blue hover:underline">
             Go to dashboard →
           </Link>
         </div>

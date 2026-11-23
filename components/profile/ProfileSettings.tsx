@@ -224,7 +224,7 @@ export function ProfileSettings({ initial, resumes, name }: { initial: ProfileVi
       <div className={card}>
         <p className="font-extrabold text-xl">Make a resume first</p>
         <p className="text-slate">Your profile is one of your resumes. Create one and it can become your profile.</p>
-        <Link href="/dashboard" className={`${btn} bg-gold text-ink self-start shadow-[0_4px_0_var(--gold-deep)]`}>Go to my resumes</Link>
+        <Link href="/dashboard/resumes" className={`${btn} bg-gold text-ink self-start shadow-[0_4px_0_var(--gold-deep)]`}>Go to my resumes</Link>
       </div>
     );
   }
