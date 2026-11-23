@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { hashToken } from "./token-hash";
 import { MIGRATIONS, checksum } from "./migrations";
 import { prepareResumeJsonForSave } from "./resume-version";
@@ -307,6 +307,11 @@ export async function listVersionNames(parentId: string, userId: string): Promis
 
 export async function deleteResume(id: string, userId: string) {
   await ensureSchema();
+  // If this resume is the shared profile, close the link first so it cannot come back with a different resume.
+  await pool.query(
+    "UPDATE profiles SET shared = false, slug = NULL, link_changed_at = now(), updated_at = now() WHERE resume_id = $1 AND user_id = $2",
+    [id, userId]
+  );
   await pool.query("DELETE FROM resumes WHERE id = $1 AND user_id = $2", [id, userId]);
 }
 
@@ -1021,6 +1026,181 @@ export async function markEmailVerified(userId: string) {
     "UPDATE users SET email_verified = true, email_verification_token = NULL, email_verification_expiry = NULL WHERE id = $1",
     [userId]
   );
+}
+
+// ---------------------------------------------------------------- profiles
+
+export type ProfileRow = {
+  user_id: string;
+  resume_id: string | null;
+  slug: string | null;
+  shared: boolean;
+  show_city: boolean;
+  show_links: boolean;
+  show_contact: boolean;
+  show_personal: boolean;
+  age_confirmed_at: string | null;
+  consent_version: number | null;
+  disabled_at: string | null;
+  disabled_reason: string | null;
+  photo_mime: string | null;
+  photo_etag: string | null;
+  link_changed_at: string | null;
+  has_photo: boolean;
+};
+
+const PROFILE_COLUMNS = `user_id, resume_id, slug, shared, show_city, show_links, show_contact, show_personal, age_confirmed_at,
+  consent_version, disabled_at, disabled_reason, photo_mime, photo_etag, link_changed_at, (photo IS NOT NULL) AS has_photo`;
+
+/** A new random profile link: 22 characters, not guessable. */
+export function newProfileSlug(): string {
+  return randomBytes(16).toString("base64url");
+}
+
+/** The user's own profile settings, or undefined when they never set one up. Never includes the photo bytes. */
+export async function getProfile(userId: string): Promise<ProfileRow | undefined> {
+  await ensureSchema();
+  const res = await pool.query(`SELECT ${PROFILE_COLUMNS} FROM profiles WHERE user_id = $1`, [userId]);
+  return res.rows[0];
+}
+
+/**
+ * Chooses which of the user's resumes is the profile, and what is shown. Only an
+ * original resume of the user's own can be chosen (never a tailored version,
+ * never someone else's). Returns undefined when the resume is not allowed.
+ */
+export async function saveProfileSettings(
+  userId: string,
+  s: { resumeId: string; showCity: boolean; showLinks: boolean; showContact: boolean; showPersonal: boolean }
+): Promise<ProfileRow | undefined> {
+  await ensureSchema();
+  const own = await pool.query("SELECT 1 FROM resumes WHERE id = $1 AND user_id = $2 AND parent_id IS NULL", [s.resumeId, userId]);
+  if (own.rowCount === 0) return undefined;
+  const res = await pool.query(
+    `INSERT INTO profiles (user_id, resume_id, show_city, show_links, show_contact, show_personal)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (user_id) DO UPDATE
+       SET resume_id = EXCLUDED.resume_id, show_city = EXCLUDED.show_city, show_links = EXCLUDED.show_links,
+           show_contact = EXCLUDED.show_contact, show_personal = EXCLUDED.show_personal,
+           -- A different resume is a different page: it needs a fresh share and a fresh link.
+           shared = CASE WHEN profiles.resume_id IS NOT DISTINCT FROM EXCLUDED.resume_id THEN profiles.shared ELSE false END,
+           slug = CASE WHEN profiles.resume_id IS NOT DISTINCT FROM EXCLUDED.resume_id THEN profiles.slug ELSE NULL END,
+           updated_at = now()
+     RETURNING ${PROFILE_COLUMNS}`,
+    [userId, s.resumeId, s.showCity, s.showLinks, s.showContact, s.showPersonal]
+  );
+  return res.rows[0];
+}
+
+/**
+ * Turns sharing on with a fresh random link. Needs a chosen resume, and is
+ * refused while an admin has taken the profile down. Records the age tick.
+ */
+export async function shareProfile(userId: string, consentVersion: number): Promise<ProfileRow | undefined> {
+  await ensureSchema();
+  const res = await pool.query(
+    `UPDATE profiles SET shared = true, slug = COALESCE(slug, $2), age_confirmed_at = now(), consent_version = $3,
+       link_changed_at = CASE WHEN slug IS NULL THEN now() ELSE link_changed_at END, updated_at = now()
+     WHERE user_id = $1 AND resume_id IS NOT NULL AND disabled_at IS NULL
+     RETURNING ${PROFILE_COLUMNS}`,
+    [userId, newProfileSlug(), consentVersion]
+  );
+  return res.rows[0];
+}
+
+/** Stops sharing and drops the link, so the old address stops working for good. */
+export async function revokeProfile(userId: string): Promise<ProfileRow | undefined> {
+  await ensureSchema();
+  const res = await pool.query(
+    `UPDATE profiles SET shared = false, slug = NULL, link_changed_at = now(), updated_at = now()
+     WHERE user_id = $1 RETURNING ${PROFILE_COLUMNS}`,
+    [userId]
+  );
+  return res.rows[0];
+}
+
+/** Admin takedown (or restore with null). A taken-down profile stops showing at once. */
+export async function setProfileDisabled(userId: string, reason: string | null): Promise<boolean> {
+  await ensureSchema();
+  const res = await pool.query(
+    reason === null
+      ? "UPDATE profiles SET disabled_at = NULL, disabled_reason = NULL, updated_at = now() WHERE user_id = $1"
+      : "UPDATE profiles SET disabled_at = now(), disabled_reason = $2, shared = false, slug = NULL, updated_at = now() WHERE user_id = $1",
+    reason === null ? [userId] : [userId, reason.slice(0, 500)]
+  );
+  return (res.rowCount ?? 0) > 0;
+}
+
+export type PublicProfileSource = {
+  user_id: string;
+  slug: string;
+  show_city: boolean;
+  show_links: boolean;
+  show_contact: boolean;
+  show_personal: boolean;
+  photo_etag: string | null;
+  has_photo: boolean;
+  resume_id: string;
+  data: string;
+};
+
+/**
+ * What the public page needs, and nothing the owner has not shared: one query
+ * that returns a row only for a live link (shared, not taken down) whose resume
+ * still exists, belongs to the same user and is an original, not a version.
+ */
+export async function getPublicProfileBySlug(slug: string): Promise<PublicProfileSource | undefined> {
+  if (!/^[A-Za-z0-9_-]{16,64}$/.test(slug)) return undefined;
+  await ensureSchema();
+  const res = await pool.query(
+    `SELECT p.user_id, p.slug, p.show_city, p.show_links, p.show_contact, p.show_personal, p.photo_etag,
+            (p.photo IS NOT NULL) AS has_photo, r.id AS resume_id, r.data::text AS data
+     FROM profiles p
+     JOIN resumes r ON r.id = p.resume_id AND r.user_id = p.user_id AND r.parent_id IS NULL
+     WHERE p.slug = $1 AND p.shared = true AND p.disabled_at IS NULL`,
+    [slug]
+  );
+  return res.rows[0];
+}
+
+/** Stores the profile picture (the image itself is checked and resized by lib/profile-photo.ts). Needs a profile row. */
+export async function setProfilePhoto(userId: string, photo: Buffer, mime: string, etag: string): Promise<boolean> {
+  // Last line of defence (the database also checks the type): never store a type that could run script when served.
+  if (!["image/jpeg", "image/png", "image/webp"].includes(mime) || photo.length === 0 || photo.length > 300_000) return false;
+  await ensureSchema();
+  const res = await pool.query(
+    "UPDATE profiles SET photo = $2, photo_mime = $3, photo_etag = $4, updated_at = now() WHERE user_id = $1",
+    [userId, photo, mime, etag]
+  );
+  return (res.rowCount ?? 0) > 0;
+}
+
+export async function clearProfilePhoto(userId: string): Promise<void> {
+  await ensureSchema();
+  await pool.query("UPDATE profiles SET photo = NULL, photo_mime = NULL, photo_etag = NULL, updated_at = now() WHERE user_id = $1", [userId]);
+}
+
+/** The picture of a live shared profile, looked up by its link. Undefined unless the link is live and has a picture. */
+export async function getPublicProfilePhoto(slug: string): Promise<{ photo: Buffer; mime: string; etag: string } | undefined> {
+  if (!/^[A-Za-z0-9_-]{16,64}$/.test(slug)) return undefined;
+  await ensureSchema();
+  const res = await pool.query(
+    `SELECT p.photo, p.photo_mime, p.photo_etag
+     FROM profiles p
+     JOIN resumes r ON r.id = p.resume_id AND r.user_id = p.user_id AND r.parent_id IS NULL
+     WHERE p.slug = $1 AND p.shared = true AND p.disabled_at IS NULL AND p.photo IS NOT NULL`,
+    [slug]
+  );
+  const row = res.rows[0];
+  return row ? { photo: row.photo, mime: row.photo_mime, etag: row.photo_etag } : undefined;
+}
+
+/** The owner's own picture, for the settings page preview. */
+export async function getOwnProfilePhoto(userId: string): Promise<{ photo: Buffer; mime: string; etag: string } | undefined> {
+  await ensureSchema();
+  const res = await pool.query("SELECT photo, photo_mime, photo_etag FROM profiles WHERE user_id = $1 AND photo IS NOT NULL", [userId]);
+  const row = res.rows[0];
+  return row ? { photo: row.photo, mime: row.photo_mime, etag: row.photo_etag } : undefined;
 }
 
 export default pool;
