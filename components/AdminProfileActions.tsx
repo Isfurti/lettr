@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 /** Take down, restore or dismiss, for one reported profile. */
-export function AdminProfileActions({ userId, reportId, disabled }: { userId: string; reportId: string; disabled: boolean }) {
+export function AdminProfileActions({ userId, reportId, disabled }: { userId: string; reportId?: string; disabled: boolean }) {
   const router = useRouter();
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -35,7 +35,7 @@ export function AdminProfileActions({ userId, reportId, disabled }: { userId: st
       {disabled && (
         <button type="button" disabled={busy} onClick={() => run(`/api/admin/profiles/${userId}`, { action: "restore" })} className="self-start rounded-xl border border-rule px-3 py-1.5 text-xs">Restore (stays private until the owner shares again)</button>
       )}
-      <button type="button" disabled={busy} onClick={() => run(`/api/admin/profile-reports/${reportId}`, {})} className="self-start text-xs text-seal hover:underline disabled:opacity-60">Dismiss this report</button>
+      {reportId && <button type="button" disabled={busy} onClick={() => run(`/api/admin/profile-reports/${reportId}`, {})} className="self-start text-xs text-seal hover:underline disabled:opacity-60">Dismiss this report</button>}
       {error && <p role="alert" className="text-xs text-[#b3261e]">{error}</p>}
     </div>
   );

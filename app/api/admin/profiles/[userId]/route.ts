@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdminApi } from "@/lib/admin-auth";
-import { getProfile, getUserById, logAdminAction, resolveOpenReportsForUser, setProfileDisabled } from "@/lib/db";
+import { getProfile, getUserById, restoreProfile, takeDownProfile } from "@/lib/db";
+import { isJsonRequest, isSameOriginRequest } from "@/lib/same-origin";
 
 export const runtime = "nodejs";
 
@@ -17,6 +18,7 @@ const Schema = z.discriminatedUnion("action", [
 export async function POST(req: Request, { params }: { params: Promise<{ userId: string }> }) {
   const admin = await requireAdminApi();
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!isSameOriginRequest(req) || !isJsonRequest(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { userId } = await params;
   const target = await getUserById(userId);
@@ -24,15 +26,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ userId:
   if (!target || !profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
   const parsed = Schema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Give a reason of at least 3 characters." }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "Choose take down (with a reason of at least 3 characters) or restore." }, { status: 400 });
 
   if (parsed.data.action === "disable") {
-    await setProfileDisabled(userId, parsed.data.reason);
-    await resolveOpenReportsForUser(userId, admin.id);
-    await logAdminAction({ adminUserId: admin.id, action: "profile_taken_down", targetUserId: userId, detail: `${target.email}: ${parsed.data.reason}` });
-  } else {
-    await setProfileDisabled(userId, null);
-    await logAdminAction({ adminUserId: admin.id, action: "profile_restored", targetUserId: userId, detail: target.email });
+    await takeDownProfile(userId, parsed.data.reason, admin.id, `${target.email}: ${parsed.data.reason}`);
+  } else if (!(await restoreProfile(userId, admin.id, target.email))) {
+    return NextResponse.json({ error: "That profile is not taken down." }, { status: 409 });
   }
   return NextResponse.json({ ok: true });
 }

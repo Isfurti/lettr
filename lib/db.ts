@@ -1273,14 +1273,14 @@ export async function countOpenProfileReports(): Promise<number> {
   return res.rows[0]?.n ?? 0;
 }
 
-/** Marks every open report about one profile as handled (after a takedown) or one report (dismissed). */
-export async function resolveProfileReport(id: string, status: "actioned" | "dismissed", adminId: string): Promise<boolean> {
+/** Dismisses (or closes) one open report. Returns the profile owner's id, or undefined if it was not open. */
+export async function resolveProfileReport(id: string, status: "actioned" | "dismissed", adminId: string): Promise<string | undefined> {
   await ensureSchema();
   const res = await pool.query(
-    "UPDATE profile_reports SET status = $2, handled_at = now(), handled_by = $3 WHERE id = $1 AND status = 'open'",
+    "UPDATE profile_reports SET status = $2, handled_at = now(), handled_by = $3 WHERE id = $1 AND status = 'open' RETURNING profile_user_id",
     [id, status, adminId]
   );
-  return (res.rowCount ?? 0) > 0;
+  return res.rows[0]?.profile_user_id;
 }
 
 export async function resolveOpenReportsForUser(userId: string, adminId: string): Promise<void> {
@@ -1289,6 +1289,81 @@ export async function resolveOpenReportsForUser(userId: string, adminId: string)
     "UPDATE profile_reports SET status = 'actioned', handled_at = now(), handled_by = $2 WHERE profile_user_id = $1 AND status = 'open'",
     [userId, adminId]
   );
+}
+
+/** Profiles an admin has taken down, newest first, so they can be restored from the screen. */
+export async function listTakenDownProfiles(limit = 100): Promise<{ user_id: string; email: string | null; name: string | null; disabled_at: Date; disabled_reason: string | null }[]> {
+  await ensureSchema();
+  const res = await pool.query(
+    `SELECT p.user_id, u.email, u.name, p.disabled_at, p.disabled_reason
+     FROM profiles p LEFT JOIN users u ON u.id = p.user_id
+     WHERE p.disabled_at IS NOT NULL ORDER BY p.disabled_at DESC LIMIT $1`,
+    [limit]
+  );
+  return res.rows;
+}
+
+/**
+ * Takedown in one transaction: the profile goes down, its open reports are closed and the audit
+ * row is written together, so a failure part-way cannot leave a half-done takedown.
+ */
+export async function takeDownProfile(userId: string, reason: string, adminId: string, detail: string): Promise<boolean> {
+  await ensureSchema();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const down = await client.query(
+      "UPDATE profiles SET disabled_at = now(), disabled_reason = $2, shared = false, slug = NULL, updated_at = now() WHERE user_id = $1",
+      [userId, reason.slice(0, 500)]
+    );
+    if (!down.rowCount) {
+      await client.query("ROLLBACK");
+      return false;
+    }
+    await client.query(
+      "UPDATE profile_reports SET status = 'actioned', handled_at = now(), handled_by = $2 WHERE profile_user_id = $1 AND status = 'open'",
+      [userId, adminId]
+    );
+    await client.query(
+      "INSERT INTO admin_audit_log (id, admin_user_id, action, target_user_id, detail) VALUES ($1, $2, 'profile_taken_down', $3, $4)",
+      [randomUUID(), adminId, userId, detail]
+    );
+    await client.query("COMMIT");
+    return true;
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** Restore a taken-down profile. It stays private (not shared, no link). False if it was not taken down. */
+export async function restoreProfile(userId: string, adminId: string, detail: string): Promise<boolean> {
+  await ensureSchema();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const up = await client.query(
+      "UPDATE profiles SET disabled_at = NULL, disabled_reason = NULL, updated_at = now() WHERE user_id = $1 AND disabled_at IS NOT NULL",
+      [userId]
+    );
+    if (!up.rowCount) {
+      await client.query("ROLLBACK");
+      return false;
+    }
+    await client.query(
+      "INSERT INTO admin_audit_log (id, admin_user_id, action, target_user_id, detail) VALUES ($1, $2, 'profile_restored', $3, $4)",
+      [randomUUID(), adminId, userId, detail]
+    );
+    await client.query("COMMIT");
+    return true;
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 export default pool;

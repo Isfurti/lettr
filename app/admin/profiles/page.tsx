@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin-auth";
-import { listProfileReports } from "@/lib/db";
+import { listProfileReports, listTakenDownProfiles } from "@/lib/db";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { AdminProfileActions } from "@/components/AdminProfileActions";
 import { formatDateTime } from "@/lib/format-date";
@@ -18,7 +18,7 @@ const REASON: Record<string, string> = {
 
 export default async function AdminProfilesPage() {
   await requireAdmin();
-  const reports = await listProfileReports();
+  const [reports, takenDown] = await Promise.all([listProfileReports(), listTakenDownProfiles()]);
   const open = reports.filter((r) => r.status === "open");
   const done = reports.filter((r) => r.status !== "open");
 
@@ -41,11 +41,26 @@ export default async function AdminProfilesPage() {
               <p className="text-xs text-ink-soft mb-2 break-all">
                 Profile of{" "}
                 <Link href={`/admin/users/${r.profile_user_id}`} className="underline">{r.user_name || r.user_email || r.profile_user_id}</Link>
-                {r.disabled_at ? " (already taken down)" : r.shared ? " (shared)" : " (not shared now)"}
+                {r.disabled_at ? " (taken down)" : r.shared ? " (shared)" : " (not shared now)"}
                 {r.reporter_email ? ` · reporter: ${r.reporter_email}` : " · reporter gave no email"}
               </p>
               {r.details && <p className="text-sm whitespace-pre-wrap mb-3">{r.details}</p>}
               <AdminProfileActions userId={r.profile_user_id} reportId={r.id} disabled={Boolean(r.disabled_at)} />
+            </div>
+          ))}
+        </div>
+
+        <h2 className="font-brand font-extrabold text-sm uppercase tracking-wide text-ink-soft mb-3">Taken down ({takenDown.length})</h2>
+        <div className="space-y-3 mb-10">
+          {takenDown.length === 0 && <p className="text-sm text-ink-soft">No profiles are taken down.</p>}
+          {takenDown.map((t) => (
+            <div key={t.user_id} className="bg-white border border-rule rounded-xl p-4">
+              <p className="text-sm font-medium break-all">
+                <Link href={`/admin/users/${t.user_id}`} className="underline">{t.name || t.email || t.user_id}</Link>
+                <span className="text-xs text-ink-soft font-mono ml-2">{formatDateTime(t.disabled_at)}</span>
+              </p>
+              {t.disabled_reason && <p className="text-sm text-ink-soft mb-3 whitespace-pre-wrap">{t.disabled_reason}</p>}
+              <AdminProfileActions userId={t.user_id} disabled />
             </div>
           ))}
         </div>

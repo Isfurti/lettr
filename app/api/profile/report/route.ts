@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import { createProfileReport, getPublicProfileBySlug, REPORT_REASONS } from "@/lib/db";
 import { anonymousClientKey } from "@/lib/client-key";
@@ -43,14 +43,18 @@ export async function POST(req: Request) {
 
   const src = await getPublicProfileBySlug(parsed.data.slug);
   if (src) {
-    const { reason, details, email } = parsed.data;
+    const { reason, email } = parsed.data;
+    const details = parsed.data.details?.trim() || undefined;
     await createProfileReport({ userId: src.user_id, reason, details, reporterEmail: email || undefined });
-    // Best effort: the report is already saved if email is not set up.
-    await notifyAdminOfSupportMessage({
-      fromEmail: email || "no-reply@getlettr.com",
-      subject: `Profile report: ${REASON_TEXT[reason]}`,
-      message: `${details ?? "(no details)"}\n\nReview it in Admin > Profile reports.`,
-    }).catch(() => {});
+    // After the answer is sent, so a live and a dead link answer equally fast. The email names only the
+    // reason: reporter-written text stays in Admin and is never sent from Lettr's address.
+    after(() =>
+      notifyAdminOfSupportMessage({
+        fromEmail: "no-reply@getlettr.com",
+        subject: `Profile report: ${REASON_TEXT[reason]}`,
+        message: "A profile was reported. Review it in Admin > Profile reports.",
+      }).catch(() => {})
+    );
   }
   return NextResponse.json({ ok: true });
 }
