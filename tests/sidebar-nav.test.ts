@@ -10,6 +10,15 @@ describe("sidebar after the profile became home", () => {
     expect(src).not.toContain('label: "Dashboard"');
   });
   it("keeps My profile lit on its settings and preview pages", () => {
-    expect(src).toContain('pathname.startsWith("/dashboard/profile")');
+    expect(src).toContain('pathname.startsWith("/dashboard/profile/")');
+  });
+});
+
+describe("no stale links to the old dashboard", () => {
+  it("emails, the Drive callback and checkout go to the resume list", () => {
+    for (const f of ["lib/email.ts", "app/api/google/callback/route.ts", "components/ProCheckoutButton.tsx"]) {
+      const s = readFileSync(f, "utf8");
+      expect(s, f).not.toMatch(/\/dashboard(\?|\\n|`|")/);
+    }
   });
 });

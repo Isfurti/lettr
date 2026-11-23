@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /** Copies the profile link. Says so in words, and tells the person if the browser refused. */
 export function CopyLinkButton({ url, className }: { url: string; className?: string }) {
   const [msg, setMsg] = useState("");
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   async function copy() {
     try {
       await navigator.clipboard.writeText(url);
@@ -12,7 +14,8 @@ export function CopyLinkButton({ url, className }: { url: string; className?: st
     } catch {
       setMsg("Couldn't copy. Open Settings to copy it.");
     }
-    setTimeout(() => setMsg(""), 3000);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setMsg(""), 3000);
   }
   return (
     <>

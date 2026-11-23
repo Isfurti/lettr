@@ -70,7 +70,7 @@ export function AppSidebar({
   // "Interview practice" stays highlighted inside one interview, and so on.
   // Home is the profile, so its settings and preview pages keep "My profile" lit.
   const isActive = (href: string) =>
-    href === "/dashboard" ? pathname === href || pathname.startsWith("/dashboard/profile") : pathname === href || pathname.startsWith(`${href}/`);
+    href === "/dashboard" ? pathname === href || pathname === "/dashboard/profile" || pathname.startsWith("/dashboard/profile/") : pathname === href || pathname.startsWith(`${href}/`);
 
   const itemClass = (active: boolean) =>
     `flex items-center gap-3 px-3.5 min-h-11 rounded-xl text-[15px] transition-colors ${

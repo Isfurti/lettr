@@ -443,8 +443,8 @@ export function ResumeEditor({
         <div className="flex items-center gap-3 min-w-0 basis-full sm:basis-auto flex-1">
           <Link
             href="/dashboard/resumes"
-            aria-label="Back to dashboard"
-            title="Back to dashboard"
+            aria-label="Back to my resumes"
+            title="Back to my resumes"
             onClick={(e) => {
               // Make sure the last few keystrokes are saved before leaving.
               if (latest.current.snapshot === savedRef.current) return;

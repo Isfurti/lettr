@@ -43,6 +43,14 @@ describe("/dashboard home", () => {
     }
   });
 
+  it("forwards repeated parameters, and keeps ?source=app on the profile", async () => {
+    await signedInUser(false);
+    const Home = (await import("@/app/dashboard/page")).default;
+    const to = await redirectTarget(Home({ searchParams: Promise.resolve({ import: ["1", "1"] }) }));
+    expect(to).toContain("/dashboard/resumes?import=1&import=1");
+    expect(await redirectTarget(Home({ searchParams: Promise.resolve({ source: "app" }) }))).toBe("");
+  });
+
   it("renders the profile for a user with a resume and for one with none, without throwing", async () => {
     const Home = (await import("@/app/dashboard/page")).default;
     await signedInUser(true);
