@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 /**
  * The picture of a shared profile. Only a live link answers: after the owner
  * stops sharing, or an admin takes the page down, this is a plain 404. The
- * answer is cached briefly so a revoked link stops showing the picture soon.
+ * answer is never reused without asking again, so a revoked link stops showing the picture at once.
  */
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -17,12 +17,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
   const headers = {
     "Content-Type": p.mime,
     ETag: etag,
-    "Cache-Control": "public, max-age=60, must-revalidate",
+    // Always revalidated, so a revoked link stops showing the picture at once. The ETag keeps this cheap (304).
+    "Cache-Control": "public, no-cache",
+    "Content-Disposition": 'inline; filename="profile.jpg"',
     "X-Content-Type-Options": "nosniff",
     "Content-Security-Policy": "default-src 'none'; sandbox",
     "X-Robots-Tag": "noindex, nofollow",
     "Referrer-Policy": "no-referrer",
   };
-  if (req.headers.get("if-none-match") === etag) return new Response(null, { status: 304, headers });
+  const sent = (req.headers.get("if-none-match") ?? "").split(",").map((t) => t.trim().replace(/^W\//, ""));
+  if (sent.includes(etag) || sent.includes("*")) return new Response(null, { status: 304, headers });
   return new Response(new Uint8Array(p.photo), { headers });
 }
