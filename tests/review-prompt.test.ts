@@ -7,7 +7,6 @@ describe("review prompt rules", () => {
     expect(isAppPage("/dashboard/applications")).toBe(true);
     expect(isAppPage("/builder/abc")).toBe(true);
     expect(isAppPage("/dashboard/feedback")).toBe(false);
-    expect(isAppPage("/dashboard/profile/preview")).toBe(false);
     expect(isAppPage("/")).toBe(false);
     expect(isAppPage("/admin")).toBe(false);
   });

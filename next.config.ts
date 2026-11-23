@@ -26,16 +26,7 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
-    return [
-      { source: "/:path*", headers: securityHeaders },
-      // Shared profiles: never listed, archived or kept. The page itself is never cached (a revoked link must stop at once).
-      // Referrer-Policy: no-referrer so the private link never travels in a Referer header (the global policy would send it to our own pages and their analytics).
-      { source: "/p/:path*", headers: [
-        { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive, nosnippet, noimageindex" },
-        { key: "Referrer-Policy", value: "no-referrer" },
-      ] },
-      { source: "/p/:slug", headers: [{ key: "Cache-Control", value: "private, no-store" }] },
-    ];
+    return [{ source: "/:path*", headers: securityHeaders }];
   },
   // pdf-parse (via pdfjs-dist) dynamically loads a worker file at runtime.
   // Next.js's bundler mangles that dynamic import path, so we tell it to

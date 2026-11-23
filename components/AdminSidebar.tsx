@@ -34,7 +34,6 @@ const NAV_ITEMS = [
   { href: "/admin/ai", label: "AI costs", icon: Sparkles },
   { href: "/admin/system", label: "System", icon: Settings },
   { href: "/admin/support", label: "Support inbox", icon: Inbox },
-  { href: "/admin/profiles", label: "Profile reports", icon: ShieldAlert },
 ];
 
 export function AdminSidebar() {

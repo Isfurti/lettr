@@ -7,14 +7,13 @@ import { Logo } from "@/components/Logo";
 import { InstallAppButton } from "@/components/AppInstall";
 import { ProBadge } from "@/components/ProBadge";
 import { signOut } from "next-auth/react";
-import { Home, LayoutTemplate, MessageSquare, LifeBuoy, Crown, LogOut, ShieldAlert, Globe, Briefcase, Mic, UserRound, Download, Menu, X } from "lucide-react";
+import { Home, LayoutTemplate, MessageSquare, LifeBuoy, Crown, LogOut, ShieldAlert, Globe, Briefcase, Mic, Download, Menu, X } from "lucide-react";
 import { TAGLINE } from "@/lib/tagline";
 
 const BASE_NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/dashboard/applications", label: "Applications", icon: Briefcase },
   { href: "/dashboard/interview", label: "Interview practice", icon: Mic },
-  { href: "/dashboard/profile", label: "My profile", icon: UserRound },
   { href: "/templates", label: "Templates", icon: LayoutTemplate },
   { href: "/dashboard/feedback", label: "Feedback", icon: MessageSquare },
   { href: "/support", label: "Help", icon: LifeBuoy },

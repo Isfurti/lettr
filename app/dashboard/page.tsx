@@ -278,11 +278,6 @@ export default async function DashboardPage({
             <p className="mt-2 text-slate flex-1">Get a profile score, a stronger headline, About and experience, all from your own words. Pro.</p>
             <span className="mt-3 font-bold text-brand-blue group-hover:underline">Improve my profile →</span>
           </Link>
-          <Link href="/dashboard/profile" className="group bg-white border-2 border-rule hover:border-ink rounded-[28px] p-6 flex flex-col">
-            <p className="font-extrabold">My profile</p>
-            <p className="mt-2 text-slate flex-1">Turn one of your resumes into a page you can share by link. Private until you choose to share it. Free.</p>
-            <span className="mt-3 font-bold text-brand-blue group-hover:underline">Set up my profile →</span>
-          </Link>
         </div>
 
         <ResumeSearch

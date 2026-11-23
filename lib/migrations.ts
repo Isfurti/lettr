@@ -314,49 +314,6 @@ export const MIGRATIONS: Migration[] = [
 ALTER TABLE resumes ADD COLUMN IF NOT EXISTS version_name TEXT;
 CREATE INDEX IF NOT EXISTS idx_resumes_parent ON resumes(parent_id);`,
   },
-  // Public profiles: a profile is one of the user's own original resumes, shared
-  // by an unguessable link. Private until shared; the link is replaced on revoke.
-  {
-    id: "0004_profiles",
-    sql: `CREATE TABLE IF NOT EXISTS profiles (
-  user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-  resume_id TEXT REFERENCES resumes(id) ON DELETE SET NULL,
-  slug TEXT,
-  shared BOOLEAN NOT NULL DEFAULT false,
-  show_city BOOLEAN NOT NULL DEFAULT false,
-  show_links BOOLEAN NOT NULL DEFAULT false,
-  show_contact BOOLEAN NOT NULL DEFAULT false,
-  show_personal BOOLEAN NOT NULL DEFAULT false,
-  age_confirmed_at TIMESTAMPTZ,
-  consent_version INTEGER,
-  disabled_at TIMESTAMPTZ,
-  disabled_reason TEXT,
-  photo BYTEA,
-  photo_mime TEXT CHECK (photo_mime IS NULL OR photo_mime IN ('image/jpeg', 'image/png', 'image/webp')),
-  photo_etag TEXT,
-  link_changed_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_slug ON profiles(slug) WHERE slug IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_profiles_resume ON profiles(resume_id);`,
-  },
-  {
-    id: "0005_profile_reports",
-    sql: `CREATE TABLE IF NOT EXISTS profile_reports (
-  id TEXT PRIMARY KEY,
-  profile_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  reason TEXT NOT NULL CHECK (reason IN ('not_me', 'private_info', 'harassment', 'spam', 'other')),
-  details TEXT,
-  reporter_email TEXT,
-  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'actioned', 'dismissed')),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  handled_at TIMESTAMPTZ,
-  handled_by TEXT
-);
-CREATE INDEX IF NOT EXISTS idx_profile_reports_status ON profile_reports(status, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_profile_reports_user ON profile_reports(profile_user_id);`,
-  },
 ];
 
 export function checksum(sql: string): string {
