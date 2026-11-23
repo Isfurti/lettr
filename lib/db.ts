@@ -1175,12 +1175,6 @@ export async function setProfilePhoto(userId: string, photo: Buffer, mime: strin
   return (res.rowCount ?? 0) > 0;
 }
 
-/** Makes sure the user has a profile row (private, nothing chosen yet), so a picture can be attached before the first share. */
-export async function ensureProfile(userId: string): Promise<void> {
-  await ensureSchema();
-  await pool.query("INSERT INTO profiles (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING", [userId]);
-}
-
 export async function clearProfilePhoto(userId: string): Promise<void> {
   await ensureSchema();
   await pool.query("UPDATE profiles SET photo = NULL, photo_mime = NULL, photo_etag = NULL, updated_at = now() WHERE user_id = $1", [userId]);
