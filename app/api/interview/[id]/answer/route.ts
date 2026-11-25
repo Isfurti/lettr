@@ -9,6 +9,7 @@ import { canUseInterviewPractice, type Plan } from "@/lib/limits";
 import { recordUse, usageContext, usedSoFar } from "@/lib/free-usage";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import { publicMessage } from "@/lib/public-error";
+import { parseMarket } from "@/lib/market";
 
 const Schema = z.object({
   questionId: z.string().max(100),
@@ -44,7 +45,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!rate.allowed) return NextResponse.json({ error: `Too many requests. Try again in ${rate.retryAfterSeconds}s.` }, { status: 429 });
 
   try {
-    const { value, model, usage } = await interviewFeedback({ role: practice.role, question: q.question, answer: parsed.data.answer });
+    const { value, model, usage } = await interviewFeedback({ role: practice.role, question: q.question, answer: parsed.data.answer, market: parseMarket(practice.market) });
     await trackAiUsage({ userId, feature: "interview_feedback", model, usage });
     await recordUse(ctx, "interview_feedback");
     const questions = practice.questions.map((x) => (x.id === q.id ? { ...x, answer: parsed.data.answer, feedback: value } : x));

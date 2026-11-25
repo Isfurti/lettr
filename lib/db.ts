@@ -1432,15 +1432,17 @@ export type InterviewSessionRow = {
   role: string;
   company: string | null;
   questions: InterviewQuestion[];
+  /** Country norms the practice follows (IN, US, UK, EU, GULF), or null for neutral. */
+  market: string | null;
   created_at: string;
   updated_at: string;
 };
 
-export async function createInterviewSession(userId: string, role: string, company: string | null, questions: InterviewQuestion[]): Promise<InterviewSessionRow> {
+export async function createInterviewSession(userId: string, role: string, company: string | null, questions: InterviewQuestion[], market: string | null = null): Promise<InterviewSessionRow> {
   await ensureSchema();
   const res = await pool.query(
-    `INSERT INTO interview_sessions (id, user_id, role, company, questions) VALUES ($1, $2, $3, $4, $5::jsonb) RETURNING *`,
-    [randomUUID(), userId, role, company, JSON.stringify(questions)]
+    `INSERT INTO interview_sessions (id, user_id, role, company, questions, market) VALUES ($1, $2, $3, $4, $5::jsonb, $6) RETURNING *`,
+    [randomUUID(), userId, role, company, JSON.stringify(questions), market]
   );
   return res.rows[0];
 }

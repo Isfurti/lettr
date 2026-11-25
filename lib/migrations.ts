@@ -314,6 +314,9 @@ export const MIGRATIONS: Migration[] = [
 ALTER TABLE resumes ADD COLUMN IF NOT EXISTS version_name TEXT;
 CREATE INDEX IF NOT EXISTS idx_resumes_parent ON resumes(parent_id);`,
   },
+  // Interview practice: the country the person is interviewing in (IN, US, UK, EU, GULF), so the
+  // questions and the answer feedback follow that country's norms. Empty means neutral.
+  { id: "0004_interview_market", sql: "ALTER TABLE interview_sessions ADD COLUMN IF NOT EXISTS market TEXT;" },
 ];
 
 export function checksum(sql: string): string {

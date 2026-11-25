@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { InterviewQuestion, InterviewSessionRow } from "@/lib/db";
+import { MARKET_IDS, MARKETS, type Market } from "@/lib/market";
 
 const KIND_LABEL: Record<string, string> = { behavioural: "Behavioural", role: "About the role", resume: "About your resume" };
 
@@ -22,6 +23,7 @@ export function StartInterview({
   const [company, setCompany] = useState("");
   const [jobPost, setJobPost] = useState("");
   const [resumeId, setResumeId] = useState(resumes[0]?.id ?? "");
+  const [market, setMarket] = useState<Market | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<{ text: string; upgrade?: boolean } | null>(null);
 
@@ -32,7 +34,7 @@ export function StartInterview({
       const res = await fetch("/api/interview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role, company: company || undefined, jobPost: jobPost || undefined, resumeId: resumeId || undefined }),
+        body: JSON.stringify({ role, company: company || undefined, jobPost: jobPost || undefined, resumeId: resumeId || undefined, market: market ?? undefined }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -73,6 +75,28 @@ export function StartInterview({
             </select>
           </label>
         )}
+        <div className="sm:col-span-2" role="group" aria-label="Interviewing in">
+          <span className="text-sm font-bold text-slate">Interviewing in (optional)</span>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {MARKET_IDS.map((id) => (
+              <button
+                key={id}
+                type="button"
+                aria-pressed={market === id}
+                title={MARKETS[id].hint}
+                onClick={() => setMarket(market === id ? null : id)}
+                className={`inline-flex items-center justify-center min-h-10 text-sm font-bold px-4 rounded-full border-2 ${
+                  market === id ? "border-ink bg-ink text-white" : "border-rule bg-white hover:border-ink"
+                }`}
+              >
+                {MARKETS[id].label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-slate mt-1.5">
+            {market ? `Questions and feedback follow ${MARKETS[market].label} interview norms.` : "Pick a country and the questions and feedback follow how interviews work there."}
+          </p>
+        </div>
         <label className="block sm:col-span-2">
           <span className="text-sm font-bold text-slate">Job post (optional, makes the questions sharper)</span>
           <textarea value={jobPost} onChange={(e) => setJobPost(e.target.value)} rows={4} className="field-input mt-1" />

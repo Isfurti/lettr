@@ -807,9 +807,9 @@ Respond ONLY with a JSON array like [{"question": "...", "kind": "behavioural"}]
 export type AnswerFeedback = { score: number; strengths: string[]; improve: string[]; better: string };
 
 /** Honest, specific feedback on one practice answer, with a stronger version to learn from. */
-export async function interviewFeedback(params: { role: string; question: string; answer: string }): Promise<AiResult<AnswerFeedback>> {
+export async function interviewFeedback(params: { role: string; question: string; answer: string; market?: Market }): Promise<AiResult<AnswerFeedback>> {
   const prompt = `You are a supportive but honest interview coach. A candidate for a "${params.role}" role answered this interview question.
-
+${params.market ? `${marketGuidance(params.market)} Judge the answer, and word the stronger version, the way interviewers in that market expect: tone, directness and how much to say about yourself.\n` : ""}
 Question: ${params.question}
 
 Answer: """${params.answer.slice(0, 4000)}"""

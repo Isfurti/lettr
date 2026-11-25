@@ -12,12 +12,15 @@ import { checkAndRecordRateLimit } from "@/lib/rate-limit";
 import type { ResumeData } from "@/lib/types";
 import { parseStoredResume } from "@/lib/resume-version";
 import { publicMessage } from "@/lib/public-error";
+import { marketOf, parseMarket } from "@/lib/market";
 
 const Schema = z.object({
   role: z.string().trim().min(2, "Add the job title you're interviewing for").max(150),
   company: z.string().trim().max(150).optional(),
   jobPost: z.string().max(10000).optional(),
   resumeId: z.string().max(100).optional(),
+  /** Country norms: IN, US, UK, EU or GULF. Anything else means neutral. */
+  market: z.string().max(10).optional(),
 });
 
 /** Starts a practice interview: writes six questions for the role. */
@@ -49,15 +52,18 @@ export async function POST(req: Request) {
     if (row) resume = parseStoredResume(row.data);
   }
 
+  const market = parseMarket(parsed.data.market) ?? marketOf(resume?.customization) ?? undefined;
+
   try {
-    const { value, model, usage } = await generateInterviewQuestions({ ...parsed.data, resume });
+    const { value, model, usage } = await generateInterviewQuestions({ ...parsed.data, resume, market });
     await trackAiUsage({ userId, feature: "interview", model, usage });
     await recordUse(ctx, "interview");
     const row = await createInterviewSession(
       userId,
       parsed.data.role,
       parsed.data.company || null,
-      value.map((q) => ({ id: randomUUID(), question: q.question, kind: q.kind }))
+      value.map((q) => ({ id: randomUUID(), question: q.question, kind: q.kind })),
+      market ?? null
     );
     return NextResponse.json({ session: row }, { status: 201 });
   } catch (err) {
