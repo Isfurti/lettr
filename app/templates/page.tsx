@@ -50,8 +50,6 @@ const TEMPLATE_META: Record<TemplateId, { name: string; description: string; tag
 
 const TEMPLATES = TEMPLATE_IDS.map((id) => ({ id, ...TEMPLATE_META[id] }));
 
-const SAMPLE_BY_COUNTRY: Record<string, TemplateSampleId> = { in: "in", us: "us", uk: "uk" };
-
 export default async function TemplatesPage({
   searchParams,
 }: {
@@ -72,7 +70,8 @@ export default async function TemplatesPage({
   const country = getCountryFromHeaders(await headers());
   const fromVisitor: TemplateSampleId = country === "IN" ? "in" : country === "GB" ? "uk" : country ? "us" : "in";
   // ?country=in|us|uk (from the Templates menu) shows every template with that country's resume.
-  const initialSample = SAMPLE_BY_COUNTRY[countryParam ?? ""] ?? fromVisitor;
+  const initialSample: TemplateSampleId =
+    countryParam === "in" || countryParam === "us" || countryParam === "uk" ? countryParam : fromVisitor;
   // ?for=freshers puts the Fresher template first.
   const freshers = forParam === "freshers";
   const ordered = freshers ? [...TEMPLATES].sort((a, b) => Number(b.id === "fresher") - Number(a.id === "fresher")) : TEMPLATES;

@@ -27,8 +27,16 @@ export function NavMenu({
   onSelect?: (item: ServiceItem) => boolean | void;
 }) {
   const [open, setOpen] = useState(false);
+  // On phones the panel is pinned to the screen edges just below the button, so it never runs off-screen.
+  const [top, setTop] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const pointer = useRef("");
+  function show() {
+    const r = btnRef.current?.getBoundingClientRect();
+    if (r) setTop(Math.round(r.bottom + 8));
+    setOpen(true);
+  }
   useEffect(() => {
     if (!open) return;
     const away = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
@@ -41,7 +49,7 @@ export function NavMenu({
     <div
       ref={ref}
       className="relative"
-      onPointerEnter={(e) => e.pointerType === "mouse" && setOpen(true)}
+      onPointerEnter={(e) => e.pointerType === "mouse" && show()}
       onPointerLeave={(e) => e.pointerType === "mouse" && setOpen(false)}
       onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false); }}
     >
@@ -50,7 +58,14 @@ export function NavMenu({
         type="button"
         aria-expanded={open}
         aria-controls={`${id}-menu`}
-        onClick={() => setOpen((o) => !o)}
+        onPointerDown={(e) => { pointer.current = e.pointerType; }}
+        onClick={() => {
+          // A mouse has already opened it by hovering, so its click keeps it open; touch and keyboard toggle.
+          const mouse = pointer.current === "mouse";
+          pointer.current = "";
+          if (mouse || !open) show();
+          else setOpen(false);
+        }}
         className={buttonClassName}
       >
         {label}
@@ -59,8 +74,14 @@ export function NavMenu({
         </svg>
       </button>
       {open && (
-        <div className={`absolute ${align === "right" ? "right-0" : "left-0"} top-full pt-3 z-40 ${cols ? "w-[min(460px,calc(100vw-1.5rem))]" : "w-[min(300px,calc(100vw-1.5rem))]"}`}>
-          <ul id={`${id}-menu`} className={`grid ${cols ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"} gap-1 bg-white rounded-2xl border border-rule shadow-lg p-2 text-ink`}>
+        <div
+          style={{ "--menu-top": `${top}px` } as React.CSSProperties}
+          className={`absolute ${align === "right" ? "right-0" : "left-0"} top-full pt-3 z-40 ${cols ? "w-[460px]" : "w-[300px]"} max-sm:fixed max-sm:inset-x-3 max-sm:top-[var(--menu-top)] max-sm:w-auto max-sm:pt-0`}
+        >
+          <ul
+            id={`${id}-menu`}
+            className={`grid ${cols ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"} gap-1 bg-white rounded-2xl border border-rule shadow-lg p-2 text-ink max-sm:max-h-[70vh] max-sm:overflow-y-auto`}
+          >
             {items.map((s) => (
               <li key={s.label}>
                 <Link
