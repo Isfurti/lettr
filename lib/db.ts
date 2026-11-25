@@ -7,6 +7,7 @@ import { encryptSecret } from "./secret-box";
 import { assertPreviewUsesStagingDatabase } from "./preview-guard";
 import type { ApplicationStatus } from "./application-status";
 import { proHasLapsed } from "./pro-pass";
+import type { SignupSource } from "./signup-source";
 
 // Every call site in the app only uses the exported functions below, so
 // swapping providers (e.g. a different Postgres host, or connection pooling
@@ -160,6 +161,8 @@ export type UserRow = {
   pro_reminder_sent_for: string | Date | null;
   ai_improvement_consent: boolean;
   ai_improvement_opt_out: boolean;
+  /** Channel and labels for where the account came from; null for older accounts. */
+  signup_source: SignupSource | null;
   created_at: string;
 };
 
@@ -238,11 +241,21 @@ export async function createUser(u: {
   emailVerified?: boolean;
   countryCode?: string;
   pricingTier?: string;
+  signupSource?: SignupSource | null;
 }) {
   await ensureSchema();
   await pool.query(
-    "INSERT INTO users (id, email, password_hash, name, email_verified, country_code, pricing_tier) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-    [u.id, u.email, u.passwordHash, u.name ?? null, u.emailVerified ?? false, u.countryCode ?? null, u.pricingTier ?? null]
+    "INSERT INTO users (id, email, password_hash, name, email_verified, country_code, pricing_tier, signup_source) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)",
+    [
+      u.id,
+      u.email,
+      u.passwordHash,
+      u.name ?? null,
+      u.emailVerified ?? false,
+      u.countryCode ?? null,
+      u.pricingTier ?? null,
+      u.signupSource ? JSON.stringify(u.signupSource) : null,
+    ]
   );
 }
 
@@ -702,6 +715,28 @@ export async function listAllUsers(search?: string): Promise<AdminUserRow[]> {
      WHERE ($1::text IS NULL OR u.email ILIKE '%' || $1 || '%' OR u.name ILIKE '%' || $1 || '%')
      ORDER BY u.created_at DESC`,
     [search || null]
+  );
+  return res.rows;
+}
+
+/**
+ * New accounts in the last `days` days, counted by where they came from.
+ * Accounts made before source tracking come back as "not_recorded".
+ * The admin's own account is left out, like the rest of the admin numbers.
+ */
+export async function countSignupsBySource(
+  days: number,
+  excludeEmail?: string | null
+): Promise<{ channel: string; count: number }[]> {
+  await ensureSchema();
+  const ex = excludeEmail?.trim().toLowerCase() || null;
+  const res = await pool.query(
+    `SELECT COALESCE(signup_source->>'channel', 'not_recorded') AS channel, COUNT(*)::int AS count
+     FROM users u
+     WHERE created_at > now() - make_interval(days => $1::int) AND ($2::text IS NULL OR lower(u.email) <> $2)
+     GROUP BY 1
+     ORDER BY count DESC, channel ASC`,
+    [Math.max(1, Math.floor(days)), ex]
   );
   return res.rows;
 }

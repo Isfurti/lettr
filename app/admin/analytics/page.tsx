@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin-auth";
-import { getAdminOverview, getTemplatePopularity } from "@/lib/db";
+import { getAdminOverview, getTemplatePopularity, countSignupsBySource } from "@/lib/db";
+import { CHANNEL_LABELS } from "@/lib/signup-source";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { AdminStatCard, SignupsChart } from "@/components/AdminWidgets";
 
@@ -8,9 +9,10 @@ export const metadata: Metadata = { title: "Analytics | Lettr Admin" };
 
 export default async function AdminAnalyticsPage() {
   const session = await requireAdmin();
-  const [overview, templatePopularity] = await Promise.all([
+  const [overview, templatePopularity, signupSources] = await Promise.all([
     getAdminOverview(session.user?.email ?? null),
     getTemplatePopularity(),
+    countSignupsBySource(30, session.user?.email ?? null),
   ]);
 
   const users = overview.totalUsers;
@@ -35,6 +37,25 @@ export default async function AdminAnalyticsPage() {
           <AdminStatCard label="New signups" value={overview.signupsLast30Days.toLocaleString()} sub="last 30 days" />
           <AdminStatCard label="Active users (30 days)" value={overview.activeUsers30Days.toLocaleString()} sub={`${activeRate}% of all users`} />
           <AdminStatCard label="Active users (7 days)" value={overview.activeUsers7Days.toLocaleString()} />
+        </div>
+
+        <h2 className="text-xs uppercase tracking-wide text-ink-soft font-medium mb-3">Sign-ups by source, last 30 days</h2>
+        <div className="rounded-2xl border border-line bg-white p-4 mb-8 max-w-md">
+          {signupSources.length === 0 ? (
+            <p className="text-sm text-ink-soft">No sign-ups in this period.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <tbody>
+                {signupSources.map((r) => (
+                  <tr key={r.channel} className="border-b border-line last:border-0">
+                    <td className="py-1.5">{CHANNEL_LABELS[r.channel as keyof typeof CHANNEL_LABELS] ?? r.channel}</td>
+                    <td className="py-1.5 text-right tabular-nums">{r.count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <p className="text-xs text-ink-soft mt-3">&ldquo;Not recorded&rdquo; is anyone who signed up before this was added, or who did not allow cookies.</p>
         </div>
 
         <h2 className="text-xs uppercase tracking-wide text-ink-soft font-medium mb-3">Usage</h2>
