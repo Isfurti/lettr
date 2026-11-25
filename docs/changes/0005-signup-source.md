@@ -37,3 +37,12 @@
 
 ## Proposed privacy wording (not applied, owner to approve)
 "We remember which link or website brought you to Lettr, in one cookie for up to 30 days, and save the channel (for example Google search or an ad) on your account when you sign up. We do not store the full link or any click ID."
+
+## Changes after review
+
+- The cookie holds raw fields only. The channel is worked out on the server (`deriveChannel`), so a visitor cannot write `google_ads` into it.
+- Email sign-ups read the cookie in `app/api/auth/register/route.ts`. Google/LinkedIn sign-ups read it in the `jwt` callback in `lib/auth.ts` and pass it to `findOrCreateOAuthUser(email, name, signupSource)`, so `lib/oauth-user.ts` has no request code. Both delete it with `path: "/"`.
+- Next already decodes cookie values once, so the server parses the JSON directly.
+- Field rules are exact (host, labels, path, date within 31 days, `paid_click === true`); nothing valid left means null.
+- Landing data is held in memory from the first page view and written once consent allows (EU/UK: after "Allow"). "No thanks" deletes any existing `lettr_src` cookie.
+- Known gaps, left as is: an OAuth sign-in that claims an existing unverified account saves no source; the cookie is rewritten on the next visit after it is used; capture is off in opt-in regions when no tracking IDs are set, because the banner never shows.

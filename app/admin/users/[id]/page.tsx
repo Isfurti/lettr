@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin-auth";
 import type { Metadata } from "next";
+import { CHANNEL_LABELS } from "@/lib/signup-source";
 import { getUserById, listResumesForUser, listRecentActivity, logAdminAction } from "@/lib/db";
 import { scoreResumeQuality } from "@/lib/resume-score";
 import { AdminSidebar } from "@/components/AdminSidebar";
@@ -51,6 +52,19 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
               <PlanBadge plan={user.plan} paid={hasPaidPro(user)} />
               {hasPaidPro(user) && user.pro_until && <span>Pro until {formatProDate(user.pro_until)} ·</span>}
               <span>Joined {formatDate(user.created_at)}</span>
+              <span>·</span>
+              <span>
+                Source:{" "}
+                {user.signup_source
+                  ? [
+                      CHANNEL_LABELS[user.signup_source.channel] ?? user.signup_source.channel,
+                      user.signup_source.utm_campaign,
+                      user.signup_source.referrer_host,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")
+                  : CHANNEL_LABELS.not_recorded}
+              </span>
               <span>·</span>
               {user.email_verified ? (
                 <span className="text-green-700">Email verified</span>

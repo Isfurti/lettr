@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { randomUUID, randomBytes } from "node:crypto";
+import type { SignupSource } from "./signup-source";
 import { getUserByEmail, createUser, claimUnverifiedAccount, type UserRow } from "./db";
 
 /**
@@ -15,7 +16,11 @@ import { getUserByEmail, createUser, claimUnverifiedAccount, type UserRow } from
  * password hash (they can never log in with a password unless they
  * separately set one - only OAuth will work for that account).
  */
-export async function findOrCreateOAuthUser(email: string, name?: string | null): Promise<UserRow> {
+export async function findOrCreateOAuthUser(
+  email: string,
+  name?: string | null,
+  signupSource?: SignupSource | null
+): Promise<UserRow> {
   const normalizedEmail = email.toLowerCase();
   const existing = await getUserByEmail(normalizedEmail);
   if (existing) {
@@ -39,7 +44,7 @@ export async function findOrCreateOAuthUser(email: string, name?: string | null)
   // Defaulting this to false (the createUser default, meant for password
   // signups) left OAuth users permanently stuck seeing an unverifiable
   // "please verify your email" banner - a real bug, not a style choice.
-  await createUser({ id, email: normalizedEmail, passwordHash: unusablePasswordHash, name: name ?? undefined, emailVerified: true });
+  await createUser({ id, email: normalizedEmail, passwordHash: unusablePasswordHash, name: name ?? undefined, emailVerified: true, signupSource });
 
   const created = await getUserByEmail(normalizedEmail);
   if (!created) throw new Error("Failed to create OAuth user");

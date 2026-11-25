@@ -7,6 +7,7 @@ import { sendVerificationEmail } from "@/lib/email";
 import { getCountryFromHeaders, getTierForCountry } from "@/lib/pricing-region";
 import { anonymousClientKey } from "@/lib/client-key";
 import { checkAndRecordRateLimit } from "@/lib/rate-limit";
+import { takeSignupSource } from "@/lib/signup-source-cookie";
 
 const RegisterSchema = z.object({
   name: z.string().min(1).max(120),
@@ -65,6 +66,7 @@ export async function POST(req: Request) {
     emailVerified: !emailServiceConfigured,
     countryCode: countryCode ?? undefined,
     pricingTier,
+    signupSource: await takeSignupSource(),
   });
 
   let verificationEmailSent = false;

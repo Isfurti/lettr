@@ -19,6 +19,7 @@ import { Providers } from "@/components/Providers";
 import { ReviewPrompt } from "@/components/ReviewPrompt";
 import { ServiceWorkerRegister } from "@/components/AppInstall";
 import { Analytics } from "@/components/Analytics";
+import { SourceCapture } from "@/components/SourceCapture";
 import { siteUrl } from "@/lib/site-url";
 import { TAGLINE } from "@/lib/tagline";
 
@@ -53,6 +54,7 @@ export default function RootLayout({
         </Providers>
         <ServiceWorkerRegister />
         <Analytics />
+        <SourceCapture />
       </body>
     </html>
   );

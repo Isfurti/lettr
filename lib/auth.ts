@@ -6,6 +6,7 @@ import type { Provider } from "next-auth/providers";
 import bcrypt from "bcryptjs";
 import { getUserByEmail, getAuthEpoch } from "./db";
 import { findOrCreateOAuthUser } from "./oauth-user";
+import { takeSignupSource } from "./signup-source-cookie";
 import { isRateLimited, recordRateLimitHit } from "./rate-limit";
 
 /** Shown on the sign-in page instead of "wrong password" when an account is being guessed at. */
@@ -79,7 +80,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // OAuth sign-in: find-or-create our own user row keyed by email,
         // so resumes/billing/support all have a stable user id to attach to.
         if (user.email) {
-          const dbUser = await findOrCreateOAuthUser(user.email, user.name);
+          const dbUser = await findOrCreateOAuthUser(user.email, user.name, await takeSignupSource());
           token.id = dbUser.id;
           token.epoch = Number(dbUser.auth_epoch ?? 0);
         }

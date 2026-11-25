@@ -3,7 +3,7 @@
 IDs are TEXT. All DB access goes through `lib/db.ts`. [Certain]
 
 ## Core
-- **users**: id, email (unique), password_hash, name, plan, country_code, pricing_tier, pro_until, pro_plan, email_verified + token/expiry columns, password-reset token/expiry, Google tokens, AI consent/opt-out flags, usage counters. Legacy `stripe_*` columns are unused.
+- **users**: id, email (unique), password_hash, name, plan, country_code, pricing_tier, signup_source (JSONB, nullable: channel + safe labels, see changes/0005), pro_until, pro_plan, email_verified + token/expiry columns, password-reset token/expiry, Google tokens, AI consent/opt-out flags, usage counters. Legacy `stripe_*` columns are unused.
 - **resumes**: user_id -> users (CASCADE), title, template, `data` JSONB, timestamps. Index on user_id.
 - **job_applications**: user_id (CASCADE), company, role, status, dates, notes, resume_id -> resumes (SET NULL).
 - **interview_sessions**: user_id (CASCADE), role, company, questions JSONB.

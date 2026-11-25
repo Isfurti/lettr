@@ -15,7 +15,7 @@ import {
   type Consent,
 } from "@/lib/analytics";
 
-const CONSENT_CHANGED_EVENT = "lettr:cookie-consent-changed";
+export const CONSENT_CHANGED_EVENT = "lettr:cookie-consent-changed";
 function subscribeConsent(onChange: () => void) {
   window.addEventListener(CONSENT_CHANGED_EVENT, onChange);
   window.addEventListener("storage", onChange);
@@ -28,7 +28,7 @@ function subscribeConsent(onChange: () => void) {
 const REGION_KEY = "lettr-consent-required";
 
 /** Asks the server whether this visitor's country needs an opt-in, remembered for the browser session. */
-async function fetchConsentRequired(): Promise<boolean> {
+export async function fetchConsentRequired(): Promise<boolean> {
   try {
     const saved = window.sessionStorage.getItem(REGION_KEY);
     if (saved === "1" || saved === "0") return saved === "1";

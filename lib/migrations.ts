@@ -314,6 +314,9 @@ export const MIGRATIONS: Migration[] = [
 ALTER TABLE resumes ADD COLUMN IF NOT EXISTS version_name TEXT;
 CREATE INDEX IF NOT EXISTS idx_resumes_parent ON resumes(parent_id);`,
   },
+  // Where the account came from (channel and a few safe labels, see docs/changes/0005).
+  // Null for accounts made before this existed.
+  { id: "0004_signup_source", sql: "ALTER TABLE users ADD COLUMN IF NOT EXISTS signup_source JSONB;" },
 ];
 
 export function checksum(sql: string): string {
