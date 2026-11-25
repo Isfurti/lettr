@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Logo } from "@/components/Logo";
 import { InstallAppButton } from "@/components/AppInstall";
+import { NavMenu } from "@/components/NavMenu";
+import { SERVICES, TEMPLATE_LINKS, type ServiceItem } from "@/lib/services";
 
 // Shown only in the mobile menu; the desktop header leaves them out.
 const MOBILE_ONLY = [
@@ -17,82 +19,11 @@ const LINKS = [
   { href: "/support", label: "Help" },
 ];
 
-const SERVICES = [
-  { href: "/builder/new", label: "Resume builder", note: "Templates, colours, PDF and Word export" },
-  { href: "/resume-checker", label: "ATS resume checker", note: "ATS score, keywords and AI analyst" },
-  { href: "/tools/bullet-writer", label: "AI resume help", note: "Rewrites, fixer, tailoring and agent" },
-  { href: "/tools/cover-letter-writer", label: "Cover letters", note: "AI-written, with designs" },
-  { href: "/dashboard/linkedin", label: "LinkedIn optimizer", note: "Rewrite your profile" },
-  { href: "/dashboard/interview", label: "Interview practice", note: "AI feedback on your answers" },
-  { href: "/dashboard", label: "Resignation letters", note: "Open a resume, then pick Resignation" },
-  { href: "/dashboard/applications", label: "Job tracker", note: "Follow every application" },
-];
-
-const BROWSE = [
-  { href: "/templates", label: "Resume templates", note: "ATS-friendly designs" },
-  { href: "/examples", label: "Resume examples", note: "For jobs, freshers to senior" },
-  { href: "/resume-builder", label: "Country templates", note: "USA, UK, India and more" },
-  { href: "/resume-builder-for-freshers", label: "Fresher resume", note: "For your first job" },
-  { href: "/tools/cover-letter-writer", label: "Cover letter designs", note: "10 designs to choose from" },
-  { href: "/dashboard", label: "Resignation letter designs", note: "Pick one in your editor" },
-];
-
-type Item = { href: string; label: string; note: string };
+type Item = ServiceItem;
 const MENUS: { id: string; label: string; items: Item[]; cols: boolean }[] = [
   { id: "services", label: "Services", items: SERVICES, cols: true },
-  { id: "browse", label: "Templates", items: BROWSE, cols: true },
+  { id: "browse", label: "Templates", items: TEMPLATE_LINKS, cols: true },
 ];
-
-function NavMenu({ id, label, items, cols }: { id: string; label: string; items: Item[]; cols: boolean }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const btnRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const away = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
-    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpen(false); btnRef.current?.focus(); } };
-    document.addEventListener("mousedown", away);
-    document.addEventListener("keydown", esc);
-    return () => { document.removeEventListener("mousedown", away); document.removeEventListener("keydown", esc); };
-  }, [open]);
-  return (
-    <div
-      ref={ref}
-      className="relative"
-      onPointerEnter={(e) => e.pointerType === "mouse" && setOpen(true)}
-      onPointerLeave={(e) => e.pointerType === "mouse" && setOpen(false)}
-      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false); }}
-    >
-      <button
-        ref={btnRef}
-        type="button"
-        aria-expanded={open}
-        aria-controls={`${id}-menu`}
-        onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-1 whitespace-nowrap hover:text-brand-blue transition-colors"
-      >
-        {label}
-        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" className={`transition-transform ${open ? "rotate-180" : ""}`}>
-          <path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-      {open && (
-        <div className={`absolute left-0 top-full pt-3 ${cols ? "w-[460px]" : "w-[300px]"}`}>
-          <ul id={`${id}-menu`} className={`grid ${cols ? "grid-cols-2" : "grid-cols-1"} gap-1 bg-white rounded-2xl border border-rule shadow-lg p-2`}>
-            {items.map((s) => (
-              <li key={s.label}>
-                <Link href={s.href} className="block rounded-xl px-3 py-2.5 hover:bg-sand" onClick={() => setOpen(false)}>
-                  <span className="block text-[15px] font-bold text-ink">{s.label}</span>
-                  <span className="block text-[13px] font-medium text-ink/60 leading-snug">{s.note}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export function PublicNav() {
   const { data: session, status } = useSession();

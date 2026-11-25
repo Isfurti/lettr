@@ -50,7 +50,14 @@ const TEMPLATE_META: Record<TemplateId, { name: string; description: string; tag
 
 const TEMPLATES = TEMPLATE_IDS.map((id) => ({ id, ...TEMPLATE_META[id] }));
 
-export default async function TemplatesPage() {
+const SAMPLE_BY_COUNTRY: Record<string, TemplateSampleId> = { in: "in", us: "us", uk: "uk" };
+
+export default async function TemplatesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ country?: string; for?: string }>;
+}) {
+  const { country: countryParam, for: forParam } = await searchParams;
   const session = await auth();
 
   let plan: Plan = "free";
@@ -63,7 +70,12 @@ export default async function TemplatesPage() {
 
   // Previews start with a resume from the visitor's part of the world; they can switch.
   const country = getCountryFromHeaders(await headers());
-  const initialSample: TemplateSampleId = country === "IN" ? "in" : country === "GB" ? "uk" : country ? "us" : "in";
+  const fromVisitor: TemplateSampleId = country === "IN" ? "in" : country === "GB" ? "uk" : country ? "us" : "in";
+  // ?country=in|us|uk (from the Templates menu) shows every template with that country's resume.
+  const initialSample = SAMPLE_BY_COUNTRY[countryParam ?? ""] ?? fromVisitor;
+  // ?for=freshers puts the Fresher template first.
+  const freshers = forParam === "freshers";
+  const ordered = freshers ? [...TEMPLATES].sort((a, b) => Number(b.id === "fresher") - Number(a.id === "fresher")) : TEMPLATES;
 
   return (
     <div className="flex-1 flex flex-col bg-cream text-ink">
@@ -71,7 +83,9 @@ export default async function TemplatesPage() {
 
       <main className="flex-1 max-w-[1280px] mx-auto w-full px-4 sm:px-8 lg:px-14 py-10 sm:py-16">
         <div className="max-w-2xl mb-12 rise">
-          <p className="text-sm font-extrabold uppercase tracking-[0.12em] text-brand-blue mb-3">Templates</p>
+          <p className="text-sm font-extrabold uppercase tracking-[0.12em] text-brand-blue mb-3">
+            {freshers ? "Templates for freshers" : "Templates"}
+          </p>
           <h1 className="font-brand font-extrabold text-[40px] sm:text-[56px] leading-[1.02] tracking-tight">
             Look the part. Pick a template.
           </h1>
@@ -83,7 +97,8 @@ export default async function TemplatesPage() {
         </div>
 
         <TemplatesGrid
-          templates={TEMPLATES.map((t) => ({ ...t, free: isTemplateFree(t.id) }))}
+          key={`${initialSample}-${freshers}`}
+          templates={ordered.map((t) => ({ ...t, free: isTemplateFree(t.id) }))}
           initialSample={initialSample}
           canUseAll={plan === "pro"}
           isLoggedIn={Boolean(session?.user)}

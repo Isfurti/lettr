@@ -1,3 +1,4 @@
+import { resumeHasContent } from "@/lib/resume-content";
 import { datePairProblem } from "./resume-dates";
 import { customSectionText, extraSections, type ResumeData } from "./types";
 import { plainResume } from "./rich-text";
@@ -800,6 +801,18 @@ export function analyzeAts(
         : overall >= 50
           ? "Fair. Fix the items below before applying to big-company portals."
           : "Needs work. Systems may skip or misread this resume.";
+
+  // Nothing written yet: layout checks pass on an empty page, so don't hand out points for them.
+  if (!resumeHasContent(input)) {
+    return {
+      overall: 0,
+      verdict: "Add your details to see your score.",
+      categories: categories.map((cat) => ({ ...cat, score: 0 })),
+      keywords,
+      topFixes,
+      heldBackBy: null,
+    };
+  }
 
   return {
     overall,

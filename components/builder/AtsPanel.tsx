@@ -1,5 +1,6 @@
 "use client";
 
+import { resumeHasContent } from "@/lib/resume-content";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { ResumeData } from "@/lib/types";
@@ -92,6 +93,7 @@ export function AtsPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- measureKey stands for data + template
   }, [measureKey]);
 
+  const blank = !resumeHasContent(data);
   const report = useMemo(() => analyzeAts(data, template, jd, pages), [data, template, jd, pages]);
 
   async function askAnalyst() {
@@ -275,11 +277,12 @@ export function AtsPanel({
         <button
           type="button"
           onClick={askAnalyst}
-          disabled={busy}
+          disabled={busy || blank}
           className="btn-press mt-3 inline-flex items-center min-h-11 px-5 rounded-full bg-ink text-white font-bold disabled:opacity-60"
         >
           {busy ? "Analysing…" : advice ? "Ask again" : "Ask the analyst"}
         </button>
+        {blank && <p className="text-xs font-bold text-slate mt-2">Add your details first, so the analyst has something to read.</p>}
         {error && (
           <p className="text-sm text-red-700 mt-3">
             {error.text}{" "}

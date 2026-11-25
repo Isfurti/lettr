@@ -1,5 +1,7 @@
 "use client";
 
+import { NavMenu } from "@/components/NavMenu";
+import { SERVICES, type ServiceItem } from "@/lib/services";
 import { MarketPicker } from "@/components/builder/MarketPicker";
 import { FresherPanel } from "@/components/builder/FresherPanel";
 import { FixesPanel } from "@/components/builder/FixesPanel";
@@ -109,6 +111,17 @@ export function ResumeEditor({
   function showTab(next: EditorTab) {
     setTab(next);
     setOpenedTabs((list) => (list.includes(next) ? list : [...list, next]));
+  }
+
+  /** The Services menu: tabs switch in place; other services save first, then open. */
+  function pickService(item: ServiceItem): boolean {
+    if (item.label === "Resume builder") { showTab("edit"); return true; }
+    if (item.tab) { showTab(item.tab); return true; }
+    // A pasted job post is only kept on this page, so ask before leaving with one.
+    if (jobPost.trim() && !window.confirm("Leaving this page clears the job post you pasted. Leave anyway?")) return true;
+    if (latest.current.snapshot === savedRef.current) return false;
+    void save("auto").then((ok) => { if (ok) router.push(item.href); });
+    return true;
   }
 
   // A job post handed over from the Applications tracker (or the homepage
@@ -497,6 +510,14 @@ export function ResumeEditor({
               </option>
             ))}
           </select>
+          <NavMenu
+            id="editor-services"
+            label="Services"
+            items={SERVICES}
+            align="right"
+            buttonClassName={`${pillOutline} gap-1.5`}
+            onSelect={pickService}
+          />
           <button onClick={() => void save("manual")} disabled={saveStatus === "saving"} className={`${pillOutline} disabled:opacity-60`}>
             {saveStatus === "saving" ? "Saving…" : "Save"}
           </button>

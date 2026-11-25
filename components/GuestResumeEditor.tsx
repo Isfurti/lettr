@@ -1,5 +1,7 @@
 "use client";
 
+import { NavMenu } from "@/components/NavMenu";
+import { SERVICES } from "@/lib/services";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { EditForm, ScorePanel, ResumePreview } from "@/components/ResumeEditor";
@@ -108,6 +110,13 @@ export function GuestResumeEditor({ initialTemplate }: { initialTemplate: string
           <span className="hidden md:inline text-sm font-bold text-slate truncate">✓ Draft saved on this device</span>
         </div>
         <div className="flex items-center gap-2">
+          <NavMenu
+            id="guest-services"
+            label="Services"
+            items={SERVICES}
+            align="right"
+            buttonClassName="btn-press inline-flex items-center justify-center gap-1.5 min-h-11 px-4 rounded-full bg-white border-2 border-ink text-ink text-sm font-bold"
+          />
           <select
             value={template}
             onChange={(e) => setTemplate(e.target.value)}
