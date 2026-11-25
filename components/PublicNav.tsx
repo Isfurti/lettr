@@ -7,18 +7,19 @@ import { useSession } from "next-auth/react";
 import { Logo } from "@/components/Logo";
 import { InstallAppButton } from "@/components/AppInstall";
 
-const LINKS = [
+// Shown only in the mobile menu; the desktop header leaves them out.
+const MOBILE_ONLY = [
   { href: "/#how", label: "How it works" },
-  { href: "/resume-checker", label: "Free checker" },
-  { href: "/templates", label: "Templates" },
-  { href: "/examples", label: "Examples" },
+];
+
+const LINKS = [
   { href: "/pricing", label: "Pricing" },
   { href: "/support", label: "Help" },
 ];
 
 const SERVICES = [
   { href: "/builder/new", label: "Resume builder", note: "Templates, colours, PDF and Word export" },
-  { href: "/resume-checker", label: "Resume score", note: "ATS score, quality score and keywords" },
+  { href: "/resume-checker", label: "ATS resume checker", note: "ATS score, keywords and AI analyst" },
   { href: "/tools/bullet-writer", label: "AI resume help", note: "Rewrites, fixer, tailoring and agent" },
   { href: "/tools/cover-letter-writer", label: "Cover letters", note: "AI-written, with designs" },
   { href: "/dashboard/linkedin", label: "LinkedIn optimizer", note: "Rewrite your profile" },
@@ -27,7 +28,22 @@ const SERVICES = [
   { href: "/dashboard/applications", label: "Job tracker", note: "Follow every application" },
 ];
 
-function ServicesMenu() {
+const BROWSE = [
+  { href: "/templates", label: "Resume templates", note: "ATS-friendly designs" },
+  { href: "/examples", label: "Resume examples", note: "For jobs, freshers to senior" },
+  { href: "/resume-builder", label: "Country templates", note: "USA, UK, India and more" },
+  { href: "/resume-builder-for-freshers", label: "Fresher resume", note: "For your first job" },
+  { href: "/tools/cover-letter-writer", label: "Cover letter designs", note: "10 designs to choose from" },
+  { href: "/dashboard", label: "Resignation letter designs", note: "Pick one in your editor" },
+];
+
+type Item = { href: string; label: string; note: string };
+const MENUS: { id: string; label: string; items: Item[]; cols: boolean }[] = [
+  { id: "services", label: "Services", items: SERVICES, cols: true },
+  { id: "browse", label: "Templates", items: BROWSE, cols: true },
+];
+
+function NavMenu({ id, label, items, cols }: { id: string; label: string; items: Item[]; cols: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -51,19 +67,19 @@ function ServicesMenu() {
         ref={btnRef}
         type="button"
         aria-expanded={open}
-        aria-controls="services-menu"
+        aria-controls={`${id}-menu`}
         onClick={() => setOpen((o) => !o)}
         className="inline-flex items-center gap-1 whitespace-nowrap hover:text-brand-blue transition-colors"
       >
-        Services
+        {label}
         <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" className={`transition-transform ${open ? "rotate-180" : ""}`}>
           <path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
       {open && (
-        <div className="absolute left-0 top-full pt-3 w-[460px]">
-          <ul id="services-menu" className="grid grid-cols-2 gap-1 bg-white rounded-2xl border border-rule shadow-lg p-2">
-            {SERVICES.map((s) => (
+        <div className={`absolute left-0 top-full pt-3 ${cols ? "w-[460px]" : "w-[300px]"}`}>
+          <ul id={`${id}-menu`} className={`grid ${cols ? "grid-cols-2" : "grid-cols-1"} gap-1 bg-white rounded-2xl border border-rule shadow-lg p-2`}>
+            {items.map((s) => (
               <li key={s.label}>
                 <Link href={s.href} className="block rounded-xl px-3 py-2.5 hover:bg-sand" onClick={() => setOpen(false)}>
                   <span className="block text-[15px] font-bold text-ink">{s.label}</span>
@@ -83,7 +99,7 @@ export function PublicNav() {
   const isLoggedIn = status === "authenticated" && Boolean(session?.user);
   const initial = (session?.user?.name || session?.user?.email || "?")[0]?.toUpperCase();
   const [open, setOpen] = useState(false);
-  const [svcOpen, setSvcOpen] = useState(false);
+  const [subOpen, setSubOpen] = useState<string | null>(null);
   const pathname = usePathname();
 
   return (
@@ -91,7 +107,7 @@ export function PublicNav() {
       <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-8 lg:px-14 py-4 sm:py-5 flex items-center justify-between gap-3">
         <Logo compact={pathname !== "/"} />
         <nav aria-label="Main" className="hidden lg:flex items-center gap-5 xl:gap-7 text-[15px] font-semibold">
-          <ServicesMenu />
+          {MENUS.map((m) => <NavMenu key={m.id} {...m} />)}
           {LINKS.map((l) => (
             <Link
               key={l.href}
@@ -130,7 +146,7 @@ export function PublicNav() {
             </>
           )}
           <button
-            onClick={() => { setOpen((o) => !o); setSvcOpen(false); }}
+            onClick={() => { setOpen((o) => !o); setSubOpen(null); }}
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             className="lg:hidden w-11 h-11 flex flex-col items-center justify-center gap-1.5 rounded-xl hover:bg-sand"
@@ -147,25 +163,32 @@ export function PublicNav() {
           aria-label="Mobile"
           className="lg:hidden absolute inset-x-0 top-full bg-cream border-b border-rule shadow-lg px-4 py-2 flex flex-col text-base font-semibold"
         >
-          <button
-            type="button"
-            aria-expanded={svcOpen && open}
-            aria-controls="services-mobile"
-            onClick={() => setSvcOpen((o) => !o)}
-            className="py-3 border-b border-rule/60 flex items-center justify-between text-left"
-          >
-            Services
-            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" className={`transition-transform ${svcOpen ? "rotate-180" : ""}`}>
-              <path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          {svcOpen &&
-            SERVICES.map((s) => (
-              <Link key={s.label} href={s.href} className="py-2.5 pl-4 border-b border-rule/60 font-medium text-ink/80" onClick={() => { setOpen(false); setSvcOpen(false); }}>
-                {s.label}
-              </Link>
-            ))}
-          {LINKS.map((l) => (
+          {MENUS.map((m) => (
+            <div key={m.id} className="flex flex-col">
+              <button
+                type="button"
+                aria-expanded={subOpen === m.id}
+                aria-controls={`${m.id}-mobile`}
+                onClick={() => setSubOpen((c) => (c === m.id ? null : m.id))}
+                className="py-3 border-b border-rule/60 flex items-center justify-between text-left"
+              >
+                {m.label}
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" className={`transition-transform ${subOpen === m.id ? "rotate-180" : ""}`}>
+                  <path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              {subOpen === m.id && (
+                <div id={`${m.id}-mobile`} className="flex flex-col">
+                  {m.items.map((s) => (
+                    <Link key={s.label} href={s.href} className="py-2.5 pl-4 border-b border-rule/60 font-medium text-ink/80" onClick={() => { setOpen(false); setSubOpen(null); }}>
+                      {s.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+          {[...MOBILE_ONLY, ...LINKS].map((l) => (
             <Link key={l.href} href={l.href} className="py-3 border-b border-rule/60" onClick={() => setOpen(false)}>
               {l.label}
             </Link>
