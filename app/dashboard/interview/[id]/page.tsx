@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Interview practice | Lettr", robots:
 
 export default async function InterviewSessionPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) redirect("/login?continue=interview");
   const userId = (session.user as { id: string }).id;
   const { id } = await params;
   const [user, practice] = await Promise.all([getUserById(userId), getInterviewSession(userId, id)]);

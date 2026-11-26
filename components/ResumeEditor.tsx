@@ -120,7 +120,7 @@ export function ResumeEditor({
     // A pasted job post is only kept on this page, so ask before leaving with one.
     if (jobPost.trim() && !window.confirm("Leaving this page clears the job post you pasted. Leave anyway?")) return true;
     if (latest.current.snapshot === savedRef.current) return false;
-    void save("auto").then((ok) => { if (ok) router.push(item.href); });
+    void save("auto").then((ok) => { if (ok) router.push(item.appHref ?? item.href); });
     return true;
   }
 

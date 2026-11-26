@@ -12,4 +12,11 @@ describe("afterSignIn", () => {
     expect(afterSignIn(null)).toBe("/dashboard");
     expect(afterSignIn("https://evil.example")).toBe("/dashboard");
   });
+
+  it("sends people from the feature pages to the real feature", () => {
+    expect(afterSignIn("linkedin")).toBe("/dashboard/linkedin");
+    expect(afterSignIn("interview")).toBe("/dashboard/interview");
+    expect(afterSignIn("tracker")).toBe("/dashboard/applications");
+    expect(afterSignIn("resignation")).toBe("/builder/new?tab=resignation-letter");
+  });
 });

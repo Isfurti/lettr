@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Applications | Lettr", robots: { ind
 
 export default async function ApplicationsPage() {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) redirect("/login?continue=tracker");
   const userId = (session.user as { id: string }).id;
   const [user, apps, resumes] = await Promise.all([getUserById(userId), listApplications(userId), listResumesForUser(userId)]);
 

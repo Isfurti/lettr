@@ -16,7 +16,7 @@ export const metadata: Metadata = { title: "Interview practice | Lettr", robots:
 
 export default async function InterviewPage() {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) redirect("/login?continue=interview");
   const userId = (session.user as { id: string }).id;
   const [user, rows, sessions] = await Promise.all([getUserById(userId), listResumesForUser(userId), listInterviewSessions(userId)]);
   const plan = (user?.plan ?? "free") as Plan;

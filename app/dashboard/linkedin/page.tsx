@@ -18,7 +18,7 @@ export const metadata: Metadata = { title: "LinkedIn profile | Lettr", robots: {
 
 export default async function LinkedInPage() {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) redirect("/login?continue=linkedin");
   const userId = (session.user as { id: string }).id;
   const [user, rows] = await Promise.all([getUserById(userId), listResumesForUser(userId)]);
   const plan = (user?.plan ?? "free") as Plan;
