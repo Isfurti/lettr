@@ -1,9 +1,22 @@
 import Image from "next/image";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
+import { siteUrl } from "@/lib/site-url";
 import { getUserById } from "@/lib/db";
 import type { FeaturePage } from "@/lib/feature-pages";
 import { MarketingPage, WRAP, H2, Faq, faqJsonLd, CtaBand, BTN_BLUE, BTN_OUTLINE } from "@/components/marketing/MarketingPage";
+
+function breadcrumbJsonLd(page: FeaturePage) {
+  const base = siteUrl();
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Lettr", item: base },
+      { "@type": "ListItem", position: 2, name: page.title, item: `${base}/${page.slug}` },
+    ],
+  };
+}
 
 /** A public page that explains a signed-in tool. Signed-out visitors sign up and come back to the tool. */
 export async function FeaturePreviewPage({ page }: { page: FeaturePage }) {
@@ -14,7 +27,7 @@ export async function FeaturePreviewPage({ page }: { page: FeaturePage }) {
   const signupHref = `/signup?continue=${page.continueKey}`;
 
   return (
-    <MarketingPage eyebrow={page.eyebrow} title={page.title} intro={<p>{page.intro}</p>} jsonLd={faqJsonLd(page.faq)}>
+    <MarketingPage eyebrow={page.eyebrow} title={page.title} intro={<p>{page.intro}</p>} jsonLd={[faqJsonLd(page.faq), breadcrumbJsonLd(page)]}>
       <section className={`${WRAP} pb-6 flex flex-wrap gap-3`}>
         {signedIn ? (
           <Link href={page.appHref} className={BTN_BLUE}>

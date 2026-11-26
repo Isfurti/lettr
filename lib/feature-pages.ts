@@ -30,7 +30,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
     access: "pro",
     eyebrow: "LinkedIn",
     title: "LinkedIn profile optimizer",
-    metaTitle: "LinkedIn Profile Optimizer: Better Headline and About | Lettr",
+    metaTitle: "LinkedIn Profile Optimizer: Headline and About | Lettr",
     metaDescription:
       "Paste your LinkedIn headline, About and experience, pick a target role and country, and Lettr rewrites them. You copy the result back yourself.",
     intro: "Get a stronger headline, About section and experience points for the role you want. Lettr rewrites your text; you copy it back to LinkedIn.",
@@ -59,7 +59,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
     title: "AI interview practice",
     metaTitle: "AI Interview Practice: Questions and Feedback | Lettr",
     metaDescription:
-      "Get 6 interview questions for your role, answer them in your own words, and get honest feedback on each. Choose the country you are interviewing in. Your first practice set is free.",
+      "Get 6 interview questions for your role, answer in your own words and get honest feedback on each. Pick your country. Your first set is free.",
     intro: "Practise the questions you are likely to get, and walk in prepared. Answer in your own words, out loud or typed, and get honest feedback.",
     image: "/features/interview.webp",
     imageAlt: "Lettr interview practice form with job title, company, resume, country and job post",
