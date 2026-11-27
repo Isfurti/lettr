@@ -9,9 +9,9 @@ import { siteUrl } from "@/lib/site-url";
 import { breadcrumbJsonLd, faqPageJsonLd, jsonLdString } from "@/lib/json-ld";
 
 export const metadata: Metadata = {
-  title: "Free ATS Resume & CV Checker: Get Your ATS Score | Lettr",
+  title: "Free ATS Resume Checker for India: Score Your Resume | Lettr",
   description:
-    "Free ATS resume and CV checker. Upload your resume, CV or LinkedIn PDF to see what hiring software reads and get your ATS score with fixes. No sign-up.",
+    "Free ATS resume checker for freshers and experienced job seekers in India. Upload your resume, see what hiring software reads, and get an ATS score with fixes. No sign-up.",
   alternates: { canonical: "/resume-checker" },
   openGraph: {
     images: [OG_IMAGE],
@@ -33,6 +33,18 @@ const FAQ = [
   {
     q: "Why does the text look different from my resume?",
     a: "That's the point: it's the plain text hiring software pulls out of your file. Fancy layouts, tables and icons often come out jumbled or missing.",
+  },
+  {
+    q: "Is this ATS resume checker free for freshers in India?",
+    a: "Yes. Freshers and experienced applicants can check a resume without an account. Upload a PDF or Word file and you get a score and a list of what to fix first.",
+  },
+  {
+    q: "What is an ATS score?",
+    a: "It is a rough measure of how easily hiring software can read your resume: clean text, standard headings, contact details, and keywords that match the job. A higher score means fewer things that can go wrong. It is a guide, not a promise of shortlisting.",
+  },
+  {
+    q: "Will it work for Naukri and company career pages?",
+    a: "The checks look for the things most job portals and applicant tracking systems struggle with: tables, columns, icons, photos in the wrong place and missing headings. Fixing those helps on Naukri and on company career pages alike.",
   },
   {
     q: "Can I check my LinkedIn profile?",
@@ -101,6 +113,8 @@ export default async function ResumeCheckerPage({ searchParams }: { searchParams
                 ["/guides/ats-friendly-resume", "How to make an ATS-friendly resume"],
                 ["/guides/ats-resume-checklist", "ATS resume checklist: 15 checks"],
                 ["/guides/ats-resume-example", "An ATS resume example you can copy"],
+                ["/guides/resume-format-for-freshers", "Resume format for freshers in India"],
+                ["/guides/naukri-resume", "How to make a resume that works on Naukri"],
               ].map(([href, label]) => (
                 <li key={href}>
                   <Link href={href} className="inline-flex items-center min-h-10 font-bold text-brand-blue hover:underline">
