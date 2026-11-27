@@ -781,6 +781,174 @@ export const GUIDES: Guide[] = [
     relatedExamples: ["law-graduate", "accountant", "chartered-accountant"],
   },
   {
+    slug: "law-student-resume-format",
+    title: "Law student resume format for India (LLB and B.A. LL.B.)",
+    description:
+      "A one-page resume format for law students and fresh LLB graduates: what to put first, how to show internships, moot courts and research, and what to leave out.",
+    published: "2026-11-27",
+    readMinutes: 5,
+    intro:
+      "A law student's resume has little paid experience, so it has to show other proof: internships, moot courts, research and drafting. This is a simple one-page format for B.A. LL.B., BBA LL.B., B.Com LL.B. and three-year LL.B. students applying for internships and first jobs.",
+    sections: [
+      {
+        heading: "The format, top to bottom",
+        ordered: true,
+        list: [
+          "Contact details: name, phone, professional email, city and LinkedIn. No photo, date of birth or father's name.",
+          "Profile: two lines saying your degree, year and the area of law you want, for example corporate, litigation or tax.",
+          "Education: degree, college, university, years and CGPA or percentage if it is strong.",
+          "Internships: courts, advocates, law firms, companies and NGOs, most recent first.",
+          "Moot courts, research and publications: where you competed, what you wrote and where it appeared.",
+          "Skills: legal research, drafting, and the databases you have used.",
+          "Achievements and activities: committees, debates, legal aid clinics, competitions.",
+        ],
+      },
+      {
+        heading: "Why internships come before skills",
+        paragraphs: [
+          "Firms and chambers hiring students look for proof that you have seen real legal work. Two or three short internships tell them more than a long skills list. Give each one the name of the place, the dates and two or three lines on what you did.",
+        ],
+      },
+      {
+        heading: "Skills to list (only if true)",
+        list: [
+          "Legal research on databases you have actually used, such as SCC Online or Manupatra",
+          "Drafting: notices, agreements, petitions, replies",
+          "Case-law summaries and legal memos",
+          "Tools: MS Word, Excel, and any e-filing or case-management software you have used",
+        ],
+        paragraphs: [
+          "Do not list a skill you cannot explain in an interview. A recruiter may ask you to describe what you drafted.",
+        ],
+      },
+      {
+        heading: "Sample education and profile lines",
+        list: [
+          "B.A. LL.B. (Hons.), [College], [University] | 2022 - 2027 | CGPA [your score]",
+          "Profile: Third-year B.A. LL.B. student with internships in litigation and corporate law, looking for a summer internship in a law firm.",
+        ],
+        paragraphs: [
+          "The brackets are for your own details. Use the exact degree name from your marksheet.",
+        ],
+      },
+      {
+        heading: "Keep it to one page",
+        paragraphs: [
+          "One page is enough until you have several years of work. Cut school-level achievements first, then anything you cannot discuss in detail. Save it as a PDF with real, selectable text, and avoid tables and graphics so software can read it.",
+        ],
+      },
+    ],
+    cta: { label: "Check my law resume for free", href: "/resume-checker" },
+    relatedExamples: ["law-graduate"],
+  },
+  {
+    slug: "moot-court-and-internships-on-resume",
+    title: "How to write moot courts and legal internships on your resume",
+    description:
+      "How law students can describe internships, moot court rounds, research papers and legal aid work on a resume, with before-and-after wording you can adapt.",
+    published: "2026-11-27",
+    readMinutes: 4,
+    intro:
+      "Most law students list their internships and moots as one-line titles, like \"Intern at XYZ Chambers\". That tells a recruiter where you were, not what you did. This guide shows how to turn each line into a short, honest description.",
+    sections: [
+      {
+        heading: "The pattern for an internship bullet",
+        paragraphs: [
+          "Start with a verb, say the work, and name the area of law or the document. Only include numbers you can actually back up.",
+        ],
+        list: [
+          "Before: Intern at [Chambers]. After: Drafted two legal notices and prepared case-law summaries for civil matters in the District Court.",
+          "Before: Worked on research. After: Researched case law on [topic] using SCC Online and wrote a five-page memo for the partner.",
+          "Before: Helped with agreements. After: Reviewed commercial agreements and listed key clauses and risks for the associate.",
+        ],
+      },
+      {
+        heading: "How to list a moot court",
+        paragraphs: [
+          "Give the competition, the year, your role and the result. If you did not win, an honest description still helps.",
+        ],
+        list: [
+          "[Competition name], [Year]: Speaker, reached the quarter-finals; argued for the respondent on [issue].",
+          "[Competition name], [Year]: Researcher; wrote the memorial on [topic].",
+        ],
+      },
+      {
+        heading: "Research papers and publications",
+        paragraphs: [
+          "List the title, where it was published or presented and the year. For an unpublished paper, say \"Paper submitted to [journal]\" only if that is true.",
+        ],
+      },
+      {
+        heading: "Legal aid and clinic work",
+        paragraphs: [
+          "Mention legal aid camps, awareness drives and clinic work in one line each, with what you did, such as \"Helped draft applications for [number] beneficiaries at the legal aid clinic.\" Use real numbers only.",
+        ],
+      },
+      {
+        heading: "Confidentiality",
+        paragraphs: [
+          "Never put client names or confidential case details on a resume. Describe the type of work instead: \"a property dispute\" or \"a consumer complaint\".",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["law-graduate"],
+  },
+  {
+    slug: "resume-for-law-firm-applications",
+    title: "Resume for law firm applications in India: what firms look for",
+    description:
+      "How to shape a resume for law firm and chamber applications in India: length, order, wording, and the common mistakes that get law resumes ignored.",
+    published: "2026-11-27",
+    readMinutes: 4,
+    intro:
+      "Law firms in India read many resumes that look the same. A clear, accurate one-page resume stands out. Here is how to shape yours for a firm, chamber or in-house legal team.",
+    sections: [
+      {
+        heading: "Match the resume to the practice area",
+        paragraphs: [
+          "A corporate firm wants to see contracts, due diligence and research. A litigation chamber wants court work, drafting and case management. Read the job post or the firm's website, then bring the matching internships and skills to the top.",
+        ],
+      },
+      {
+        heading: "What to put first",
+        list: [
+          "Your degree and year, written correctly (see our guide on how to write LLB)",
+          "Internships in the same practice area",
+          "Moots and papers that relate to the role",
+          "A short profile that names the area you want",
+        ],
+      },
+      {
+        heading: "Common mistakes",
+        list: [
+          "Writing \"Advocate\" before you are enrolled with a State Bar Council",
+          "Writing the degree in different forms on the same page",
+          "Listing internships with no description of the work",
+          "Putting a photo, date of birth or family details",
+          "A resume over one page for a student or fresher",
+        ],
+      },
+      {
+        heading: "Send a short cover note",
+        paragraphs: [
+          "Many firms accept applications by email. Write three or four lines: who you are, why this firm and this practice area, and what you attach. Name the firm correctly and attach the resume as a PDF.",
+        ],
+      },
+      {
+        heading: "Check before you send",
+        list: [
+          "Spelling of every case name, court and firm",
+          "Consistent dates and degree names",
+          "A professional email address",
+          "Real, selectable text in the PDF",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["law-graduate"],
+  },
+  {
     slug: "ats-resume-requirements",
     title: "ATS resume requirements: what is required and what is a myth",
     description:
@@ -1112,8 +1280,11 @@ export const READ_NEXT: Record<string, string[]> = {
   "ats-resume-example": ["ats-resume-requirements", "ats-resume-checklist"],
   "ats-resume-checklist": ["ats-resume-requirements", "ats-resume-example"],
   "fresher-resume-examples": ["resume-format-for-freshers", "bcom-llb-resume-example"],
-  "bcom-llb-resume-example": ["how-to-write-llb-in-resume", "legal-assistant-resume-example"],
-  "how-to-write-llb-in-resume": ["bcom-llb-resume-example", "legal-assistant-resume-example"],
+  "bcom-llb-resume-example": ["how-to-write-llb-in-resume", "law-student-resume-format", "legal-assistant-resume-example"],
+  "how-to-write-llb-in-resume": ["law-student-resume-format", "bcom-llb-resume-example", "legal-assistant-resume-example"],
+  "law-student-resume-format": ["moot-court-and-internships-on-resume", "how-to-write-llb-in-resume", "resume-for-law-firm-applications"],
+  "moot-court-and-internships-on-resume": ["law-student-resume-format", "resume-for-law-firm-applications"],
+  "resume-for-law-firm-applications": ["law-student-resume-format", "how-to-write-llb-in-resume"],
   "ats-resume-requirements": ["ats-friendly-resume", "ats-resume-example"],
   "resume-for-1-2-years-experience": ["explain-gap-or-short-job-on-resume", "ats-resume-checklist"],
   "explain-gap-or-short-job-on-resume": ["resume-for-1-2-years-experience", "ats-friendly-resume"],
