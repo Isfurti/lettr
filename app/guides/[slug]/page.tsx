@@ -42,7 +42,14 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
 
   const base = siteUrl();
   const related = (g.relatedExamples ?? []).map((s) => getExample(s)).filter((e) => e !== undefined);
-  const others = GUIDES.filter((x) => x.slug !== g.slug);
+  // "More guides": the 8 closest by shared words in the slug, skipping the "Read next" ones.
+  const skip = new Set([g.slug, ...readNext(g.slug).map((n) => n.slug)]);
+  const words = new Set(g.slug.split("-").filter((w) => w.length > 2));
+  const others = GUIDES.filter((x) => !skip.has(x.slug))
+    .map((x) => ({ x, score: x.slug.split("-").filter((w) => words.has(w)).length }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 8)
+    .map((r) => r.x);
 
   const jsonLd = [
     {
@@ -167,6 +174,9 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
             </li>
           ))}
         </ul>
+        <Link href="/guides" className="inline-flex items-center min-h-11 mt-2 font-bold text-ink hover:underline">
+          See all guides →
+        </Link>
       </section>
 
       <CtaBand title="Build a resume that gets read" text="Clean templates, a live ATS score and AI help, all free to start." />
