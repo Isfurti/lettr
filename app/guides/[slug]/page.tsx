@@ -81,6 +81,9 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
     >
       <article className={`${WRAP} pb-14`}>
         <div className="max-w-2xl">
+          <Link href="/guides" className="inline-flex items-center gap-2 min-h-11 mb-2 font-bold text-brand-blue hover:underline">
+            <span aria-hidden="true">←</span> All guides
+          </Link>
           <GuideCover slug={g.slug} className="rounded-[24px] border-2 border-ink mb-2" />
           {g.sections.map((s) => {
             const ListTag = s.ordered ? "ol" : "ul";
