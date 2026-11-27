@@ -1265,6 +1265,208 @@ export const GUIDES: Guide[] = [
     cta: { label: "Check my resume for free", href: "/resume-checker" },
     relatedExamples: ["law-graduate"],
   },
+  {
+    slug: "resume-format-for-experienced-professionals",
+    title: "Resume format for experienced professionals in India (3+ years)",
+    description:
+      "The resume format for experienced candidates in India: section order, how long it should be, how to write a summary and achievements, and what to remove.",
+    published: "2026-11-27",
+    readMinutes: 4,
+    intro:
+      "With three or more years of work, your resume should show your career in a few seconds: where you work now, what you own and what you have delivered. This is the format and order that works for experienced applicants in India.",
+    sections: [
+      {
+        heading: "The section order",
+        ordered: true,
+        list: [
+          "Header: name, phone, email, city and LinkedIn link",
+          "Summary of three or four lines",
+          "Key skills, grouped (tools, domain, people skills)",
+          "Work experience, latest job first",
+          "Projects or certifications, only if they help for this role",
+          "Education, in one or two lines",
+        ],
+      },
+      {
+        heading: "How long should it be?",
+        paragraphs: [
+          "One page is fine up to about five years of experience if everything on it is useful. Two pages are normal for longer careers or senior roles. Do not stretch to a second page with filler, and do not squeeze text so small that it is hard to read.",
+        ],
+      },
+      {
+        heading: "Write a summary that names your level",
+        paragraphs: [
+          "State your role, years of experience, the kind of company or domain you work in and two or three strengths that match the job. Example shape: Operations manager with 7 years of experience in logistics, managing teams of up to 20 and vendor contracts. Use your own facts.",
+        ],
+      },
+      {
+        heading: "Show achievements, not duties",
+        paragraphs: [
+          "Each job needs three to six bullets. Start with the biggest result. Use numbers only when you can stand behind them in an interview: team size, volume, time saved, targets met.",
+        ],
+        list: [
+          "Duty: Managed the support team.",
+          "Better: Led a team of 12 support executives and brought average reply time down from two days to one.",
+          "If you cannot give a number, name the scale: customers, cities, budget, tools or people involved.",
+        ],
+      },
+      {
+        heading: "Show growth inside one company",
+        paragraphs: [
+          "If you were promoted, list each title with its own dates under the same company. Recruiters like to see progress, and it helps ATS software read your titles correctly.",
+        ],
+      },
+      {
+        heading: "What to remove",
+        list: [
+          "Class 10 and 12 marks, unless a form asks for them",
+          "Objective statements such as 'seeking a challenging position'",
+          "Photo, date of birth, father's name and marital status",
+          "Jobs older than about 15 years, or keep them as one short line each",
+          "Skills you could not discuss for two minutes",
+        ],
+      },
+      {
+        heading: "Gaps and job changes",
+        paragraphs: [
+          "Short stints and gaps are common. Keep dates honest and see our guide on explaining a gap or a very short job.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["operations-manager", "product-manager", "business-analyst", "project-manager-canada"],
+  },
+  {
+    slug: "resume-format-for-btech-freshers",
+    title: "Resume format for B.Tech and engineering freshers in India",
+    description:
+      "A one-page resume format for B.Tech and engineering freshers: what to put first, how to describe projects and internships, and how to list skills for campus and off-campus jobs.",
+    published: "2026-11-27",
+    readMinutes: 4,
+    intro:
+      "Engineering freshers usually have the same marks and the same college projects as hundreds of other applicants. What sets a resume apart is clear projects, honest skills and a layout that software can read. Here is the format.",
+    sections: [
+      {
+        heading: "The section order",
+        ordered: true,
+        list: [
+          "Header: name, phone, email, city, LinkedIn and GitHub link if your code is public",
+          "Two-line summary stating your branch and the kind of role you want",
+          "Education, with degree, college, years and CGPA or percentage",
+          "Projects, two or three of your best",
+          "Internships or training, if any",
+          "Technical skills, grouped by type",
+          "Certifications and achievements",
+        ],
+      },
+      {
+        heading: "Education goes first for freshers",
+        paragraphs: [
+          "With no job yet, your degree is your strongest line. Write the degree, branch, college, university, years and your CGPA or percentage. Add Class 12 and Class 10 only if the job post or the portal asks for them.",
+        ],
+      },
+      {
+        heading: "Describe projects so a recruiter can follow them",
+        paragraphs: [
+          "For each project give the title, the tools you used and two or three bullets: the problem, what you built and the result. Say clearly which part you did if it was a team project.",
+        ],
+        list: [
+          "Weak: Made a library management system.",
+          "Better: Built a library management system in Java and MySQL with login, book search and fine calculation; used by 30 students in a trial at college.",
+          "Only claim a result such as a trial or a user count if it really happened.",
+        ],
+      },
+      {
+        heading: "List skills honestly and by group",
+        paragraphs: [
+          "Group skills so they are easy to scan, for example Languages, Tools and Core subjects. List only what you can answer questions on. A long list of tools you touched once will be tested in the interview.",
+        ],
+      },
+      {
+        heading: "Internships, training and certificates",
+        paragraphs: [
+          "Write the company, role and dates, then two bullets on what you did. Short online courses can go in one line each. Keep only those related to the role you want.",
+        ],
+      },
+      {
+        heading: "Keep the layout simple for ATS",
+        list: [
+          "One page, single column",
+          "Standard headings such as Education, Projects and Skills",
+          "No tables, icons, skill bars or photo",
+          "Save as PDF unless the portal asks for Word",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["campus-placement-software-engineer", "mechanical-engineer-fresher", "software-engineer"],
+  },
+  {
+    slug: "resume-format-for-commerce-and-mba-freshers",
+    title: "Resume format for B.Com, BBA and MBA freshers in India",
+    description:
+      "A resume format for commerce, BBA and MBA freshers: how to show internships, academic projects and tools like Excel and Tally, for roles in accounts, finance, marketing and HR.",
+    published: "2026-11-27",
+    readMinutes: 4,
+    intro:
+      "Commerce and management freshers are often hired for accounts, finance, sales, marketing and HR roles. Recruiters look for practical tools, internships and clear, accurate writing. Here is how to lay it out.",
+    sections: [
+      {
+        heading: "The section order",
+        ordered: true,
+        list: [
+          "Header: name, phone, email, city and LinkedIn link",
+          "Two-line summary naming your degree and the role you want",
+          "Education, with specialisation and marks or CGPA",
+          "Internships and live projects",
+          "Skills and tools",
+          "Certifications, positions of responsibility and achievements",
+        ],
+      },
+      {
+        heading: "Choose the role, then shape the resume",
+        paragraphs: [
+          "A resume for an accounts role and one for a marketing role should not read the same. Pick the role you are applying for and move the matching internship, project and tools to the top.",
+        ],
+        list: [
+          "Accounts and finance: Tally, Excel, GST filing practice, bank reconciliation, MIS reports",
+          "Sales and marketing: lead generation, campaign support, social media, CRM tools, presentations",
+          "HR: recruitment coordination, screening, onboarding, records and Excel",
+        ],
+      },
+      {
+        heading: "Make internships and projects count",
+        paragraphs: [
+          "Write the organisation, your role, the duration and two or three bullets with a verb, the work and the tool. If your internship was short, say what you handled yourself.",
+        ],
+        list: [
+          "Weak: Worked in the accounts department.",
+          "Better: Prepared monthly bank reconciliation statements in Excel for a small trading firm during a 6-week internship.",
+          "MBA freshers can add a summer internship project with its objective, method and finding, using only facts you can discuss.",
+        ],
+      },
+      {
+        heading: "Tools recruiters search for",
+        paragraphs: [
+          "List the tools you have actually used, such as Excel (say which functions), Tally, a CRM, PowerPoint or a reporting tool. Recruiters and ATS software search by tool name, so use the same names as the job post.",
+        ],
+      },
+      {
+        heading: "Use positions of responsibility",
+        paragraphs: [
+          "Club lead, event coordinator or class representative roles show teamwork and ownership. Keep two or three, each with one line on what you organised and for how many people.",
+        ],
+      },
+      {
+        heading: "Keep it to one page",
+        paragraphs: [
+          "One page, clean headings, no photo or decorative layout. Check spelling and dates twice. Finance and HR recruiters notice mistakes quickly.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["bcom-fresher-accounts", "mba-fresher-marketing", "hr-executive", "accountant"],
+  },
 ];
 
 export function getGuide(slug: string) {
@@ -1273,7 +1475,10 @@ export function getGuide(slug: string) {
 
 /** Which guides to suggest at the end of each guide. Plain data; a test checks every slug exists. */
 export const READ_NEXT: Record<string, string[]> = {
-  "resume-format-for-freshers": ["fresher-resume-examples", "ats-resume-checklist"],
+  "resume-format-for-freshers": ["resume-format-for-btech-freshers", "resume-format-for-commerce-and-mba-freshers", "fresher-resume-examples"],
+  "resume-format-for-experienced-professionals": ["resume-for-1-2-years-experience", "explain-gap-or-short-job-on-resume", "ats-resume-checklist"],
+  "resume-format-for-btech-freshers": ["resume-format-for-freshers", "fresher-resume-examples", "ats-resume-checklist"],
+  "resume-format-for-commerce-and-mba-freshers": ["resume-format-for-freshers", "fresher-resume-examples", "ats-resume-checklist"],
   "naukri-resume": ["ats-friendly-resume", "resume-for-1-2-years-experience"],
   "ats-friendly-resume": ["ats-resume-requirements", "ats-resume-checklist"],
   "cover-letter-format": ["ats-friendly-resume", "resume-for-1-2-years-experience"],
@@ -1286,7 +1491,7 @@ export const READ_NEXT: Record<string, string[]> = {
   "moot-court-and-internships-on-resume": ["law-student-resume-format", "resume-for-law-firm-applications"],
   "resume-for-law-firm-applications": ["law-student-resume-format", "how-to-write-llb-in-resume"],
   "ats-resume-requirements": ["ats-friendly-resume", "ats-resume-example"],
-  "resume-for-1-2-years-experience": ["explain-gap-or-short-job-on-resume", "ats-resume-checklist"],
+  "resume-for-1-2-years-experience": ["resume-format-for-experienced-professionals", "explain-gap-or-short-job-on-resume", "ats-resume-checklist"],
   "explain-gap-or-short-job-on-resume": ["resume-for-1-2-years-experience", "ats-friendly-resume"],
   "ai-engineer-resume-example": ["resume-for-1-2-years-experience", "ats-resume-requirements"],
   "legal-assistant-resume-example": ["bcom-llb-resume-example", "how-to-write-llb-in-resume"],
