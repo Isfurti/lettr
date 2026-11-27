@@ -1467,6 +1467,277 @@ export const GUIDES: Guide[] = [
     cta: { label: "Check my resume for free", href: "/resume-checker" },
     relatedExamples: ["bcom-fresher-accounts", "mba-fresher-marketing", "hr-executive", "accountant"],
   },
+  {
+    slug: "resignation-letter-format-india",
+    title: "Resignation letter format for India: sample and what to include",
+    description:
+      "The standard resignation letter format for India: subject line, what to include, a short sample you can adapt, and the mistakes to avoid.",
+    published: "2026-11-27",
+    readMinutes: 4,
+    intro:
+      "A resignation letter is a short, polite, formal record that you are leaving. HR keeps it on file, so clear and neutral is better than long and emotional. Here is the format and a sample you can adapt.",
+    sections: [
+      {
+        heading: "What to include",
+        list: [
+          "Date",
+          "To: your manager's name and designation (and HR if your company asks)",
+          "Subject: Resignation from the post of [your job title]",
+          "A clear statement that you are resigning",
+          "Your last working day, based on your notice period",
+          "A short thank-you",
+          "An offer to help with the handover",
+          "Your name and signature",
+        ],
+      },
+      {
+        heading: "A short sample",
+        paragraphs: [
+          "Subject: Resignation from the post of [Job title]",
+          "Dear [Manager's name],",
+          "I am writing to resign from my position as [Job title] at [Company name]. As per my notice period of [number] days, my last working day will be [date].",
+          "Thank you for the opportunities and support during my time here. I will complete my pending work and help hand over my responsibilities to the person you choose.",
+          "Yours sincerely,",
+          "[Your name], [Employee ID if you have one]",
+          "These are placeholders, so fill in your own details.",
+        ],
+      },
+      {
+        heading: "Keep it short and neutral",
+        paragraphs: [
+          "You do not need to give a detailed reason. One line is enough, or none. Do not criticise the company or colleagues; the letter stays in your file.",
+        ],
+      },
+      {
+        heading: "Send it the right way",
+        paragraphs: [
+          "Follow your company's process. Many companies want the letter by email to your manager with HR in copy, and some also want a signed copy. Speak to your manager first if you can, so the letter is not a surprise.",
+        ],
+      },
+      {
+        heading: "Mistakes to avoid",
+        list: [
+          "Writing a long story about why you are unhappy",
+          "Leaving out the last working day",
+          "Quoting a notice period without checking your contract",
+          "Sending it before you have a written offer from the new employer",
+        ],
+      },
+      {
+        heading: "Notice period",
+        paragraphs: [
+          "Check your offer letter or employment contract for the notice period and any buy-out clause. This guide is general information, not legal advice.",
+        ],
+      },
+    ],
+    cta: { label: "Write my resignation letter", href: "/resignation-letters" },
+  },
+  {
+    slug: "resignation-letter-for-one-month-notice",
+    title: "Resignation letter for a one-month notice period (with sample)",
+    description:
+      "How to write a resignation letter when your notice period is one month: counting the last working day, a sample letter and how to hand over.",
+    published: "2026-11-27",
+    readMinutes: 3,
+    intro:
+      "A one-month notice period is common in India. Your letter states the date you resign and the last working day that follows from it. Here is how to write it and a sample to adapt.",
+    sections: [
+      {
+        heading: "Work out the last working day",
+        paragraphs: [
+          "Count from the date you give the letter, not from the date you tell your manager informally. If you resign on [date], one month later is your last working day, unless your contract counts days or has other rules. Ask HR to confirm the date in writing.",
+        ],
+      },
+      {
+        heading: "A sample letter",
+        paragraphs: [
+          "Subject: Resignation from the post of [Job title]",
+          "Dear [Manager's name],",
+          "Please accept this letter as formal notice of my resignation from the position of [Job title] at [Company name]. As per my one-month notice period, my last working day will be [date].",
+          "I am grateful for the learning and support I have received. During my notice period I will complete my pending tasks and prepare a handover for my team.",
+          "Yours sincerely,",
+          "[Your name]",
+          "These are placeholders, so use your own details.",
+        ],
+      },
+      {
+        heading: "Plan the handover",
+        list: [
+          "List your open tasks, deadlines and who needs to know",
+          "Write down passwords or access that must be transferred, following your company's security rules",
+          "Offer to train a replacement if one is hired",
+          "Keep a copy of your own documents that you are allowed to keep",
+        ],
+      },
+      {
+        heading: "If you want to leave earlier",
+        paragraphs: [
+          "You can ask for an earlier last day or a notice period buy-out, but the company decides. Put the request in a separate polite note or email, not inside the resignation letter.",
+        ],
+      },
+      {
+        heading: "Before you submit",
+        paragraphs: [
+          "Check your offer letter or employment contract for the notice period and any buy-out clause. This guide is general information, not legal advice.",
+        ],
+      },
+    ],
+    cta: { label: "Write my resignation letter", href: "/resignation-letters" },
+  },
+  {
+    slug: "resignation-letter-immediate-effect",
+    title: "Resignation letter with immediate effect: when and how to write it",
+    description:
+      "How to write a resignation letter with immediate effect: what it means, why you should check your contract first, a sample and a polite way to ask.",
+    published: "2026-11-27",
+    readMinutes: 3,
+    intro:
+      "Resigning with immediate effect means you want to leave at once instead of serving a notice period. The company may not accept it, so the tone and the request matter. Here is how to write it carefully.",
+    sections: [
+      {
+        heading: "Check your contract first",
+        paragraphs: [
+          "Most employment contracts require a notice period. Leaving without serving it can lead to a deduction of pay in lieu or affect your experience letter. Read the clause before you write, and speak to HR if you are unsure.",
+        ],
+      },
+      {
+        heading: "Ask, do not announce",
+        paragraphs: [
+          "A letter that says you are leaving today may be refused. A better approach is to resign, explain briefly that you need to leave quickly, and ask whether the company can release you early or accept a buy-out.",
+        ],
+      },
+      {
+        heading: "A sample letter",
+        paragraphs: [
+          "Subject: Resignation from the post of [Job title] and request for early release",
+          "Dear [Manager's name],",
+          "I am resigning from my position as [Job title] at [Company name]. Due to [short, honest reason, or leave it out], I request that you release me from my duties with effect from [date], or as early as possible.",
+          "I am willing to discuss a notice period buy-out and to complete a handover before I go.",
+          "Yours sincerely,",
+          "[Your name]",
+          "These are placeholders. Only state a reason that is true.",
+        ],
+      },
+      {
+        heading: "Be ready to compromise",
+        list: [
+          "Offer a short handover period",
+          "Offer to pay the notice period buy-out if your contract allows it",
+          "Ask HR to confirm in writing what dues and documents you will receive",
+        ],
+      },
+      {
+        heading: "Before you submit",
+        paragraphs: [
+          "Check your offer letter or employment contract for the notice period and any buy-out clause. This guide is general information, not legal advice.",
+        ],
+      },
+    ],
+    cta: { label: "Write my resignation letter", href: "/resignation-letters" },
+  },
+  {
+    slug: "resignation-letter-for-better-offer",
+    title: "Resignation letter when you have a better job offer",
+    description:
+      "How to resign politely when you have a new job: what to say about the reason, a short sample and how to handle a counter-offer.",
+    published: "2026-11-27",
+    readMinutes: 3,
+    intro:
+      "Leaving for a better opportunity is the most common reason to resign. Your letter does not need to mention the new job or salary. Keep it short, thankful and professional.",
+    sections: [
+      {
+        heading: "Do these before you resign",
+        list: [
+          "Get the offer in writing and read the joining date and conditions",
+          "Check your notice period so your last day and the new joining date fit",
+          "Check whether your contract has a non-compete or confidentiality clause",
+        ],
+      },
+      {
+        heading: "What to say about the reason",
+        paragraphs: [
+          "You can say you are leaving to take up another opportunity, or give no reason. You do not have to name the company or the pay. Avoid comparing the two employers.",
+        ],
+      },
+      {
+        heading: "A sample letter",
+        paragraphs: [
+          "Subject: Resignation from the post of [Job title]",
+          "Dear [Manager's name],",
+          "I am resigning from my position as [Job title] at [Company name] to take up another opportunity. My last working day will be [date], as per my notice period.",
+          "Thank you for your guidance and for the chance to work on [project or team]. I will make sure my work is handed over properly.",
+          "Yours sincerely,",
+          "[Your name]",
+          "These are placeholders, so use your own details.",
+        ],
+      },
+      {
+        heading: "If you get a counter-offer",
+        paragraphs: [
+          "Think before you accept. Ask yourself why you wanted to leave and whether a higher salary changes that. Whatever you choose, thank your manager and respond politely.",
+        ],
+      },
+      {
+        heading: "Before you submit",
+        paragraphs: [
+          "Check your offer letter or employment contract for the notice period and any buy-out clause. This guide is general information, not legal advice.",
+        ],
+      },
+    ],
+    cta: { label: "Write my resignation letter", href: "/resignation-letters" },
+  },
+  {
+    slug: "resignation-letter-for-health-or-family-reasons",
+    title: "Resignation letter for health or family reasons (with sample)",
+    description:
+      "How to write a resignation letter for health or family reasons: how much to share, a respectful sample and what to ask HR about final dues.",
+    published: "2026-11-27",
+    readMinutes: 3,
+    intro:
+      "Sometimes you need to leave because of your own health or a family situation. You do not have to share details. A short, honest line is enough, and you can ask about the handover and final dues.",
+    sections: [
+      {
+        heading: "Share only what you want to",
+        paragraphs: [
+          "A phrase such as 'for personal reasons' or 'for health reasons' is enough. Employers do not need a diagnosis in a resignation letter, though some may ask for documents if you also request leave.",
+        ],
+      },
+      {
+        heading: "A sample letter",
+        paragraphs: [
+          "Subject: Resignation from the post of [Job title]",
+          "Dear [Manager's name],",
+          "I am sorry to inform you that I must resign from my position as [Job title] at [Company name] because of [family reasons / health reasons]. My last working day will be [date].",
+          "I am thankful for the support I have received. I will do my best to complete my work and hand over my tasks before I leave.",
+          "Yours sincerely,",
+          "[Your name]",
+          "These are placeholders. Share only as much as you are comfortable with.",
+        ],
+      },
+      {
+        heading: "Ask about leave before you resign",
+        paragraphs: [
+          "If you need time rather than a permanent exit, ask whether your company allows leave without pay or a break. It may be a better option than resigning.",
+        ],
+      },
+      {
+        heading: "Ask HR about the final steps",
+        list: [
+          "Last working day and notice period terms",
+          "Full and final settlement date",
+          "Relieving letter and experience certificate",
+          "Provident fund and any insurance cover after you leave",
+        ],
+      },
+      {
+        heading: "Before you submit",
+        paragraphs: [
+          "Check your offer letter or employment contract for the notice period and any buy-out clause. This guide is general information, not legal advice.",
+        ],
+      },
+    ],
+    cta: { label: "Write my resignation letter", href: "/resignation-letters" },
+  },
 ];
 
 export function getGuide(slug: string) {
@@ -1490,6 +1761,11 @@ export const READ_NEXT: Record<string, string[]> = {
   "law-student-resume-format": ["moot-court-and-internships-on-resume", "how-to-write-llb-in-resume", "resume-for-law-firm-applications"],
   "moot-court-and-internships-on-resume": ["law-student-resume-format", "resume-for-law-firm-applications"],
   "resume-for-law-firm-applications": ["law-student-resume-format", "how-to-write-llb-in-resume"],
+  "resignation-letter-format-india": ["resignation-letter-for-one-month-notice", "resignation-letter-for-better-offer", "resignation-letter-immediate-effect", "resignation-letter-for-health-or-family-reasons"],
+  "resignation-letter-for-one-month-notice": ["resignation-letter-format-india", "resignation-letter-immediate-effect"],
+  "resignation-letter-immediate-effect": ["resignation-letter-format-india", "resignation-letter-for-one-month-notice"],
+  "resignation-letter-for-better-offer": ["resignation-letter-format-india", "resignation-letter-for-one-month-notice"],
+  "resignation-letter-for-health-or-family-reasons": ["resignation-letter-format-india", "resignation-letter-immediate-effect"],
   "ats-resume-requirements": ["ats-friendly-resume", "ats-resume-example"],
   "resume-for-1-2-years-experience": ["resume-format-for-experienced-professionals", "explain-gap-or-short-job-on-resume", "ats-resume-checklist"],
   "explain-gap-or-short-job-on-resume": ["resume-for-1-2-years-experience", "ats-friendly-resume"],
