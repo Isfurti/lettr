@@ -896,6 +896,91 @@ export const EXAMPLES: ResumeExample[] = [
     ],
     { languages: ["English", "Mandarin", "Malay (conversational)"] }
   ),
+  // ---------- Added: more roles in India, the USA and the UK ----------
+  ex(
+    "civil-engineer-india",
+    "Civil Engineer (site and quantity)",
+    "Skilled trades",
+    "Early career",
+    "classic",
+    { name: "Suresh Patil", location: "Nashik" },
+    "Civil engineer with 3 years on residential building sites. Handles quantity take-off, bar bending schedules, site supervision and contractor billing.",
+    [["Site Engineer", "Shreeji Constructions", "Jun 2023", "Present", ["Supervise a team of 25 workers on a 4-storey residential block", "Prepare weekly quantity and billing statements for 6 sub-contractors", "Track steel and cement stock to avoid delays in slab casting"]]],
+    [["B.E., Civil Engineering", "K. K. Wagh Institute of Engineering, Nashik", "2019", "2023"]],
+    ["AutoCAD", "Quantity surveying", "Site supervision", "Bar bending schedule", "MS Excel", "IS codes"],
+    ["Site scale (workers, floors, contractors) tells the recruiter the level of work.", "Tools and codes are named the way job posts name them.", "Bullets show control of cost and stock, not only attendance."],
+    { languages: ["English", "Hindi", "Marathi"] }
+  ),
+  ex(
+    "data-entry-operator",
+    "Data Entry Operator",
+    "Operations & support",
+    "Early career",
+    "minimal",
+    { name: "Pooja Verma", location: "Lucknow" },
+    "Accurate data entry operator with 2 years in a distribution company. Types 40 words per minute with careful checking, and keeps records in Excel and Tally.",
+    [["Data Entry Operator", "Gomti Distributors", "Aug 2024", "Present", ["Enter 150+ invoices a day into Tally and cross-check totals before posting", "Maintain stock registers in Excel and send a daily summary to the accounts head", "Correct entry errors by comparing records against delivery challans"]]],
+    [["B.Com", "University of Lucknow", "2021", "2024"]],
+    ["Data entry", "MS Excel", "Tally", "Typing (40 wpm)", "MS Word", "Record keeping"],
+    ["Speed and daily volume are stated, because that is how data entry is judged.", "Shows checking steps, not only typing.", "Tools match what recruiters search for."],
+    { languages: ["English", "Hindi"] }
+  ),
+  ex(
+    "electrical-engineer-fresher",
+    "Electrical Engineer (fresher)",
+    "Students & freshers",
+    "Fresher",
+    "fresher",
+    { name: "Imran Sheikh", location: "Pune" },
+    "B.E. Electrical graduate with training in power distribution and PLC programming. Looking for a graduate engineer trainee role in a manufacturing or utility company.",
+    [["Industrial Trainee", "Mahalaxmi Power Distribution", "Dec 2024", "Jan 2025", ["Observed load balancing and fault finding on a 11 kV feeder under a senior engineer", "Prepared a one-page report on transformer maintenance schedules"]]],
+    [["B.E., Electrical Engineering (CGPA 7.8)", "Pune Institute of Technology", "2021", "2025"]],
+    ["PLC basics", "AutoCAD Electrical", "MATLAB", "Power systems", "Circuit analysis", "MS Excel"],
+    ["Training is placed under experience, with what was actually done.", "Skills are tools used in labs and projects.", "CGPA is easy to find, as trainee recruiters ask for it."],
+    { projects: [["Automatic Power Factor Corrector", "Final-year project that switches capacitor banks based on measured power factor; tested on a lab load."]], languages: ["English", "Hindi", "Marathi"] }
+  ),
+  ex(
+    "receptionist-front-office",
+    "Receptionist / Front Office Executive",
+    "Operations & support",
+    "Early career",
+    "compact",
+    { name: "Neha Kapoor", location: "Gurugram" },
+    "Front office executive with 3 years in corporate offices. Welcomes visitors, manages calls and courier, and supports the admin team with bookings and records.",
+    [["Front Office Executive", "Brightline Consulting", "Mar 2023", "Present", ["Greet 60+ visitors a day and log them in the visitor system", "Handle a 6-line phone system and route calls within 30 seconds", "Book meeting rooms and travel for a team of 80"]]],
+    [["B.A. (English)", "Delhi University (School of Open Learning)", "2019", "2022"]],
+    ["Communication", "Calendar and travel booking", "MS Office", "Visitor management", "Phone etiquette", "Record keeping"],
+    ["Daily volumes show the pace of the job.", "Soft skills are tied to actual tasks.", "Short, one page, easy to scan."],
+    { languages: ["English", "Hindi"] }
+  ),
+  ex(
+    "customer-service-representative-usa",
+    "Customer Service Representative (USA)",
+    "International",
+    "Early career",
+    "modern",
+    { name: "Jordan Ellis", location: "Columbus, OH", phone: "+1 (614) 555-0142" },
+    "Customer service representative with 3 years in phone and chat support for an online retailer. Calm under pressure, accurate with account details and focused on first-contact resolution.",
+    [["Customer Service Representative", "Bright Cart Retail", "May 2023", "Present", ["Resolve about 45 phone and chat contacts a day with a 92% customer satisfaction score", "Handle returns, refunds and billing questions in Zendesk and Salesforce", "Trained 4 new hires on the refund policy"]]],
+    [["Associate Degree, Business Administration", "Columbus State Community College", "2021", "2023"]],
+    ["Zendesk", "Salesforce", "Phone and chat support", "De-escalation", "Order management", "Typing (65 wpm)"],
+    ["US style: one page, no photo, no age or marital status.", "Metrics (contacts per day, satisfaction) match what support managers screen for.", "Tool names are the ones in US job posts."],
+    {}
+  ),
+  ex(
+    "graduate-cv-uk",
+    "Graduate CV (UK)",
+    "International",
+    "Fresher",
+    "classic",
+    { name: "Amelia Hughes", location: "Manchester", phone: "+44 7700 900123", linkedin: false },
+    "Recent Economics graduate from the University of Manchester with internship experience in a regional bank. Strong with Excel and data analysis, looking for a graduate analyst role.",
+    [["Intern, Retail Banking", "Northern Mutual Bank", "Jun 2025", "Aug 2025", ["Analysed 12 months of branch footfall data in Excel and presented 3 findings to the branch manager", "Supported 2 customer events with 80 attendees"]]],
+    [["BSc (Hons) Economics, 2:1", "University of Manchester", "2022", "2025"], ["A levels: Maths, Economics, History", "Stockport Sixth Form College", "2020", "2022"]],
+    ["Excel", "Data analysis", "Report writing", "Presentation", "Teamwork", "Time management"],
+    ["UK style: called a CV, no photo, no date of birth.", "Degree classification and A levels are listed, as UK graduate employers ask for them.", "Internship results lead the page."],
+    {}
+  ),
 ];
 
 export const EXAMPLE_CATEGORIES: ExampleCategory[] = [
