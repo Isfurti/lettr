@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MarketingPage, WRAP, CtaBand } from "@/components/marketing/MarketingPage";
 import { GUIDES } from "@/lib/guides";
+import { GuideCover } from "@/components/guides/GuideCover";
 
 export const metadata: Metadata = {
   title: "Resume & Job Search Guides for India | Lettr",
@@ -30,14 +31,17 @@ export default function GuidesPage() {
             <li key={g.slug}>
               <Link
                 href={`/guides/${g.slug}`}
-                className="group h-full flex flex-col bg-white border-2 border-rule hover:border-ink rounded-[24px] p-6 sm:p-7 transition-colors"
+                className="group h-full flex flex-col bg-white border-2 border-rule hover:border-ink rounded-[24px] overflow-hidden transition-colors"
               >
+                <GuideCover slug={g.slug} className="border-b-2 border-rule" />
+                <span className="flex flex-col flex-1 p-6 sm:p-7">
                 <span className="text-sm font-bold text-slate">{g.readMinutes} min read</span>
                 <span className="mt-2 font-brand font-extrabold text-[22px] sm:text-[26px] leading-tight tracking-tight group-hover:text-brand-blue">
                   {g.title}
                 </span>
                 <span className="mt-3 text-slate leading-relaxed">{g.description}</span>
                 <span className="mt-auto pt-5 font-bold text-brand-blue">Read the guide →</span>
+                </span>
               </Link>
             </li>
           ))}

@@ -8,6 +8,7 @@ import { getExample } from "@/lib/examples";
 import { SELLER } from "@/lib/company";
 import { formatDate } from "@/lib/format-date";
 import { siteUrl } from "@/lib/site-url";
+import { GuideCover } from "@/components/guides/GuideCover";
 
 export function generateStaticParams() {
   return GUIDES.map((g) => ({ slug: g.slug }));
@@ -80,10 +81,11 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
     >
       <article className={`${WRAP} pb-14`}>
         <div className="max-w-2xl">
+          <GuideCover slug={g.slug} className="rounded-[24px] border-2 border-ink mb-2" />
           {g.sections.map((s) => {
             const ListTag = s.ordered ? "ol" : "ul";
             return (
-              <section key={s.heading} className="mt-10 first:mt-2">
+              <section key={s.heading} className="mt-10">
                 <h2 className="font-brand font-extrabold text-[24px] sm:text-[30px] leading-tight tracking-tight">{s.heading}</h2>
                 {s.paragraphs?.map((p) => (
                   <p key={p} className="mt-4 text-[17px] leading-relaxed">
