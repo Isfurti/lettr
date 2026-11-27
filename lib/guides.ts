@@ -1738,6 +1738,776 @@ export const GUIDES: Guide[] = [
     ],
     cta: { label: "Write my resignation letter", href: "/resignation-letters" },
   },
+  {
+    slug: "synonyms-for-managed-on-a-resume",
+    title: "Synonyms for \u201cmanaged\u201d on a resume (with examples)",
+    description:
+      "Stronger words to use instead of \u201cmanaged\u201d on a resume, with before and after examples. Use only words that are true for your work.",
+    published: "2026-11-27",
+    readMinutes: 3,
+    intro:
+      "\u201cManaged\u201d is the most common verb on resumes and says little. These alternatives show how you managed, and what changed.",
+    sections: [
+      {
+        heading: "Why change the word",
+        paragraphs: [
+          "Recruiters and ATS software read dozens of resumes. Repeating the same verb in every bullet makes your work look flat. A precise verb shows what you actually did.",
+        ],
+      },
+      {
+        heading: "Words you can use instead",
+        list: [
+          "Led: for a team you guided day to day",
+          "Coordinated: for people, schedules or vendors you kept on track",
+          "Supervised: for direct supervision of staff or workers",
+          "Oversaw: for a process or area you were accountable for",
+          "Directed: for senior roles with set targets",
+          "Administered: for systems, budgets or records you ran",
+          "Organised: for events, files or workloads you put in order",
+        ],
+      },
+      {
+        heading: "Before and after",
+        list: [
+          "Before: Managed a team of 8.",
+          "After: Led a team of 8 support executives and cut average reply time from two days to one.",
+          "Before: Managed vendors.",
+          "After: Coordinated 6 vendors and kept deliveries on schedule each month.",
+        ],
+      },
+      {
+        heading: "Use only what is true",
+        paragraphs: [
+          "A stronger verb must still describe your real role. If you supported a project, say supported, not led. Interviewers will ask you about every word.",
+        ],
+      },
+      {
+        heading: "Check the rest of your resume",
+        paragraphs: [
+          "After you change the verbs, run your resume through a free ATS check to see how it reads as plain text.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+  },
+  {
+    slug: "synonyms-for-led-on-a-resume",
+    title: "Synonyms for \u201cled\u201d on a resume (with examples)",
+    description:
+      "Stronger words to use instead of \u201cled\u201d on a resume, with before and after examples. Use only words that are true for your work.",
+    published: "2026-11-27",
+    readMinutes: 3,
+    intro:
+      "\u201cLed\u201d is a strong verb, but it loses force when every bullet uses it. Here are accurate alternatives for different kinds of leadership.",
+    sections: [
+      {
+        heading: "Why change the word",
+        paragraphs: [
+          "Recruiters and ATS software read dozens of resumes. Repeating the same verb in every bullet makes your work look flat. A precise verb shows what you actually did.",
+        ],
+      },
+      {
+        heading: "Words you can use instead",
+        list: [
+          "Headed: when you were the named head of a team or project",
+          "Guided: when you mentored people without being their manager",
+          "Spearheaded: when you started and drove an initiative",
+          "Mentored: for coaching juniors or interns",
+          "Chaired: for committees and meetings",
+          "Launched: for something new you started",
+          "Trained: for teaching people a process or tool",
+        ],
+      },
+      {
+        heading: "Before and after",
+        list: [
+          "Before: Led a project.",
+          "After: Spearheaded a six-month migration of 12 reports from Excel to Power BI.",
+          "Before: Led new hires.",
+          "After: Trained 5 new hires on the refund process in their first two weeks.",
+        ],
+      },
+      {
+        heading: "Use only what is true",
+        paragraphs: [
+          "A stronger verb must still describe your real role. If you supported a project, say supported, not led. Interviewers will ask you about every word.",
+        ],
+      },
+      {
+        heading: "Check the rest of your resume",
+        paragraphs: [
+          "After you change the verbs, run your resume through a free ATS check to see how it reads as plain text.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+  },
+  {
+    slug: "synonyms-for-responsible-for-on-a-resume",
+    title: "Synonyms for \u201cresponsible for\u201d on a resume (with examples)",
+    description:
+      "Stronger words to use instead of \u201cresponsible for\u201d on a resume, with before and after examples. Use only words that are true for your work.",
+    published: "2026-11-27",
+    readMinutes: 3,
+    intro:
+      "\u201cResponsible for\u201d describes a duty, not a result. Replace it with an action verb and, where you honestly can, show the outcome.",
+    sections: [
+      {
+        heading: "Why change the word",
+        paragraphs: [
+          "Recruiters and ATS software read dozens of resumes. Repeating the same verb in every bullet makes your work look flat. A precise verb shows what you actually did.",
+        ],
+      },
+      {
+        heading: "Words you can use instead",
+        list: [
+          "Handled: for tasks you did every day",
+          "Owned: for work you were fully accountable for",
+          "Prepared: for reports, documents or analyses",
+          "Delivered: for completed projects or outputs",
+          "Maintained: for systems, records or accounts",
+          "Processed: for invoices, claims or orders",
+          "Resolved: for problems and customer issues",
+        ],
+      },
+      {
+        heading: "Before and after",
+        list: [
+          "Before: Responsible for monthly reports.",
+          "After: Prepared monthly sales reports in Excel for 4 regional managers.",
+          "Before: Responsible for customer complaints.",
+          "After: Resolved about 30 customer complaints a week and escalated unresolved cases to the team lead.",
+        ],
+      },
+      {
+        heading: "Use only what is true",
+        paragraphs: [
+          "A stronger verb must still describe your real role. If you supported a project, say supported, not led. Interviewers will ask you about every word.",
+        ],
+      },
+      {
+        heading: "Check the rest of your resume",
+        paragraphs: [
+          "After you change the verbs, run your resume through a free ATS check to see how it reads as plain text.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+  },
+  {
+    slug: "synonyms-for-helped-on-a-resume",
+    title: "Synonyms for \u201chelped\u201d on a resume (with examples)",
+    description:
+      "Stronger words to use instead of \u201chelped\u201d on a resume, with before and after examples. Use only words that are true for your work.",
+    published: "2026-11-27",
+    readMinutes: 3,
+    intro:
+      "\u201cHelped\u201d hides your real contribution. These verbs say what you actually did to support a team, a customer or a project.",
+    sections: [
+      {
+        heading: "Why change the word",
+        paragraphs: [
+          "Recruiters and ATS software read dozens of resumes. Repeating the same verb in every bullet makes your work look flat. A precise verb shows what you actually did.",
+        ],
+      },
+      {
+        heading: "Words you can use instead",
+        list: [
+          "Supported: for ongoing help to a team or manager",
+          "Assisted: for tasks done under someone's direction",
+          "Contributed: for a clear part of a bigger result",
+          "Collaborated: for work done with others as equals",
+          "Enabled: for something that let others work faster",
+          "Advised: for giving recommendations",
+          "Facilitated: for running or arranging sessions",
+        ],
+      },
+      {
+        heading: "Before and after",
+        list: [
+          "Before: Helped the sales team.",
+          "After: Supported a 5-person sales team by preparing weekly lead lists and follow-up reminders.",
+          "Before: Helped with a website project.",
+          "After: Contributed to a website redesign by writing the copy for 8 pages.",
+        ],
+      },
+      {
+        heading: "Use only what is true",
+        paragraphs: [
+          "A stronger verb must still describe your real role. If you supported a project, say supported, not led. Interviewers will ask you about every word.",
+        ],
+      },
+      {
+        heading: "Check the rest of your resume",
+        paragraphs: [
+          "After you change the verbs, run your resume through a free ATS check to see how it reads as plain text.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+  },
+  {
+    slug: "resume-format-usa",
+    title: "Resume format for the USA: length, sections and what to leave out",
+    description:
+      "The US resume format: one page for most people, no photo or age, reverse-chronological order, and a plain layout that applicant tracking systems read.",
+    published: "2026-11-27",
+    readMinutes: 4,
+    intro:
+      "A US resume is short, factual and focused on results. Employers expect a clean one-page document for most careers. Here is the format, with the details that surprise applicants from other countries.",
+    sections: [
+      {
+        heading: "The section order",
+        ordered: true,
+        list: [
+          "Header: name, phone, email, city and state, LinkedIn",
+          "Summary of two or three lines",
+          "Work experience, latest first",
+          "Skills",
+          "Education",
+          "Certifications or projects, if they help",
+        ],
+      },
+      {
+        heading: "Length",
+        paragraphs: [
+          "One page is the usual advice for students and early careers. Two pages can be fine for ten or more years of experience or senior roles. Use US Letter size (8.5 by 11 inches) when you export.",
+        ],
+      },
+      {
+        heading: "Leave these out",
+        list: [
+          "Photo",
+          "Age, date of birth, marital status or religion",
+          "Full home address; city and state are enough",
+          "References; write them on a separate page only if asked",
+          "An objective line that only says you want a good job",
+        ],
+      },
+      {
+        heading: "Use numbers and tools",
+        paragraphs: [
+          "US recruiters like results: sales, savings, volume, time saved, team size. Use only numbers you can explain. Name the tools, such as Excel, Salesforce or Python, using the same words as the job post.",
+        ],
+      },
+      {
+        heading: "Resume or CV?",
+        paragraphs: [
+          "In the USA, a resume is the normal job document. A CV is longer and used mainly for academic, research and some medical roles.",
+        ],
+      },
+      {
+        heading: "Keep it ATS friendly",
+        list: [
+          "Single column, standard headings",
+          "No tables, text boxes or icons",
+          "Save as PDF or Word, as the job post asks",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["software-engineer-usa", "customer-service-representative-usa"],
+  },
+  {
+    slug: "cover-letter-format-usa",
+    title: "Cover letter format for US applications (with a sample)",
+    description:
+      "How to format a US cover letter: structure, length, opening line, a short sample and common mistakes. Written for applicants applying to US jobs.",
+    published: "2026-11-27",
+    readMinutes: 4,
+    intro:
+      "A US cover letter is a short, confident letter that connects your experience to one job. It is usually half a page to one page. Here is the structure and a sample you can adapt.",
+    sections: [
+      {
+        heading: "The structure",
+        ordered: true,
+        list: [
+          "Your name and contact details at the top",
+          "Date",
+          "Hiring manager's name, if you can find it, and the company",
+          "Opening: the job you want and why you fit, in two sentences",
+          "Middle: one or two short paragraphs with specific results that match the job",
+          "Closing: thanks and a clear next step",
+          "Sign-off: Sincerely, and your name",
+        ],
+      },
+      {
+        heading: "A short sample",
+        paragraphs: [
+          "Dear [Hiring manager's name],",
+          "I am applying for the [Job title] role at [Company]. In my current role at [Company name] I [one result that matches the job], and I would like to bring the same focus to your team.",
+          "[One more specific example: a project, a number, a tool used.]",
+          "Thank you for your time. I would welcome the chance to talk about how I can help [Company] with [goal from the job post].",
+          "Sincerely,",
+          "[Your name]",
+          "These are placeholders, so use your own facts.",
+        ],
+      },
+      {
+        heading: "Length and tone",
+        paragraphs: [
+          "Keep it to one page. Write in plain, direct English. Avoid copying your resume line for line; add the story behind two or three points.",
+        ],
+      },
+      {
+        heading: "Mistakes to avoid",
+        list: [
+          "Starting with 'To whom it may concern' when a name is available",
+          "Writing about what the job will do for you instead of what you bring",
+          "Sending the same letter to every company",
+          "Spelling the company or the hiring manager's name wrongly",
+        ],
+      },
+    ],
+    cta: { label: "Write my cover letter", href: "/builder/new?tab=cover-letter" },
+  },
+  {
+    slug: "how-to-use-an-ai-resume-builder",
+    title: "How to use an AI resume builder without making things up",
+    description:
+      "A practical way to use an AI resume builder: give it real facts, tailor to the job, check every line and keep control of the final text.",
+    published: "2026-11-27",
+    readMinutes: 4,
+    intro:
+      "An AI resume builder can save time, but it can also write confident sentences about things you never did. Here is a safe way to use one so that the result is accurate and still sounds like you.",
+    sections: [
+      {
+        heading: "Start with your own facts",
+        paragraphs: [
+          "Write a plain list of your jobs, dates, tools and real results first. The AI should improve wording, not invent experience. If a tool adds a number or skill you cannot confirm, remove it.",
+        ],
+      },
+      {
+        heading: "Add the job post",
+        paragraphs: [
+          "Paste the job description and ask for the keywords you are missing. Add only those that are true for you. This is how you match a job without copying it.",
+        ],
+      },
+      {
+        heading: "Check every line before you send",
+        list: [
+          "Every date, title and employer is correct",
+          "Every number is one you can explain in an interview",
+          "No skill appears that you cannot use",
+          "The tone sounds like you, not like a template",
+        ],
+      },
+      {
+        heading: "Use the score as a guide",
+        paragraphs: [
+          "An ATS score is a rough check of how readable your resume is for software. It does not predict whether you will be shortlisted. Use it to find formatting problems and missing keywords.",
+        ],
+      },
+      {
+        heading: "Keep different versions",
+        paragraphs: [
+          "Save a base resume and make a copy for each type of role. A short tailoring pass is enough, and it keeps your facts consistent.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["software-engineer", "data-analyst"],
+  },
+  {
+    slug: "cv-format-uk",
+    title: "CV format for the UK: length, layout and what to include",
+    description:
+      "How to write a UK CV: two pages at most, no photo, a short personal statement, clear order and the details UK employers expect.",
+    published: "2026-11-27",
+    readMinutes: 4,
+    intro:
+      "In the UK you apply with a CV. It is usually two pages, factual and easy to scan. Here is the format and what to leave out.",
+    sections: [
+      {
+        heading: "The section order",
+        ordered: true,
+        list: [
+          "Name and contact details: phone, email, town or city, LinkedIn",
+          "Personal statement of three or four lines",
+          "Work experience, latest first",
+          "Education and qualifications",
+          "Skills",
+          "Interests, only if they add something",
+        ],
+      },
+      {
+        heading: "Length and size",
+        paragraphs: [
+          "Two pages of A4 is the normal limit. One page is fine for school leavers and graduates. Do not add pages to fill space.",
+        ],
+      },
+      {
+        heading: "Leave these out",
+        list: [
+          "Photo",
+          "Date of birth, age, marital status or nationality",
+          "Full postal address; a town or city is enough",
+          "The words 'Curriculum Vitae' as a heading",
+          "References; 'available on request' is optional",
+        ],
+      },
+      {
+        heading: "Education",
+        paragraphs: [
+          "List your highest qualification first. For graduates include the degree classification (for example 2:1) and, if recent, your A levels or equivalents. Include GCSE Maths and English results if they are asked for.",
+        ],
+      },
+      {
+        heading: "Use UK spelling",
+        paragraphs: [
+          "Write organised, programme and centre. Use UK date formats and the pound sign for amounts.",
+        ],
+      },
+      {
+        heading: "Keep it ATS friendly",
+        list: [
+          "Single column and standard headings",
+          "No tables, icons or text boxes",
+          "Save as PDF unless told otherwise",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["data-analyst-uk", "graduate-cv-uk"],
+  },
+  {
+    slug: "graduate-cv-uk",
+    title: "Graduate CV for the UK: example layout and tips",
+    description:
+      "How to write a CV as a UK graduate: what to put first, how to show internships, society roles and part-time work, and how long it should be.",
+    published: "2026-11-27",
+    readMinutes: 4,
+    intro:
+      "Graduate employers in the UK see many CVs with similar degrees. What stands out is clear evidence of skills from work, projects and activities. Here is how to lay it out.",
+    sections: [
+      {
+        heading: "The section order",
+        ordered: true,
+        list: [
+          "Contact details",
+          "Personal statement of three or four lines",
+          "Education, with degree, university, classification and key modules",
+          "Work experience, internships and placements",
+          "Projects, volunteering and society roles",
+          "Skills",
+        ],
+      },
+      {
+        heading: "Education first",
+        paragraphs: [
+          "With little full-time work, put education above experience. Include your degree, university, dates, classification or expected grade and A levels or equivalents. Add two or three relevant modules or a dissertation title if it helps.",
+        ],
+      },
+      {
+        heading: "Count part-time and student work",
+        paragraphs: [
+          "Bar work, tutoring, retail and volunteering show reliability, teamwork and customer skills. Describe what you did, with one result or scale if true.",
+        ],
+      },
+      {
+        heading: "Show skills with evidence",
+        paragraphs: [
+          "Do not just write 'good communicator'. Say where you showed it: a presentation to 40 people, a society event, a customer-facing role.",
+        ],
+      },
+      {
+        heading: "Keep to one or two pages",
+        paragraphs: [
+          "One page is fine for most graduates. Two pages are acceptable if the content is strong.",
+        ],
+      },
+      {
+        heading: "Tailor for graduate schemes",
+        paragraphs: [
+          "Read the scheme's listed skills and values and use the same words where they are true for you.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["graduate-cv-uk", "data-analyst-uk"],
+  },
+  {
+    slug: "cv-for-school-leavers-uk",
+    title: "CV for school leavers in the UK (no experience)",
+    description:
+      "How to write a CV after school in the UK with little work experience: use GCSEs, work experience, volunteering and skills to show you are reliable.",
+    published: "2026-11-27",
+    readMinutes: 3,
+    intro:
+      "Employers and apprenticeship providers know that school leavers have little work history. They look for reliability, a good attitude and a neat, honest CV. Here is how to write one.",
+    sections: [
+      {
+        heading: "The section order",
+        ordered: true,
+        list: [
+          "Contact details",
+          "Short personal statement of two or three lines",
+          "Education and qualifications",
+          "Work experience, volunteering and activities",
+          "Skills",
+          "Interests, briefly",
+        ],
+      },
+      {
+        heading: "Education",
+        paragraphs: [
+          "List your school, the years and your GCSEs or equivalents with grades, plus any A levels or BTECs you are taking. Put your latest qualification first.",
+        ],
+      },
+      {
+        heading: "What counts as experience",
+        list: [
+          "Work experience placements",
+          "Part-time or weekend jobs",
+          "Volunteering and community work",
+          "Caring for family members",
+          "Sports teams, clubs, Duke of Edinburgh and similar awards",
+        ],
+      },
+      {
+        heading: "Write about skills with examples",
+        paragraphs: [
+          "Teamwork, reliability and communication are best shown by a short example. Example shape: Helped run a school charity event for 100 guests. Use your own real example.",
+        ],
+      },
+      {
+        heading: "Keep it to one page",
+        paragraphs: [
+          "One clean page is enough. Check spelling, ask someone to read it and use a professional email address.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+  },
+  {
+    slug: "personal-statement-for-cv-uk",
+    title: "Personal statement for a CV: how to write one (UK)",
+    description:
+      "How to write a CV personal statement: what to include, how long it should be, and examples of the shape for graduates, career changers and experienced workers.",
+    published: "2026-11-27",
+    readMinutes: 3,
+    intro:
+      "A personal statement is a short paragraph at the top of your UK CV. It tells the reader who you are, what you offer and what you want. Aim for three or four lines.",
+    sections: [
+      {
+        heading: "What to include",
+        list: [
+          "Who you are: your role, level or degree",
+          "What you offer: two or three skills or strengths that match the job",
+          "What you want: the type of role or sector",
+        ],
+      },
+      {
+        heading: "Examples of the shape",
+        paragraphs: [
+          "Graduate: Recent Economics graduate with internship experience in banking and strong Excel skills, seeking a graduate analyst role.",
+          "Experienced: Operations manager with 8 years in logistics, leading teams of up to 20 and reducing delivery delays, seeking a senior operations role.",
+          "Career changer: Customer service professional with 5 years of experience moving into data analysis, with SQL and Excel skills gained through study and projects.",
+          "These are examples of the shape, so use your own facts.",
+        ],
+      },
+      {
+        heading: "Keep it factual",
+        paragraphs: [
+          "Avoid empty phrases such as 'hard-working team player'. Replace them with something you can prove.",
+        ],
+      },
+      {
+        heading: "Tailor it",
+        paragraphs: [
+          "Change one or two phrases for each application so that the statement matches the job post.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+  },
+  {
+    slug: "cover-letter-format-uk",
+    title: "Cover letter format for UK applications (with sample)",
+    description:
+      "How to write a UK cover letter: layout, length, how to open and close it, and a short sample that fits UK conventions.",
+    published: "2026-11-27",
+    readMinutes: 4,
+    intro:
+      "A UK cover letter is a one-page letter that goes with your CV. It explains why you want the job and why you are a good fit. Here is the layout and a sample.",
+    sections: [
+      {
+        heading: "The layout",
+        ordered: true,
+        list: [
+          "Your address block or contact details at the top right or left",
+          "Date",
+          "Employer's name and address, if you know them",
+          "Greeting: Dear Ms Smith, or Dear Hiring Manager",
+          "Opening: the role and where you saw it",
+          "Middle: two short paragraphs linking your experience to the role",
+          "Closing: thanks and your availability for interview",
+          "Sign-off: Yours sincerely if you used a name, Yours faithfully if you wrote Dear Sir or Madam",
+        ],
+      },
+      {
+        heading: "A short sample",
+        paragraphs: [
+          "Dear [Name],",
+          "I am writing to apply for the [Job title] position advertised on [site]. I am a [degree or role] with experience in [skill], and I am keen to join [Company].",
+          "[A specific example from work, study or volunteering that matches the job.]",
+          "Thank you for considering my application. I would welcome the chance to discuss it at interview.",
+          "Yours sincerely,",
+          "[Your name]",
+          "These are placeholders, so use your own facts.",
+        ],
+      },
+      {
+        heading: "Length",
+        paragraphs: [
+          "One page of A4. Keep paragraphs short.",
+        ],
+      },
+      {
+        heading: "Use UK spelling and tone",
+        paragraphs: [
+          "Polite, clear and modest works best. Avoid slang and strong claims you cannot prove.",
+        ],
+      },
+    ],
+    cta: { label: "Write my cover letter", href: "/builder/new?tab=cover-letter" },
+  },
+  {
+    slug: "nhs-supporting-statement-uk",
+    title: "NHS job applications: how to write a supporting statement",
+    description:
+      "How to write a supporting statement for an NHS job application: match the person specification, give evidence for each point and show the values the role asks for.",
+    published: "2026-11-27",
+    readMinutes: 4,
+    intro:
+      "Many NHS jobs are applied for through an online application form rather than a plain CV. The key part is the supporting statement. Check the job advert for the exact process, because it can differ by employer.",
+    sections: [
+      {
+        heading: "Start with the person specification",
+        paragraphs: [
+          "The job pack lists essential and desirable criteria. Treat each one as a heading and write about it. If you do not answer a criterion, the shortlisting team cannot give you credit for it.",
+        ],
+      },
+      {
+        heading: "Give evidence, not claims",
+        paragraphs: [
+          "For each criterion give a short example: what the situation was, what you did and what happened. Use real examples from work, placements, study or volunteering.",
+        ],
+      },
+      {
+        heading: "Show the values",
+        paragraphs: [
+          "NHS roles often ask for values such as compassion, respect and teamwork. Show them through your examples, using words from the job pack where they are true for you.",
+        ],
+      },
+      {
+        heading: "Check the basics",
+        list: [
+          "Stay within any word limit",
+          "Use accurate dates and job titles",
+          "Check any registration, such as with a professional body, if the role needs it",
+          "Proofread before you submit",
+        ],
+      },
+      {
+        heading: "Keep a CV ready too",
+        paragraphs: [
+          "Some employers still ask for a CV or want one for speculative applications. Keep a clean two-page version.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+    relatedExamples: ["registered-nurse-uk-nhs"],
+  },
+  {
+    slug: "resume-vs-cv-difference",
+    title: "Resume vs CV: what is the difference and which one to use",
+    description:
+      "The difference between a resume and a CV, and which one to use in India, the USA, the UK, Canada, Australia and other countries.",
+    published: "2026-11-27",
+    readMinutes: 4,
+    intro:
+      "The words resume and CV mean different things in different countries. Using the right document avoids confusion and helps your application get read.",
+    sections: [
+      {
+        heading: "The short answer",
+        paragraphs: [
+          "A resume is a short, targeted summary of your work, usually one or two pages. A CV (curriculum vitae) is a fuller record, longer in academic and research careers. In many countries the two words are used for the same job application document.",
+        ],
+      },
+      {
+        heading: "By country",
+        list: [
+          "USA and Canada: resume for jobs; CV for academic, research and some medical roles",
+          "UK and Ireland: CV is the normal job document, usually two pages",
+          "India: both words are used; for most jobs it is a one or two page document",
+          "Australia and New Zealand: both words are used; resume is common",
+          "Europe: a CV, often a structured one; check local norms for details like photos",
+        ],
+      },
+      {
+        heading: "What to do",
+        paragraphs: [
+          "Read the job post. If it says resume or CV, use that word in your file name. If it asks for a particular length or format, follow it. If you are unsure, send a clean one or two page document.",
+        ],
+      },
+      {
+        heading: "Academic CVs",
+        paragraphs: [
+          "Academic CVs list publications, teaching, grants and conferences, so they can run many pages. Do not use that format for ordinary company jobs.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+  },
+  {
+    slug: "resume-rules-by-country",
+    title: "Resume rules by country: photo, age and length",
+    description:
+      "A simple guide to what goes on a resume in different countries: photo, date of birth, length and spelling, for India, the USA, the UK, Canada, Australia, the UAE and Singapore.",
+    published: "2026-11-27",
+    readMinutes: 4,
+    intro:
+      "Resume norms change from one country to another. What is normal in one place can hurt you in another. Use this guide as a starting point and always check the job post and local advice.",
+    sections: [
+      {
+        heading: "The general picture",
+        list: [
+          "USA and Canada: no photo, no age or marital status, one page for most people",
+          "UK: no photo, no date of birth, two pages at most",
+          "Australia: usually no photo, two or three pages is common for experienced candidates",
+          "India: no photo needed for most corporate jobs; one or two pages; skip date of birth unless asked",
+          "UAE and Gulf: employers often ask about visa status and notice period, so mention them briefly",
+          "Singapore: keep it short and factual; some employers ask for current and expected salary, so check the job post",
+        ],
+      },
+      {
+        heading: "Why it matters",
+        paragraphs: [
+          "In several countries, employers avoid photos and personal details to reduce bias. Adding them can make your resume look out of touch with local practice.",
+        ],
+      },
+      {
+        heading: "Spelling and dates",
+        paragraphs: [
+          "Use UK spelling for the UK, India, Australia and Singapore, and US spelling for the USA. Match the date format of the country.",
+        ],
+      },
+      {
+        heading: "Always check",
+        paragraphs: [
+          "These are general norms and they change. Read the employer's job post and apply their instructions first.",
+        ],
+      },
+      {
+        heading: "Build for your country",
+        paragraphs: [
+          "Lettr has templates and guidance for several countries, so you can start from a layout that fits.",
+        ],
+      },
+    ],
+    cta: { label: "Check my resume for free", href: "/resume-checker" },
+  },
 ];
 
 export function getGuide(slug: string) {
@@ -1766,6 +2536,21 @@ export const READ_NEXT: Record<string, string[]> = {
   "resignation-letter-immediate-effect": ["resignation-letter-format-india", "resignation-letter-for-one-month-notice"],
   "resignation-letter-for-better-offer": ["resignation-letter-format-india", "resignation-letter-for-one-month-notice"],
   "resignation-letter-for-health-or-family-reasons": ["resignation-letter-format-india", "resignation-letter-immediate-effect"],
+  "synonyms-for-managed-on-a-resume": ["synonyms-for-led-on-a-resume", "synonyms-for-responsible-for-on-a-resume", "ats-friendly-resume"],
+  "synonyms-for-led-on-a-resume": ["synonyms-for-managed-on-a-resume", "synonyms-for-helped-on-a-resume"],
+  "synonyms-for-responsible-for-on-a-resume": ["synonyms-for-managed-on-a-resume", "resume-for-1-2-years-experience"],
+  "synonyms-for-helped-on-a-resume": ["synonyms-for-led-on-a-resume", "synonyms-for-responsible-for-on-a-resume"],
+  "resume-format-usa": ["cover-letter-format-usa", "how-to-use-an-ai-resume-builder", "resume-vs-cv-difference"],
+  "cover-letter-format-usa": ["resume-format-usa", "cover-letter-format"],
+  "how-to-use-an-ai-resume-builder": ["ats-friendly-resume", "resume-format-usa"],
+  "cv-format-uk": ["graduate-cv-uk", "personal-statement-for-cv-uk", "cover-letter-format-uk"],
+  "graduate-cv-uk": ["cv-format-uk", "personal-statement-for-cv-uk"],
+  "cv-for-school-leavers-uk": ["cv-format-uk", "personal-statement-for-cv-uk"],
+  "personal-statement-for-cv-uk": ["cv-format-uk", "graduate-cv-uk"],
+  "cover-letter-format-uk": ["cv-format-uk", "personal-statement-for-cv-uk"],
+  "nhs-supporting-statement-uk": ["cv-format-uk", "cover-letter-format-uk"],
+  "resume-vs-cv-difference": ["resume-rules-by-country", "cv-format-uk", "resume-format-usa"],
+  "resume-rules-by-country": ["resume-vs-cv-difference", "resume-format-usa", "cv-format-uk"],
   "ats-resume-requirements": ["ats-friendly-resume", "ats-resume-example"],
   "resume-for-1-2-years-experience": ["resume-format-for-experienced-professionals", "explain-gap-or-short-job-on-resume", "ats-resume-checklist"],
   "explain-gap-or-short-job-on-resume": ["resume-for-1-2-years-experience", "ats-friendly-resume"],
