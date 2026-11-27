@@ -9,6 +9,7 @@ import { SELLER } from "@/lib/company";
 import { formatDate } from "@/lib/format-date";
 import { siteUrl } from "@/lib/site-url";
 import { GuideCover } from "@/components/guides/GuideCover";
+import { GuideShot } from "@/components/guides/GuideShot";
 
 export function generateStaticParams() {
   return GUIDES.map((g) => ({ slug: g.slug }));
@@ -85,6 +86,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
             <span aria-hidden="true">←</span> All guides
           </Link>
           <GuideCover slug={g.slug} className="rounded-[24px] border-2 border-ink mb-2" />
+          <GuideShot slug={g.slug} />
           {g.sections.map((s) => {
             const ListTag = s.ordered ? "ol" : "ul";
             return (
